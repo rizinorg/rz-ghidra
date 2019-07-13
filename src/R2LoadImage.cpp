@@ -11,7 +11,6 @@ R2LoadImage::R2LoadImage(RCore *core)
 void R2LoadImage::loadFill(uint1 *ptr, int4 size, const Address &addr)
 {
 	// TODO: sync
-	printf("r2 io queried: 0x%" PFMT64x ", size: %d\n", (ut64)addr.getOffset(), (int)size);
 	r_io_read_at(core->io, addr.getOffset(), ptr, size);
 }
 

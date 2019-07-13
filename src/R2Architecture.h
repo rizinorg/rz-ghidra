@@ -16,8 +16,11 @@ class R2Architecture : public SleighArchitecture
 	public:
 		explicit R2Architecture(RCore *core);
 
+		RCore *getCore() const 	{ return core; }
+
 	protected:
 		void buildLoader(DocumentStorage &store) override;
+		Scope *buildGlobalScope() override;
 };
 
 #endif //R2GHIDRA_R2ARCHITECTURE_H

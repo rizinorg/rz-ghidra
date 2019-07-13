@@ -1,6 +1,7 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
 #include "R2LoadImage.h"
+#include "R2Scope.h"
 #include "R2Architecture.h"
 
 #include <iostream>
@@ -26,4 +27,15 @@ void R2Architecture::buildLoader(DocumentStorage &store)
 {
 	collectSpecFiles(*errorstream);
 	loader = new R2LoadImage(core);
+}
+
+Scope *R2Architecture::buildGlobalScope()
+{
+	Scope *globalscope = symboltab->getGlobalScope();
+	if(globalscope)
+		return globalscope;
+
+	globalscope = new R2Scope(this);
+	symboltab->attachScope(globalscope, nullptr);
+	return globalscope;
 }

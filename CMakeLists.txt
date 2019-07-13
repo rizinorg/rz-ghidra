@@ -9,7 +9,9 @@ set(SOURCE
 		src/R2Architecture.cpp
 		src/R2Architecture.h
 		src/R2LoadImage.cpp
-		src/R2LoadImage.h)
+		src/R2LoadImage.h
+		src/R2Scope.cpp
+		src/R2Scope.h)
 
 find_package(Radare2 REQUIRED)
 
