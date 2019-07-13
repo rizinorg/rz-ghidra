@@ -11,7 +11,9 @@ set(SOURCE
 		src/R2LoadImage.cpp
 		src/R2LoadImage.h
 		src/R2Scope.cpp
-		src/R2Scope.h)
+		src/R2Scope.h
+		src/R2TypeFactory.cpp
+		src/R2TypeFactory.h)
 
 find_package(Radare2 REQUIRED)
 

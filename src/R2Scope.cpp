@@ -22,6 +22,13 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 	return cache->addFunction(Address(arch->getDefaultSpace(), fcn->addr), fcn->name);
 }
 
+Symbol *R2Scope::registerFlag(RFlagItem *flag) const
+{
+	Datatype *type = arch->types->getTypeCode(); // TODO
+	SymbolEntry *entry = cache->addSymbol(flag->name, type, Address(arch->getDefaultSpace(), flag->offset), Address());
+	return entry ? entry->getSymbol() : nullptr;
+}
+
 Symbol *R2Scope::queryR2(const Address &addr) const
 {
 	// TODO: sync
@@ -32,13 +39,27 @@ Symbol *R2Scope::queryR2(const Address &addr) const
 
 	// TODO: register more things
 
+	RFlagItem *flag = r_flag_get_at(core->flags, addr.getOffset(), false);
+	if(flag)
+		return registerFlag(flag);
+
 	return nullptr;
 }
 
 LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 {
-	// TODO
-	return nullptr;
+	// TODO: sync
+	RCore *core = arch->getCore();
+
+	RAnalFunction *fcn = r_anal_get_fcn_in(core->anal, addr.getOffset(), R_ANAL_FCN_TYPE_NULL);
+	if(!fcn)
+		return nullptr;
+
+	const char *label = r_anal_fcn_label_at(core->anal, fcn, addr.getOffset());
+	if(!label)
+		return nullptr;
+
+	return cache->addCodeLabel(addr, label);
 }
 
 SymbolEntry *R2Scope::findAddr(const Address &addr,const Address &usepoint) const
