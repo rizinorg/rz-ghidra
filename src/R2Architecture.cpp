@@ -7,19 +7,30 @@
 
 #include <iostream>
 
+static const std::map<std::string, std::string> arch_map = {
+		{ "x86", "x86" }
+};
+
 std::string FilenameFromCore(RCore *core)
 {
 	return core->bin->file;
 }
 
-std::string TArgFromCore(RCore *core)
+std::string SleighIdFromCore(RCore *core)
 {
-	// TODO
-	return "x86:LE:64:default";
+	const char *arch = r_config_get(core->config, "asm.arch");
+	bool be = r_config_get_i(core->config, "cfg.bigendian") != 0;
+	ut64 bits = r_config_get_i(core->config, "asm.bits");
+
+	auto arch_it = arch_map.find(arch);
+	if(arch_it == arch_map.end())
+		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
+
+	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":default";
 }
 
 R2Architecture::R2Architecture(RCore *core)
-	: SleighArchitecture(FilenameFromCore(core), TArgFromCore(core), &cout),
+	: SleighArchitecture(FilenameFromCore(core), SleighIdFromCore(core), &cout),
 	core(core)
 {
 }

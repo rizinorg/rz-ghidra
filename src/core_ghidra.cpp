@@ -39,12 +39,12 @@ static void decompile(RCore *core) {
 		int res = arch.allacts.getCurrent()->perform(dec_func);
 		if (res<0)
 			eprintf("break\n");
-		else
+		/*else
 		{
 			eprintf("Decompilation complete\n");
 			if(res==0)
 				eprintf("(no change)\n");
-		}
+		}*/
 
 		arch.print->docFunction(&dec_func);
 	}
