@@ -31,7 +31,8 @@ static void decompile(RCore *core) {
 		DocumentStorage store;
 		arch.init(store);
 
-		arch.print->setOutputStream(&cout);
+		std::stringstream out_stream;
+		arch.print->setOutputStream(&out_stream);
 
 		Funcdata dec_func(function->name,
 				arch.symboltab->getGlobalScope(),
@@ -47,6 +48,8 @@ static void decompile(RCore *core) {
 		}*/
 
 		arch.print->docFunction(&dec_func);
+
+		r_cons_print(out_stream.str().c_str());
 	}
 	catch(LowlevelError error)
 	{

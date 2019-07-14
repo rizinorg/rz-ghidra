@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.12)
 
+project(r2ghidra)
+
+option(BUILD_CUTTER_PLUGIN "Build r2ghidra plugin for Cutter" OFF)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+set(CMAKE_CXX_STANDARD 11)
 
 add_subdirectory(ghidra)
 
@@ -16,6 +22,10 @@ set(SOURCE
 		src/R2TypeFactory.h src/R2CommentDatabase.cpp src/R2CommentDatabase.h)
 
 find_package(Radare2 REQUIRED)
+
+if(BUILD_CUTTER_PLUGIN)
+	add_subdirectory(cutter-plugin)
+endif()
 
 add_library(core_ghidra SHARED ${SOURCE})
 target_link_libraries(core_ghidra ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
