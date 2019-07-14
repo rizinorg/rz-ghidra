@@ -13,7 +13,7 @@ set(SOURCE
 		src/R2Scope.cpp
 		src/R2Scope.h
 		src/R2TypeFactory.cpp
-		src/R2TypeFactory.h)
+		src/R2TypeFactory.h src/R2CommentDatabase.cpp src/R2CommentDatabase.h)
 
 find_package(Radare2 REQUIRED)
 

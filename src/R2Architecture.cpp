@@ -4,6 +4,7 @@
 #include "R2Scope.h"
 #include "R2Architecture.h"
 #include "R2TypeFactory.h"
+#include "R2CommentDatabase.h"
 
 #include <iostream>
 
@@ -78,4 +79,9 @@ void R2Architecture::buildTypegrp(DocumentStorage &store)
 	types->setCoreType("code", 1, TYPE_CODE, false);
 	types->setCoreType("wchar", 2, TYPE_INT, true);
 	types->cacheCoreTypes();
+}
+
+void R2Architecture::buildCommentDB(DocumentStorage &store)
+{
+	commentdb = new R2CommentDatabase(this);
 }
