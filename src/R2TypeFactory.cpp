@@ -11,6 +11,6 @@ R2TypeFactory::R2TypeFactory(R2Architecture *arch)
 
 Datatype *R2TypeFactory::findById(const string &n, uint8 id)
 {
-	eprintf("type queried: %s, id: %llu\n", n.c_str(), (unsigned long long)id);
+	//eprintf("type queried: %s, id: %llu\n", n.c_str(), (unsigned long long)id);
 	return TypeFactory::findById(n, id);
 }

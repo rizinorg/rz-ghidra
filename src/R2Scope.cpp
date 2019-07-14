@@ -24,25 +24,69 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 {
-	Datatype *type = arch->types->getTypeCode(); // TODO
+	uint4 attr = Varnode::namelock | Varnode::typelock;
+	Datatype *type = nullptr;
+	if(flag->space && !strcmp(flag->space->name, R_FLAGS_FS_STRINGS))
+	{
+		Datatype *ptype = arch->types->findByName("char");
+		type = arch->types->getTypeArray(static_cast<int4>(flag->size), ptype);
+		attr |= Varnode::readonly;
+	}
+
+	// TODO: more types
+
+	if(!type)
+	{
+		type = arch->types->getTypeCode();
+	}
+
 	SymbolEntry *entry = cache->addSymbol(flag->name, type, Address(arch->getDefaultSpace(), flag->offset), Address());
-	return entry ? entry->getSymbol() : nullptr;
+	if(!entry)
+		return nullptr;
+
+	auto symbol = entry->getSymbol();
+	cache->setAttribute(symbol, attr);
+
+	return symbol;
 }
 
-Symbol *R2Scope::queryR2(const Address &addr) const
+Symbol *R2Scope::queryR2Absoulte(ut64 addr) const
 {
 	// TODO: sync
 	RCore *core = arch->getCore();
-	RAnalFunction *fcn = r_anal_get_fcn_at(core->anal, addr.getOffset(), R_ANAL_FCN_TYPE_NULL);
+	RAnalFunction *fcn = r_anal_get_fcn_at(core->anal, addr, R_ANAL_FCN_TYPE_NULL);
 	if(fcn)
 		return registerFunction(fcn);
 
 	// TODO: register more things
 
-	RFlagItem *flag = r_flag_get_at(core->flags, addr.getOffset(), false);
+	RFlagItem *flag = r_flag_get_at(core->flags, addr, false);
 	if(flag)
 		return registerFlag(flag);
 
+	return nullptr;
+}
+
+
+Symbol *R2Scope::queryR2(const Address &addr) const
+{
+	switch(addr.getSpace()->getType())
+	{
+		case IPTR_CONSTANT:
+			break;
+		case IPTR_PROCESSOR:
+			return queryR2Absoulte(addr.getOffset());
+		case IPTR_SPACEBASE:
+			break;
+		case IPTR_INTERNAL:
+			break;
+		case IPTR_FSPEC:
+			break;
+		case IPTR_IOP:
+			break;
+		case IPTR_JOIN:
+			break;
+	}
 	return nullptr;
 }
 
@@ -62,7 +106,7 @@ LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 	return cache->addCodeLabel(addr, label);
 }
 
-SymbolEntry *R2Scope::findAddr(const Address &addr,const Address &usepoint) const
+SymbolEntry *R2Scope::findAddr(const Address &addr, const Address &usepoint) const
 {
 	SymbolEntry *entry = cache->findAddr(addr,usepoint);
 	if(entry)
@@ -78,9 +122,9 @@ SymbolEntry *R2Scope::findAddr(const Address &addr,const Address &usepoint) cons
 	return (entry && entry->getAddr() == addr) ? entry : nullptr;
 }
 
-SymbolEntry *R2Scope::findContainer(const Address &addr,int4 size, const Address &usepoint) const
+SymbolEntry *R2Scope::findContainer(const Address &addr, int4 size, const Address &usepoint) const
 {
-	SymbolEntry *entry = cache->findClosestFit(addr,size,usepoint);
+	SymbolEntry *entry = cache->findClosestFit(addr, size, usepoint);
 
 	if(!entry)
 	{

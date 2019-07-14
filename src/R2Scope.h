@@ -5,6 +5,8 @@
 
 #include <database.hh>
 
+#include <r_types.h>
+
 class R2Architecture;
 typedef struct r_anal_function_t RAnalFunction;
 typedef struct r_flag_item_t RFlagItem;
@@ -17,6 +19,7 @@ class R2Scope : public Scope
 
 		FunctionSymbol *registerFunction(RAnalFunction *fcn) const;
 		Symbol *registerFlag(RFlagItem *flag) const;
+		Symbol *queryR2Absoulte(ut64 addr) const;
 		Symbol *queryR2(const Address &addr) const;
 		LabSymbol *queryR2FunctionLabel(const Address &addr) const;
 
