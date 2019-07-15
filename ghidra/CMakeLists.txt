@@ -131,11 +131,16 @@ file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bison")
 # build yacc files and append the output files to OUT_VAR
 macro(build_bison OUT_VAR)
 	foreach(yacc_file ${ARGN})
-		get_filename_component(yacc_name "${yacc_file}" NAME_WLE)
+		get_filename_component(yacc_name "${yacc_file}" NAME_WE)
+		if(BISON_VERSION VERSION_LESS 2.6)
+			set(BISON_COMPILE_FLAGS "--name-prefix=${yacc_name}_")
+		else()
+			set(BISON_COMPILE_FLAGS "-Dapi.prefix={${yacc_name}}")
+		endif()
 		BISON_TARGET(${yacc_name}
-				"${DECOMPILER_SOURCE_DIR}/${yacc_file}"
+				"${CMAKE_CURRENT_SOURCE_DIR}/${DECOMPILER_SOURCE_DIR}/${yacc_file}"
 				"${CMAKE_CURRENT_BINARY_DIR}/bison/${yacc_name}.cpp"
-				COMPILE_FLAGS -Dapi.prefix={${yacc_name}})
+				COMPILE_FLAGS ${BISON_COMPILE_FLAGS})
 		list(APPEND ${OUT_VAR} "${BISON_${yacc_name}_OUTPUTS}")
 	endforeach()
 endmacro()
