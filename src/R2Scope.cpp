@@ -2,6 +2,9 @@
 
 #include "R2Scope.h"
 #include "R2Architecture.h"
+#include "R2Utils.h"
+
+#include <funcdata.hh>
 
 #include <r_anal.h>
 
@@ -19,7 +22,41 @@ R2Scope::~R2Scope()
 
 FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 {
-	return cache->addFunction(Address(arch->getDefaultSpace(), fcn->addr), fcn->name);
+	RCore *core = arch->getCore();
+
+	auto sym = cache->addFunction(Address(arch->getDefaultSpace(), fcn->addr), fcn->name);
+	auto function = sym->getFunction();
+
+	RList *vars = r_anal_var_list (core->anal, fcn, 'b');
+	auto stackSpace = arch->getStackSpace();
+	if(vars)
+	{
+		r_list_foreach_cpp<RAnalVar>(vars, [this, function, stackSpace](RAnalVar *var) {
+			Datatype *type = arch->types->findByName(var->type);
+			if(!type)
+			{
+				eprintf("type not found %s\n", var->type);
+				type = arch->types->findByName("uint32_t");
+			}
+			uintb off;
+			if(var->delta >= 0)
+				off = var->delta;
+			else
+				off = stackSpace->getHighest() + var->delta + 1;
+			auto addr = Address(stackSpace, off);
+			auto overlap = function->getScopeLocal()->findOverlap(addr, type->getSize());
+			if(overlap)
+			{
+				eprintf("overlap for %s\n", var->name);
+				return;
+			}
+			auto varsym = function->getScopeLocal()->addSymbol(var->name, type, addr, Address());
+			function->getScopeLocal()->setAttribute(varsym->getSymbol(), Varnode::namelock | Varnode::typelock);
+		});
+		r_list_free(vars);
+	}
+
+	return sym;
 }
 
 Symbol *R2Scope::registerFlag(RFlagItem *flag) const

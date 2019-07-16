@@ -2,16 +2,9 @@
 
 #include "R2CommentDatabase.h"
 #include "R2Architecture.h"
+#include "R2Utils.h"
 
 #include <r_core.h>
-
-template<typename T, typename F> void r_list_foreach_cpp(RList *list, const F &func)
-{
-	for(RListIter *it = list->head; it; it = it->n)
-	{
-		func(reinterpret_cast<T *>(it->data));
-	}
-}
 
 R2CommentDatabase::R2CommentDatabase(R2Architecture *arch)
 	: arch(arch),

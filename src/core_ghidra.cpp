@@ -19,6 +19,8 @@ static void print_usage(const RCore *const core) {
 
 enum class DecompileMode { DEFAULT, DEBUG_XML };
 
+//#define DEBUG_EXCEPTIONS
+
 static void decompile(RCore *core, DecompileMode mode) {
 	RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
 	if(!function)
@@ -27,8 +29,10 @@ static void decompile(RCore *core, DecompileMode mode) {
 		return;
 	}
 
+#ifndef DEBUG_EXCEPTIONS
 	try
 	{
+#endif
 		R2Architecture arch(core);
 		DocumentStorage store;
 		arch.init(store);
@@ -36,10 +40,14 @@ static void decompile(RCore *core, DecompileMode mode) {
 		std::stringstream out_stream;
 		arch.print->setOutputStream(&out_stream);
 
-		Funcdata dec_func(function->name,
-				arch.symboltab->getGlobalScope(),
-				Address(arch.getDefaultSpace(), function->addr));
-		int res = arch.allacts.getCurrent()->perform(dec_func);
+		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultSpace(), function->addr));
+		if(!func)
+		{
+			eprintf("No function in Scope\n");
+			return;
+		}
+
+		int res = arch.allacts.getCurrent()->perform(*func);
 		if (res<0)
 			eprintf("break\n");
 		/*else
@@ -52,19 +60,21 @@ static void decompile(RCore *core, DecompileMode mode) {
 		switch(mode)
 		{
 			case DecompileMode::DEFAULT:
-				arch.print->docFunction(&dec_func);
+				arch.print->docFunction(func);
 				break;
 			case DecompileMode::DEBUG_XML:
-				arch.saveXml(std::cout);
+				arch.saveXml(out_stream);
 				break;
 		}
 
 		r_cons_print(out_stream.str().c_str());
+#ifndef DEBUG_EXCEPTIONS
 	}
 	catch(LowlevelError error)
 	{
 		eprintf("Ghidra Decompiler Error: %s\n", error.explain.c_str());
 	}
+#endif
 }
 
 static void _cmd(RCore *core, const char *input) {
