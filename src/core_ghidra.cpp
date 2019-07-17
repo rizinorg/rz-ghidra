@@ -17,7 +17,9 @@ static void print_usage(const RCore *const core) {
 	r_cons_cmd_help(help, core->print->flags & R_PRINT_FLAGS_COLOR);
 }
 
-static void decompile(RCore *core) {
+enum class DecompileMode { DEFAULT, DEBUG_XML };
+
+static void decompile(RCore *core, DecompileMode mode) {
 	RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
 	if(!function)
 	{
@@ -47,7 +49,15 @@ static void decompile(RCore *core) {
 				eprintf("(no change)\n");
 		}*/
 
-		arch.print->docFunction(&dec_func);
+		switch(mode)
+		{
+			case DecompileMode::DEFAULT:
+				arch.print->docFunction(&dec_func);
+				break;
+			case DecompileMode::DEBUG_XML:
+				arch.saveXml(std::cout);
+				break;
+		}
 
 		r_cons_print(out_stream.str().c_str());
 	}
@@ -59,8 +69,11 @@ static void decompile(RCore *core) {
 
 static void _cmd(RCore *core, const char *input) {
 	switch (*input) {
+		case 'd':
+			decompile(core, DecompileMode::DEBUG_XML);
+			break;
 		case '\0':
-			decompile(core);
+			decompile(core, DecompileMode::DEFAULT);
 			break;
 		default:
 			print_usage(core);

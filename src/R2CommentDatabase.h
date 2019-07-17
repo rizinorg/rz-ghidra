@@ -28,7 +28,7 @@ class R2CommentDatabase : public CommentDatabase
 		CommentSet::const_iterator beginComment(const Address &fad) const override;
 		CommentSet::const_iterator endComment(const Address &fad) const override;
 
-		void saveXml(ostream &s) const override { throw LowlevelError("commentdb::saveXml unimplemented"); }
+		void saveXml(ostream &s) const override { cache.saveXml(s); }
 		void restoreXml(const Element *el, const AddrSpaceManager *trans) override { throw LowlevelError("commentdb::restoreXml unimplemented"); }
 };
 

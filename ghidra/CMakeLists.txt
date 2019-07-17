@@ -1,6 +1,6 @@
 
 option(BUILD_DECOMPILE_EXECUTABLE "Build \"decompile\" executable as used by Ghidra (not needed for r2)" OFF)
-option(BUILD_DECOMPILE_CLI_EXECUTABLE "" ON)
+option(BUILD_DECOMPILE_CLI_EXECUTABLE "Build REPL decompiler (not needed for r2)" OFF)
 
 ################################################################################
 # see Ghidra/Features/Decompiler/build.gradle in Ghidra source
@@ -64,8 +64,6 @@ set(DECOMPILER_SOURCE_BASE_CXX
 		memstate.cc
 		opbehavior.cc
 		paramid.cc
-		inject_ghidra.cc
-		ghidra_translate.cc
 		# callgraph.cc			// uncomment for debug
 		# ifacedecomp.cc		// uncomment for debug
 		# ifaceterm.cc			// uncomment for debug
@@ -87,7 +85,9 @@ set(DECOMPILER_SOURCE_GHIDRA_CXX
 		database_ghidra.cc
 		ghidra_context.cc
 		cpool_ghidra.cc
-		comment_ghidra.cc)
+		comment_ghidra.cc
+		inject_ghidra.cc
+		ghidra_translate.cc)
 
 set(DECOMPILER_SOURCE_SLEIGH_CXX
 		sleigh_arch.cc
