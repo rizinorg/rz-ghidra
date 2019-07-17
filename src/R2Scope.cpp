@@ -24,14 +24,56 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 {
 	RCore *core = arch->getCore();
 
-	auto sym = cache->addFunction(Address(arch->getDefaultSpace(), fcn->addr), fcn->name);
-	auto function = sym->getFunction();
+	// We use xml here, because the public interface for Functions
+	// doesn't let us set up the scope parenting as we need it :-(
 
-	RList *vars = r_anal_var_list (core->anal, fcn, 'b');
+	auto child = [](Element *el, const std::string &name, std::map<std::string, std::string> attrs = {}) {
+		auto child = new Element(el);
+		child->setName(name);
+		el->addChild(child);
+		for(const auto &attr : attrs)
+			child->addAttribute(attr.first, attr.second);
+		return child;
+	};
+
+	auto hex = [](ut64 v) {
+		std::stringstream ss;
+		ss << "0x" << std::hex << v;
+		return ss.str();
+	};
+
+	Document doc;
+	doc.setName("mapsym");
+
+	auto functionElement = child(&doc, "function", {
+			{ "name", fcn->name },
+			{ "size", "1" }
+	});
+
+	child(functionElement, "addr", {
+			{ "space", "ram" },
+			{ "offset", hex(fcn->addr) }
+	});
+
+	auto localDbElement = child(functionElement, "localdb", {
+			{ "lock", "false" },
+			{ "main", "stack" }
+	});
+
+	auto scopeElement = child(localDbElement, "scope", {
+			{ "name", fcn->name }
+	});
+
+	child(child(scopeElement, "parent"), "val");
+	child(scopeElement, "rangelist");
+
+	auto symbollistElement = child(scopeElement, "symbollist");
+
+	RList *vars = r_anal_var_list(core->anal, fcn, 'b');
 	auto stackSpace = arch->getStackSpace();
 	if(vars)
 	{
-		r_list_foreach_cpp<RAnalVar>(vars, [this, function, stackSpace](RAnalVar *var) {
+		r_list_foreach_cpp<RAnalVar>(vars, [this, child, hex, symbollistElement, stackSpace](RAnalVar *var) {
 			Datatype *type = arch->types->findByName(var->type);
 			if(!type)
 			{
@@ -44,19 +86,53 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			else
 				off = stackSpace->getHighest() + var->delta + 1;
 			auto addr = Address(stackSpace, off);
-			auto overlap = function->getScopeLocal()->findOverlap(addr, type->getSize());
-			if(overlap)
-			{
-				eprintf("overlap for %s\n", var->name);
-				return;
-			}
-			auto varsym = function->getScopeLocal()->addSymbol(var->name, type, addr, Address());
-			function->getScopeLocal()->setAttribute(varsym->getSymbol(), Varnode::namelock | Varnode::typelock);
+
+			auto mapsymElement = child(symbollistElement, "mapsym");
+			auto symbolElement = child(mapsymElement, "symbol", {
+					{ "name", var->name },
+					{ "typelock", "false" },
+					{ "namelock", "true" },
+					{ "readonly", "false" },
+					{ "cat", "-1" }
+			});
+
+			child(symbolElement, "typeref", {
+					{ "name", "uint8_t" } // TODO
+			});
+
+			child(mapsymElement, "addr", {
+					{ "space", addr.getSpace()->getName() },
+					{ "offset", hex(addr.getOffset()) }
+			});
+
+			child(mapsymElement, "rangelist");
 		});
 		r_list_free(vars);
 	}
 
-	return sym;
+	auto prototypeElement = child(functionElement, "prototype", {
+			{ "extrapop", "4" }, // TODO: what is this?
+			{ "model", "unknown" }
+	});
+
+	auto returnsymElement = child(prototypeElement, "returnsym");
+	child(returnsymElement, "addr", { // TODO: can be different
+			{ "space", "register" },
+			{ "offset", hex(0) }
+	});
+	child(returnsymElement, "typeref", {
+			{ "name", "undefined" }
+	});
+
+	child(&doc, "addr", {
+			{ "space", "ram" },
+			{ "offset", hex(fcn->addr) }
+	});
+
+	child(&doc, "rangelist");
+
+	auto sym = cache->addMapSym(&doc);
+	return dynamic_cast<FunctionSymbol *>(sym);
 }
 
 Symbol *R2Scope::registerFlag(RFlagItem *flag) const
