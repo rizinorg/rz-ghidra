@@ -8,15 +8,19 @@
 
 #include <r_core.h>
 
+class R2TypeFactory;
+
 class R2Architecture : public SleighArchitecture
 {
 	private:
 		RCore *core;
+		R2TypeFactory *r2TypeFactory = nullptr;
 
 	public:
 		explicit R2Architecture(RCore *core);
 
 		RCore *getCore() const 	{ return core; }
+		R2TypeFactory *getTypeFactory() const { return r2TypeFactory; }
 
 	protected:
 		void buildLoader(DocumentStorage &store) override;

@@ -5,18 +5,26 @@
 
 #include <type.hh>
 
+typedef struct r_parse_ctype_t RParseCType;
+typedef struct r_parse_ctype_type_t RParseCTypeType;
+
 class R2Architecture;
 
 class R2TypeFactory : public TypeFactory
 {
 	private:
 		R2Architecture *arch;
+		RParseCType *ctype;
 
 	protected:
 		Datatype *findById(const string &n, uint8 id) override;
 
 	public:
 		R2TypeFactory(R2Architecture *arch);
+		~R2TypeFactory() override;
+
+		Datatype *fromCString(const string &str, string *error = nullptr);
+		Datatype *fromCType(const RParseCTypeType *ctype, string *error = nullptr);
 };
 
 #endif //R2GHIDRA_R2TYPEFACTORY_H

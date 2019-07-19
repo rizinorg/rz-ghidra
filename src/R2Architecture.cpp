@@ -55,7 +55,7 @@ Scope *R2Architecture::buildGlobalScope()
 
 void R2Architecture::buildTypegrp(DocumentStorage &store)
 {
-	types = new R2TypeFactory(this);
+	types = r2TypeFactory = new R2TypeFactory(this);
 
 	// TODO: load from r2?
 	types->setCoreType("void", 1, TYPE_VOID, false);

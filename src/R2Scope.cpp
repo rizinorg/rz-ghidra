@@ -2,6 +2,7 @@
 
 #include "R2Scope.h"
 #include "R2Architecture.h"
+#include "R2TypeFactory.h"
 #include "R2Utils.h"
 
 #include <funcdata.hh>
@@ -20,27 +21,62 @@ R2Scope::~R2Scope()
 	delete cache;
 }
 
+static Element *child(Element *el, const std::string &name, const std::map<std::string, std::string> &attrs = {})
+{
+	auto child = new Element(el);
+	child->setName(name);
+	el->addChild(child);
+	for(const auto &attr : attrs)
+		child->addAttribute(attr.first, attr.second);
+	return child;
+}
+
+static std::string hex(ut64 v)
+{
+	std::stringstream ss;
+	ss << "0x" << std::hex << v;
+	return ss.str();
+}
+
+static Element *typeToXMLElement(Datatype *type, Element *parent)
+{
+	auto pointer = dynamic_cast<TypePointer *>(type);
+	if(pointer)
+	{
+		Element *r = child(parent, "type", {
+				{ "name", "" },
+				{ "size", to_string(pointer->getSize()) },
+				{ "metatype", "ptr" }
+		});
+		typeToXMLElement(pointer->getPtrTo(), r);
+		return r;
+	}
+
+	auto array = dynamic_cast<TypeArray *>(type);
+	if(array)
+	{
+		Element *r = child(parent, "type", {
+				{ "name", "" },
+				{ "size", to_string(array->getSize()) },
+				{ "arraysize", to_string(array->numElements()) },
+				{ "metatype", "array" }
+		});
+		typeToXMLElement(array->getBase(), r);
+		return nullptr;
+	}
+
+	return child(parent, "typeref", {
+			{ "name", type->getName() },
+			{ "id", hex(type->getId()) }
+	});
+}
+
 FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 {
 	RCore *core = arch->getCore();
 
 	// We use xml here, because the public interface for Functions
 	// doesn't let us set up the scope parenting as we need it :-(
-
-	auto child = [](Element *el, const std::string &name, std::map<std::string, std::string> attrs = {}) {
-		auto child = new Element(el);
-		child->setName(name);
-		el->addChild(child);
-		for(const auto &attr : attrs)
-			child->addAttribute(attr.first, attr.second);
-		return child;
-	};
-
-	auto hex = [](ut64 v) {
-		std::stringstream ss;
-		ss << "0x" << std::hex << v;
-		return ss.str();
-	};
 
 	Document doc;
 	doc.setName("mapsym");
@@ -69,17 +105,21 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 	auto symbollistElement = child(scopeElement, "symbollist");
 
+	RangeList varRanges; // to check for overlaps
 	RList *vars = r_anal_var_list(core->anal, fcn, 'b');
 	auto stackSpace = arch->getStackSpace();
 	if(vars)
 	{
-		r_list_foreach_cpp<RAnalVar>(vars, [this, child, hex, symbollistElement, stackSpace](RAnalVar *var) {
-			Datatype *type = arch->types->findByName(var->type);
+		r_list_foreach_cpp<RAnalVar>(vars, [this, &varRanges, symbollistElement, stackSpace](RAnalVar *var) {
+			Datatype *type = arch->getTypeFactory()->fromCString(var->type);
+			bool typelock = true;
 			if(!type)
 			{
 				eprintf("type not found %s\n", var->type);
+				typelock = false;
 				type = arch->types->findByName("uint32_t");
 			}
+
 			uintb off;
 			if(var->delta >= 0)
 				off = var->delta;
@@ -87,18 +127,40 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 				off = stackSpace->getHighest() + var->delta + 1;
 			auto addr = Address(stackSpace, off);
 
+			uintb last = addr.getOffset();
+			if(type->getSize() > 0)
+				last += type->getSize() - 1;
+			bool overlap = false;
+			if(typelock)
+			{
+				for(const auto &range : varRanges)
+				{
+					if(range.getFirst() > last)
+						continue;
+					if(range.getLast() < addr.getOffset())
+						continue;
+					overlap = true;
+					break;
+				}
+			}
+			varRanges.insertRange(stackSpace, addr.getOffset(), last);
+
+			if(overlap) // overlap
+			{
+				eprintf("overlap detected\n");
+				typelock = false;
+			}
+
 			auto mapsymElement = child(symbollistElement, "mapsym");
 			auto symbolElement = child(mapsymElement, "symbol", {
 					{ "name", var->name },
-					{ "typelock", "false" },
+					{ "typelock", typelock ? "true" : "false" },
 					{ "namelock", "true" },
 					{ "readonly", "false" },
 					{ "cat", "-1" }
 			});
 
-			child(symbolElement, "typeref", {
-					{ "name", "uint8_t" } // TODO
-			});
+			typeToXMLElement(type, symbolElement);
 
 			child(mapsymElement, "addr", {
 					{ "space", addr.getSpace()->getName() },
