@@ -17,7 +17,7 @@ static void print_usage(const RCore *const core) {
 	r_cons_cmd_help(help, core->print->flags & R_PRINT_FLAGS_COLOR);
 }
 
-enum class DecompileMode { DEFAULT, DEBUG_XML };
+enum class DecompileMode { DEFAULT, XML, DEBUG_XML };
 
 //#define DEBUG_EXCEPTIONS
 
@@ -57,8 +57,17 @@ static void decompile(RCore *core, DecompileMode mode) {
 				eprintf("(no change)\n");
 		}*/
 
+		if(mode == DecompileMode::XML)
+		{
+			arch.print->setXML(true);
+			out_stream << "<result><function>";
+			func->saveXml(out_stream, true);
+			out_stream << "</function><code>";
+		}
+
 		switch(mode)
 		{
+			case DecompileMode::XML:
 			case DecompileMode::DEFAULT:
 				arch.print->docFunction(func);
 				break;
@@ -66,6 +75,9 @@ static void decompile(RCore *core, DecompileMode mode) {
 				arch.saveXml(out_stream);
 				break;
 		}
+
+		if(mode == DecompileMode::XML)
+			out_stream << "</code></result>";
 
 		r_cons_print(out_stream.str().c_str());
 #ifndef DEBUG_EXCEPTIONS
@@ -84,6 +96,9 @@ static void _cmd(RCore *core, const char *input) {
 			break;
 		case '\0':
 			decompile(core, DecompileMode::DEFAULT);
+			break;
+		case 'x':
+			decompile(core, DecompileMode::XML);
 			break;
 		default:
 			print_usage(core);
