@@ -8,8 +8,17 @@
 
 #include <iostream>
 
+// maps radare2 asm/anal plugins names to sleigh language
 static const std::map<std::string, std::string> arch_map = {
 		{ "x86", "x86" }
+};
+
+// maps radare2 calling conventions to decompiler proto models
+static const std::map<std::string, std::string> cc_map = {
+		{ "cdecl", "__cdecl" },
+		{ "fastcall", "__fastcall" },
+		{ "stdcall", "__stdcall" },
+		// { "thiscall", "__thiscall" }
 };
 
 std::string FilenameFromCore(RCore *core)
@@ -34,6 +43,19 @@ R2Architecture::R2Architecture(RCore *core)
 	: SleighArchitecture(FilenameFromCore(core), SleighIdFromCore(core), &cout),
 	core(core)
 {
+}
+
+ProtoModel *R2Architecture::protoModelFromR2CC(const char *cc)
+{
+	auto it = cc_map.find(cc);
+	if(it == cc_map.end())
+		return nullptr;
+
+	auto protoIt = protoModels.find(it->second);
+	if(protoIt == protoModels.end())
+		return nullptr;
+
+	return protoIt->second;
 }
 
 void R2Architecture::buildLoader(DocumentStorage &store)

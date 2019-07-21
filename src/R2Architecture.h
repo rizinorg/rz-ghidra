@@ -22,6 +22,8 @@ class R2Architecture : public SleighArchitecture
 		RCore *getCore() const 	{ return core; }
 		R2TypeFactory *getTypeFactory() const { return r2TypeFactory; }
 
+		ProtoModel *protoModelFromR2CC(const char *cc);
+
 	protected:
 		void buildLoader(DocumentStorage &store) override;
 		Scope *buildGlobalScope() override;

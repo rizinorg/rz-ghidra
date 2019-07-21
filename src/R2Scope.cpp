@@ -21,6 +21,13 @@ R2Scope::~R2Scope()
 	delete cache;
 }
 
+static std::string hex(ut64 v)
+{
+	std::stringstream ss;
+	ss << "0x" << std::hex << v;
+	return ss.str();
+}
+
 static Element *child(Element *el, const std::string &name, const std::map<std::string, std::string> &attrs = {})
 {
 	auto child = new Element(el);
@@ -31,41 +38,42 @@ static Element *child(Element *el, const std::string &name, const std::map<std::
 	return child;
 }
 
-static std::string hex(ut64 v)
+static Element *childAddr(Element *el, const std::string &name, const Address &addr)
 {
-	std::stringstream ss;
-	ss << "0x" << std::hex << v;
-	return ss.str();
+	return child(el, name, {
+		{ "space", addr.getSpace()->getName() },
+		{ "offset", hex(addr.getOffset()) }
+	});
 }
 
-static Element *typeToXMLElement(Datatype *type, Element *parent)
+static Element *childType(Element *el, Datatype *type)
 {
 	auto pointer = dynamic_cast<TypePointer *>(type);
 	if(pointer)
 	{
-		Element *r = child(parent, "type", {
+		Element *r = child(el, "type", {
 				{ "name", "" },
 				{ "size", to_string(pointer->getSize()) },
 				{ "metatype", "ptr" }
 		});
-		typeToXMLElement(pointer->getPtrTo(), r);
+		childType(r, pointer->getPtrTo());
 		return r;
 	}
 
 	auto array = dynamic_cast<TypeArray *>(type);
 	if(array)
 	{
-		Element *r = child(parent, "type", {
+		Element *r = child(el, "type", {
 				{ "name", "" },
 				{ "size", to_string(array->getSize()) },
 				{ "arraysize", to_string(array->numElements()) },
 				{ "metatype", "array" }
 		});
-		typeToXMLElement(array->getBase(), r);
+		childType(r, array->getBase());
 		return nullptr;
 	}
 
-	return child(parent, "typeref", {
+	return child(el, "typeref", {
 			{ "name", type->getName() },
 			{ "id", hex(type->getId()) }
 	});
@@ -86,10 +94,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			{ "size", "1" }
 	});
 
-	child(functionElement, "addr", {
-			{ "space", "ram" },
-			{ "offset", hex(fcn->addr) }
-	});
+	childAddr(functionElement, "addr", Address(arch->getDefaultSpace(), fcn->addr));
 
 	auto localDbElement = child(functionElement, "localdb", {
 			{ "lock", "false" },
@@ -160,28 +165,43 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 					{ "cat", "-1" }
 			});
 
-			typeToXMLElement(type, symbolElement);
-
-			child(mapsymElement, "addr", {
-					{ "space", addr.getSpace()->getName() },
-					{ "offset", hex(addr.getOffset()) }
-			});
-
+			childType(symbolElement, type);
+			childAddr(mapsymElement, "addr", addr);
 			child(mapsymElement, "rangelist");
 		});
 		r_list_free(vars);
 	}
 
+	ProtoModel *proto = fcn->cc ? arch->protoModelFromR2CC(fcn->cc) : nullptr;
+	if(!proto)
+		eprintf("Failed to match calling convention!\n");
+
 	auto prototypeElement = child(functionElement, "prototype", {
-			{ "extrapop", "4" }, // TODO: what is this?
-			{ "model", "unknown" }
+			{ "extrapop", to_string(proto ? proto->getExtraPop() : arch->translate->getDefaultSize()) },
+			{ "model", proto ? proto->getName() : "unknown" }
 	});
 
+	Address returnAddr(arch->getSpaceByName("register"), 0);
+	bool returnFound = false;
+	if(proto)
+	{
+		for(auto it=proto->effectBegin(); it!=proto->effectEnd(); it++)
+		{
+			if(it->getType() == EffectRecord::return_address)
+			{
+				returnAddr = it->getAddress();
+				returnFound = true;
+				break;
+			}
+		}
+	}
+
+	if(!returnFound)
+		eprintf("Failed to find return address!");
+
 	auto returnsymElement = child(prototypeElement, "returnsym");
-	child(returnsymElement, "addr", { // TODO: can be different
-			{ "space", "register" },
-			{ "offset", hex(0) }
-	});
+	childAddr(returnsymElement, "addr", returnAddr);
+
 	child(returnsymElement, "typeref", {
 			{ "name", "undefined" }
 	});
