@@ -32,6 +32,9 @@ std::string SleighIdFromCore(RCore *core)
 	bool be = r_config_get_i(core->config, "cfg.bigendian") != 0;
 	ut64 bits = r_config_get_i(core->config, "asm.bits");
 
+	if (!strcmp(arch, "arm") && bits == 64)
+		return std::string("AARCH64:LE:64:v8A:default");
+
 	auto arch_it = arch_map.find(arch);
 	if(arch_it == arch_map.end())
 		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
