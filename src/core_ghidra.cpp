@@ -12,6 +12,7 @@ static void print_usage(const RCore *const core) {
 	const char* help[] = {
 		"Usage: " CMD_PREFIX, "", "# Native Ghidra decompiler plugin",
 		CMD_PREFIX, "", "# Decompile current function with the Ghidra decompiler",
+		CMD_PREFIX, "d", "# dump the debug XML Dump",
 		CMD_PREFIX, "x", "# Dump the XML of the current decompiled function",
 		"Environment:", "", "",
 		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
