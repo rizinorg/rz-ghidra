@@ -11,6 +11,7 @@
 static void print_usage(const RCore *const core) {
 	const char* help[] = {
 			"Usage: " CMD_PREFIX, "",	"# Ghidra integration",
+			"Environment: %SLEIGHHOME" , "",	"# Path to ghidra build root directory",
 			NULL
 	};
 
@@ -116,9 +117,14 @@ static int r2ghidra_cmd(void *user, const char *input) {
 }
 
 static int r2ghidra_init(void *user, const char *cmd) {
-	//RCmd *rcmd = (RCmd*)user;
 	const char *sleighhomepath = getenv("SLEIGHHOME");
+	char *homepath = NULL;
+	if (!sleighhomepath) {
+		homepath = r_str_home (".local/share/radare2/r2pm/git/ghidra");
+		sleighhomepath = homepath;
+	}
 	startDecompilerLibrary(sleighhomepath);
+	r_free (homepath);
 	return true;
 }
 
