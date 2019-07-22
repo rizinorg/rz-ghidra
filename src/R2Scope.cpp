@@ -110,12 +110,18 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 	auto symbollistElement = child(scopeElement, "symbollist");
 
+	ProtoModel *proto = fcn->cc ? arch->protoModelFromR2CC(fcn->cc) : nullptr;
+	if(!proto)
+		eprintf("Failed to match calling convention!\n");
+
+	int4 extraPop = proto ? proto->getExtraPop() : arch->translate->getDefaultSize();
+
 	RangeList varRanges; // to check for overlaps
 	RList *vars = r_anal_var_list(core->anal, fcn, 'b');
 	auto stackSpace = arch->getStackSpace();
 	if(vars)
 	{
-		r_list_foreach_cpp<RAnalVar>(vars, [this, &varRanges, symbollistElement, stackSpace](RAnalVar *var) {
+		r_list_foreach_cpp<RAnalVar>(vars, [this, extraPop, proto, &varRanges, symbollistElement, stackSpace](RAnalVar *var) {
 			Datatype *type = arch->getTypeFactory()->fromCString(var->type);
 			bool typelock = true;
 			if(!type)
@@ -126,10 +132,11 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			}
 
 			uintb off;
-			if(var->delta >= 0)
-				off = var->delta;
+			int delta = var->delta - extraPop; // not 100% sure if extraPop is correct here
+			if(delta >= 0)
+				off = delta;
 			else
-				off = stackSpace->getHighest() + var->delta + 1;
+				off = stackSpace->getHighest() + delta + 1;
 			auto addr = Address(stackSpace, off);
 
 			uintb last = addr.getOffset();
@@ -162,8 +169,18 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 					{ "typelock", typelock ? "true" : "false" },
 					{ "namelock", "true" },
 					{ "readonly", "false" },
-					{ "cat", "-1" }
+					{ "cat", var->isarg ? "0" : "-1" }
 			});
+
+			if(var->isarg)
+			{
+				ParamActive params(false);
+				params.registerTrial(addr, var->size);
+				proto->deriveInputMap(&params);
+				int4 trial = params.whichTrial(addr, var->size);
+				int4 paramIndex = trial < 0 ? 0 : trial;
+				symbolElement->addAttribute("index", to_string(paramIndex));
+			}
 
 			childType(symbolElement, type);
 			childAddr(mapsymElement, "addr", addr);
@@ -172,12 +189,8 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		r_list_free(vars);
 	}
 
-	ProtoModel *proto = fcn->cc ? arch->protoModelFromR2CC(fcn->cc) : nullptr;
-	if(!proto)
-		eprintf("Failed to match calling convention!\n");
-
 	auto prototypeElement = child(functionElement, "prototype", {
-			{ "extrapop", to_string(proto ? proto->getExtraPop() : arch->translate->getDefaultSize()) },
+			{ "extrapop", to_string(extraPop) },
 			{ "model", proto ? proto->getName() : "unknown" }
 	});
 
