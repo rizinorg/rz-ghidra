@@ -168,6 +168,11 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			if(!var->isarg)
 				return;
 			auto addr = addrForVar(var);
+			if(addr.isInvalid())
+			{
+				arch->addWarning("Failed to get address for var " + to_string(var->name));
+				return;
+			}
 			params.registerTrial(addr, var->size);
 			int4 i = params.whichTrial(addr, var->size);
 			params.getTrial(i).markActive();
@@ -192,7 +197,8 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			auto addr = addrForVar(var);
 			if(addr.isInvalid())
 			{
-				arch->addWarning("Failed to get address for var " + to_string(var->name));
+				if(var->isarg) // Already emitted this warning before
+					arch->addWarning("Failed to get address for var " + to_string(var->name));
 				return;
 			}
 
