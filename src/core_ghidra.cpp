@@ -62,6 +62,9 @@ static void decompile(RCore *core, DecompileMode mode) {
 				eprintf("(no change)\n");
 		}*/
 
+		for(const auto &warning : arch.getWarnings())
+			func->warningHeader("[r2ghidra] " + warning);
+
 		if(mode == DecompileMode::XML)
 		{
 			arch.print->setXML(true);

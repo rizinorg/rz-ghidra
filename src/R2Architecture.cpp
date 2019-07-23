@@ -61,6 +61,53 @@ ProtoModel *R2Architecture::protoModelFromR2CC(const char *cc)
 	return protoIt->second;
 }
 
+static std::string lowercase(std::string str)
+{
+	std::transform(str.begin(), str.end(), str.begin(), [](int c){
+		if(c >= 'A' && c <= 'Z') {
+			return c - ('A' - 'a');
+		}
+		return c;
+	});
+	return str;
+}
+
+void R2Architecture::loadRegisters(const Translate *translate)
+{
+	registers = {};
+	if(!translate)
+		return;
+	std::map<VarnodeData, std::string> regs;
+	translate->getAllRegisters(regs);
+	for(const auto &reg : regs)
+	{
+		registers[reg.second] = reg.first;
+		auto lower = lowercase(reg.second);
+
+		// as a fallback we also map all registers as lowercase
+		if(registers.find(lower) == registers.end())
+			registers[lower] = reg.first;
+	}
+}
+
+Address R2Architecture::registerAddressFromR2Reg(const char *regname)
+{
+	loadRegisters(translate);
+	auto it = registers.find(regname);
+	if(it == registers.end())
+		it = registers.find(lowercase(regname));
+	if(it == registers.end())
+		return Address(); // not found, invalid addr
+	return it->second.getAddr();
+}
+
+Translate *R2Architecture::buildTranslator(DocumentStorage &store)
+{
+	Translate *ret = SleighArchitecture::buildTranslator(store);
+	loadRegisters(ret);
+	return ret;
+}
+
 void R2Architecture::buildLoader(DocumentStorage &store)
 {
 	collectSpecFiles(*errorstream);

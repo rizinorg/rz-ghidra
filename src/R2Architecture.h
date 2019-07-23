@@ -15,6 +15,10 @@ class R2Architecture : public SleighArchitecture
 	private:
 		RCore *core;
 		R2TypeFactory *r2TypeFactory = nullptr;
+		std::map<std::string, VarnodeData> registers;
+		std::vector<std::string> warnings;
+
+		void loadRegisters(const Translate *translate);
 
 	public:
 		explicit R2Architecture(RCore *core);
@@ -23,8 +27,13 @@ class R2Architecture : public SleighArchitecture
 		R2TypeFactory *getTypeFactory() const { return r2TypeFactory; }
 
 		ProtoModel *protoModelFromR2CC(const char *cc);
+		Address registerAddressFromR2Reg(const char *regname);
+
+		void addWarning(const std::string &warning)	{ warnings.push_back(warning); }
+		const std::vector<std::string> getWarnings() const { return warnings; }
 
 	protected:
+		Translate *buildTranslator(DocumentStorage &store) override;
 		void buildLoader(DocumentStorage &store) override;
 		Scope *buildGlobalScope() override;
 		void buildTypegrp(DocumentStorage &store) override;
