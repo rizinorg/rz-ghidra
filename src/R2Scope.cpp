@@ -184,7 +184,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 	if(vars)
 	{
-		r_list_foreach_cpp<RAnalVar>(vars, [this, extraPop, proto, &varRanges, symbollistElement, stackSpace, addrForVar, &params](RAnalVar *var) {
+		r_list_foreach_cpp<RAnalVar>(vars, [&](RAnalVar *var) {
 			Datatype *type = var->type ? arch->getTypeFactory()->fromCString(var->type) : nullptr;
 			bool typelock = true;
 			if(!type)
@@ -255,7 +255,20 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			childType(symbolElement, type);
 			childAddr(mapsymElement, "addr", addr);
 
-			child(mapsymElement, "rangelist");
+			auto rangelist = child(mapsymElement, "rangelist");
+			if(var->isarg && var->kind == R_ANAL_VAR_KIND_REG)
+			{
+				// For reg args, add a range just before the function
+				// This prevents the arg to be assigned as a local variable in the decompiled function,
+				// which can make the code confusing to read.
+				// (Ghidra does the same)
+				Address rangeAddr(arch->getDefaultSpace(), fcn->addr > 0 ? fcn->addr - 1 : 0);
+				child(rangelist, "range", {
+						{ "space", rangeAddr.getSpace()->getName() },
+						{ "first", hex(rangeAddr.getOffset()) },
+						{ "last", hex(rangeAddr.getOffset()) }
+				});
+			}
 		});
 	}
 
