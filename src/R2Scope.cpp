@@ -182,15 +182,29 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 	if(proto)
 		proto->deriveInputMap(&params);
 
+	auto childRegRange = [&](Element *e) {
+		// For reg args, add a range just before the function
+		// This prevents the arg to be assigned as a local variable in the decompiled function,
+		// which can make the code confusing to read.
+		// (Ghidra does the same)
+		Address rangeAddr(arch->getDefaultSpace(), fcn->addr > 0 ? fcn->addr - 1 : 0);
+		child(e, "range", {
+				{ "space", rangeAddr.getSpace()->getName() },
+				{ "first", hex(rangeAddr.getOffset()) },
+				{ "last", hex(rangeAddr.getOffset()) }
+		});
+	};
+
 	if(vars)
 	{
+		std::vector<Element *> argsByIndex;
+
 		r_list_foreach_cpp<RAnalVar>(vars, [&](RAnalVar *var) {
 			Datatype *type = var->type ? arch->getTypeFactory()->fromCString(var->type) : nullptr;
 			bool typelock = true;
 			if(!type)
 			{
 				arch->addWarning("Failed to match type " + to_string(var->type) + " for variable " + to_string(var->name) + " to Decompiler type");
-				typelock = false;
 				type = arch->types->getBase(var->size, TYPE_UNKNOWN);
 				if(!type)
 					return;
@@ -233,6 +247,13 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 				typelock = false;
 			}
 
+			if(var->isarg && proto && !proto->possibleInputParam(addr, var->size))
+			{
+				// Prevent segfaults in the Decompiler
+				arch->addWarning("Removing arg " + to_string(var->name) + " because it doesn't fit into ProtoModel");
+				return;
+			}
+
 			varRanges.insertRange(addr.getSpace(), addr.getOffset(), last);
 
 			auto mapsymElement = child(symbollistElement, "mapsym");
@@ -251,6 +272,11 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 				if(paramIndex < 0)
 					arch->addWarning("Failed to determine arg index of " + to_string(var->name));
 
+				if(argsByIndex.size() < paramIndex + 1)
+					argsByIndex.resize(paramIndex + 1, nullptr);
+
+				argsByIndex[paramIndex] = symbolElement;
+
 				symbolElement->addAttribute("index", to_string(paramIndex < 0 ? 0 : paramIndex));
 			}
 
@@ -259,19 +285,38 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 			auto rangelist = child(mapsymElement, "rangelist");
 			if(var->isarg && var->kind == R_ANAL_VAR_KIND_REG)
-			{
-				// For reg args, add a range just before the function
-				// This prevents the arg to be assigned as a local variable in the decompiled function,
-				// which can make the code confusing to read.
-				// (Ghidra does the same)
-				Address rangeAddr(arch->getDefaultSpace(), fcn->addr > 0 ? fcn->addr - 1 : 0);
-				child(rangelist, "range", {
-						{ "space", rangeAddr.getSpace()->getName() },
-						{ "first", hex(rangeAddr.getOffset()) },
-						{ "last", hex(rangeAddr.getOffset()) }
-				});
-			}
+				childRegRange(rangelist);
 		});
+
+		// Add placeholder args in gaps
+		for(size_t i=0; i<argsByIndex.size(); i++)
+		{
+			if(argsByIndex[i])
+				continue;
+
+			auto trial = params.getTrial(i);
+
+			Datatype *type = arch->types->getBase(trial.getSize(), TYPE_UNKNOWN);
+			if(!type)
+				continue;
+
+			auto mapsymElement = child(symbollistElement, "mapsym");
+			auto symbolElement = child(mapsymElement, "symbol", {
+					{ "name", "placeholder_" + to_string(i) },
+					{ "typelock", "true" },
+					{ "namelock", "true" },
+					{ "readonly", "false" },
+					{ "cat", "0" },
+					{ "index", to_string(i) }
+			});
+
+			childAddr(mapsymElement, "addr", trial.getAddress());
+			childType(symbolElement, type);
+
+			auto rangelist = child(mapsymElement, "rangelist");
+			if(trial.getAddress().getSpace() != arch->translate->getStackSpace())
+				childRegRange(rangelist);
+		}
 	}
 
 	r_list_free(vars);
