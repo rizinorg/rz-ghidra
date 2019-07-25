@@ -3,6 +3,7 @@
 #include "R2Architecture.h"
 
 #include <libdecomp.hh>
+#include <printc.hh>
 
 #include <r_core.h>
 
@@ -44,6 +45,14 @@ static void decompile(RCore *core, DecompileMode mode) {
 
 		std::stringstream out_stream;
 		arch.print->setOutputStream(&out_stream);
+
+		if(auto printC = dynamic_cast<PrintC *>(arch.print))
+		{
+			printC->setCPlusPlusStyleComments();
+			printC->setSpaceAfterComma(true);
+			printC->setNewlineBeforeOpeningBrace(true);
+			printC->setNewlineAfterPrototype(false);
+		}
 
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultSpace(), function->addr));
 		if(!func)
