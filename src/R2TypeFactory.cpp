@@ -46,7 +46,7 @@ Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error)
 		case RParseCTypeType::R_PARSE_CTYPE_TYPE_KIND_IDENTIFIER:
 		{
 			Datatype *r = findByName(ctype->identifier.name);
-			if(!r)
+			if(!r && error)
 				*error = "Unknown type identifier " + std::string(ctype->identifier.name);
 			return r;
 		}

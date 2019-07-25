@@ -191,7 +191,9 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			{
 				arch->addWarning("Failed to match type " + to_string(var->type) + " for variable " + to_string(var->name) + " to Decompiler type");
 				typelock = false;
-				type = arch->types->findByName("uint32_t");
+				type = arch->types->getBase(var->size, TYPE_UNKNOWN);
+				if(!type)
+					return;
 			}
 
 			auto addr = addrForVar(var);
