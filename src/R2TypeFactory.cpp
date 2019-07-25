@@ -127,14 +127,37 @@ Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error)
 {
 	switch(ctype->kind)
 	{
-		case RParseCTypeType::R_PARSE_CTYPE_TYPE_KIND_IDENTIFIER:
+		case R_PARSE_CTYPE_TYPE_KIND_IDENTIFIER:
 		{
+			if(ctype->identifier.kind == R_PARSE_CTYPE_IDENTIFIER_KIND_UNION)
+			{
+				if(error)
+					*error = "Union types not supported in Decompiler";
+				return nullptr;
+			}
+
 			Datatype *r = findByName(ctype->identifier.name);
-			if(!r && error)
-				*error = "Unknown type identifier " + std::string(ctype->identifier.name);
+			if(!r)
+			{
+				if(error)
+					*error = "Unknown type identifier " + std::string(ctype->identifier.name);
+				return nullptr;
+			}
+			if(ctype->identifier.kind == R_PARSE_CTYPE_IDENTIFIER_KIND_STRUCT && r->getMetatype() != TYPE_STRUCT)
+			{
+				if(error)
+					*error = "Type identifier " + std::string(ctype->identifier.name) + " is not the name of a struct";
+				return nullptr;
+			}
+			if(ctype->identifier.kind == R_PARSE_CTYPE_IDENTIFIER_KIND_ENUM && !r->isEnumType())
+			{
+				if(error)
+					*error = "Type identifier " + std::string(ctype->identifier.name) + " is not the name of an enum";
+				return nullptr;
+			}
 			return r;
 		}
-		case RParseCTypeType::R_PARSE_CTYPE_TYPE_KIND_POINTER:
+		case R_PARSE_CTYPE_TYPE_KIND_POINTER:
 		{
 			Datatype *sub = fromCType(ctype->pointer.type);
 			if(!sub)
@@ -142,7 +165,7 @@ Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error)
 			auto space = arch->getDefaultSpace();
 			return this->getTypePointer(space->getAddrSize(), sub, space->getWordSize());
 		}
-		case RParseCTypeType::R_PARSE_CTYPE_TYPE_KIND_ARRAY:
+		case R_PARSE_CTYPE_TYPE_KIND_ARRAY:
 		{
 			Datatype *sub = fromCType(ctype->array.type);
 			if(!sub)
