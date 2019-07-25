@@ -16,6 +16,9 @@ class R2TypeFactory : public TypeFactory
 		R2Architecture *arch;
 		RParseCType *ctype;
 
+		Datatype *queryR2Struct(const string &n);
+		Datatype *queryR2(const string &n, std::set<std::string> &stackTypes);
+
 	protected:
 		Datatype *findById(const string &n, uint8 id) override;
 

@@ -19,10 +19,94 @@ R2TypeFactory::~R2TypeFactory()
 	r_parse_ctype_free(ctype);
 }
 
+
+std::vector<std::string> splitSdbArray(const std::string& str)
+{
+	std::stringstream ss(str);
+	std::string token;
+	std::vector<std::string> r;
+	while(std::getline(ss, token, SDB_RS))
+		r.push_back(token);
+	return r;
+}
+
+Datatype *R2TypeFactory::queryR2Struct(const string &n)
+{
+	RCore *core = arch->getCore();
+	Sdb *sdb = core->anal->sdb_types;
+
+	// TODO: We need an API for this in r2
+
+	const char *members = sdb_const_get(sdb, ("struct." + n).c_str(), nullptr);
+	if(!members)
+		return nullptr;
+
+	std::vector<TypeField> fields;
+	std::stringstream membersStream(members);
+	std::string memberName;
+	while(std::getline(membersStream, memberName, SDB_RS))
+	{
+		const char *memberContents = sdb_const_get(sdb, ("struct." + n + "." + memberName).c_str(), nullptr);
+		if(!memberContents)
+			continue;
+		auto memberTokens = splitSdbArray(memberContents);
+		if(memberTokens.size() < 3)
+			continue;
+		auto memberTypeName = memberTokens[0];
+		int4 offset = std::stoi(memberTokens[1]);
+		int4 elements = std::stoi(memberTokens[2]);
+		Datatype *memberType = fromCString(memberTypeName);
+		if(!memberType)
+		{
+			arch->addWarning("Failed to match type " + memberTypeName + " of member " + memberName + " in struct " + n);
+			continue;
+		}
+
+		if(elements > 0)
+			memberType = getTypeArray(elements, memberType);
+
+		fields.push_back({
+			.offset = offset,
+			.name = memberName,
+			.type = memberType
+		});
+	}
+
+	TypeStruct *r = getTypeStruct(n);
+	setFields(fields, r, 0);
+	return r;
+}
+
+Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTypes)
+{
+	if(stackTypes.find(n) != stackTypes.end())
+	{
+		arch->addWarning("Recursion detected while creating type " + n);
+		return nullptr;
+	}
+	stackTypes.insert(n);
+
+	// TODO: sync
+	RCore *core = arch->getCore();
+	int kind = r_type_kind(core->anal->sdb_types, n.c_str());
+	switch(kind)
+	{
+		case R_TYPE_STRUCT:
+			return queryR2Struct(n);
+		// TODO: support other kinds
+		default:
+			return nullptr;
+	}
+}
+
 Datatype *R2TypeFactory::findById(const string &n, uint8 id)
 {
-	//eprintf("type queried: %s, id: %llu\n", n.c_str(), (unsigned long long)id);
-	return TypeFactory::findById(n, id);
+	Datatype *r = TypeFactory::findById(n, id);
+	if(r)
+		return r;
+
+	std::set<std::string> stackTypes; // to detect recursion
+	return queryR2(n, stackTypes);
 }
 
 Datatype *R2TypeFactory::fromCString(const string &str, string *error)
