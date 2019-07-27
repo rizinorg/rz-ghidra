@@ -159,7 +159,7 @@ Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error)
 		}
 		case R_PARSE_CTYPE_TYPE_KIND_POINTER:
 		{
-			Datatype *sub = fromCType(ctype->pointer.type);
+			Datatype *sub = fromCType(ctype->pointer.type, error);
 			if(!sub)
 				return nullptr;
 			auto space = arch->getDefaultSpace();
@@ -167,7 +167,7 @@ Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error)
 		}
 		case R_PARSE_CTYPE_TYPE_KIND_ARRAY:
 		{
-			Datatype *sub = fromCType(ctype->array.type);
+			Datatype *sub = fromCType(ctype->array.type, error);
 			if(!sub)
 				return nullptr;
 			return this->getTypeArray(ctype->array.count, sub);

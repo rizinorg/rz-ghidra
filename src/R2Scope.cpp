@@ -200,11 +200,12 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		std::vector<Element *> argsByIndex;
 
 		r_list_foreach_cpp<RAnalVar>(vars, [&](RAnalVar *var) {
-			Datatype *type = var->type ? arch->getTypeFactory()->fromCString(var->type) : nullptr;
+			std::string typeError;
+			Datatype *type = var->type ? arch->getTypeFactory()->fromCString(var->type, &typeError) : nullptr;
 			bool typelock = true;
 			if(!type)
 			{
-				arch->addWarning("Failed to match type " + to_string(var->type) + " for variable " + to_string(var->name) + " to Decompiler type");
+				arch->addWarning("Failed to match type " + to_string(var->type) + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
 				type = arch->types->getBase(var->size, TYPE_UNKNOWN);
 				if(!type)
 					return;
