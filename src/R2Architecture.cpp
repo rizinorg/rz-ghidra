@@ -76,9 +76,9 @@ std::string SleighIdFromCore(RCore *core)
 	if(arch_it == arch_map.end())
 		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
 
-	if (!strcmp(arch_it->second.c_str(), "avr8"))
+	if (!arch_it->second.compare("avr8"))
 		bits = 16;
-	if (!strcmp(arch_it->second.c_str(), "JVM"))
+	if (!arch_it->second.compare("JVM"))
 		be = true;
 	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":default:" + CompilerFromCore(core);
 }
