@@ -52,6 +52,8 @@ static void decompile(RCore *core, DecompileMode mode) {
 			printC->setSpaceAfterComma(true);
 			printC->setNewlineBeforeOpeningBrace(true);
 			printC->setNewlineAfterPrototype(false);
+			printC->setIndentIncrement(4);
+			printC->setLineCommentIndent(0);
 		}
 
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultSpace(), function->addr));
