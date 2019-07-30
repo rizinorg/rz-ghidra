@@ -353,7 +353,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 	});
 
 	child(&doc, "addr", {
-			{ "space", "ram" },
+			{ "space", arch->getDefaultSpace()->getName() },
 			{ "offset", hex(fcn->addr) }
 	});
 
