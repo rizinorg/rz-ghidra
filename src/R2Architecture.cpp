@@ -30,6 +30,7 @@ static const std::map<std::string, std::string> arch_map = {
 		{ "sparc32", "sparc" } ,
 		{ "sparc64", "sparc" } ,
 		{ "msp43016", "TI_MSP430" } ,
+		{ "m68k32", "68000" } ,
 };
 
 static const std::map<std::string, std::string> compiler_map = {
