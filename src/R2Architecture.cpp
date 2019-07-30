@@ -13,7 +13,23 @@
 
 // maps radare2 asm/anal plugins names to sleigh language
 static const std::map<std::string, std::string> arch_map = {
-		{ "x86", "x86" }
+		{ "x8632", "x86" },
+		{ "x8664", "x86" },
+		{ "arm32", "ARM"},
+		{ "arm64", "AARCH64" } ,
+		{ "mips32", "MIPS" },
+		{ "mips64", "MIPS" },
+		{ "avr8", "avr8" } ,
+		{ "avr32", "avr32a" } ,
+		{ "dalvik32", "Dalvik" } ,
+		{ "650216", "6502" } ,
+		{ "java32", "JVM" } ,
+		{ "hppa32", "pa-risc" } ,
+		{ "ppc32", "PowerPC" } ,
+		{ "ppc64", "PowerPC" } ,
+		{ "sparc32", "sparc" } ,
+		{ "sparc64", "sparc" } ,
+		{ "msp43016", "TI_MSP430" } ,
 };
 
 static const std::map<std::string, std::string> compiler_map = {
@@ -49,7 +65,7 @@ std::string SleighIdFromCore(RCore *core)
 {
 	const char *arch = r_config_get(core->config, "asm.arch");
 	bool be = r_config_get_i(core->config, "cfg.bigendian") != 0;
-	ut64 bits = r_config_get_i(core->config, "asm.bits");
+	std::string bits = to_string(r_config_get_i(core->config, "asm.bits"));
 
 	if (!strcmp(arch, "arm") && bits == 64)
 		return std::string("AARCH64:LE:64:v8A:default");
