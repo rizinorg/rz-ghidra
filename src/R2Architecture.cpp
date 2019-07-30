@@ -72,10 +72,14 @@ std::string SleighIdFromCore(RCore *core)
 		return std::string("AARCH64:LE:64:v8A:default");
 
 	auto arch_it = arch_map.find(arch);
+	
 	if(arch_it == arch_map.end())
 		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
 
+	if (!strcmp(arch_it->second.c_str(), "avr8"))
+		bits = 16;
 	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":default:" + CompilerFromCore(core);
+
 }
 
 R2Architecture::R2Architecture(RCore *core)
