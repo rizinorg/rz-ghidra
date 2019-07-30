@@ -2,6 +2,7 @@
 
 #include "R2TypeFactory.h"
 #include "R2Architecture.h"
+#include "R2Utils.h"
 
 #include <r_parse.h>
 
@@ -77,6 +78,35 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n)
 	return r;
 }
 
+Datatype *R2TypeFactory::queryR2Enum(const string &n)
+{
+	RCore *core = arch->getCore();
+	RList *members = r_type_get_enum(core->anal->sdb_types, n.c_str());
+	if(!members)
+		return nullptr;
+
+	std::vector<std::string> namelist;
+	std::vector<uintb> vallist;
+	std::vector<bool> assignlist;
+
+	r_list_foreach_cpp<RTypeEnum>(members, [&](RTypeEnum *member) {
+		if(!member->name || !member->val)
+			return;
+		uintb val = std::stoull(member->val, nullptr, 0);
+		namelist.push_back(member->name);
+		vallist.push_back(val);
+		assignlist.push_back(true); // all enum values from r2 have explicit values
+	});
+	r_list_free (members);
+
+	if(namelist.empty())
+		return nullptr;
+
+	auto enumType = getTypeEnum(n);
+	setEnumValues(namelist, vallist, assignlist, enumType);
+	return enumType;
+}
+
 Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTypes)
 {
 	if(stackTypes.find(n) != stackTypes.end())
@@ -93,7 +123,8 @@ Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTy
 	{
 		case R_TYPE_STRUCT:
 			return queryR2Struct(n);
-		// TODO: support other kinds
+		case R_TYPE_ENUM:
+			return queryR2Enum(n);
 		default:
 			return nullptr;
 	}
