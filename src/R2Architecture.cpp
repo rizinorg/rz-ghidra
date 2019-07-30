@@ -78,8 +78,9 @@ std::string SleighIdFromCore(RCore *core)
 
 	if (!strcmp(arch_it->second.c_str(), "avr8"))
 		bits = 16;
+	if (!strcmp(arch_it->second.c_str(), "JVM"))
+		be = true;
 	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":default:" + CompilerFromCore(core);
-
 }
 
 R2Architecture::R2Architecture(RCore *core)
