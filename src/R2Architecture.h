@@ -5,6 +5,7 @@
 
 #include "architecture.hh"
 #include "sleigh_arch.hh"
+#include "printcoffsets.hh"
 
 #include <r_core.h>
 
@@ -31,6 +32,7 @@ class R2Architecture : public SleighArchitecture
 
 		void addWarning(const std::string &warning)	{ warnings.push_back(warning); }
 		const std::vector<std::string> getWarnings() const { return warnings; }
+		PrintLanguage *print_with_offsets;
 
 	protected:
 		Translate *buildTranslator(DocumentStorage &store) override;

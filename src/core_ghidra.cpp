@@ -4,6 +4,7 @@
 
 #include <libdecomp.hh>
 #include <printc.hh>
+#include "R2Printc.h"
 
 #include <r_core.h>
 
@@ -23,7 +24,7 @@ static void print_usage(const RCore *const core) {
 	r_cons_cmd_help(help, core->print->flags & R_PRINT_FLAGS_COLOR);
 }
 
-enum class DecompileMode { DEFAULT, XML, DEBUG_XML };
+enum class DecompileMode { DEFAULT, XML, DEBUG_XML, OFFSET, STATEMENTS };
 
 //#define DEBUG_EXCEPTIONS
 
@@ -45,7 +46,9 @@ static void decompile(RCore *core, DecompileMode mode) {
 
 		std::stringstream out_stream;
 		arch.print->setOutputStream(&out_stream);
+		arch.print_with_offsets->setOutputStream(&out_stream);
 
+		auto r2PrintC = dynamic_cast<R2PrintC *>(arch.print_with_offsets);
 		if(auto printC = dynamic_cast<PrintC *>(arch.print))
 		{
 			printC->setCPlusPlusStyleComments();
@@ -90,17 +93,69 @@ static void decompile(RCore *core, DecompileMode mode) {
 			case DecompileMode::DEFAULT:
 				arch.print->docFunction(func);
 				break;
+			case DecompileMode::STATEMENTS:
+			case DecompileMode::OFFSET:
+				arch.print_with_offsets->docFunction(func);
+				break;
 			case DecompileMode::DEBUG_XML:
 				arch.saveXml(out_stream);
 				break;
 		}
 
 		if(mode == DecompileMode::XML)
+		{
 			out_stream << "</code></result>";
+		}
+		else if(mode == DecompileMode::OFFSET)
+		{
+			ut64 offset;
+			string line;
+			std::stringstream line_stream;
+			while (getline(out_stream, line))
+			{
+				std::stringstream offset_stream;
+				size_t start_tag = line.find("R2_OFFSET_START");
+				if(start_tag != -1)
+				{
+					size_t end_tag = line.find("R2_OFFSET_STOP");
+					size_t start_offset = start_tag + 15;
+					offset =  stoi(line.substr(start_offset, end_tag-start_offset));
+					line.erase(start_tag, end_tag + strlen("R2_OFFSET_STOP")-start_tag);
+					offset_stream << "0x" << std::setfill('0') << std::setw(10) << std::hex << offset;
+					line_stream << "    " <<  offset_stream.str() << "    |" << line << "\n";
+				}
+				else
+				{
+					line_stream << "                    |" << line << "\n";
+				}
+			}
+			r_cons_print(line_stream.str().c_str());
+		}
+		else if(mode == DecompileMode::STATEMENTS)
+		{
+			for (auto const& addr : r2PrintC->getStatementsMap())
+			{
+				string statement = addr.second;
+				stringstream comment_stream;
+				size_t start_tag = statement.find("R2_OFFSET_START");
+				if(start_tag != -1)
+				{
+					size_t end_tag = statement.find("R2_OFFSET_STOP") + 15;
+					statement.erase(start_tag, end_tag-start_tag);
+				}
+				statement.erase(std::remove(statement.begin(), statement.end(), '\n'), statement.end() );
 
-		r_cons_print(out_stream.str().c_str());
-#ifndef DEBUG_EXCEPTIONS
+				comment_stream << "s " <<  "0x" << std::hex << addr.first.getOffset() << "\n";
+				comment_stream << "\"CC " << statement.c_str() <<  "\"\n";
+				r_cons_print(comment_stream.str().c_str());
+			}
+		}
+		else
+		{
+			r_cons_print(out_stream.str().c_str());
+		}
 	}
+#ifndef DEBUG_EXCEPTIONS
 	catch(LowlevelError error)
 	{
 		eprintf("Ghidra Decompiler Error: %s\n", error.explain.c_str());
@@ -118,6 +173,12 @@ static void _cmd(RCore *core, const char *input) {
 			break;
 		case 'x':
 			decompile(core, DecompileMode::XML);
+			break;
+		case 'o':
+			decompile(core, DecompileMode::OFFSET);
+			break;
+		case '*':
+			decompile(core, DecompileMode::STATEMENTS);
 			break;
 		default:
 			print_usage(core);
