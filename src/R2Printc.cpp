@@ -23,17 +23,15 @@ void R2PrintC::emitStatement(const PcodeOp *inst)
 	stringstream statement_stream;
 	Address addr = inst->getAddr();
 	auto r2emit = dynamic_cast<R2Emit *>(emit);
-	r2emit->pushOffset(addr);
-	int4 id = emit->beginStatement(inst);
 	ostream *saved_stream = getOutputStream();
 	setOutputStream(&statement_stream);
-	emitExpression(inst);
-	emit->endStatement(id);
-	if (!isSet(comma_separate))
-		emit->print(";");
+	r2emit->pushOffset(addr);
+
+	PrintC::emitStatement(inst);
+
 	*saved_stream << statement_stream.str();
-	pushStatement(addr, statement_stream.str());
 	setOutputStream(saved_stream);
+	pushStatement(addr, statement_stream.str());
 }
 
 void R2PrintC::pushStatement(Address addr, std::string statement)
