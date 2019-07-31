@@ -17,12 +17,6 @@ void R2Emit::tagLine(int4 indent)
 	EmitPrettyPrint::tagLine(indent);
 }
 
-int4 R2Emit::startIndent(void)
-{
-	/* resetOffsetLine(); */
-	return EmitPrettyPrint::startIndent();
-}
-
 void R2Emit::resetOffsetLine()
 {
 	vector<Address> lc(line);
