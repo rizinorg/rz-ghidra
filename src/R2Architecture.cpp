@@ -5,6 +5,7 @@
 #include "R2Architecture.h"
 #include "R2TypeFactory.h"
 #include "R2CommentDatabase.h"
+#include "printcoffsets.hh"
 
 #include <iostream>
 
@@ -46,6 +47,7 @@ R2Architecture::R2Architecture(RCore *core)
 	: SleighArchitecture(FilenameFromCore(core), SleighIdFromCore(core), &cout),
 	core(core)
 {
+	print_with_offsets = new PrintCWithOffsets(this, string("tagged-c-language"));
 }
 
 ProtoModel *R2Architecture::protoModelFromR2CC(const char *cc)
