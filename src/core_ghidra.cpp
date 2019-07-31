@@ -4,6 +4,7 @@
 
 #include <libdecomp.hh>
 #include <printc.hh>
+#include "R2Printc.h"
 
 #include <r_core.h>
 
@@ -47,7 +48,7 @@ static void decompile(RCore *core, DecompileMode mode) {
 		arch.print->setOutputStream(&out_stream);
 		arch.print_with_offsets->setOutputStream(&out_stream);
 
-		auto printCWithOffsets = dynamic_cast<PrintCWithOffsets *>(arch.print_with_offsets);
+		auto r2PrintC = dynamic_cast<R2PrintC *>(arch.print_with_offsets);
 		if(auto printC = dynamic_cast<PrintC *>(arch.print))
 		{
 			printC->setCPlusPlusStyleComments();
@@ -132,7 +133,7 @@ static void decompile(RCore *core, DecompileMode mode) {
 		}
 		else if(mode == DecompileMode::STATEMENTS)
 		{
-			for (auto const& addr : printCWithOffsets->getStatementsMap())
+			for (auto const& addr : r2PrintC->getStatementsMap())
 			{
 				string statement = addr.second;
 				stringstream comment_stream;
