@@ -57,6 +57,7 @@ static void decompile(RCore *core, DecompileMode mode) {
 			printC->setNewlineAfterPrototype(false);
 			printC->setIndentIncrement(4);
 			printC->setLineCommentIndent(0);
+			printC->setMaxLineSize(120);
 		}
 
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultSpace(), function->addr));
