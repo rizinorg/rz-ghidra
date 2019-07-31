@@ -149,7 +149,7 @@ static void decompile(RCore *core, DecompileMode mode) {
 				r_cons_print(comment_stream.str().c_str());
 			}
 		}
-        else
+		else
 		{
 			r_cons_print(out_stream.str().c_str());
 		}

@@ -1,7 +1,7 @@
 #include "R2Printc.h"
 #include "R2Architecture.h"
 
-R2PrintC::R2PrintC(Architecture *g,const string &nm)
+R2PrintC::R2PrintC(Architecture *g, const string &nm)
 	: PrintC(g, nm)
 {
 }
@@ -100,7 +100,7 @@ void R2PrintC::emitBlockIf(const BlockIf *bl)
 
 	pushMod();
 	setMod(no_branch);
-	uint ifBlockAddr;
+	uintb ifBlockAddr;
 	if (bl->getBlock(0)->lastOp())
 	{
 		ifBlockAddr = bl->getBlock(0)->lastOp()->getAddr().getOffset();
@@ -153,7 +153,8 @@ void R2PrintC::emitBlockIf(const BlockIf *bl)
 		if (option_newline_before_else)
 		{
 			emit->tagLine();
-		} else
+		}
+		else
 		{
 			emit->spaces(1);
 		}
@@ -170,7 +171,6 @@ void R2PrintC::emitBlockIf(const BlockIf *bl)
 }
 
 void R2PrintC::emitStatement(const PcodeOp *inst)
-
 {
 	stringstream statement_stream;
 	Address addr = inst->getAddr();
@@ -186,7 +186,8 @@ void R2PrintC::emitStatement(const PcodeOp *inst)
 	setOutputStream(saved_stream);
 }
 
-void R2PrintC::pushStatement(Address addr, std::string statement) {
+void R2PrintC::pushStatement(Address addr, std::string statement)
+{
 	smap.insert(std::pair<Address, std::string>(addr, statement));
 }
 
