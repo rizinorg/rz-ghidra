@@ -60,7 +60,6 @@ set(DECOMPILER_SOURCE_BASE_CXX
 		prettyprint.cc
 		printlanguage.cc
 		printc.cc
-		printcoffsets.cc
 		printjava.cc
 		memstate.cc
 		opbehavior.cc
