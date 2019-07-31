@@ -102,15 +102,20 @@ static void decompile(RCore *core, DecompileMode mode) {
 		}
 
 		if(mode == DecompileMode::XML)
+		{
 			out_stream << "</code></result>";
-		else if(mode == DecompileMode::OFFSET) {
+		}
+		else if(mode == DecompileMode::OFFSET)
+		{
 			ut64 offset;
 			string line;
 			std::stringstream line_stream;
-			while (getline(out_stream, line)) {
+			while (getline(out_stream, line))
+			{
 				std::stringstream offset_stream;
 				size_t start_tag = line.find("R2_OFFSET_START");
-				if (start_tag != -1) {
+				if(start_tag != -1)
+				{
 					size_t end_tag = line.find("R2_OFFSET_STOP");
 					size_t start_offset = start_tag + 15;
 					offset =  stoi(line.substr(start_offset, end_tag-start_offset));
@@ -118,17 +123,22 @@ static void decompile(RCore *core, DecompileMode mode) {
 					offset_stream << "0x" << std::setfill('0') << std::setw(10) << std::hex << offset;
 					line_stream << "    " <<  offset_stream.str() << "    |" << line << "\n";
 				}
-				else {
+				else
+				{
 					line_stream << "                    |" << line << "\n";
 				}
 			}
 			r_cons_print(line_stream.str().c_str());
-		} else if (mode == DecompileMode::STATEMENTS) {
-			for (auto const& addr : printCWithOffsets->getStatementsMap()) {
+		}
+		else if(mode == DecompileMode::STATEMENTS)
+		{
+			for (auto const& addr : printCWithOffsets->getStatementsMap())
+			{
 				string statement = addr.second;
 				stringstream comment_stream;
 				size_t start_tag = statement.find("R2_OFFSET_START");
-				if (start_tag != -1) {
+				if(start_tag != -1)
+				{
 					size_t end_tag = statement.find("R2_OFFSET_STOP") + 15;
 					statement.erase(start_tag, end_tag-start_tag);
 				}
@@ -138,11 +148,13 @@ static void decompile(RCore *core, DecompileMode mode) {
 				comment_stream << "\"CC " << statement.c_str() <<  "\"\n";
 				r_cons_print(comment_stream.str().c_str());
 			}
-		} else {
+		}
+        else
+		{
 			r_cons_print(out_stream.str().c_str());
-#ifndef DEBUG_EXCEPTIONS
 		}
 	}
+#ifndef DEBUG_EXCEPTIONS
 	catch(LowlevelError error)
 	{
 		eprintf("Ghidra Decompiler Error: %s\n", error.explain.c_str());
