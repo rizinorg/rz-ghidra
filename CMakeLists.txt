@@ -24,8 +24,8 @@ set(SOURCE
 		src/R2CommentDatabase.h
 		src/R2Printc.cpp
 		src/R2Printc.h
-        src/R2Emit.cpp
-        src/R2Emit.h)
+		src/R2Emit.cpp
+		src/R2Emit.h)
 
 find_package(Radare2 REQUIRED)
 
