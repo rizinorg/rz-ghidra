@@ -23,12 +23,6 @@ int4 R2Emit::startIndent(void)
 	return EmitPrettyPrint::startIndent();
 }
 
-void R2Emit::overflow(void)
-{
-	EmitPrettyPrint::overflow();
-	resetOffsetLine();
-}
-
 void R2Emit::resetOffsetLine()
 {
 	vector<Address> lc(line);

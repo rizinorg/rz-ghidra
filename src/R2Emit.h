@@ -17,7 +17,6 @@ class R2Emit : public EmitPrettyPrint
 	void resetOffsetLine(void);
 	int4 startIndent(void);
 	void pushOffset(Address off);
-	void overflow(void);
 	vector<vector<Address>> getOffsets();
 };
 
