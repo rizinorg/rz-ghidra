@@ -5,6 +5,7 @@
 
 #include "architecture.hh"
 #include "sleigh_arch.hh"
+#include "printcoffsets.hh"
 
 #include <r_core.h>
 
