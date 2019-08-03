@@ -5,7 +5,7 @@
 #include "R2Architecture.h"
 #include "R2TypeFactory.h"
 #include "R2CommentDatabase.h"
-#include "R2Printc.h"
+#include "R2PrintC.h"
 
 #include <iostream>
 

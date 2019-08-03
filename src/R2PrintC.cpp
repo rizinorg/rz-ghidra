@@ -1,4 +1,4 @@
-#include "R2Printc.h"
+#include "R2PrintC.h"
 #include "R2Emit.h"
 #include "R2Architecture.h"
 
@@ -39,11 +39,6 @@ void R2PrintC::pushStatement(Address addr, std::string statement)
 	smap.insert(std::pair<Address, std::string>(addr, statement));
 }
 
-
-map<Address, string> R2PrintC::getStatementsMap()
-{
-	return smap;
-}
 
 vector<vector<Address>> R2PrintC::getOffsets()
 {

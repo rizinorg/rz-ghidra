@@ -4,7 +4,7 @@
 
 #include <libdecomp.hh>
 #include <printc.hh>
-#include "R2Printc.h"
+#include "R2PrintC.h"
 
 #include <r_core.h>
 

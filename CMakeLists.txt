@@ -22,8 +22,8 @@ set(SOURCE
 		src/R2TypeFactory.h
 		src/R2CommentDatabase.cpp
 		src/R2CommentDatabase.h
-		src/R2Printc.cpp
-		src/R2Printc.h
+		src/R2PrintC.cpp
+		src/R2PrintC.h
 		src/R2Emit.cpp
 		src/R2Emit.h)
 
