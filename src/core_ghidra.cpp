@@ -14,8 +14,10 @@ static void print_usage(const RCore *const core) {
 	const char* help[] = {
 		"Usage: " CMD_PREFIX, "", "# Native Ghidra decompiler plugin",
 		CMD_PREFIX, "", "# Decompile current function with the Ghidra decompiler",
-		CMD_PREFIX, "d", "# dump the debug XML Dump",
+		CMD_PREFIX, "d", "# Dump the debug XML Dump",
 		CMD_PREFIX, "x", "# Dump the XML of the current decompiled function",
+		CMD_PREFIX, "o", "# Decompile current function side by side with offsets",
+		CMD_PREFIX, "*", "# Decompiled code is returned to r2 as comment",
 		"Environment:", "", "",
 		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
 		NULL
@@ -49,6 +51,16 @@ static void decompile(RCore *core, DecompileMode mode) {
 		arch.print_with_offsets->setOutputStream(&out_stream);
 
 		auto r2PrintC = dynamic_cast<R2PrintC *>(arch.print_with_offsets);
+		if (r2PrintC)
+		{
+			r2PrintC->setCPlusPlusStyleComments();
+			r2PrintC->setSpaceAfterComma(true);
+			r2PrintC->setNewlineBeforeOpeningBrace(true);
+			r2PrintC->setNewlineAfterPrototype(false);
+			r2PrintC->setIndentIncrement(4);
+			r2PrintC->setLineCommentIndent(0);
+		}
+
 		if(auto printC = dynamic_cast<PrintC *>(arch.print))
 		{
 			printC->setCPlusPlusStyleComments();
@@ -112,16 +124,15 @@ static void decompile(RCore *core, DecompileMode mode) {
 			ut64 offset;
 			string line;
 			std::stringstream line_stream;
+			vector<vector<Address>> offsets = r2PrintC->getOffsets();
+			size_t ln = 0;
 			while (getline(out_stream, line))
 			{
-				std::stringstream offset_stream;
-				size_t start_tag = line.find("R2_OFFSET_START");
-				if(start_tag != -1)
+				if(ln >= offsets.size()) break;
+				if(offsets[ln].size())
 				{
-					size_t end_tag = line.find("R2_OFFSET_STOP");
-					size_t start_offset = start_tag + 15;
-					offset =  stoi(line.substr(start_offset, end_tag-start_offset));
-					line.erase(start_tag, end_tag + strlen("R2_OFFSET_STOP")-start_tag);
+					offset = offsets[ln].front().getOffset();
+					std::stringstream offset_stream;
 					offset_stream << "0x" << std::setfill('0') << std::setw(10) << std::hex << offset;
 					line_stream << "    " <<  offset_stream.str() << "    |" << line << "\n";
 				}
@@ -129,6 +140,7 @@ static void decompile(RCore *core, DecompileMode mode) {
 				{
 					line_stream << "                    |" << line << "\n";
 				}
+				ln+=1;
 			}
 			r_cons_print(line_stream.str().c_str());
 		}
@@ -155,8 +167,8 @@ static void decompile(RCore *core, DecompileMode mode) {
 		{
 			r_cons_print(out_stream.str().c_str());
 		}
-	}
 #ifndef DEBUG_EXCEPTIONS
+	}
 	catch(LowlevelError error)
 	{
 		eprintf("Ghidra Decompiler Error: %s\n", error.explain.c_str());
@@ -214,17 +226,17 @@ static int r2ghidra_fini(void *user, const char *cmd) {
 }
 
 RCorePlugin r_core_plugin_ghidra = {
-		.name = "r2ghidra",
-		.desc = "Ghidra integration",
-		.license = "GPL3",
-		.call = r2ghidra_cmd,
-		.init = r2ghidra_init
+	.name = "r2ghidra",
+	.desc = "Ghidra integration",
+	.license = "GPL3",
+	.call = r2ghidra_cmd,
+	.init = r2ghidra_init
 };
 
 #ifndef CORELIB
 R_API RLibStruct radare_plugin = {
-		.type = R_LIB_TYPE_CORE,
-		.data = &r_core_plugin_ghidra,
-		.version = R2_VERSION
+	.type = R_LIB_TYPE_CORE,
+	.data = &r_core_plugin_ghidra,
+	.version = R2_VERSION
 };
 #endif
