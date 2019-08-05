@@ -115,11 +115,7 @@ static void decompile(RCore *core, DecompileMode mode) {
 				break;
 		}
 
-		if(mode == DecompileMode::XML)
-		{
-			out_stream << "</code></result>";
-		}
-		else if(mode == DecompileMode::OFFSET)
+		if(mode == DecompileMode::OFFSET)
 		{
 			ut64 offset;
 			string line;
@@ -165,6 +161,10 @@ static void decompile(RCore *core, DecompileMode mode) {
 		}
 		else
 		{
+			if(mode == DecompileMode::XML)
+			{
+				out_stream << "</code></result>";
+			}
 			r_cons_print(out_stream.str().c_str());
 		}
 #ifndef DEBUG_EXCEPTIONS
