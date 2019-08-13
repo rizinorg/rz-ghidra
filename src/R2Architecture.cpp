@@ -6,6 +6,8 @@
 #include "R2TypeFactory.h"
 #include "R2CommentDatabase.h"
 #include "R2PrintC.h"
+#include "R2Utils.h"
+#include <funcdata.hh>
 
 #include <iostream>
 
@@ -108,6 +110,18 @@ Translate *R2Architecture::buildTranslator(DocumentStorage &store)
 	Translate *ret = SleighArchitecture::buildTranslator(store);
 	loadRegisters(ret);
 	return ret;
+}
+
+void R2Architecture::postSpecFile()
+{
+	// Configure noreturn functions
+	r_list_foreach_cpp<RAnalFunction>(core->anal->fcns, [&](RAnalFunction *func) {
+		if (r_anal_noreturn_at(core->anal, func->addr))
+		{
+			Funcdata *infd = symboltab->getGlobalScope()->queryFunction(Address(getDefaultSpace(), func->addr));
+			infd->getFuncProto().setNoReturn(true);
+		}
+	});
 }
 
 void R2Architecture::buildLoader(DocumentStorage &store)
