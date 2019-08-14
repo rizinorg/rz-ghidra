@@ -114,10 +114,10 @@ Translate *R2Architecture::buildTranslator(DocumentStorage &store)
 
 void R2Architecture::postSpecFile()
 {
-	// Configure noreturn functions
 	r_list_foreach_cpp<RAnalFunction>(core->anal->fcns, [&](RAnalFunction *func) {
-		if (r_anal_noreturn_at(core->anal, func->addr))
+		if (func->is_noreturn)
 		{
+			// Configure noreturn functions
 			Funcdata *infd = symboltab->getGlobalScope()->queryFunction(Address(getDefaultSpace(), func->addr));
 			infd->getFuncProto().setNoReturn(true);
 		}
