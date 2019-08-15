@@ -69,13 +69,12 @@ std::string SleighIdFromCore(RCore *core)
 	std::string bits = to_string(r_config_get_i(core->config, "asm.bits"));
 	string flavor = string("default");
 
-	if (!strcmp(arch, "arm") && bits == 64)
+	if (!strcmp(arch, "arm") && bits == "64")
 		return std::string("AARCH64:LE:64:v8A:default");
 
-	auto arch_it = arch_map.find(arch);
-	
+	auto arch_it = arch_map.find(arch + bits);
 	if(arch_it == arch_map.end())
-		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
+		throw LowlevelError("Could not match asm.arch " + std::string(arch + bits) + " to sleigh arch.");
 
 	if (!arch_it->second.compare("ARM"))
 		flavor = string("v7");
@@ -83,7 +82,7 @@ std::string SleighIdFromCore(RCore *core)
 		bits = 16;
 	if (!arch_it->second.compare("JVM"))
 		be = true;
-	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":" + flavor + ":" + CompilerFromCore(core);
+	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + bits + ":" + flavor + ":" + CompilerFromCore(core);
 }
 
 R2Architecture::R2Architecture(RCore *core)
