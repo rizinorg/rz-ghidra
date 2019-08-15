@@ -16,7 +16,8 @@ static const std::map<std::string, std::string> arch_map = {
 
 static const std::map<std::string, std::string> compiler_map = {
 		{ "elf", "gcc" },
-		{ "pe", "windows" }
+		{ "pe", "windows" },
+		{ "mach0", "macosx" }
 };
 
 // maps radare2 calling conventions to decompiler proto models
