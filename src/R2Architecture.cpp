@@ -13,7 +13,24 @@
 
 // maps radare2 asm/anal plugins names to sleigh language
 static const std::map<std::string, std::string> arch_map = {
-		{ "x86", "x86" }
+		{ "x8632", "x86" },
+		{ "x8664", "x86" },
+		{ "arm32", "ARM"},
+		{ "arm64", "AARCH64" } ,
+		{ "mips32", "MIPS" },
+		{ "mips64", "MIPS" },
+		{ "avr8", "avr8" } ,
+		{ "avr32", "avr32a" } ,
+		{ "dalvik32", "Dalvik" } ,
+		{ "650216", "6502" } ,
+		{ "java32", "JVM" } ,
+		{ "hppa32", "pa-risc" } ,
+		{ "ppc32", "PowerPC" } ,
+		{ "ppc64", "PowerPC" } ,
+		{ "sparc32", "sparc" } ,
+		{ "sparc64", "sparc" } ,
+		{ "msp43016", "TI_MSP430" } ,
+		{ "m68k32", "68000" } ,
 };
 
 static const std::map<std::string, std::string> compiler_map = {
@@ -49,16 +66,22 @@ std::string SleighIdFromCore(RCore *core)
 {
 	const char *arch = r_config_get(core->config, "asm.arch");
 	bool be = r_config_get_i(core->config, "cfg.bigendian") != 0;
-	ut64 bits = r_config_get_i(core->config, "asm.bits");
+	std::string bits = to_string(r_config_get_i(core->config, "asm.bits"));
+	string flavor = string("default");
 
-	if (!strcmp(arch, "arm") && bits == 64)
-		return std::string("AARCH64:LE:64:v8A:default");
-
-	auto arch_it = arch_map.find(arch);
+	auto arch_it = arch_map.find(arch + bits);
 	if(arch_it == arch_map.end())
-		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
+		throw LowlevelError("Could not match asm.arch " + std::string(arch + bits) + " to sleigh arch.");
 
-	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":default:" + CompilerFromCore(core);
+	if (!arch_it->second.compare("ARM"))
+		flavor = string("v7");
+	if (!arch_it->second.compare("avr8"))
+		bits = 16;
+	if (!arch_it->second.compare("JVM"))
+		be = true;
+	if (!arch_it->second.compare("AARCH64"))
+		flavor = string("v8A");
+	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + bits + ":" + flavor + ":" + CompilerFromCore(core);
 }
 
 R2Architecture::R2Architecture(RCore *core)
