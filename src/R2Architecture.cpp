@@ -14,17 +14,33 @@ static const std::map<std::string, std::string> arch_map = {
 		{ "x86", "x86" }
 };
 
+static const std::map<std::string, std::string> compiler_map = {
+		{ "elf", "gcc" },
+		{ "pe", "windows" },
+		{ "mach0", "macosx" }
+};
+
 // maps radare2 calling conventions to decompiler proto models
 static const std::map<std::string, std::string> cc_map = {
 		{ "cdecl", "__cdecl" },
 		{ "fastcall", "__fastcall" },
 		{ "stdcall", "__stdcall" },
-		{ "cdecl-thiscall-ms", "__thiscall" }
+		{ "cdecl-thiscall-ms", "__thiscall" },
+		{ "amd64", "__stdcall" }
 };
 
 std::string FilenameFromCore(RCore *core)
 {
 	return core->bin->file;
+}
+
+std:: string CompilerFromCore(RCore *core)
+{
+	RBinInfo *info = r_bin_get_info(core->bin);
+	auto comp_it = compiler_map.find(info->rclass);
+	if(comp_it == compiler_map.end())
+		throw LowlevelError("Could not match container" + std::string(info->rclass) + " to sleigh compiler.");
+	return comp_it->second;
 }
 
 std::string SleighIdFromCore(RCore *core)
@@ -40,7 +56,7 @@ std::string SleighIdFromCore(RCore *core)
 	if(arch_it == arch_map.end())
 		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
 
-	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":default";
+	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":default:" + CompilerFromCore(core);
 }
 
 R2Architecture::R2Architecture(RCore *core)
