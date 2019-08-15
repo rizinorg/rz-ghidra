@@ -39,6 +39,7 @@ class R2Architecture : public SleighArchitecture
 		Scope *buildGlobalScope() override;
 		void buildTypegrp(DocumentStorage &store) override;
 		void buildCommentDB(DocumentStorage &store) override;
+		void postSpecFile() override;
 };
 
 #endif //R2GHIDRA_R2ARCHITECTURE_H
