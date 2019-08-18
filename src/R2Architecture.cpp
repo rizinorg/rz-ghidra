@@ -56,7 +56,7 @@ std::string FilenameFromCore(RCore *core)
 std:: string CompilerFromCore(RCore *core)
 {
 	RBinInfo *info = r_bin_get_info(core->bin);
-	if (!info)
+	if (!info || !info->rclass)
 		return std::string("");
 
 	auto comp_it = compiler_map.find(info->rclass);
