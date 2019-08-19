@@ -32,6 +32,7 @@ class R2Architecture : public SleighArchitecture
 		void addWarning(const std::string &warning)	{ warnings.push_back(warning); }
 		const std::vector<std::string> getWarnings() const { return warnings; }
 		PrintLanguage *print_with_offsets;
+		ContextDatabase *getContextDatabase();
 
 	protected:
 		Translate *buildTranslator(DocumentStorage &store) override;

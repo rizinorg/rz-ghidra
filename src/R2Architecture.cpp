@@ -15,6 +15,7 @@
 static const std::map<std::string, std::string> arch_map = {
 		{ "x8632", "x86" },
 		{ "x8664", "x86" },
+		{ "arm16", "ARM"},
 		{ "arm32", "ARM"},
 		{ "arm64", "AARCH64" } ,
 		{ "mips32", "MIPS" },
@@ -69,22 +70,24 @@ std::string SleighIdFromCore(RCore *core)
 {
 	const char *arch = r_config_get(core->config, "asm.arch");
 	bool be = r_config_get_i(core->config, "cfg.bigendian") != 0;
-	std::string bits = to_string(r_config_get_i(core->config, "asm.bits"));
+	ut64 bits = r_config_get_i(core->config, "asm.bits");
 	string flavor = string("default");
 
-	auto arch_it = arch_map.find(arch + bits);
+	auto arch_it = arch_map.find(arch + to_string(bits));
 	if(arch_it == arch_map.end())
-		throw LowlevelError("Could not match asm.arch " + std::string(arch + bits) + " to sleigh arch.");
+		throw LowlevelError("Could not match asm.arch " + std::string(arch) + to_string(bits) + " to sleigh arch.");
 
-	if (!arch_it->second.compare("ARM"))
+	if (!arch_it->second.compare("ARM")) {
 		flavor = string("v7");
+		bits = 32;
+	}
 	if (!arch_it->second.compare("avr8"))
 		bits = 16;
 	if (!arch_it->second.compare("JVM"))
 		be = true;
 	if (!arch_it->second.compare("AARCH64"))
 		flavor = string("v8A");
-	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + bits + ":" + flavor + ":" + CompilerFromCore(core);
+	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":" + flavor + ":" + CompilerFromCore(core);
 }
 
 R2Architecture::R2Architecture(RCore *core)
@@ -152,6 +155,11 @@ Translate *R2Architecture::buildTranslator(DocumentStorage &store)
 	Translate *ret = SleighArchitecture::buildTranslator(store);
 	loadRegisters(ret);
 	return ret;
+}
+
+ContextDatabase *R2Architecture::getContextDatabase()
+{
+	return context;
 }
 
 void R2Architecture::postSpecFile()

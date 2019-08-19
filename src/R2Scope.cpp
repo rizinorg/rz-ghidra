@@ -87,12 +87,18 @@ static std::string to_string(const char *str)
 FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 {
 	RCore *core = arch->getCore();
+	const std::string r2Arch(r_config_get(core->config, "asm.arch"));
 
 	// We use xml here, because the public interface for Functions
 	// doesn't let us set up the scope parenting as we need it :-(
 
 	Document doc;
 	doc.setName("mapsym");
+
+	if (fcn->bits == 16 && !r2Arch.compare("arm")) {
+		ContextDatabase * cdb = arch->getContextDatabase();
+		cdb->setVariable("TMode", Address(arch->getDefaultSpace(), fcn->addr), 1);
+	}
 
 	auto functionElement = child(&doc, "function", {
 			{ "name", fcn->name },
