@@ -417,23 +417,8 @@ Symbol *R2Scope::queryR2Absoulte(ut64 addr) const
 
 Symbol *R2Scope::queryR2(const Address &addr) const
 {
-	switch(addr.getSpace()->getType())
-	{
-		case IPTR_CONSTANT:
-			break;
-		case IPTR_PROCESSOR:
-			return queryR2Absoulte(addr.getOffset());
-		case IPTR_SPACEBASE:
-			break;
-		case IPTR_INTERNAL:
-			break;
-		case IPTR_FSPEC:
-			break;
-		case IPTR_IOP:
-			break;
-		case IPTR_JOIN:
-			break;
-	}
+	if(addr.getSpace() == arch->getDefaultSpace())
+		return queryR2Absoulte(addr.getOffset());
 	return nullptr;
 }
 
