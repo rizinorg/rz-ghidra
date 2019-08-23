@@ -8,9 +8,45 @@
 
 #include <r_core.h>
 
-#define CMD_PREFIX "pdg"
+#include <vector>
 
-static void print_usage(const RCore *const core) {
+#define CMD_PREFIX "pdg"
+#define CFG_PREFIX "r2ghidra"
+
+struct ConfigVar
+{
+	private:
+		static std::vector<const ConfigVar *> vars_all;
+
+		const std::string name;
+		const char * const defval;
+		const char * const desc;
+
+	public:
+		ConfigVar(const char *var, const char *defval, const char *desc)
+			: name(std::string(CFG_PREFIX) + "." + var), defval(defval), desc(desc) { vars_all.push_back(this); }
+
+		const char *GetName() const 				{ return name.c_str(); }
+		const char *GetDefault() const 				{ return defval; }
+		const char *GetDesc() const 				{ return desc; }
+
+		ut64 GetInt(RConfig *cfg) const				{ return r_config_get_i(cfg, name.c_str()); }
+		bool GetBool(RConfig *cfg) const			{ return GetInt(cfg) != 0; }
+		std::string GetString(RConfig *cfg) const	{ return r_config_get(cfg, name.c_str()); }
+
+		static const std::vector<const ConfigVar *> &GetAll()	{ return vars_all; }
+};
+std::vector<const ConfigVar *> ConfigVar::vars_all;
+
+static const ConfigVar cfg_var_cmt_cpp		("cmt.cpp",		"true",		"C++ comment style");
+static const ConfigVar cfg_var_cmt_indent	("cmt.indent",	"4",		"Comment indent");
+static const ConfigVar cfg_var_nl_brace		("nl.brace",	"false",	"Newline before opening '{'");
+static const ConfigVar cfg_var_nl_else		("nl.else",		"false",	"Newline before else");
+static const ConfigVar cfg_var_indent		("indent",		"4",		"Indent increment");
+static const ConfigVar cfg_var_linelen		("linelen",		"120",		"Max line length");
+
+static void print_usage(const RCore *const core)
+{
 	const char* help[] = {
 		"Usage: " CMD_PREFIX, "", "# Native Ghidra decompiler plugin",
 		CMD_PREFIX, "", "# Decompile current function with the Ghidra decompiler",
@@ -30,7 +66,28 @@ enum class DecompileMode { DEFAULT, XML, DEBUG_XML, OFFSET, STATEMENTS };
 
 //#define DEBUG_EXCEPTIONS
 
-static void decompile(RCore *core, DecompileMode mode) {
+static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
+{
+	if(!print_c)
+		return;
+
+	if(cfg_var_cmt_cpp.GetBool(cfg))
+		print_c->setCPlusPlusStyleComments();
+	else
+		print_c->setCStyleComments();
+
+	print_c->setSpaceAfterComma(true);
+
+	print_c->setNewlineBeforeOpeningBrace(cfg_var_nl_brace.GetBool(cfg));
+	print_c->setNewlineBeforeElse(cfg_var_nl_else.GetBool(cfg));
+	print_c->setNewlineAfterPrototype(false);
+	print_c->setIndentIncrement(cfg_var_indent.GetInt(cfg));
+	print_c->setLineCommentIndent(cfg_var_cmt_indent.GetInt(cfg));
+	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
+}
+
+static void decompile(RCore *core, DecompileMode mode)
+{
 	RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
 	if(!function)
 	{
@@ -50,27 +107,9 @@ static void decompile(RCore *core, DecompileMode mode) {
 		arch.print->setOutputStream(&out_stream);
 		arch.print_with_offsets->setOutputStream(&out_stream);
 
-		auto r2PrintC = dynamic_cast<R2PrintC *>(arch.print_with_offsets);
-		if (r2PrintC)
-		{
-			r2PrintC->setCPlusPlusStyleComments();
-			r2PrintC->setSpaceAfterComma(true);
-			r2PrintC->setNewlineBeforeOpeningBrace(true);
-			r2PrintC->setNewlineAfterPrototype(false);
-			r2PrintC->setIndentIncrement(4);
-			r2PrintC->setLineCommentIndent(0);
-		}
-
-		if(auto printC = dynamic_cast<PrintC *>(arch.print))
-		{
-			printC->setCPlusPlusStyleComments();
-			printC->setSpaceAfterComma(true);
-			printC->setNewlineBeforeOpeningBrace(true);
-			printC->setNewlineAfterPrototype(false);
-			printC->setIndentIncrement(4);
-			printC->setLineCommentIndent(0);
-			printC->setMaxLineSize(120);
-		}
+		auto r2_print_c = dynamic_cast<R2PrintC *>(arch.print_with_offsets);
+		ApplyPrintCConfig(core->config, r2_print_c);
+		ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
 
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultSpace(), function->addr));
 		if(!func)
@@ -120,7 +159,7 @@ static void decompile(RCore *core, DecompileMode mode) {
 			ut64 offset;
 			string line;
 			std::stringstream line_stream;
-			vector<vector<Address>> offsets = r2PrintC->getOffsets();
+			vector<vector<Address>> offsets = r2_print_c->getOffsets();
 			size_t ln = 0;
 			while (getline(out_stream, line))
 			{
@@ -142,7 +181,7 @@ static void decompile(RCore *core, DecompileMode mode) {
 		}
 		else if(mode == DecompileMode::STATEMENTS)
 		{
-			for (auto const& addr : r2PrintC->getStatementsMap())
+			for (auto const& addr : r2_print_c->getStatementsMap())
 			{
 				string statement = addr.second;
 				stringstream comment_stream;
@@ -176,7 +215,8 @@ static void decompile(RCore *core, DecompileMode mode) {
 #endif
 }
 
-static void _cmd(RCore *core, const char *input) {
+static void _cmd(RCore *core, const char *input)
+{
 	switch (*input) {
 		case 'd':
 			decompile(core, DecompileMode::DEBUG_XML);
@@ -199,19 +239,31 @@ static void _cmd(RCore *core, const char *input) {
 	}
 }
 
-static int r2ghidra_cmd(void *user, const char *input) {
+static int r2ghidra_cmd(void *user, const char *input)
+{
 	RCore *core = (RCore *) user;
-	if (!strncmp (input, CMD_PREFIX, strlen(CMD_PREFIX))) {
+	if (!strncmp (input, CMD_PREFIX, strlen(CMD_PREFIX)))
+	{
 		_cmd (core, input + 3);
 		return true;
 	}
 	return false;
 }
 
-static int r2ghidra_init(void *user, const char *cmd) {
+static int r2ghidra_init(void *user, const char *cmd)
+{
+	auto *rcmd = reinterpret_cast<RCmd *>(user);
+	auto *core = reinterpret_cast<RCore *>(rcmd->data);
+	RConfig *cfg = core->config;
+	r_config_lock (cfg, false);
+	for(const auto var : ConfigVar::GetAll())
+		r_config_node_desc(r_config_set(cfg, var->GetName(), var->GetDefault()), var->GetDesc());
+	r_config_lock (cfg, true);
+
 	const char *sleighhomepath = getenv("SLEIGHHOME");
 	char *homepath = NULL;
-	if (!sleighhomepath) {
+	if(!sleighhomepath)
+	{
 		homepath = r_str_home (".local/share/radare2/r2pm/git/ghidra");
 		sleighhomepath = homepath;
 	}
@@ -220,7 +272,8 @@ static int r2ghidra_init(void *user, const char *cmd) {
 	return true;
 }
 
-static int r2ghidra_fini(void *user, const char *cmd) {
+static int r2ghidra_fini(void *user, const char *cmd)
+{
 	shutdownDecompilerLibrary();
 	return true;
 }
