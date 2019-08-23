@@ -1,7 +1,6 @@
+<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="r2ghidra-dec logo" src="https://raw.githubusercontent.com/thestr4ng3r/r2ghidra-dec/master/assets/logo.png">
 
 # r2ghidra-dec
-
-**TODO**: Cool deal-with-it logo
 
 This is an integration of the Ghidra decompiler for [radare2](https://github.com/radare/radare2).
 It is solely based on the decompiler part of Ghidra, which is written entirely in
