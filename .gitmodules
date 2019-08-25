@@ -1,3 +1,6 @@
 [submodule "ghidra/ghidra"]
 	path = ghidra/ghidra
 	url = https://github.com/thestr4ng3r/ghidra.git
+[submodule "third-party/pugixml"]
+	path = third-party/pugixml
+	url = https://github.com/zeux/pugixml.git

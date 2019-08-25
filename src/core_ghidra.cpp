@@ -1,6 +1,7 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
 #include "R2Architecture.h"
+#include "CodeXMLParse.h"
 
 #include <libdecomp.hh>
 #include <printc.hh>
@@ -150,15 +151,19 @@ static void Decompile(RCore *core, DecompileMode mode)
 			func->saveXml(out_stream, true);
 			out_stream << "</function><code>";
 		}
+		else if(mode == DecompileMode::OFFSET)
+		{
+			arch.print->setXML(true);
+		}
 
 		switch(mode)
 		{
 			case DecompileMode::XML:
 			case DecompileMode::DEFAULT:
+			case DecompileMode::OFFSET:
 				arch.print->docFunction(func);
 				break;
 			case DecompileMode::STATEMENTS:
-			case DecompileMode::OFFSET:
 				arch.print_with_offsets->docFunction(func);
 				break;
 			case DecompileMode::DEBUG_XML:
@@ -168,6 +173,16 @@ static void Decompile(RCore *core, DecompileMode mode)
 
 		if(mode == DecompileMode::OFFSET)
 		{
+			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
+			if(!code)
+			{
+				eprintf("Failed to parse XML code\n");
+				return;
+			}
+			// TODO: print code with offsets from RAnnotatedCode here
+			r_cons_print(code->code);
+			r_annotated_code_free(code);
+			return;
 			ut64 offset;
 			string line;
 			std::stringstream line_stream;
