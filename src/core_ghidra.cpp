@@ -47,6 +47,7 @@ std::vector<const ConfigVar *> ConfigVar::vars_all;
 bool SleighHomeConfig(void *user, void *data);
 
 static const ConfigVar cfg_var_sleighhome	("sleighhome",	"",			"SLEIGHHOME", SleighHomeConfig);
+static const ConfigVar cfg_var_sleighid		("lang",		"",			"Custom Sleigh ID to override auto-detection (e.g. x86:LE:32:default)");
 static const ConfigVar cfg_var_cmt_cpp		("cmt.cpp",		"true",		"C++ comment style");
 static const ConfigVar cfg_var_cmt_indent	("cmt.indent",	"4",		"Comment indent");
 static const ConfigVar cfg_var_nl_brace		("nl.brace",	"false",	"Newline before opening '{'");
@@ -110,7 +111,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 	try
 	{
 #endif
-		R2Architecture arch(core);
+		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 		DocumentStorage store;
 		arch.init(store);
 

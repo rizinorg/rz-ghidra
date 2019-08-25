@@ -21,7 +21,7 @@ class R2Architecture : public SleighArchitecture
 		void loadRegisters(const Translate *translate);
 
 	public:
-		explicit R2Architecture(RCore *core);
+		explicit R2Architecture(RCore *core, const std::string &sleigh_id);
 
 		RCore *getCore() const 	{ return core; }
 		R2TypeFactory *getTypeFactory() const { return r2TypeFactory; }

@@ -90,8 +90,8 @@ std::string SleighIdFromCore(RCore *core)
 	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":" + flavor + ":" + CompilerFromCore(core);
 }
 
-R2Architecture::R2Architecture(RCore *core)
-	: SleighArchitecture(FilenameFromCore(core), SleighIdFromCore(core), &cout),
+R2Architecture::R2Architecture(RCore *core, const std::string &sleigh_id)
+	: SleighArchitecture(FilenameFromCore(core), sleigh_id.empty() ? SleighIdFromCore(core) : sleigh_id, &cout),
 	core(core)
 {
 	print_with_offsets = new R2PrintC(this, string("tagged-c-language"));
