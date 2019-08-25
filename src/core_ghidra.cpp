@@ -176,14 +176,14 @@ static void decompile(RCore *core, DecompileMode mode)
 				if(ln >= offsets.size()) break;
 				if(offsets[ln].size())
 				{
+					char hexstring[11] = {};
 					offset = offsets[ln].front().getOffset();
-					std::stringstream offset_stream;
-					offset_stream << "0x" << std::setfill('0') << std::setw(10) << std::hex << offset;
-					line_stream << "    " <<  offset_stream.str() << "    |" << line << "\n";
+					snprintf(hexstring, 10, "0x%08x" PRIx64, offset);
+					line_stream << "    " <<  hexstring << "    |" << line << "\n";
 				}
 				else
 				{
-					line_stream << "                    |" << line << "\n";
+					line_stream << "                 |" << line << "\n";
 				}
 				ln+=1;
 			}
