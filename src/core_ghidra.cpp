@@ -13,6 +13,8 @@
 #define CMD_PREFIX "pdg"
 #define CFG_PREFIX "r2ghidra"
 
+typedef bool (*ConfigVarCb)(void *user, void *data);
+
 struct ConfigVar
 {
 	private:
@@ -21,29 +23,37 @@ struct ConfigVar
 		const std::string name;
 		const char * const defval;
 		const char * const desc;
+		ConfigVarCb callback;
 
 	public:
-		ConfigVar(const char *var, const char *defval, const char *desc)
-			: name(std::string(CFG_PREFIX) + "." + var), defval(defval), desc(desc) { vars_all.push_back(this); }
+		ConfigVar(const char *var, const char *defval, const char *desc, ConfigVarCb callback = nullptr)
+			: name(std::string(CFG_PREFIX) + "." + var), defval(defval), desc(desc), callback(callback) { vars_all.push_back(this); }
 
 		const char *GetName() const 				{ return name.c_str(); }
 		const char *GetDefault() const 				{ return defval; }
 		const char *GetDesc() const 				{ return desc; }
+		ConfigVarCb GetCallback() const				{ return callback; }
 
 		ut64 GetInt(RConfig *cfg) const				{ return r_config_get_i(cfg, name.c_str()); }
 		bool GetBool(RConfig *cfg) const			{ return GetInt(cfg) != 0; }
 		std::string GetString(RConfig *cfg) const	{ return r_config_get(cfg, name.c_str()); }
 
+		void Set(RConfig *cfg, const char *s) const	{ r_config_set(cfg, name.c_str(), s); }
+
 		static const std::vector<const ConfigVar *> &GetAll()	{ return vars_all; }
 };
 std::vector<const ConfigVar *> ConfigVar::vars_all;
 
+bool SleighHomeConfig(void *user, void *data);
+
+static const ConfigVar cfg_var_sleighhome	("sleighhome",	"",			"SLEIGHHOME", SleighHomeConfig);
 static const ConfigVar cfg_var_cmt_cpp		("cmt.cpp",		"true",		"C++ comment style");
 static const ConfigVar cfg_var_cmt_indent	("cmt.indent",	"4",		"Comment indent");
 static const ConfigVar cfg_var_nl_brace		("nl.brace",	"false",	"Newline before opening '{'");
 static const ConfigVar cfg_var_nl_else		("nl.else",		"false",	"Newline before else");
 static const ConfigVar cfg_var_indent		("indent",		"4",		"Indent increment");
 static const ConfigVar cfg_var_linelen		("linelen",		"120",		"Max line length");
+
 
 static void print_usage(const RCore *const core)
 {
@@ -250,25 +260,61 @@ static int r2ghidra_cmd(void *user, const char *input)
 	return false;
 }
 
+bool SleighHomeConfig(void */* user */, void *data)
+{
+	auto node = reinterpret_cast<RConfigNode *>(data);
+	SleighArchitecture::shutdown();
+	SleighArchitecture::specpaths = FileManage();
+	if(node->value && *node->value)
+		SleighArchitecture::scanForSleighDirectories(node->value);
+	return true;
+}
+
+static void SetInitialSleighHome(RConfig *cfg)
+{
+	// user-set, for example from .radare2rc
+	if(!cfg_var_sleighhome.GetString(cfg).empty())
+		return;
+
+	// SLEIGHHOME env
+	const char *sleighhomepath = getenv("SLEIGHHOME");
+	if(sleighhomepath && *sleighhomepath)
+	{
+		cfg_var_sleighhome.Set(cfg, sleighhomepath);
+		return;
+	}
+
+	// TODO: bundled by r2pm r2ghidra package
+
+	// r2pm-installed ghidra
+	char *homepath = r_str_home(".local/share/radare2/r2pm/git/ghidra");
+	if(homepath && r_file_is_directory(homepath))
+	{
+		cfg_var_sleighhome.Set(cfg, homepath);
+	}
+	r_mem_free (homepath);
+}
+
 static int r2ghidra_init(void *user, const char *cmd)
 {
+	startDecompilerLibrary(nullptr);
+
 	auto *rcmd = reinterpret_cast<RCmd *>(user);
 	auto *core = reinterpret_cast<RCore *>(rcmd->data);
 	RConfig *cfg = core->config;
 	r_config_lock (cfg, false);
 	for(const auto var : ConfigVar::GetAll())
-		r_config_node_desc(r_config_set(cfg, var->GetName(), var->GetDefault()), var->GetDesc());
+	{
+		RConfigNode *node;
+		if(var->GetCallback())
+			node = r_config_set_cb(cfg, var->GetName(), var->GetDefault(), var->GetCallback());
+		else
+			node = r_config_set(cfg, var->GetName(), var->GetDefault());
+		r_config_node_desc(node, var->GetDesc());
+	}
 	r_config_lock (cfg, true);
 
-	const char *sleighhomepath = getenv("SLEIGHHOME");
-	char *homepath = NULL;
-	if(!sleighhomepath)
-	{
-		homepath = r_str_home (".local/share/radare2/r2pm/git/ghidra");
-		sleighhomepath = homepath;
-	}
-	startDecompilerLibrary(sleighhomepath);
-	r_free (homepath);
+	SetInitialSleighHome(cfg);
 	return true;
 }
 
@@ -283,7 +329,8 @@ RCorePlugin r_core_plugin_ghidra = {
 	.desc = "Ghidra integration",
 	.license = "GPL3",
 	.call = r2ghidra_cmd,
-	.init = r2ghidra_init
+	.init = r2ghidra_init,
+	.fini = r2ghidra_fini
 };
 
 #ifndef CORELIB
