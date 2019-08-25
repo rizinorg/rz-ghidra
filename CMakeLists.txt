@@ -25,7 +25,9 @@ set(SOURCE
 		src/R2PrintC.cpp
 		src/R2PrintC.h
 		src/R2Emit.cpp
-		src/R2Emit.h)
+		src/R2Emit.h
+		src/AnnotatedCode.h
+		src/AnnotatedCode.c)
 
 find_package(Radare2 REQUIRED)
 
