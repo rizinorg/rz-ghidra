@@ -55,7 +55,7 @@ static const ConfigVar cfg_var_indent		("indent",		"4",		"Indent increment");
 static const ConfigVar cfg_var_linelen		("linelen",		"120",		"Max line length");
 
 
-static void print_usage(const RCore *const core)
+static void PrintUsage(const RCore *const core)
 {
 	const char* help[] = {
 		"Usage: " CMD_PREFIX, "", "# Native Ghidra decompiler plugin",
@@ -63,6 +63,7 @@ static void print_usage(const RCore *const core)
 		CMD_PREFIX, "d", "# Dump the debug XML Dump",
 		CMD_PREFIX, "x", "# Dump the XML of the current decompiled function",
 		CMD_PREFIX, "o", "# Decompile current function side by side with offsets",
+		CMD_PREFIX, "s", "# Display loaded Sleigh Languages",
 		CMD_PREFIX, "*", "# Decompiled code is returned to r2 as comment",
 		"Environment:", "", "",
 		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
@@ -96,7 +97,7 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
 }
 
-static void decompile(RCore *core, DecompileMode mode)
+static void Decompile(RCore *core, DecompileMode mode)
 {
 	RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
 	if(!function)
@@ -225,26 +226,43 @@ static void decompile(RCore *core, DecompileMode mode)
 #endif
 }
 
+static void ListSleighLangs()
+{
+	SleighArchitecture::collectSpecFiles(std::cerr);
+	auto langs = SleighArchitecture::getLanguageDescriptions();
+	if(langs.empty())
+	{
+		r_cons_printf("No languages available, make sure %s is set correctly!\n", cfg_var_sleighhome.GetName());
+		return;
+	}
+
+	for(const auto &lang : langs)
+		r_cons_printf("%s\n", lang.getId().c_str());
+}
+
 static void _cmd(RCore *core, const char *input)
 {
 	switch (*input) {
 		case 'd':
-			decompile(core, DecompileMode::DEBUG_XML);
+			Decompile(core, DecompileMode::DEBUG_XML);
 			break;
 		case '\0':
-			decompile(core, DecompileMode::DEFAULT);
+			Decompile(core, DecompileMode::DEFAULT);
 			break;
 		case 'x':
-			decompile(core, DecompileMode::XML);
+			Decompile(core, DecompileMode::XML);
 			break;
 		case 'o':
-			decompile(core, DecompileMode::OFFSET);
+			Decompile(core, DecompileMode::OFFSET);
 			break;
 		case '*':
-			decompile(core, DecompileMode::STATEMENTS);
+			Decompile(core, DecompileMode::STATEMENTS);
+			break;
+		case 's':
+			ListSleighLangs();
 			break;
 		default:
-			print_usage(core);
+			PrintUsage(core);
 			break;
 	}
 }
