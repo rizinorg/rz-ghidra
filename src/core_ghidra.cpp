@@ -193,8 +193,9 @@ static void decompile(RCore *core, DecompileMode mode)
 				}
 				statement.erase(std::remove(statement.begin(), statement.end(), '\n'), statement.end() );
 
-				comment_stream << "s " <<  "0x" << std::hex << addr.first.getOffset() << "\n";
-				comment_stream << "\"CC " << statement.c_str() <<  "\"\n";
+				char *b64statement = r_base64_encode_dyn(statement.c_str(), statement.size());
+				comment_stream << "s " << "0x" << std::hex << addr.first.getOffset() << "\n";
+				comment_stream << "CCu base64:" << b64statement << "\n";
 				r_cons_print(comment_stream.str().c_str());
 			}
 		}
