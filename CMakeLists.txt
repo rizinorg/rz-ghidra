@@ -9,6 +9,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(CMAKE_CXX_STANDARD 11)
 
 add_subdirectory(ghidra)
+add_subdirectory(third-party)
 
 set(SOURCE
 		src/core_ghidra.cpp
@@ -27,7 +28,9 @@ set(SOURCE
 		src/R2Emit.cpp
 		src/R2Emit.h
 		src/AnnotatedCode.h
-		src/AnnotatedCode.c)
+		src/AnnotatedCode.c
+		src/CodeXMLParse.h
+		src/CodeXMLParse.cpp)
 
 find_package(Radare2 REQUIRED)
 
@@ -37,7 +40,8 @@ endif()
 
 add_library(core_ghidra SHARED ${SOURCE})
 target_link_libraries(core_ghidra ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
+target_link_libraries(core_ghidra pugixml)
+target_link_libraries(core_ghidra Radare2::libr)
 set_target_properties(core_ghidra PROPERTIES
 		OUTPUT_NAME core_ghidra
 		PREFIX "")
-target_link_libraries(core_ghidra Radare2::libr)
