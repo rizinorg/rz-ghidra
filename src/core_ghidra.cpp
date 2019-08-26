@@ -64,6 +64,7 @@ static void PrintUsage(const RCore *const core)
 		CMD_PREFIX, "", "# Decompile current function with the Ghidra decompiler",
 		CMD_PREFIX, "d", "# Dump the debug XML Dump",
 		CMD_PREFIX, "x", "# Dump the XML of the current decompiled function",
+		CMD_PREFIX, "j", "# Dump the current decompiled function as JSON",
 		CMD_PREFIX, "o", "# Decompile current function side by side with offsets",
 		CMD_PREFIX, "s", "# Display loaded Sleigh Languages",
 		CMD_PREFIX, "*", "# Decompiled code is returned to r2 as comment",
@@ -75,7 +76,7 @@ static void PrintUsage(const RCore *const core)
 	r_cons_cmd_help(help, core->print->flags & R_PRINT_FLAGS_COLOR);
 }
 
-enum class DecompileMode { DEFAULT, XML, DEBUG_XML, OFFSET, STATEMENTS };
+enum class DecompileMode { DEFAULT, XML, DEBUG_XML, OFFSET, STATEMENTS, JSON };
 
 //#define DEBUG_EXCEPTIONS
 
@@ -144,16 +145,15 @@ static void Decompile(RCore *core, DecompileMode mode)
 		for(const auto &warning : arch.getWarnings())
 			func->warningHeader("[r2ghidra] " + warning);
 
+		if(mode == DecompileMode::XML || mode == DecompileMode::JSON)
+			arch.print->setXML(true);
+
+
 		if(mode == DecompileMode::XML)
 		{
-			arch.print->setXML(true);
 			out_stream << "<result><function>";
 			func->saveXml(out_stream, true);
 			out_stream << "</function><code>";
-		}
-		else if(mode == DecompileMode::OFFSET)
-		{
-			arch.print->setXML(true);
 		}
 
 		switch(mode)
@@ -161,6 +161,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 			case DecompileMode::XML:
 			case DecompileMode::DEFAULT:
 			case DecompileMode::OFFSET:
+			case DecompileMode::JSON:
 				arch.print->docFunction(func);
 				break;
 			case DecompileMode::STATEMENTS:
@@ -173,16 +174,6 @@ static void Decompile(RCore *core, DecompileMode mode)
 
 		if(mode == DecompileMode::OFFSET)
 		{
-			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
-			if(!code)
-			{
-				eprintf("Failed to parse XML code\n");
-				return;
-			}
-			// TODO: print code with offsets from RAnnotatedCode here
-			r_cons_print(code->code);
-			r_annotated_code_free(code);
-			return;
 			ut64 offset;
 			string line;
 			std::stringstream line_stream;
@@ -226,6 +217,19 @@ static void Decompile(RCore *core, DecompileMode mode)
 				r_cons_print(comment_stream.str().c_str());
 			}
 		}
+		else if(mode == DecompileMode::JSON)
+		{
+			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
+			if(!code)
+			{
+				eprintf("Failed to parse XML code\n");
+				return;
+			}
+			r_annotated_code_print_json(code);
+			r_annotated_code_free(code);
+			return;
+
+		}
 		else
 		{
 			if(mode == DecompileMode::XML)
@@ -268,6 +272,9 @@ static void _cmd(RCore *core, const char *input)
 			break;
 		case 'x':
 			Decompile(core, DecompileMode::XML);
+			break;
+		case 'j':
+			Decompile(core, DecompileMode::JSON);
 			break;
 		case 'o':
 			Decompile(core, DecompileMode::OFFSET);
