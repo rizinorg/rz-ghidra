@@ -9,7 +9,7 @@ class R2GhidraDecompiler: public Decompiler
 {
 	public:
 		R2GhidraDecompiler(QObject *parent = nullptr);
-		DecompiledCode decompileAt(RVA addr) override;
+		AnnotatedCode decompileAt(RVA addr) override;
 };
 
 #endif //R2GHIDRA_R2GHIDRADECOMPILER_H
