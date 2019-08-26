@@ -2,6 +2,7 @@
 #include "AnnotatedCode.h"
 
 #include <r_util.h>
+#include <r_cons.h>
 
 R_API RAnnotatedCode *r_annotated_code_new(char *code)
 {
@@ -39,4 +40,36 @@ R_API RPVector *r_annotated_code_annotations_in(RAnnotatedCode *code, size_t off
 		}
 	}
 	return r;
+}
+
+R_API void r_annotated_code_print_json(RAnnotatedCode *code)
+{
+	PJ *pj = pj_new ();
+	if (!pj) {
+		return;
+	}
+
+	pj_o (pj);
+	pj_ks (pj, "code", code->code);
+
+	pj_k (pj, "annotations");
+	pj_a (pj);
+	RCodeAnnotation *annotation;
+	r_vector_foreach (&code->annotations, annotation) {
+		pj_o (pj);
+		pj_kn (pj, "start", (ut64)annotation->start);
+		pj_kn (pj, "end", (ut64)annotation->end);
+		switch (annotation->type) {
+		case R_CODE_ANNOTATION_TYPE_OFFSET:
+			pj_ks (pj, "type", "offset");
+			pj_kn (pj, "offset", annotation->offset.offset);
+			break;
+		}
+		pj_end (pj);
+	}
+	pj_end (pj);
+
+	pj_end (pj);
+	r_cons_printf ("%s", pj_string (pj));
+	pj_free (pj);
 }
