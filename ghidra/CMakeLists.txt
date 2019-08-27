@@ -114,6 +114,16 @@ set(DECOMPILER_SOURCE_CONSOLE_CXX
 		callgraph.cc
 		raw_arch.cc)
 
+set(SLEIGH_COMPILER_SOURCE_CXX
+		slgh_compile.cc
+		slgh_compile.hh)
+
+set(SLEIGH_COMPILER_SOURCE_YACC
+		slghparse.y)
+
+set(SLEIGH_COMPILER_SOURCE_FLEX
+		slghscan.l)
+
 set(DECOMPILER_SOURCE_DIR ghidra/Ghidra/Features/Decompiler/src/decompile/cpp)
 
 ################################################################################
@@ -123,19 +133,27 @@ list(TRANSFORM DECOMPILER_SOURCE_LIBDECOMP_CXX PREPEND "${DECOMPILER_SOURCE_DIR}
 list(TRANSFORM DECOMPILER_SOURCE_GHIDRA_CXX PREPEND "${DECOMPILER_SOURCE_DIR}/")
 list(TRANSFORM DECOMPILER_SOURCE_SLEIGH_CXX PREPEND "${DECOMPILER_SOURCE_DIR}/")
 list(TRANSFORM DECOMPILER_SOURCE_CONSOLE_CXX PREPEND "${DECOMPILER_SOURCE_DIR}/")
+list(TRANSFORM SLEIGH_COMPILER_SOURCE_CXX PREPEND "${DECOMPILER_SOURCE_DIR}/")
 set(SOURCE "${DECOMPILER_SOURCE_BASE_CXX}")
 
 find_package(BISON REQUIRED)
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bison")
+find_package(FLEX REQUIRED)
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/flex")
 
 # build yacc files and append the output files to OUT_VAR
 macro(build_bison OUT_VAR)
 	foreach(yacc_file ${ARGN})
 		get_filename_component(yacc_name "${yacc_file}" NAME_WE)
-		if(BISON_VERSION VERSION_LESS 2.6)
-			set(BISON_COMPILE_FLAGS "--name-prefix=${yacc_name}_")
+		if("${yacc_name}" STREQUAL "slghparse")
+			set(yacc_prefix yy)
 		else()
-			set(BISON_COMPILE_FLAGS "-Dapi.prefix={${yacc_name}}")
+			set(yacc_prefix "${yacc_name}")
+		endif()
+		if(BISON_VERSION VERSION_LESS 2.6)
+			set(BISON_COMPILE_FLAGS "--name-prefix=${yacc_prefix}")
+		else()
+			set(BISON_COMPILE_FLAGS "-Dapi.prefix={${yacc_prefix}}")
 		endif()
 		BISON_TARGET(${yacc_name}
 				"${CMAKE_CURRENT_SOURCE_DIR}/${DECOMPILER_SOURCE_DIR}/${yacc_file}"
@@ -147,6 +165,11 @@ endmacro()
 
 build_bison(SOURCE ${DECOMPILER_SOURCE_BASE_YACC})
 build_bison(DECOMPILER_SOURCE_SLEIGH_CXX ${DECOMPILER_SOURCE_SLEIGH_YACC})
+build_bison(SLEIGH_COMPILER_SOURCE_CXX ${SLEIGH_COMPILER_SOURCE_YACC})
+
+FLEX_TARGET(slghscan "${DECOMPILER_SOURCE_DIR}/${SLEIGH_COMPILER_SOURCE_FLEX}" "${CMAKE_CURRENT_BINARY_DIR}/flex/slghscan.cpp")
+list(APPEND SLEIGH_COMPILER_SOURCE_CXX "${CMAKE_CURRENT_BINARY_DIR}/flex/slghscan.cpp")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/flex/slghparse.tab.hh" "#include \"../bison/slghparse.hpp\"")
 
 add_library(ghidra_decompiler_base STATIC ${SOURCE})
 target_include_directories(ghidra_decompiler_base PUBLIC "${DECOMPILER_SOURCE_DIR}")
@@ -171,3 +194,7 @@ if(BUILD_DECOMPILE_CLI_EXECUTABLE)
 	target_link_libraries(ghidra_decompiler_cli ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
 	set_target_properties(ghidra_decompiler_cli PROPERTIES OUTPUT_NAME decompile_cli)
 endif()
+
+add_executable(sleighc ${SLEIGH_COMPILER_SOURCE_CXX})
+target_link_libraries(sleighc ghidra_decompiler_sleigh ghidra_decompiler_base)
+target_include_directories(sleighc PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/flex")
