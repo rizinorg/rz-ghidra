@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.12)
 
 project(r2ghidra)
 
+set(RADARE2_INSTALL_PLUGDIR "share/radare2/plugins" CACHE PATH "Directory to install radare2 plugin into")
+set(CUTTER_INSTALL_PLUGDIR "share/Cutter/plugins" CACHE PATH "Directory to install Cutter plugin into")
+
 option(BUILD_CUTTER_PLUGIN "Build r2ghidra plugin for Cutter" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -45,3 +48,5 @@ target_link_libraries(core_ghidra Radare2::libr)
 set_target_properties(core_ghidra PROPERTIES
 		OUTPUT_NAME core_ghidra
 		PREFIX "")
+
+install(TARGETS core_ghidra DESTINATION "${RADARE2_INSTALL_PLUGDIR}")
