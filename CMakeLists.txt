@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 project(r2ghidra)
 
 set(RADARE2_INSTALL_PLUGDIR "share/radare2/plugins" CACHE PATH "Directory to install radare2 plugin into")
-set(CUTTER_INSTALL_PLUGDIR "share/Cutter/plugins" CACHE PATH "Directory to install Cutter plugin into")
+set(CUTTER_INSTALL_PLUGDIR "share/RadareOrg/Cutter/plugins/native" CACHE PATH "Directory to install Cutter plugin into")
 
 option(BUILD_CUTTER_PLUGIN "Build r2ghidra plugin for Cutter" OFF)
 option(BUILD_DECOMPILE_EXECUTABLE "Build \"decompile\" executable as used by Ghidra (not needed for r2)" OFF)
