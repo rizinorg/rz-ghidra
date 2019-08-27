@@ -1,7 +1,4 @@
 
-option(BUILD_DECOMPILE_EXECUTABLE "Build \"decompile\" executable as used by Ghidra (not needed for r2)" OFF)
-option(BUILD_DECOMPILE_CLI_EXECUTABLE "Build REPL decompiler (not needed for r2)" OFF)
-
 ################################################################################
 # see Ghidra/Features/Decompiler/build.gradle in Ghidra source
 
@@ -198,3 +195,28 @@ endif()
 add_executable(sleighc ${SLEIGH_COMPILER_SOURCE_CXX})
 target_link_libraries(sleighc ghidra_decompiler_sleigh ghidra_decompiler_base)
 target_include_directories(sleighc PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/flex")
+
+if(BUILD_SLASPECS)
+	file(GLOB_RECURSE SLASPEC_FILES "ghidra/Ghidra/Processors/*.slaspec")
+	file(GLOB_RECURSE CPEC_FILES "ghidra/Ghidra/Processors/*.cspec")
+	file(GLOB_RECURSE LDEFS_FILES "ghidra/Ghidra/Processors/*.ldefs")
+	file(GLOB_RECURSE PSPEC_FILES "ghidra/Ghidra/Processors/*.pspec")
+	set(SLAFILES "")
+	set(SLEIGH_BASE "${CMAKE_CURRENT_BINARY_DIR}/sleigh")
+	file(MAKE_DIRECTORY "${SLEIGH_BASE}")
+	foreach(slaspec ${SLASPEC_FILES})
+		get_filename_component(sleigh_name "${slaspec}" NAME_WE)
+		set(sla_file "${SLEIGH_BASE}/${sleigh_name}.sla")
+		add_custom_command(OUTPUT "${sla_file}"
+				COMMAND sleighc "${slaspec}" "${sla_file}"
+				MAIN_DEPENDENCY "${slaspec}")
+		list(APPEND SLAFILES "${sla_file}")
+	endforeach()
+	add_custom_target(sla DEPENDS ${SLAFILES})
+	set(SLEIGH_INSTALL_DEST "${RADARE2_INSTALL_PLUGDIR}/r2ghidra_sleigh")
+	install(FILES ${SLAFILES} ${CPEC_FILES} ${LDEFS_FILES} ${PSPEC_FILES} DESTINATION "${SLEIGH_INSTALL_DEST}")
+	get_filename_component(SLEIGHHOME_DEFAULT "${SLEIGH_INSTALL_DEST}" ABSOLUTE BASE_DIR "${CMAKE_INSTALL_PREFIX}")
+else()
+	unset(SLEIGHHOME_DEFAULT)
+endif()
+set(SLEIGHHOME_DEFAULT "${SLEIGHHOME_DEFAULT}" PARENT_SCOPE)

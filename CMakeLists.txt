@@ -6,6 +6,9 @@ set(RADARE2_INSTALL_PLUGDIR "share/radare2/plugins" CACHE PATH "Directory to ins
 set(CUTTER_INSTALL_PLUGDIR "share/Cutter/plugins" CACHE PATH "Directory to install Cutter plugin into")
 
 option(BUILD_CUTTER_PLUGIN "Build r2ghidra plugin for Cutter" OFF)
+option(BUILD_DECOMPILE_EXECUTABLE "Build \"decompile\" executable as used by Ghidra (not needed for r2)" OFF)
+option(BUILD_DECOMPILE_CLI_EXECUTABLE "Build REPL decompiler (not needed for r2)" OFF)
+option(BUILD_SLASPECS "Build Sleigh specs for architectures from Ghidra" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -48,5 +51,9 @@ target_link_libraries(core_ghidra Radare2::libr)
 set_target_properties(core_ghidra PROPERTIES
 		OUTPUT_NAME core_ghidra
 		PREFIX "")
+
+if(SLEIGHHOME_DEFAULT)
+	target_compile_definitions(core_ghidra PRIVATE -DR2GHIDRA_SLEIGHHOME_DEFAULT="${SLEIGHHOME_DEFAULT}")
+endif()
 
 install(TARGETS core_ghidra DESTINATION "${RADARE2_INSTALL_PLUGDIR}")

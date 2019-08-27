@@ -326,7 +326,13 @@ static void SetInitialSleighHome(RConfig *cfg)
 		return;
 	}
 
-	// TODO: bundled by r2pm r2ghidra package
+#ifdef R2GHIDRA_SLEIGHHOME_DEFAULT
+	if(r_file_is_directory(R2GHIDRA_SLEIGHHOME_DEFAULT))
+	{
+		cfg_var_sleighhome.Set(cfg, R2GHIDRA_SLEIGHHOME_DEFAULT);
+		return;
+	}
+#endif
 
 	// r2pm-installed ghidra
 	char *homepath = r_str_home(".local/share/radare2/r2pm/git/ghidra");
