@@ -86,7 +86,8 @@ static std::string to_string(const char *str)
 
 FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 {
-	RCore *core = arch->getCore();
+	RCoreLock core(arch);
+
 	const std::string r2Arch(r_config_get(core->config, "asm.arch"));
 
 	// We use xml here, because the public interface for Functions
@@ -399,8 +400,8 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 
 Symbol *R2Scope::queryR2Absoulte(ut64 addr) const
 {
-	// TODO: sync
-	RCore *core = arch->getCore();
+	RCoreLock core(arch);
+
 	RAnalFunction *fcn = r_anal_get_fcn_at(core->anal, addr, R_ANAL_FCN_TYPE_NULL);
 	if(fcn)
 		return registerFunction(fcn);
@@ -424,8 +425,7 @@ Symbol *R2Scope::queryR2(const Address &addr) const
 
 LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 {
-	// TODO: sync
-	RCore *core = arch->getCore();
+	RCoreLock core(arch);
 
 	RAnalFunction *fcn = r_anal_get_fcn_in(core->anal, addr.getOffset(), R_ANAL_FCN_TYPE_NULL);
 	if(!fcn)

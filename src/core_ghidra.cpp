@@ -156,7 +156,9 @@ static void Decompile(RCore *core, DecompileMode mode)
 			return;
 		}
 
+		arch.sleepBegin();
 		int res = arch.allacts.getCurrent()->perform(*func);
+		arch.sleepEnd();
 		if (res<0)
 			eprintf("break\n");
 		/*else

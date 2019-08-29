@@ -10,6 +10,7 @@
 #include <funcdata.hh>
 
 #include <iostream>
+#include <cassert>
 
 // maps radare2 asm/anal plugins names to sleigh language
 static const std::map<std::string, std::string> arch_map = {
@@ -54,7 +55,7 @@ std::string FilenameFromCore(RCore *core)
 	return core->bin->file;
 }
 
-std:: string CompilerFromCore(RCore *core)
+std::string CompilerFromCore(RCore *core)
 {
 	RBinInfo *info = r_bin_get_info(core->bin);
 	if (!info || !info->rclass)
@@ -92,9 +93,30 @@ std::string SleighIdFromCore(RCore *core)
 
 R2Architecture::R2Architecture(RCore *core, const std::string &sleigh_id)
 	: SleighArchitecture(FilenameFromCore(core), sleigh_id.empty() ? SleighIdFromCore(core) : sleigh_id, &cout),
-	core(core)
+	_core(core)
 {
 	print_with_offsets = new R2PrintC(this, string("tagged-c-language"));
+	caffeine_level = 1;
+	bed = nullptr;
+}
+
+void R2Architecture::sleepEnd()
+{
+	assert(caffeine_level >= 0);
+	caffeine_level++;
+	if(caffeine_level == 1)
+	{
+		r_cons_sleep_end(bed);
+		bed = nullptr;
+	}
+}
+
+void R2Architecture::sleepBegin()
+{
+	assert(caffeine_level > 0);
+	caffeine_level--;
+	if(caffeine_level == 0)
+		bed = r_cons_sleep_begin();
 }
 
 ProtoModel *R2Architecture::protoModelFromR2CC(const char *cc)
@@ -164,6 +186,7 @@ ContextDatabase *R2Architecture::getContextDatabase()
 
 void R2Architecture::postSpecFile()
 {
+	RCoreLock core(this);
 	r_list_foreach_cpp<RAnalFunction>(core->anal->fcns, [&](RAnalFunction *func) {
 		if (func->is_noreturn)
 		{
@@ -176,6 +199,7 @@ void R2Architecture::postSpecFile()
 
 void R2Architecture::buildLoader(DocumentStorage &store)
 {
+	RCoreLock core(this);
 	collectSpecFiles(*errorstream);
 	loader = new R2LoadImage(core);
 }

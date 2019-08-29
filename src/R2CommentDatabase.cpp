@@ -14,8 +14,7 @@ R2CommentDatabase::R2CommentDatabase(R2Architecture *arch)
 
 void R2CommentDatabase::fillCache(const Address &fad) const
 {
-	// TODO: sync
-	RCore *core = arch->getCore();
+	RCoreLock core(arch);
 
 	RAnalFunction *fcn = r_anal_get_fcn_at(core->anal, fad.getOffset(), R_ANAL_FCN_TYPE_NULL);
 	if(!fcn)
