@@ -9,31 +9,31 @@
 R2GhidraDecompiler::R2GhidraDecompiler(QObject *parent)
 	: Decompiler("r2ghidra", "Ghidra", parent)
 {
-	    task = nullptr;
+	task = nullptr;
 }
 
 void R2GhidraDecompiler::decompileAt(RVA addr)
 {
-	if (task) {
-        return;
-    }
+	if(task)
+		return;
 
 	AnnotatedCode code = {};
 
 	task = new R2Task ("pdgj @ " + QString::number(addr));
 
 	connect(task, &R2Task::finished, this, [this]() {
-        AnnotatedCode code = {};
-        QString s;
+		AnnotatedCode code = {};
+		QString s;
 
-        QJsonObject json = task->getResultJson().object();
-        delete task;
-        task = nullptr;
-        if (json.isEmpty()) {
-            code.code = tr("Failed to parse JSON from r2ghidra");
-            emit finished(code);
-            return;
-        }
+		QJsonObject json = task->getResultJson().object();
+		delete task;
+		task = nullptr;
+		if(json.isEmpty())
+		{
+			code.code = tr("Failed to parse JSON from r2ghidra");
+			emit finished(code);
+			return;
+		}
 
 		auto root = json;
 		code.code = root["code"].toString();
@@ -54,7 +54,7 @@ void R2GhidraDecompiler::decompileAt(RVA addr)
 			code.annotations.push_back(annotation);
 		}
 		emit finished(code);
-    });
+	});
 	task->startTask();
 
 }
