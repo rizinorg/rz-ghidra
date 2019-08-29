@@ -10,6 +10,7 @@
 #include <r_core.h>
 
 #include <vector>
+#include <mutex>
 
 #define CMD_PREFIX "pdg"
 #define CFG_PREFIX "r2ghidra"
@@ -57,6 +58,8 @@ static const ConfigVar cfg_var_indent		("indent",		"4",		"Indent increment");
 static const ConfigVar cfg_var_linelen		("linelen",		"120",		"Max line length");
 
 
+static std::recursive_mutex decompiler_mutex;
+
 static void PrintUsage(const RCore *const core)
 {
 	const char* help[] = {
@@ -102,6 +105,8 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 
 static void Decompile(RCore *core, DecompileMode mode)
 {
+	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
+
 	RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
 	if(!function)
 	{
@@ -249,6 +254,8 @@ static void Decompile(RCore *core, DecompileMode mode)
 
 static void ListSleighLangs()
 {
+	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
+
 	SleighArchitecture::collectSpecFiles(std::cerr);
 	auto langs = SleighArchitecture::getLanguageDescriptions();
 	if(langs.empty())
@@ -304,6 +311,7 @@ static int r2ghidra_cmd(void *user, const char *input)
 
 bool SleighHomeConfig(void */* user */, void *data)
 {
+	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	auto node = reinterpret_cast<RConfigNode *>(data);
 	SleighArchitecture::shutdown();
 	SleighArchitecture::specpaths = FileManage();
@@ -345,6 +353,7 @@ static void SetInitialSleighHome(RConfig *cfg)
 
 static int r2ghidra_init(void *user, const char *cmd)
 {
+	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	startDecompilerLibrary(nullptr);
 
 	auto *rcmd = reinterpret_cast<RCmd *>(user);
@@ -368,6 +377,7 @@ static int r2ghidra_init(void *user, const char *cmd)
 
 static int r2ghidra_fini(void *user, const char *cmd)
 {
+	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	shutdownDecompilerLibrary();
 	return true;
 }
