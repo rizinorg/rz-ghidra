@@ -60,6 +60,25 @@ static const ConfigVar cfg_var_linelen		("linelen",		"120",		"Max line length");
 
 static std::recursive_mutex decompiler_mutex;
 
+class DecompilerLock
+{
+	public:
+		DecompilerLock()
+		{
+			if(!decompiler_mutex.try_lock())
+			{
+				void *bed = r_cons_sleep_begin();
+				decompiler_mutex.lock();
+				r_cons_sleep_end(bed);
+			}
+		}
+
+		~DecompilerLock()
+		{
+			decompiler_mutex.unlock();
+		}
+};
+
 static void PrintUsage(const RCore *const core)
 {
 	const char* help[] = {
@@ -105,7 +124,7 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 
 static void Decompile(RCore *core, DecompileMode mode)
 {
-	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
+	DecompilerLock lock;
 
 	RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
 	if(!function)
@@ -254,7 +273,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 
 static void ListSleighLangs()
 {
-	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
+	DecompilerLock lock;
 
 	SleighArchitecture::collectSpecFiles(std::cerr);
 	auto langs = SleighArchitecture::getLanguageDescriptions();
