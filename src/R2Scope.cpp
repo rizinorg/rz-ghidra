@@ -398,7 +398,7 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 	return symbol;
 }
 
-Symbol *R2Scope::queryR2Absoulte(ut64 addr) const
+Symbol *R2Scope::queryR2Absolute(ut64 addr) const
 {
 	RCoreLock core(arch);
 
@@ -419,7 +419,7 @@ Symbol *R2Scope::queryR2Absoulte(ut64 addr) const
 Symbol *R2Scope::queryR2(const Address &addr) const
 {
 	if(addr.getSpace() == arch->getDefaultSpace())
-		return queryR2Absoulte(addr.getOffset());
+		return queryR2Absolute(addr.getOffset());
 	return nullptr;
 }
 

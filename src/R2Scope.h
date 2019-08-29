@@ -19,7 +19,7 @@ class R2Scope : public Scope
 
 		FunctionSymbol *registerFunction(RAnalFunction *fcn) const;
 		Symbol *registerFlag(RFlagItem *flag) const;
-		Symbol *queryR2Absoulte(ut64 addr) const;
+		Symbol *queryR2Absolute(ut64 addr) const;
 		Symbol *queryR2(const Address &addr) const;
 		LabSymbol *queryR2FunctionLabel(const Address &addr) const;
 
