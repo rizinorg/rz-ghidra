@@ -1,0 +1,33 @@
+
+language: cpp
+
+#branches:
+#  only:
+#    - master
+
+os: linux
+dist: bionic
+
+addons:
+  apt:
+    packages:
+       - ninja-build
+
+install:
+  - pip3 install meson
+  - git clone git@github.com:radare/radare2
+  - cd radare2 && mkdir build && cd build
+  - meson --prefix="$TRAVIS_BUILD_DIR/radare2-prefix" ..
+  - ninja
+  - ninja install
+
+script:
+  - mkdir build && cd build
+  - cmake
+      -DCMAKE_BUILD_TYPE=Release
+      -DCMAKE_PREFIX_PATH="$TRAVIS_BUILD_DIR/radare2-prefix"
+      -DCMAKE_INSTALL_PREFIX="$TRAVIS_BUILD_DIR/prefix"
+      ..
+  - make -j4
+  - make install
+
