@@ -1,6 +1,4 @@
 
-set(CUTTER_SOURCE_DIR CUTTER_SOURCE_DIR-NOTFOUND CACHE STRING "Root directory of Cutter source")
-
 set(SOURCE
 		R2GhidraPlugin.h
 		R2GhidraPlugin.cpp

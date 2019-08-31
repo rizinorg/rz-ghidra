@@ -5,6 +5,8 @@ project(r2ghidra)
 set(RADARE2_INSTALL_PLUGDIR "share/radare2/plugins" CACHE PATH "Directory to install radare2 plugin into")
 set(CUTTER_INSTALL_PLUGDIR "share/RadareOrg/Cutter/plugins/native" CACHE PATH "Directory to install Cutter plugin into")
 
+set(CUTTER_SOURCE_DIR CUTTER_SOURCE_DIR-NOTFOUND CACHE STRING "Root directory of Cutter source")
+
 option(BUILD_CUTTER_PLUGIN "Build r2ghidra plugin for Cutter" OFF)
 option(BUILD_DECOMPILE_EXECUTABLE "Build \"decompile\" executable as used by Ghidra (not needed for r2)" OFF)
 option(BUILD_DECOMPILE_CLI_EXECUTABLE "Build REPL decompiler (not needed for r2)" OFF)
