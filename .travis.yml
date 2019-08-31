@@ -1,9 +1,9 @@
 
 language: cpp
 
-#branches:
-#  only:
-#    - master
+branches:
+  only:
+    - master
 
 os: linux
 dist: bionic
