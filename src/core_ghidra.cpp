@@ -403,19 +403,23 @@ static int r2ghidra_fini(void *user, const char *cmd)
 	return true;
 }
 
-RCorePlugin r_core_plugin_ghidra = {
-	.name = "r2ghidra",
-	.desc = "Ghidra integration",
-	.license = "GPL3",
-	.call = r2ghidra_cmd,
-	.init = r2ghidra_init,
-	.fini = r2ghidra_fini
-};
+RCorePlugin r_core_plugin_ghidra = []() {
+	RCorePlugin plugin = {};
+	plugin.name = "r2ghidra";
+	plugin.desc = "Ghidra integration";
+	plugin.license = "GPL3";
+	plugin.call = r2ghidra_cmd;
+	plugin.init = r2ghidra_init;
+	plugin.fini = r2ghidra_fini;
+	return plugin;
+}();
 
 #ifndef CORELIB
-R_API RLibStruct radare_plugin = {
-	.type = R_LIB_TYPE_CORE,
-	.data = &r_core_plugin_ghidra,
-	.version = R2_VERSION
-};
+R_API RLibStruct radare_plugin = []() {
+	RLibStruct plugin = {};
+	plugin.type = R_LIB_TYPE_CORE;
+	plugin.data = &r_core_plugin_ghidra;
+	plugin.version = R2_VERSION;
+	return plugin;
+}();
 #endif
