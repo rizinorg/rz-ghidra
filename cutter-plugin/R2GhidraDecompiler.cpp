@@ -4,7 +4,9 @@
 
 #include <Cutter.h>
 
-#include <QtXml>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 R2GhidraDecompiler::R2GhidraDecompiler(QObject *parent)
 	: Decompiler("r2ghidra", "Ghidra", parent)
