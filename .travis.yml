@@ -17,7 +17,7 @@ addons:
        - python3-setuptools
        - ninja-build
        - qt512base
-       - libgl1-mesa-dev
+       - libgl1-mesa-deav
 
 install:
   - pip3 install meson
