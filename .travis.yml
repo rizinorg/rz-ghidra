@@ -1,0 +1,43 @@
+
+language: cpp
+
+branches:
+  only:
+    - master
+
+os: linux
+dist: bionic
+
+addons:
+  apt:
+    sources:
+      - sourceline: "ppa:beineri/opt-qt-5.12.0-bionic"
+    packages:
+       - python3-pip
+       - python3-setuptools
+       - ninja-build
+       - qt512base
+       - libgl1-mesa-deav
+
+install:
+  - pip3 install meson
+  - git clone --depth 1 https://github.com/radare/radare2
+  - cd radare2 && mkdir build && cd build
+  - meson --prefix="$TRAVIS_BUILD_DIR/radare2-prefix" ..
+  - ninja
+  - ninja install
+  - cd ../..
+  - git clone --depth 1 https://github.com/radareorg/cutter
+
+script:
+  - mkdir build && cd build
+  - cmake
+      -DCMAKE_BUILD_TYPE=Release
+      -DCMAKE_PREFIX_PATH="$TRAVIS_BUILD_DIR/radare2-prefix;/opt/qt512"
+      -DCMAKE_INSTALL_PREFIX="$TRAVIS_BUILD_DIR/prefix"
+      -DBUILD_CUTTER_PLUGIN=ON
+      -DCUTTER_SOURCE_DIR="$TRAVIS_BUILD_DIR/cutter"
+      ..
+  - make -j4
+  - make install
+
