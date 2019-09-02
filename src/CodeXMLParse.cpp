@@ -1,6 +1,11 @@
 
 #include "CodeXMLParse.h"
 #include "AnnotatedCode.h"
+
+#ifdef LoadImage
+#undef LoadImage
+#endif
+
 #include <funcdata.hh>
 #include <r_util.h>
 #include <pugixml.hpp>
