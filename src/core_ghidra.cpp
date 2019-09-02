@@ -3,6 +3,11 @@
 #include "R2Architecture.h"
 #include "CodeXMLParse.h"
 
+// Windows clash
+#ifdef restrict
+#undef restrict
+#endif
+
 #include <libdecomp.hh>
 #include <printc.hh>
 #include "R2PrintC.h"

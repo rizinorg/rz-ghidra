@@ -20,4 +20,8 @@ if(APPLE)
 	target_link_options(r2ghidra_cutter PRIVATE -undefined dynamic_lookup)
 endif()
 
+if(WIN32)
+	target_link_options(r2ghidra_cutter PRIVATE -FORCE:UNRESOLVED)
+endif()
+
 install(TARGETS r2ghidra_cutter DESTINATION "${CUTTER_INSTALL_PLUGDIR}")

@@ -2,10 +2,11 @@
 
 #include "R2TypeFactory.h"
 #include "R2Architecture.h"
-#include "R2Utils.h"
 
 #include <r_parse.h>
 #include <r_core.h>
+
+#include "R2Utils.h"
 
 R2TypeFactory::R2TypeFactory(R2Architecture *arch)
 	: TypeFactory(arch),
@@ -69,9 +70,9 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n)
 			memberType = getTypeArray(elements, memberType);
 
 		fields.push_back({
-			.offset = offset,
-			.name = memberName,
-			.type = memberType
+			offset,
+			memberName,
+			memberType
 		});
 	}
 

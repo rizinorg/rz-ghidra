@@ -206,10 +206,12 @@ if(BUILD_SLASPECS)
 	file(MAKE_DIRECTORY "${SLEIGH_BASE}")
 	foreach(slaspec ${SLASPEC_FILES})
 		get_filename_component(sleigh_name "${slaspec}" NAME_WE)
+		get_filename_component(sleigh_dir "${slaspec}" DIRECTORY)
 		set(sla_file "${SLEIGH_BASE}/${sleigh_name}.sla")
 		add_custom_command(OUTPUT "${sla_file}"
 				COMMAND sleighc "${slaspec}" "${sla_file}"
-				MAIN_DEPENDENCY "${slaspec}")
+				MAIN_DEPENDENCY "${slaspec}"
+				WORKING_DIRECTORY "${sleigh_dir}")
 		list(APPEND SLAFILES "${sla_file}")
 	endforeach()
 	add_custom_target(sla ALL DEPENDS ${SLAFILES})

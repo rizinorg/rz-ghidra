@@ -27,8 +27,8 @@ void AnnotateOpref(ANNOTATOR_PARAMS)
 	pugi::xml_attribute attr = node.attribute("opref");
 	if(attr.empty())
 		return;
-	unsigned long long opref = attr.as_ullong(ULONG_LONG_MAX);
-	if(opref == ULONG_LONG_MAX)
+	unsigned long long opref = attr.as_ullong(ULLONG_MAX);
+	if(opref == ULLONG_MAX)
 		return;
 	auto opit = ctx->ops.find((uintm)opref);
 	if(opit == ctx->ops.end())

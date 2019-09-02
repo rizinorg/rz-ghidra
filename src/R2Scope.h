@@ -7,6 +7,11 @@
 
 #include <r_types.h>
 
+// Windows defines LoadImage to LoadImageA
+#ifdef LoadImage
+#undef LoadImage
+#endif
+
 class R2Architecture;
 typedef struct r_anal_function_t RAnalFunction;
 typedef struct r_flag_item_t RFlagItem;
