@@ -6,9 +6,8 @@
 #include "architecture.hh"
 #include "sleigh_arch.hh"
 
-#include <r_core.h>
-
 class R2TypeFactory;
+typedef struct r_core_t RCore;
 
 class R2Architecture : public SleighArchitecture
 {

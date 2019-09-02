@@ -3,11 +3,13 @@
 #include "R2Scope.h"
 #include "R2Architecture.h"
 #include "R2TypeFactory.h"
-#include "R2Utils.h"
 
 #include <funcdata.hh>
 
 #include <r_anal.h>
+#include <r_core.h>
+
+#include "R2Utils.h"
 
 R2Scope::R2Scope(R2Architecture *arch)
 		: Scope("", arch),

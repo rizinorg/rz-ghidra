@@ -5,6 +5,7 @@
 #include "R2Utils.h"
 
 #include <r_parse.h>
+#include <r_core.h>
 
 R2TypeFactory::R2TypeFactory(R2Architecture *arch)
 	: TypeFactory(arch),
