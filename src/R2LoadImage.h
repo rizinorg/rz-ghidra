@@ -7,6 +7,11 @@
 
 #include <r_core.h>
 
+// Windows defines LoadImage to LoadImageA
+#ifdef LoadImage
+#undef LoadImage
+#endif
+
 class R2LoadImage : public LoadImage
 {
 	private:

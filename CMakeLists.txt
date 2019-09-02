@@ -55,7 +55,7 @@ set_target_properties(core_ghidra PROPERTIES
 		PREFIX "")
 
 if(SLEIGHHOME_DEFAULT)
-	target_compile_definitions(core_ghidra PRIVATE -DR2GHIDRA_SLEIGHHOME_DEFAULT="${SLEIGHHOME_DEFAULT}")
+	target_compile_definitions(core_ghidra PRIVATE "-DR2GHIDRA_SLEIGHHOME_DEFAULT=\"${SLEIGHHOME_DEFAULT}\"")
 endif()
 
 install(TARGETS core_ghidra DESTINATION "${RADARE2_INSTALL_PLUGDIR}")
