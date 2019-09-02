@@ -2,9 +2,10 @@
 
 #include "R2CommentDatabase.h"
 #include "R2Architecture.h"
-#include "R2Utils.h"
 
 #include <r_core.h>
+
+#include "R2Utils.h"
 
 R2CommentDatabase::R2CommentDatabase(R2Architecture *arch)
 	: arch(arch),
