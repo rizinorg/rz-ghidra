@@ -420,6 +420,9 @@ RCorePlugin r_core_plugin_ghidra = {
 };
 
 #ifndef CORELIB
+#ifdef __cplusplus
+extern "C"
+#endif
 R_API RLibStruct radare_plugin = {
 	/* .type = */ R_LIB_TYPE_CORE,
 	/* .data = */ &r_core_plugin_ghidra,
