@@ -10,11 +10,44 @@ C++, so Ghidra itself is not required at all and the plugin can be built self-co
 
 ## Installing
 
-**TODO**: Info about r2pm
+An r2pm package is available that can easily be installed like:
+```
+r2pm -i r2ghidra-dec
+```
+
+This package only installs the radare2 part.
+To use r2ghidra from cutter, either use a provided pre-built release starting with
+Cutter 1.9, which bundles r2ghidra, or follow the build instructions below.
 
 ## Usage
 
-**TODO**: Document commands and config vars
+```
+Usage: pdg   # Native Ghidra decompiler plugin
+| pdg           # Decompile current function with the Ghidra decompiler
+| pdgd          # Dump the debug XML Dump
+| pdgx          # Dump the XML of the current decompiled function
+| pdgj          # Dump the current decompiled function as JSON
+| pdgo          # Decompile current function side by side with offsets
+| pdgs          # Display loaded Sleigh Languages
+| pdg*          # Decompiled code is returned to r2 as comment
+```
+
+The following config vars (for the `e` command) can be used to adjust r2ghidra's behavior:
+
+```
+    r2ghidra.cmt.cpp: C++ comment style
+ r2ghidra.cmt.indent: Comment indent
+     r2ghidra.indent: Indent increment
+       r2ghidra.lang: Custom Sleigh ID to override auto-detection (e.g. x86:LE:32:default)
+    r2ghidra.linelen: Max line length
+   r2ghidra.nl.brace: Newline before opening '{'
+    r2ghidra.nl.else: Newline before else
+ r2ghidra.sleighhome: SLEIGHHOME
+```
+
+Here, `r2ghidra.sleighhome` must point to a directory containing the `*.sla`, `*.lspec`, ... files for
+the architectures that should supported by the decompiler. This is however set up automatically when using
+the r2pm package or installing as shown below.
 
 ## Building
 
@@ -25,15 +58,19 @@ git submodule init
 git submodule update
 ```
 
-Then, the plugin can be built as follows:
+Then, the radare2 plugin can be built and installed as follows:
 
 ```
 mkdir build && cd build
-cmake ..
+cmake -DCMAKE_INSTALL_PREFIX=~/.local ..
 make
+make install
 ```
 
-**TODO**: add install target and info about it
+Here, set the `CMAKE_INSTALL_PREFIX` to a location where radare2 can load the plugin from.
+The install step is necessary for the plugin to work because it includes installing the necessary Sleigh files.
+
+To also build the Cutter plugin, pass `-DBUILD_CUTTER_PLUGIN=ON -DCUTTER_SOURCE_DIR=/path/to/cutter/source` to cmake.
 
 ## License
 
