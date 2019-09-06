@@ -12,13 +12,15 @@
 #undef LoadImage
 #endif
 
+class R2Architecture;
+
 class R2LoadImage : public LoadImage
 {
 	private:
-		RCore *core;
+		R2Architecture * const arch;
 
 	public:
-		explicit R2LoadImage(RCore *core);
+		explicit R2LoadImage(R2Architecture *arch);
 
 		void loadFill(uint1 *ptr, int4 size, const Address &addr) override;
 		string getArchType() const override;

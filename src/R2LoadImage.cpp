@@ -1,16 +1,17 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
 #include "R2LoadImage.h"
+#include "R2Architecture.h"
 
-R2LoadImage::R2LoadImage(RCore *core)
+R2LoadImage::R2LoadImage(R2Architecture *arch)
 	: LoadImage("radare2_program"),
-	core(core)
+	arch(arch)
 {
 }
 
 void R2LoadImage::loadFill(uint1 *ptr, int4 size, const Address &addr)
 {
-	// TODO: sync
+	RCoreLock core(arch);
 	r_io_read_at(core->io, addr.getOffset(), ptr, size);
 }
 
