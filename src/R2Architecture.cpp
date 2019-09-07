@@ -47,7 +47,8 @@ static const std::map<std::string, std::string> cc_map = {
 		{ "fastcall", "__fastcall" },
 		{ "stdcall", "__stdcall" },
 		{ "cdecl-thiscall-ms", "__thiscall" },
-		{ "amd64", "__stdcall" }
+		{ "amd64", "__stdcall" },
+		{ "arm16", "__stdcall" } /* not actually __stdcall */
 };
 
 std::string FilenameFromCore(RCore *core)
