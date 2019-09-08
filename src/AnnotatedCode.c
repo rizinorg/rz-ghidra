@@ -70,6 +70,6 @@ R_API void r_annotated_code_print_json(RAnnotatedCode *code)
 	pj_end (pj);
 
 	pj_end (pj);
-	r_cons_printf ("%s", pj_string (pj));
+	r_cons_printf ("%s\n", pj_string (pj));
 	pj_free (pj);
 }

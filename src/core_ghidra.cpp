@@ -131,17 +131,14 @@ static void Decompile(RCore *core, DecompileMode mode)
 {
 	DecompilerLock lock;
 
-	RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
-	if(!function)
-	{
-		eprintf("No function\n");
-		return;
-	}
-
 #ifndef DEBUG_EXCEPTIONS
 	try
 	{
 #endif
+		RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
+		if(!function)
+			throw LowlevelError("No function at this offset");
+
 		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 		DocumentStorage store;
 		arch.init(store);
@@ -156,10 +153,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultSpace(), function->addr));
 		if(!func)
-		{
-			eprintf("No function in Scope\n");
-			return;
-		}
+			throw LowlevelError("No function in Scope");
 
 		arch.sleepBegin();
 		int res = arch.allacts.getCurrent()->perform(*func);
@@ -252,10 +246,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 		{
 			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
 			if(!code)
-			{
-				eprintf("Failed to parse XML code\n");
-				return;
-			}
+				throw LowlevelError("Failed to parse XML code from Decompiler");
 			r_annotated_code_print_json(code);
 			r_annotated_code_free(code);
 			return;
@@ -271,9 +262,25 @@ static void Decompile(RCore *core, DecompileMode mode)
 		}
 #ifndef DEBUG_EXCEPTIONS
 	}
-	catch(LowlevelError error)
+	catch(const LowlevelError &error)
 	{
-		eprintf("Ghidra Decompiler Error: %s\n", error.explain.c_str());
+		std::string s = "Ghidra Decompiler Error: " + error.explain;
+		if(mode == DecompileMode::JSON)
+		{
+			PJ *pj = pj_new ();
+			if(!pj)
+				return;
+			pj_o(pj);
+			pj_k(pj, "errors");
+			pj_a(pj);
+			pj_s(pj, s.c_str());
+			pj_end(pj);
+			pj_end(pj);
+			r_cons_printf ("%s\n", pj_string (pj));
+			pj_free(pj);
+		}
+		else
+			eprintf("%s\n", s.c_str());
 	}
 #endif
 }

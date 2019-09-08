@@ -55,6 +55,10 @@ void R2GhidraDecompiler::decompileAt(RVA addr)
 				continue;
 			code.annotations.push_back(annotation);
 		}
+
+		for(QJsonValueRef error : json["errors"].toArray())
+			code.code += "// " + error.toString() + "\n";
+
 		emit finished(code);
 	});
 	task->startTask();
