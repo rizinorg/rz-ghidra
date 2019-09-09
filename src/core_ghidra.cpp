@@ -185,10 +185,10 @@ static void Decompile(RCore *core, DecompileMode mode)
 		{
 			case DecompileMode::XML:
 			case DecompileMode::DEFAULT:
-			case DecompileMode::OFFSET:
 			case DecompileMode::JSON:
 				arch.print->docFunction(func);
 				break;
+			case DecompileMode::OFFSET:
 			case DecompileMode::STATEMENTS:
 				arch.print_with_offsets->docFunction(func);
 				break;
