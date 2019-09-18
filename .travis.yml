@@ -21,7 +21,7 @@ addons:
 
 install:
   - pip3 install meson
-  - git clone --depth 1 https://github.com/radare/radare2
+  - git clone --depth 1 https://github.com/radareorg/radare2
   - cd radare2 && mkdir build && cd build
   - meson --prefix="$TRAVIS_BUILD_DIR/radare2-prefix" ..
   - ninja
