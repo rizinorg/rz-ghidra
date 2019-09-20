@@ -230,7 +230,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
 			if (! code)
 				throw LowlevelError("Failed to parse XML code from Decompiler");
-			r_annotated_code_print_with_syntax_highlighting(code, core);
+			r_annotated_code_print_with_syntax_highlighting(code);
 			r_annotated_code_free(code);
 			return;
 		}

@@ -106,7 +106,7 @@ R_API void r_annotated_code_print_json(RAnnotatedCode *code)
 	pj_free (pj);
 }
 
-R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode* code, RCore *core)
+R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode* code)
 {
 	if (code->annotations.len == 0) {
 		r_cons_printf("%s\n", code->code);
@@ -117,6 +117,7 @@ R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode* code,
 	size_t cur = 0;
 	size_t len = strlen(code->code);
 
+	RCons *cons = r_cons_singleton();
 	RCodeAnnotation *annotation;
 	r_vector_foreach (&code->annotations, annotation) {
 		if (annotation->type != R_CODE_ANNOTATION_TYPE_SYNTAX_HIGHLIGHT) {
@@ -126,7 +127,7 @@ R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode* code,
 		// (1/3)
 		// now we have a syntax highlighting annotation.
 		// pick a suitable color for it.
-#define PALETTE(x) (core->cons && core->cons->context->pal.x)? core->cons->context->pal.x 
+#define PALETTE(x) (cons && cons->context->pal.x)? cons->context->pal.x 
 		const char* color = Color_RESET;
 		switch (annotation->syntax_highlight.type) {
 		case R_SYNTAX_HIGHLIGHT_TYPE_COMMENT:
