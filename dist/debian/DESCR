@@ -1,0 +1,2 @@
+Native Ghidra Decompiler plugin for radare2
+This plugin adds the ability to use the Ghidra decompiler from r2, without having the need to use Java or Ghidra at all. The plugin ships all the Sleigh arch descriptions and syncs the names and types information with radare2.
