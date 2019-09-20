@@ -170,9 +170,9 @@ static void Decompile(RCore *core, DecompileMode mode)
 		for(const auto &warning : arch.getWarnings())
 			func->warningHeader("[r2ghidra] " + warning);
 
-    bool generate_xml = (mode == DecompileMode::XML);
-    generate_xml |= (mode == DecompileMode::JSON);
-    generate_xml |= (mode == DecompileMode::DEFAULT);
+		bool generate_xml = (mode == DecompileMode::XML);
+		generate_xml |= (mode == DecompileMode::JSON);
+		generate_xml |= (mode == DecompileMode::DEFAULT);
 		if (generate_xml)
 			arch.print->setXML(true);
 
@@ -180,7 +180,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 		if(mode == DecompileMode::XML)
 		{
 			out_stream << "<result><function>";
-      func->saveXml(out_stream, true);
+			func->saveXml(out_stream, true);
 			out_stream << "</function><code>";
 		}
 
@@ -225,15 +225,15 @@ static void Decompile(RCore *core, DecompileMode mode)
 			}
 			r_cons_print(line_stream.str().c_str());
 		}
-    else if (mode == DecompileMode::DEFAULT)
-    {
-      RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
-      if (! code)
-        throw LowlevelError("Failed to parse XML code from Decompiler");
-      r_annotated_code_print_with_syntax_highlighting(code, core);
-      r_annotated_code_free(code);
-      return;
-    }
+		else if (mode == DecompileMode::DEFAULT)
+		{
+			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
+			if (! code)
+				throw LowlevelError("Failed to parse XML code from Decompiler");
+			r_annotated_code_print_with_syntax_highlighting(code, core);
+			r_annotated_code_free(code);
+			return;
+		}
 		else if(mode == DecompileMode::STATEMENTS)
 		{
 			for (auto const& addr : r2_print_c->getStatementsMap())

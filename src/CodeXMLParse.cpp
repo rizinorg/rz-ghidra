@@ -53,46 +53,46 @@ void AnnotateOpref(ANNOTATOR_PARAMS)
  **/
 void AnnotateColor(ANNOTATOR_PARAMS)
 {
-  pugi::xml_attribute attr = node.attribute("color");
-  if (attr.empty())
-    return;
+	pugi::xml_attribute attr = node.attribute("color");
+	if (attr.empty())
+		return;
 
-  std::string color = attr.as_string();
-  if (color == "")
-    return;
+	std::string color = attr.as_string();
+	if (color == "")
+		return;
 
-  RSyntaxHighlightType type;
-  if (color == "keyword")
-    type = R_SYNTAX_HIGHLIGHT_TYPE_KEYWORD;
-  else if (color == "comment")
-    type = R_SYNTAX_HIGHLIGHT_TYPE_COMMENT;
-  else if (color == "type")
-    type = R_SYNTAX_HIGHLIGHT_TYPE_DATATYPE;
-  else if (color == "funcname")
-    type = R_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_NAME;
-  else if (color == "param")
-    type = R_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_PARAMETER;
-  else if (color == "var")
-    type = R_SYNTAX_HIGHLIGHT_TYPE_LOCAL_VARIABLE;
-  else if (color == "const")
-    type = R_SYNTAX_HIGHLIGHT_TYPE_CONSTANT_VARIABLE;
-  else if (color == "global")
-    type = R_SYNTAX_HIGHLIGHT_TYPE_GLOBAL_VARIABLE;
-  else
-    return;
-  RCodeAnnotation annotation = {};
-  annotation.type = R_CODE_ANNOTATION_TYPE_SYNTAX_HIGHLIGHT;
-  annotation.syntax_highlight.type = type;
-  out->push_back(annotation);
+	RSyntaxHighlightType type;
+	if (color == "keyword")
+		type = R_SYNTAX_HIGHLIGHT_TYPE_KEYWORD;
+	else if (color == "comment")
+		type = R_SYNTAX_HIGHLIGHT_TYPE_COMMENT;
+	else if (color == "type")
+		type = R_SYNTAX_HIGHLIGHT_TYPE_DATATYPE;
+	else if (color == "funcname")
+		type = R_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_NAME;
+	else if (color == "param")
+		type = R_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_PARAMETER;
+	else if (color == "var")
+		type = R_SYNTAX_HIGHLIGHT_TYPE_LOCAL_VARIABLE;
+	else if (color == "const")
+		type = R_SYNTAX_HIGHLIGHT_TYPE_CONSTANT_VARIABLE;
+	else if (color == "global")
+		type = R_SYNTAX_HIGHLIGHT_TYPE_GLOBAL_VARIABLE;
+	else
+		return;
+	RCodeAnnotation annotation = {};
+	annotation.type = R_CODE_ANNOTATION_TYPE_SYNTAX_HIGHLIGHT;
+	annotation.syntax_highlight.type = type;
+	out->push_back(annotation);
 }
 
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
 	{ "statement", { AnnotateOpref } },
 	{ "op", { AnnotateOpref, AnnotateColor } },
-  { "comment", { AnnotateColor } },
-  { "variable", { AnnotateColor } },
-  { "funcname", { AnnotateColor } },
-  { "type", { AnnotateColor } },
+	{ "comment", { AnnotateColor } },
+	{ "variable", { AnnotateColor } },
+	{ "funcname", { AnnotateColor } },
+	{ "type", { AnnotateColor } },
 };
 
 //#define TEST_UNKNOWN_NODES
@@ -108,7 +108,7 @@ static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > an
  **/
 static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostream &stream, RAnnotatedCode *code)
 {
-  // A leaf is an XML node which contains parts of the high level decompilation language
+	// A leaf is an XML node which contains parts of the high level decompilation language
 	if(node.type() == pugi::xml_node_type::node_pcdata)
 	{
 		stream << node.value();
@@ -132,8 +132,8 @@ static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostrea
 		if(it != annotators.end())
 		{
 			auto &callbacks = it->second;
-      for (auto &callback : callbacks)
-        callback(node, ctx, &annotations);
+			for (auto &callback : callbacks)
+				callback(node, ctx, &annotations);
 			for(auto &annotation : annotations)
 				annotation.start = stream.tellp();
 		}
@@ -152,7 +152,7 @@ static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostrea
 	for(pugi::xml_node child : node)
 		ParseNode(child, ctx, stream, code);
 
-  // an annotation applies for a node an all its children
+	// an annotation applies for a node an all its children
 	for(auto &annotation : annotations)
 	{
 		annotation.end = stream.tellp();
