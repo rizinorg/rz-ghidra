@@ -106,7 +106,26 @@ R_API void r_annotated_code_print_json(RAnnotatedCode *code)
 	pj_free (pj);
 }
 
-R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode* code)
+
+#define PALETTE(x) (cons && cons->context->pal.x)? cons->context->pal.x 
+
+static void print_offset_in_binary_line_bar(ut64 offset)
+{
+	RCons *cons = r_cons_singleton();
+	if (! offset) {
+		r_cons_printf("                  |");
+	} else {
+		char hex_str[0x10];
+		snprintf(hex_str, 11, "0x%08x" PRIx64, offset);
+		r_cons_printf("    "); 
+		r_cons_printf("%s", PALETTE(offset): Color_GREEN);
+		r_cons_printf("%s", hex_str);
+		r_cons_printf("%s", Color_RESET);
+		r_cons_printf("    |");
+	}
+}
+
+R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode* code, RVector *line_offsets)
 {
 	if (code->annotations.len == 0) {
 		r_cons_printf("%s\n", code->code);
@@ -115,6 +134,7 @@ R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode* code)
 
 
 	size_t cur = 0;
+	size_t line_idx = 0;
 	size_t len = strlen(code->code);
 
 	RCons *cons = r_cons_singleton();
@@ -127,7 +147,6 @@ R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode* code)
 		// (1/3)
 		// now we have a syntax highlighting annotation.
 		// pick a suitable color for it.
-#define PALETTE(x) (cons && cons->context->pal.x)? cons->context->pal.x 
 		const char* color = Color_RESET;
 		switch (annotation->syntax_highlight.type) {
 		case R_SYNTAX_HIGHLIGHT_TYPE_COMMENT:
@@ -151,21 +170,52 @@ R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode* code)
 		// (2/3)
 		// the chunk before the syntax highlighting annotation should not be colored
 		for (; cur < annotation->start && cur < len; cur++) {
+			// if we are starting a new line and we are printing with offsets
+			// we need to prepare the bar with offsets on the left handside before that
+			if (line_offsets && (cur == 0 || code->code[cur - 1] == '\n')) {
+				ut64 offset = 0;
+				if (line_idx < line_offsets->len) {
+					offset = *(ut64 *)r_vector_index_ptr(line_offsets, line_idx);
+				}
+				print_offset_in_binary_line_bar(offset);
+				line_idx++;
+			}
 			r_cons_printf("%c", code->code[cur]);
 		}
 
 		// (3/3)
-		// everything in between start and end inclusive should be highlighted
+		// everything in between the "start" and the "end" inclusive should be highlighted
 		r_cons_printf("%s", color);
 		for (; cur < annotation->end && cur < len; cur++) {
+			// if we are starting a new line and we are printing with offsets
+			// we need to prepare the bar with offsets on the left handside before that
+			if (line_offsets && (cur == 0 || code->code[cur - 1] == '\n')) {
+				ut64 offset = 0;
+				if (line_idx < line_offsets->len) {
+					offset = *(ut64 *)r_vector_index_ptr(line_offsets, line_idx);
+				}
+				r_cons_printf("%s", Color_RESET);
+				print_offset_in_binary_line_bar(offset);
+				r_cons_printf("%s", color);
+				line_idx++;
+			}
 			r_cons_printf("%c", code->code[cur]);
 		}
 		r_cons_printf("%s", Color_RESET);
 	}
 	// the rest of the decompiled code should be printed
 	// without any highlighting since we don't have any annotations left
-	while (cur < len) {
+	for (; cur < len; cur++) {
+		// if we are starting a new line and we are printing with offsets
+		// we need to prepare the bar with offsets on the left handside before that
+		if (line_offsets && (cur == 0 || code->code[cur - 1] == '\n')) {
+			ut64 offset = 0;
+			if (line_idx < line_offsets->len) {
+				offset = *(ut64 *)r_vector_index_ptr(line_offsets, line_idx);
+			}
+			print_offset_in_binary_line_bar(offset);
+			line_idx++;
+		}
 		r_cons_printf("%c", code->code[cur]);
-		cur++;
 	}
 }

@@ -55,7 +55,7 @@ R_API void r_annotated_code_free(RAnnotatedCode *code);
 R_API void r_annotated_code_add_annotation(RAnnotatedCode *code, RCodeAnnotation *annotation);
 R_API RPVector *r_annotated_code_annotations_in(RAnnotatedCode *code, size_t offset);
 R_API void r_annotated_code_print_json(RAnnotatedCode *code);
-R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode *code);
+R_API void r_annotated_code_print_with_syntax_highlighting(RAnnotatedCode *code, RVector *line_offsets);
 
 #ifdef __cplusplus
 }
