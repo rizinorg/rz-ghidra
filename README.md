@@ -37,6 +37,7 @@ The following config vars (for the `e` command) can be used to adjust r2ghidra's
 ```
     r2ghidra.cmt.cpp: C++ comment style
  r2ghidra.cmt.indent: Comment indent
+  r2ghidra.highlight: Enable/disable syntax highlighting
      r2ghidra.indent: Indent increment
        r2ghidra.lang: Custom Sleigh ID to override auto-detection (e.g. x86:LE:32:default)
     r2ghidra.linelen: Max line length
