@@ -31,6 +31,8 @@ static const std::map<std::string, std::string> arch_map = {
 		{ "ppc64", "PowerPC" } ,
 		{ "sparc32", "sparc" } ,
 		{ "sparc64", "sparc" } ,
+		{ "sh32", "SuperH4" } ,
+		{ "sh32", "SuperH" } ,
 		{ "msp43016", "TI_MSP430" } ,
 		{ "m68k32", "68000" } ,
 };
