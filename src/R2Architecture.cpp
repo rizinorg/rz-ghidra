@@ -49,6 +49,7 @@ static const std::map<std::string, std::string> cc_map = {
 		{ "fastcall", "__fastcall" },
 		{ "stdcall", "__stdcall" },
 		{ "cdecl-thiscall-ms", "__thiscall" },
+		{ "sh32", "__stdcall" },
 		{ "amd64", "__stdcall" },
 		{ "arm16", "__stdcall" } /* not actually __stdcall */
 };
@@ -91,6 +92,11 @@ std::string SleighIdFromCore(RCore *core)
 		be = true;
 	if (!arch_it->second.compare("AARCH64"))
 		flavor = string("v8A");
+	// XXX: Since r2 only has a single sh mapping, this can get tricky with the current structure
+	if (!arch_it->second.compare("SuperH4"))
+		bits = 32; // XXX: SuperH4:LE:32
+	if (!arch_it->second.compare("SuperH"))
+		bits = 32; // XXX: SH, SH-2, SH-2A...
 	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":" + flavor + ":" + CompilerFromCore(core);
 }
 
