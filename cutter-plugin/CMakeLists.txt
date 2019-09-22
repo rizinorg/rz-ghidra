@@ -13,8 +13,10 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 add_library(r2ghidra_cutter SHARED ${SOURCE})
 target_link_libraries(r2ghidra_cutter Qt5::Widgets)
-target_include_directories(r2ghidra_cutter PRIVATE "${CUTTER_SOURCE_DIR}/src" "${CUTTER_SOURCE_DIR}/src/common" "${CUTTER_SOURCE_DIR}/src/core")
 target_link_libraries(r2ghidra_cutter Radare2::libr)
+
+find_package(Cutter REQUIRED)
+target_link_libraries(r2ghidra_cutter Cutter::Cutter)
 
 if(APPLE)
 	target_link_options(r2ghidra_cutter PRIVATE -undefined dynamic_lookup)
