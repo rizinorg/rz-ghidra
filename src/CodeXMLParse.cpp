@@ -93,6 +93,7 @@ static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > an
 	{ "variable", { AnnotateColor } },
 	{ "funcname", { AnnotateColor } },
 	{ "type", { AnnotateColor } },
+	{ "syntax", { AnnotateColor } }
 };
 
 //#define TEST_UNKNOWN_NODES
