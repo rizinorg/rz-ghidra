@@ -36,9 +36,9 @@ struct ConfigVar
 		ConfigVar(const char *var, const char *defval, const char *desc, ConfigVarCb callback = nullptr)
 			: name(std::string(CFG_PREFIX) + "." + var), defval(defval), desc(desc), callback(callback) { vars_all.push_back(this); }
 
-		const char *GetName() const 				{ return name.c_str(); }
-		const char *GetDefault() const 				{ return defval; }
-		const char *GetDesc() const 				{ return desc; }
+		const char *GetName() const					{ return name.c_str(); }
+		const char *GetDefault() const				{ return defval; }
+		const char *GetDesc() const					{ return desc; }
 		ConfigVarCb GetCallback() const				{ return callback; }
 
 		ut64 GetInt(RConfig *cfg) const				{ return r_config_get_i(cfg, name.c_str()); }
@@ -61,6 +61,8 @@ static const ConfigVar cfg_var_nl_brace		("nl.brace",	"false",	"Newline before o
 static const ConfigVar cfg_var_nl_else		("nl.else",		"false",	"Newline before else");
 static const ConfigVar cfg_var_indent		("indent",		"4",		"Indent increment");
 static const ConfigVar cfg_var_linelen		("linelen",		"120",		"Max line length");
+static const ConfigVar cfg_var_highlight	("highlight",		"true",		"Enable/disable syntax highlighting");
+
 
 
 static std::recursive_mutex decompiler_mutex;
@@ -170,9 +172,19 @@ static void Decompile(RCore *core, DecompileMode mode)
 		for(const auto &warning : arch.getWarnings())
 			func->warningHeader("[r2ghidra] " + warning);
 
-		if(mode == DecompileMode::XML || mode == DecompileMode::JSON)
-			arch.print->setXML(true);
-
+		switch (mode)
+		{
+			case DecompileMode::XML:
+			case DecompileMode::JSON:
+			case DecompileMode::DEFAULT:
+				arch.print->setXML(true);
+				break;
+			case DecompileMode::OFFSET:
+				arch.print_with_offsets->setXML(true);
+				break;
+			default:
+				break;
+		}
 
 		if(mode == DecompileMode::XML)
 		{
@@ -195,32 +207,36 @@ static void Decompile(RCore *core, DecompileMode mode)
 			case DecompileMode::DEBUG_XML:
 				arch.saveXml(out_stream);
 				break;
+			default:
+				break;
 		}
 
 		if(mode == DecompileMode::OFFSET)
 		{
-			ut64 offset;
-			string line;
-			std::stringstream line_stream;
+			RVector *r2offsets = r_vector_new(sizeof(ut64), NULL, NULL);
 			vector<vector<Address>> offsets = r2_print_c->getOffsets();
-			size_t ln = 0;
-			while (getline(out_stream, line))
-			{
-				if(ln >= offsets.size()) break;
-				if(offsets[ln].size())
-				{
-					char hexstring[11] = {};
-					offset = offsets[ln].front().getOffset();
-					snprintf(hexstring, 10, "0x%08x" PRIx64, offset);
-					line_stream << "    " <<  hexstring << "    |" << line << "\n";
-				}
-				else
-				{
-					line_stream << "                 |" << line << "\n";
-				}
-				ln+=1;
+			for (auto &vec : offsets) {
+				ut64 offset = (vec.empty()) ? 0 : vec.front().getOffset();
+				r_vector_push(r2offsets, &offset);
 			}
-			r_cons_print(line_stream.str().c_str());
+			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
+			code->color_enabled = cfg_var_highlight.GetBool(core->config);
+			if (! code)
+				throw LowlevelError("Failed to parse XML code from Decompiler");
+			r_annotated_code_print(code, r2offsets);
+			r_annotated_code_free(code);
+			r_vector_free(r2offsets);
+			return;
+		}
+		else if (mode == DecompileMode::DEFAULT)
+		{
+			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
+			code->color_enabled = cfg_var_highlight.GetBool(core->config);
+			if (! code)
+				throw LowlevelError("Failed to parse XML code from Decompiler");
+			r_annotated_code_print(code, NULL);
+			r_annotated_code_free(code);
+			return;
 		}
 		else if(mode == DecompileMode::STATEMENTS)
 		{
@@ -250,7 +266,6 @@ static void Decompile(RCore *core, DecompileMode mode)
 			r_annotated_code_print_json(code);
 			r_annotated_code_free(code);
 			return;
-
 		}
 		else
 		{

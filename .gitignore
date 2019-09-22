@@ -1,3 +1,6 @@
 .idea
 cmake-build-*
 build
+*.swp
+compile_commands.json
+ghidra/flex/
