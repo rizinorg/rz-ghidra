@@ -31,6 +31,7 @@ static const std::map<std::string, std::string> arch_map = {
 		{ "ppc64", "PowerPC" } ,
 		{ "sparc32", "sparc" } ,
 		{ "sparc64", "sparc" } ,
+		{ "sh32", "SuperH4" } ,
 		{ "msp43016", "TI_MSP430" } ,
 		{ "m68k32", "68000" } ,
 };
@@ -47,6 +48,7 @@ static const std::map<std::string, std::string> cc_map = {
 		{ "fastcall", "__fastcall" },
 		{ "stdcall", "__stdcall" },
 		{ "cdecl-thiscall-ms", "__thiscall" },
+		{ "sh32", "__stdcall" },
 		{ "amd64", "__stdcall" },
 		{ "arm16", "__stdcall" } /* not actually __stdcall */
 };
