@@ -70,7 +70,15 @@ make install
 Here, set the `CMAKE_INSTALL_PREFIX` to a location where radare2 can load the plugin from.
 The install step is necessary for the plugin to work because it includes installing the necessary Sleigh files.
 
-To also build the Cutter plugin, pass `-DBUILD_CUTTER_PLUGIN=ON -DCUTTER_SOURCE_DIR=/path/to/cutter/source` to cmake.
+To also build the Cutter plugin, pass `-DBUILD_CUTTER_PLUGIN=ON -DCUTTER_SOURCE_DIR=/path/to/cutter/source` to cmake, for example like this:
+```
+/my/path> git clone https://github.com/radareorg/cutter
+/my/path> # build Cutter, clone r2ghidra-dec, etc.
+...
+/my/path/r2ghidra-dec> mkdir build && cd build
+/my/path/r2ghidra-dec/build> cmake -DBUILD_CUTTER_PLUGIN=ON -DCUTTER_SOURCE_DIR=/my/path/cutter -DCMAKE_INSTALL_PREFIX=~/.local ..
+/my/path/r2ghidra-dec/build> make && make install
+```
 
 ## License
 
