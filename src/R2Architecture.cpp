@@ -32,7 +32,6 @@ static const std::map<std::string, std::string> arch_map = {
 		{ "sparc32", "sparc" } ,
 		{ "sparc64", "sparc" } ,
 		{ "sh32", "SuperH4" } ,
-		{ "sh32", "SuperH" } ,
 		{ "msp43016", "TI_MSP430" } ,
 		{ "m68k32", "68000" } ,
 };
@@ -92,11 +91,6 @@ std::string SleighIdFromCore(RCore *core)
 		be = true;
 	if (!arch_it->second.compare("AARCH64"))
 		flavor = string("v8A");
-	// XXX: Since r2 only has a single sh mapping, this can get tricky with the current structure
-	if (!arch_it->second.compare("SuperH4"))
-		bits = 32; // XXX: SuperH4:LE:32
-	if (!arch_it->second.compare("SuperH"))
-		bits = 32; // XXX: SH, SH-2, SH-2A...
 	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":" + flavor + ":" + CompilerFromCore(core);
 }
 
