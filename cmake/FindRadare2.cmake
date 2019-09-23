@@ -46,8 +46,7 @@ if(WIN32)
 			socket
 			fs
 			magic
-			crypto
-			sdb)
+			crypto)
 
 	set(Radare2_LIBRARIES "")
 	set(Radare2_LIBRARIES_VARS "")
