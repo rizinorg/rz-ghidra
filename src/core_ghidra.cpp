@@ -220,9 +220,9 @@ static void Decompile(RCore *core, DecompileMode mode)
 				r_vector_push(r2offsets, &offset);
 			}
 			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
-			code->color_enabled = cfg_var_highlight.GetBool(core->config);
-			if (! code)
+			if (nullptr == code)
 				throw LowlevelError("Failed to parse XML code from Decompiler");
+			code->color_enabled = cfg_var_highlight.GetBool(core->config);
 			r_annotated_code_print(code, r2offsets);
 			r_annotated_code_free(code);
 			r_vector_free(r2offsets);
