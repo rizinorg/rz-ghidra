@@ -7,6 +7,7 @@
 This is an integration of the Ghidra decompiler for [radare2](https://github.com/radareorg/radare2).
 It is solely based on the decompiler part of Ghidra, which is written entirely in
 C++, so Ghidra itself is not required at all and the plugin can be built self-contained.
+This project was presented at r2con 2019 as part of the Cutter talk: [https://youtu.be/eHtMiezr7l8?t=950](https://youtu.be/eHtMiezr7l8?t=950)
 
 ## Installing
 
