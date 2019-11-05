@@ -158,7 +158,9 @@ static void Decompile(RCore *core, DecompileMode mode)
 			throw LowlevelError("No function in Scope");
 
 		arch.sleepBegin();
-		int res = arch.allacts.getCurrent()->perform(*func);
+		auto action = arch.allacts.getCurrent();
+		action->reset(*func);
+		int res = action->perform(*func);
 		arch.sleepEnd();
 		if (res<0)
 			eprintf("break\n");
