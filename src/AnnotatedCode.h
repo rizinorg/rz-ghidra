@@ -55,8 +55,10 @@ R_API RAnnotatedCode *r_annotated_code_new(char *code);
 R_API void r_annotated_code_free(RAnnotatedCode *code);
 R_API void r_annotated_code_add_annotation(RAnnotatedCode *code, RCodeAnnotation *annotation);
 R_API RPVector *r_annotated_code_annotations_in(RAnnotatedCode *code, size_t offset);
+R_API RPVector *r_annotated_code_annotations_range(RAnnotatedCode *code, size_t start, size_t end);
 R_API void r_annotated_code_print_json(RAnnotatedCode *code);
 R_API void r_annotated_code_print(RAnnotatedCode *code, RVector *line_offsets);
+R_API RVector *r_annotated_code_line_offsets(RAnnotatedCode *code);
 
 #ifdef __cplusplus
 }

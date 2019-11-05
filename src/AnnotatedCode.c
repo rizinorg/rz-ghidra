@@ -4,8 +4,7 @@
 #include <r_util.h>
 #include <r_cons.h>
 
-R_API RAnnotatedCode *r_annotated_code_new(char *code)
-{
+R_API RAnnotatedCode *r_annotated_code_new(char *code) {
 	RAnnotatedCode *r = R_NEW0 (RAnnotatedCode);
 	if (!r) {
 		return NULL;
@@ -15,20 +14,17 @@ R_API RAnnotatedCode *r_annotated_code_new(char *code)
 	return r;
 }
 
-R_API void r_annotated_code_free(RAnnotatedCode *code)
-{
+R_API void r_annotated_code_free(RAnnotatedCode *code) {
 	r_vector_clear (&code->annotations);
 	r_free (code->code);
 	r_free (code);
 }
 
-R_API void r_annotated_code_add_annotation(RAnnotatedCode *code, RCodeAnnotation *annotation)
-{
+R_API void r_annotated_code_add_annotation(RAnnotatedCode *code, RCodeAnnotation *annotation) {
 	r_vector_push (&code->annotations, annotation);
 }
 
-R_API RPVector *r_annotated_code_annotations_in(RAnnotatedCode *code, size_t offset)
-{
+R_API RPVector *r_annotated_code_annotations_in(RAnnotatedCode *code, size_t offset) {
 	RPVector *r = r_pvector_new (NULL);
 	if (!r) {
 		return NULL;
@@ -42,8 +38,22 @@ R_API RPVector *r_annotated_code_annotations_in(RAnnotatedCode *code, size_t off
 	return r;
 }
 
-R_API void r_annotated_code_print_json(RAnnotatedCode *code)
-{
+R_API RPVector *r_annotated_code_annotations_range(RAnnotatedCode *code, size_t start, size_t end) {
+	RPVector *r = r_pvector_new (NULL);
+	if (!r) {
+		return NULL;
+	}
+	RCodeAnnotation *annotation;
+	r_vector_foreach (&code->annotations, annotation) {
+		if (start >= annotation->end || end < annotation->start) {
+			continue;
+		}
+		r_pvector_push (r, annotation);
+	}
+	return r;
+}
+
+R_API void r_annotated_code_print_json(RAnnotatedCode *code) {
 	PJ *pj = pj_new ();
 	if (!pj) {
 		return;
@@ -110,14 +120,13 @@ R_API void r_annotated_code_print_json(RAnnotatedCode *code)
 #define PALETTE(x) (cons && cons->context->pal.x)? cons->context->pal.x 
 #define PICK_COLOR(x)   ((code->color_enabled)? (x) : "")
 
-static void print_offset_in_binary_line_bar(RAnnotatedCode *code, ut64 offset)
-{
+static void print_offset_in_binary_line_bar(RAnnotatedCode *code, ut64 offset) {
 	RCons *cons = r_cons_singleton();
-	if (! offset) {
+	if (offset == UT64_MAX) {
 		r_cons_printf("                  |");
 	} else {
 		char hex_str[0x10];
-		snprintf(hex_str, 11, "0x%08x" PRIx64, offset);
+		snprintf(hex_str, 11, "0x%08"PFMT64x, offset);
 		r_cons_printf("    "); 
 		r_cons_printf("%s", PICK_COLOR(PALETTE(offset): Color_GREEN));
 		r_cons_printf("%s", hex_str);
@@ -126,8 +135,7 @@ static void print_offset_in_binary_line_bar(RAnnotatedCode *code, ut64 offset)
 	}
 }
 
-R_API void r_annotated_code_print(RAnnotatedCode* code, RVector *line_offsets)
-{
+R_API void r_annotated_code_print(RAnnotatedCode* code, RVector *line_offsets) {
 	if (code->annotations.len == 0) {
 		r_cons_printf("%s\n", code->code);
 		return;
@@ -219,4 +227,31 @@ R_API void r_annotated_code_print(RAnnotatedCode* code, RVector *line_offsets)
 		}
 		r_cons_printf("%c", code->code[cur]);
 	}
+}
+
+R_API RVector *r_annotated_code_line_offsets(RAnnotatedCode *code) {
+	RVector *r = r_vector_new(sizeof(ut64), NULL, NULL);
+	if (!r) {
+		return NULL;
+	}
+	size_t cur = 0;
+	size_t len = strlen (code->code);
+	do {
+		char *next = strchr (code->code + cur, '\n');
+		size_t next_i = next ? (next - code->code) + 1 : len;
+		RPVector *annotations = r_annotated_code_annotations_range (code, cur, next_i);
+		ut64 offset = UT64_MAX;
+		void **it;
+		r_pvector_foreach (annotations, it) {
+			RCodeAnnotation *annotation = *it;
+			if (annotation->type != R_CODE_ANNOTATION_TYPE_OFFSET) {
+				continue;
+			}
+			offset = annotation->offset.offset;
+			break;
+		}
+		r_vector_push (r, &offset);
+		cur = next_i;
+	} while(cur < len);
+	return r;
 }

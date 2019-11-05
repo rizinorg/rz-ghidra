@@ -179,10 +179,8 @@ static void Decompile(RCore *core, DecompileMode mode)
 			case DecompileMode::XML:
 			case DecompileMode::JSON:
 			case DecompileMode::DEFAULT:
-				arch.print->setXML(true);
-				break;
 			case DecompileMode::OFFSET:
-				arch.print_with_offsets->setXML(true);
+				arch.print->setXML(true);
 				break;
 			default:
 				break;
@@ -200,9 +198,9 @@ static void Decompile(RCore *core, DecompileMode mode)
 			case DecompileMode::XML:
 			case DecompileMode::DEFAULT:
 			case DecompileMode::JSON:
+			case DecompileMode::OFFSET:
 				arch.print->docFunction(func);
 				break;
-			case DecompileMode::OFFSET:
 			case DecompileMode::STATEMENTS:
 				arch.print_with_offsets->docFunction(func);
 				break;
@@ -215,19 +213,14 @@ static void Decompile(RCore *core, DecompileMode mode)
 
 		if(mode == DecompileMode::OFFSET)
 		{
-			RVector *r2offsets = r_vector_new(sizeof(ut64), NULL, NULL);
-			vector<vector<Address>> offsets = r2_print_c->getOffsets();
-			for (auto &vec : offsets) {
-				ut64 offset = (vec.empty()) ? 0 : vec.front().getOffset();
-				r_vector_push(r2offsets, &offset);
-			}
 			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
 			if (!code)
 				throw LowlevelError("Failed to parse XML code from Decompiler");
+			RVector *offsets = r_annotated_code_line_offsets(code);
 			code->color_enabled = cfg_var_highlight.GetBool(core->config);
-			r_annotated_code_print(code, r2offsets);
+			r_annotated_code_print(code, offsets);
 			r_annotated_code_free(code);
-			r_vector_free(r2offsets);
+			r_vector_free(offsets);
 			return;
 		}
 		else if (mode == DecompileMode::DEFAULT)
