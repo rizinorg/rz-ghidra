@@ -1,0 +1,7 @@
+{
+  "name": "r2ghidra-dec-test",
+  "version": "0.1.0",
+  "dependencies": {
+    "node-r2r": "^0.2.3"
+  }
+}

@@ -1,0 +1,98 @@
+NAME=x86_32
+FILE=r2r/bins/elf/crackme0x05
+EXPECT=<<EOF
+x86:LE:32:default:gcc
+
+undefined4[0m main[0m(void[0m)
+{
+    int32_t[0m [0mvar_78h[0m;
+    
+    sym.imp.printf[0m("IOLI Crackme Level 0x05\n"[0m);
+    sym.imp.printf[0m("Password: "[0m);
+    sym.imp.scanf[0m(0x80486b2[0m, &[0mvar_78h[0m);
+    sym.check[0m((int32_t[0m)&[0mvar_78h[0m);
+    return[0m 0[0m;
+}
+EOF
+CMDS=<<EOF
+pdgss
+s main
+af
+pdg
+EOF
+RUN
+
+NAME=x86_64
+FILE=r2r/bins/elf/hello_world
+EXPECT=<<EOF
+x86:LE:64:default:gcc
+
+// [0mWARNING:[0m [r2ghidra][0m Detected[0m overlap[0m for[0m variable[0m var_1ch[0m
+// [0mWARNING:[0m [r2ghidra][0m Failed[0m to[0m find[0m return[0m address[0m in[0m ProtoModel[0m
+
+void[0m main[0m(void[0m)
+{
+    int32_t[0m [0miVar1[0m;
+    int32_t[0m [0miVar2[0m;
+    int64_t[0m [0miVar3[0m;
+    int64_t[0m [0mvar_20h[0m;
+    int64_t[0m [0mvar_18h[0m;
+    int64_t[0m [0mvar_10h[0m;
+    int64_t[0m [0mvar_8h[0m;
+    
+    [0miVar1[0m = sym.imp.strlen[0m(0x8d4[0m);
+    [0miVar2[0m = sym.imp.strlen[0m(0x8da[0m);
+    [0miVar3[0m = sym.imp.malloc[0m((int64_t[0m)([0miVar2[0m + [0miVar1[0m + 1[0m));
+    if[0m ([0miVar3[0m != 0[0m) {
+        sym.imp.strcpy[0m([0miVar3[0m, 0x8d4[0m, 0x8d4[0m);
+        sym.imp.strcat[0m([0miVar3[0m, 0x8da[0m, 0x8da[0m);
+        sym.imp.puts[0m([0miVar3[0m);
+        sym.imp.free[0m([0miVar3[0m);
+    }
+    return[0m;
+}
+EOF
+CMDS=<<EOF
+pdgss
+s main
+af
+pdg
+EOF
+RUN
+
+NAME=6502
+FILE=r2r/bins/prg/t01.prg
+ARGS=-F prg
+EXPECT=<<EOF
+6502:LE:16:default:
+
+// [0mWARNING:[0m [r2ghidra][0m Failed[0m to[0m match[0m radare2[0m calling[0m convention[0m (null)[0m to[0m Decompiler[0m ProtoModel[0m
+// [0mWARNING:[0m [r2ghidra][0m Failed[0m to[0m get[0m address[0m for[0m var[0m arg_101h[0m
+// [0mWARNING:[0m [r2ghidra][0m Failed[0m to[0m find[0m return[0m address[0m in[0m ProtoModel[0m
+
+void[0m fcn.0000080e[0m(void[0m)
+{
+    undefined[0m [0muVar1[0m;
+    uint8_t[0m [0muVar2[0m;
+    
+    [0muVar2[0m = 0xff[0m;
+    do[0m {
+        *(undefined[0m *)((uint16_t[0m)[0muVar2[0m + 0x3ff[0m) = 0x41[0m;
+        [0muVar1[0m = [0muRAM0824[0m;
+        [0muVar2[0m = [0muVar2[0m - 1[0m;
+    } while[0m ([0muVar2[0m != 0[0m);
+    [0muVar2[0m = 0xff[0m;
+    do[0m {
+        *(undefined[0m *)((uint16_t[0m)[0muVar2[0m + 0xd7ff[0m) = [0muVar1[0m;
+        [0muVar2[0m = [0muVar2[0m - 1[0m;
+    } while[0m ([0muVar2[0m != 0[0m);
+    return[0m;
+}
+EOF
+CMDS=<<EOF
+pdgss
+s 0x080e
+af
+pdg
+EOF
+RUN
