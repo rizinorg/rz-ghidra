@@ -38,7 +38,9 @@ set(SOURCE
 		src/AnnotatedCode.h
 		src/AnnotatedCode.c
 		src/CodeXMLParse.h
-		src/CodeXMLParse.cpp)
+		src/CodeXMLParse.cpp
+		src/ArchMap.h
+		src/ArchMap.cpp)
 
 find_package(Radare2 REQUIRED)
 

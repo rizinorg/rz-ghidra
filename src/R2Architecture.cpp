@@ -7,40 +7,12 @@
 #include "R2CommentDatabase.h"
 #include "R2PrintC.h"
 #include "R2Utils.h"
+#include "ArchMap.h"
+
 #include <funcdata.hh>
 
 #include <iostream>
 #include <cassert>
-
-// maps radare2 asm/anal plugins names to sleigh language
-static const std::map<std::string, std::string> arch_map = {
-		{ "x8632", "x86" },
-		{ "x8664", "x86" },
-		{ "arm16", "ARM"},
-		{ "arm32", "ARM"},
-		{ "arm64", "AARCH64" } ,
-		{ "mips32", "MIPS" },
-		{ "mips64", "MIPS" },
-		{ "avr8", "avr8" } ,
-		{ "avr32", "avr32a" } ,
-		{ "dalvik32", "Dalvik" } ,
-		{ "650216", "6502" } ,
-		{ "java32", "JVM" } ,
-		{ "hppa32", "pa-risc" } ,
-		{ "ppc32", "PowerPC" } ,
-		{ "ppc64", "PowerPC" } ,
-		{ "sparc32", "sparc" } ,
-		{ "sparc64", "sparc" } ,
-		{ "sh32", "SuperH4" } ,
-		{ "msp43016", "TI_MSP430" } ,
-		{ "m68k32", "68000" } ,
-};
-
-static const std::map<std::string, std::string> compiler_map = {
-		{ "elf", "gcc" },
-		{ "pe", "windows" },
-		{ "mach0", "macosx" }
-};
 
 // maps radare2 calling conventions to decompiler proto models
 static const std::map<std::string, std::string> cc_map = {
@@ -56,42 +28,6 @@ static const std::map<std::string, std::string> cc_map = {
 std::string FilenameFromCore(RCore *core)
 {
 	return core->bin->file;
-}
-
-std::string CompilerFromCore(RCore *core)
-{
-	RBinInfo *info = r_bin_get_info(core->bin);
-	if (!info || !info->rclass)
-		return std::string("");
-
-	auto comp_it = compiler_map.find(info->rclass);
-	if(comp_it == compiler_map.end())
-		throw LowlevelError("Could not match container" + std::string(info->rclass) + " to sleigh compiler.");
-	return comp_it->second;
-}
-
-std::string SleighIdFromCore(RCore *core)
-{
-	const char *arch = r_config_get(core->config, "asm.arch");
-	bool be = r_config_get_i(core->config, "cfg.bigendian") != 0;
-	ut64 bits = r_config_get_i(core->config, "asm.bits");
-	string flavor = string("default");
-
-	auto arch_it = arch_map.find(arch + to_string(bits));
-	if(arch_it == arch_map.end())
-		throw LowlevelError("Could not match asm.arch " + std::string(arch) + to_string(bits) + " to sleigh arch.");
-
-	if (!arch_it->second.compare("ARM")) {
-		flavor = string("v7");
-		bits = 32;
-	}
-	if (!arch_it->second.compare("avr8"))
-		bits = 16;
-	if (!arch_it->second.compare("JVM"))
-		be = true;
-	if (!arch_it->second.compare("AARCH64"))
-		flavor = string("v8A");
-	return arch_it->second + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) + ":" + flavor + ":" + CompilerFromCore(core);
 }
 
 R2Architecture::R2Architecture(RCore *core, const std::string &sleigh_id)
