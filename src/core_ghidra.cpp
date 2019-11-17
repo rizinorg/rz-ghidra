@@ -2,6 +2,7 @@
 
 #include "R2Architecture.h"
 #include "CodeXMLParse.h"
+#include "ArchMap.h"
 
 // Windows clash
 #ifdef restrict
@@ -61,7 +62,7 @@ static const ConfigVar cfg_var_nl_brace		("nl.brace",	"false",	"Newline before o
 static const ConfigVar cfg_var_nl_else		("nl.else",		"false",	"Newline before else");
 static const ConfigVar cfg_var_indent		("indent",		"4",		"Indent increment");
 static const ConfigVar cfg_var_linelen		("linelen",		"120",		"Max line length");
-static const ConfigVar cfg_var_highlight	("highlight",		"true",		"Enable/disable syntax highlighting");
+static const ConfigVar cfg_var_highlight	("highlight",	"true",		"Enable/disable syntax highlighting");
 
 
 
@@ -96,6 +97,7 @@ static void PrintUsage(const RCore *const core)
 		CMD_PREFIX, "j", "# Dump the current decompiled function as JSON",
 		CMD_PREFIX, "o", "# Decompile current function side by side with offsets",
 		CMD_PREFIX, "s", "# Display loaded Sleigh Languages",
+		CMD_PREFIX, "ss", "# Display automatically matched Sleigh Language ID",
 		CMD_PREFIX, "*", "# Decompiled code is returned to r2 as comment",
 		"Environment:", "", "",
 		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
@@ -311,29 +313,47 @@ static void ListSleighLangs()
 		r_cons_printf("%s\n", lang.getId().c_str());
 }
 
+static void PrintAutoSleighLang(RCore *core)
+{
+	DecompilerLock lock;
+	try
+	{
+		auto id = SleighIdFromCore(core);
+		r_cons_printf("%s\n", id.c_str());
+	}
+	catch(LowlevelError &e)
+	{
+		eprintf("%s\n", e.explain.c_str());
+	}
+}
+
 static void _cmd(RCore *core, const char *input)
 {
-	switch (*input) {
-		case 'd':
+	switch (*input)
+	{
+		case 'd': // "pdgd"
 			Decompile(core, DecompileMode::DEBUG_XML);
 			break;
-		case '\0':
+		case '\0': // "pdg"
 			Decompile(core, DecompileMode::DEFAULT);
 			break;
-		case 'x':
+		case 'x': // "pdgx"
 			Decompile(core, DecompileMode::XML);
 			break;
-		case 'j':
+		case 'j': // "pdgj"
 			Decompile(core, DecompileMode::JSON);
 			break;
-		case 'o':
+		case 'o': // "pdgo"
 			Decompile(core, DecompileMode::OFFSET);
 			break;
-		case '*':
+		case '*': // "pdg*"
 			Decompile(core, DecompileMode::STATEMENTS);
 			break;
-		case 's':
-			ListSleighLangs();
+		case 's': // "pdgs"
+			if (input[1] == 's') // "pdgss"
+				PrintAutoSleighLang(core);
+			else
+				ListSleighLangs();
 			break;
 		default:
 			PrintUsage(core);
