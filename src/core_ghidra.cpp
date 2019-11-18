@@ -62,7 +62,6 @@ static const ConfigVar cfg_var_nl_brace		("nl.brace",	"false",	"Newline before o
 static const ConfigVar cfg_var_nl_else		("nl.else",		"false",	"Newline before else");
 static const ConfigVar cfg_var_indent		("indent",		"4",		"Indent increment");
 static const ConfigVar cfg_var_linelen		("linelen",		"120",		"Max line length");
-static const ConfigVar cfg_var_highlight	("highlight",	"true",		"Enable/disable syntax highlighting");
 
 
 
@@ -219,7 +218,6 @@ static void Decompile(RCore *core, DecompileMode mode)
 			if (!code)
 				throw LowlevelError("Failed to parse XML code from Decompiler");
 			RVector *offsets = r_annotated_code_line_offsets(code);
-			code->color_enabled = cfg_var_highlight.GetBool(core->config);
 			r_annotated_code_print(code, offsets);
 			r_annotated_code_free(code);
 			r_vector_free(offsets);
@@ -228,8 +226,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 		else if (mode == DecompileMode::DEFAULT)
 		{
 			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
-			code->color_enabled = cfg_var_highlight.GetBool(core->config);
-			if (! code)
+			if (!code)
 				throw LowlevelError("Failed to parse XML code from Decompiler");
 			r_annotated_code_print(code, NULL);
 			r_annotated_code_free(code);

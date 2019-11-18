@@ -47,7 +47,6 @@ typedef struct r_code_annotation_t {
 
 typedef struct r_annotated_code_t {
 	char *code; // owned
-	bool color_enabled; // whether or not to highlight the syntax when printing
 	RVector/*<RCodeAnnotation>*/ annotations;
 } RAnnotatedCode;
 

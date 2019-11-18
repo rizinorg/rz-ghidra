@@ -3,15 +3,15 @@ FILE=r2r/bins/elf/crackme0x05
 EXPECT=<<EOF
 x86:LE:32:default:gcc
 
-undefined4[0m main[0m(void[0m)
+undefined4 main(void)
 {
-    int32_t[0m [0mvar_78h[0m;
+    int32_t var_78h;
     
-    sym.imp.printf[0m("IOLI Crackme Level 0x05\n"[0m);
-    sym.imp.printf[0m("Password: "[0m);
-    sym.imp.scanf[0m(0x80486b2[0m, &[0mvar_78h[0m);
-    sym.check[0m((int32_t[0m)&[0mvar_78h[0m);
-    return[0m 0[0m;
+    sym.imp.printf("IOLI Crackme Level 0x05\n");
+    sym.imp.printf("Password: ");
+    sym.imp.scanf(0x80486b2, &var_78h);
+    sym.check((int32_t)&var_78h);
+    return 0;
 }
 EOF
 CMDS=<<EOF
@@ -27,29 +27,29 @@ FILE=r2r/bins/elf/hello_world
 EXPECT=<<EOF
 x86:LE:64:default:gcc
 
-// [0mWARNING:[0m [r2ghidra][0m Detected[0m overlap[0m for[0m variable[0m var_1ch[0m
-// [0mWARNING:[0m [r2ghidra][0m Failed[0m to[0m find[0m return[0m address[0m in[0m ProtoModel[0m
+// WARNING: [r2ghidra] Detected overlap for variable var_1ch
+// WARNING: [r2ghidra] Failed to find return address in ProtoModel
 
-void[0m main[0m(void[0m)
+void main(void)
 {
-    int32_t[0m [0miVar1[0m;
-    int32_t[0m [0miVar2[0m;
-    int64_t[0m [0miVar3[0m;
-    int64_t[0m [0mvar_20h[0m;
-    int64_t[0m [0mvar_18h[0m;
-    int64_t[0m [0mvar_10h[0m;
-    int64_t[0m [0mvar_8h[0m;
+    int32_t iVar1;
+    int32_t iVar2;
+    int64_t iVar3;
+    int64_t var_20h;
+    int64_t var_18h;
+    int64_t var_10h;
+    int64_t var_8h;
     
-    [0miVar1[0m = sym.imp.strlen[0m(0x8d4[0m);
-    [0miVar2[0m = sym.imp.strlen[0m(0x8da[0m);
-    [0miVar3[0m = sym.imp.malloc[0m((int64_t[0m)([0miVar2[0m + [0miVar1[0m + 1[0m));
-    if[0m ([0miVar3[0m != 0[0m) {
-        sym.imp.strcpy[0m([0miVar3[0m, 0x8d4[0m, 0x8d4[0m);
-        sym.imp.strcat[0m([0miVar3[0m, 0x8da[0m, 0x8da[0m);
-        sym.imp.puts[0m([0miVar3[0m);
-        sym.imp.free[0m([0miVar3[0m);
+    iVar1 = sym.imp.strlen(0x8d4);
+    iVar2 = sym.imp.strlen(0x8da);
+    iVar3 = sym.imp.malloc((int64_t)(iVar2 + iVar1 + 1));
+    if (iVar3 != 0) {
+        sym.imp.strcpy(iVar3, 0x8d4, 0x8d4);
+        sym.imp.strcat(iVar3, 0x8da, 0x8da);
+        sym.imp.puts(iVar3);
+        sym.imp.free(iVar3);
     }
-    return[0m;
+    return;
 }
 EOF
 CMDS=<<EOF
@@ -66,27 +66,27 @@ ARGS=-F prg
 EXPECT=<<EOF
 6502:LE:16:default:
 
-// [0mWARNING:[0m [r2ghidra][0m Failed[0m to[0m match[0m radare2[0m calling[0m convention[0m (null)[0m to[0m Decompiler[0m ProtoModel[0m
-// [0mWARNING:[0m [r2ghidra][0m Failed[0m to[0m get[0m address[0m for[0m var[0m arg_101h[0m
-// [0mWARNING:[0m [r2ghidra][0m Failed[0m to[0m find[0m return[0m address[0m in[0m ProtoModel[0m
+// WARNING: [r2ghidra] Failed to match radare2 calling convention (null) to Decompiler ProtoModel
+// WARNING: [r2ghidra] Failed to get address for var arg_101h
+// WARNING: [r2ghidra] Failed to find return address in ProtoModel
 
-void[0m fcn.0000080e[0m(void[0m)
+void fcn.0000080e(void)
 {
-    undefined[0m [0muVar1[0m;
-    uint8_t[0m [0muVar2[0m;
+    undefined uVar1;
+    uint8_t uVar2;
     
-    [0muVar2[0m = 0xff[0m;
-    do[0m {
-        *(undefined[0m *)((uint16_t[0m)[0muVar2[0m + 0x3ff[0m) = 0x41[0m;
-        [0muVar1[0m = [0muRAM0824[0m;
-        [0muVar2[0m = [0muVar2[0m - 1[0m;
-    } while[0m ([0muVar2[0m != 0[0m);
-    [0muVar2[0m = 0xff[0m;
-    do[0m {
-        *(undefined[0m *)((uint16_t[0m)[0muVar2[0m + 0xd7ff[0m) = [0muVar1[0m;
-        [0muVar2[0m = [0muVar2[0m - 1[0m;
-    } while[0m ([0muVar2[0m != 0[0m);
-    return[0m;
+    uVar2 = 0xff;
+    do {
+        *(undefined *)((uint16_t)uVar2 + 0x3ff) = 0x41;
+        uVar1 = uRAM0824;
+        uVar2 = uVar2 - 1;
+    } while (uVar2 != 0);
+    uVar2 = 0xff;
+    do {
+        *(undefined *)((uint16_t)uVar2 + 0xd7ff) = uVar1;
+        uVar2 = uVar2 - 1;
+    } while (uVar2 != 0);
+    return;
 }
 EOF
 CMDS=<<EOF
@@ -94,5 +94,71 @@ pdgss
 s 0x080e
 af
 pdg
+EOF
+RUN
+
+NAME=code printing
+FILE=r2r/bins/elf/crackme0x05
+EXPECT=<<EOF
+
+undefined4 main(void)
+{
+    int32_t var_78h;
+    
+    sym.imp.printf("IOLI Crackme Level 0x05\n");
+    sym.imp.printf("Password: ");
+    sym.imp.scanf(0x80486b2, &var_78h);
+    sym.check((int32_t)&var_78h);
+    return 0;
+}
+--
+                  |
+                  |undefined4 main(void)
+                  |{
+                  |    int32_t var_78h;
+                  |    
+    0x08048566    |    sym.imp.printf("IOLI Crackme Level 0x05\n");
+    0x08048572    |    sym.imp.printf("Password: ");
+    0x08048585    |    sym.imp.scanf(0x80486b2, &var_78h);
+    0x0804858a    |    sym.check((int32_t)&var_78h);
+    0x0804859b    |    return 0;
+                  |}
+--
+
+[38;2;0;55;218mundefined4[0m [38;2;197;15;31mmain[0m([1;38;2;180;0;158mvoid[0m)
+{
+    [38;2;0;55;218mint32_t[0m [0mvar_78h[0m;
+    
+    [38;2;197;15;31msym.imp.printf[0m([38;2;193;156;0m"IOLI Crackme Level 0x05\n"[0m);
+    [38;2;197;15;31msym.imp.printf[0m([38;2;193;156;0m"Password: "[0m);
+    [38;2;197;15;31msym.imp.scanf[0m([38;2;193;156;0m0x80486b2[0m, &[0mvar_78h[0m);
+    [38;2;197;15;31msym.check[0m(([38;2;0;55;218mint32_t[0m)&[0mvar_78h[0m);
+    [1;38;2;180;0;158mreturn[0m [38;2;193;156;0m0[0m;
+}
+--
+                  |
+[38;2;0;55;218m[0m                  |[38;2;0;55;218mundefined4[0m [38;2;197;15;31mmain[0m([1;38;2;180;0;158mvoid[0m)
+                  |{
+                  |    [38;2;0;55;218mint32_t[0m [0mvar_78h[0m;
+                  |    
+    [38;2;19;161;14m0x08048566[0m    |    [38;2;197;15;31msym.imp.printf[0m([38;2;193;156;0m"IOLI Crackme Level 0x05\n"[0m);
+    [38;2;19;161;14m0x08048572[0m    |    [38;2;197;15;31msym.imp.printf[0m([38;2;193;156;0m"Password: "[0m);
+    [38;2;19;161;14m0x08048585[0m    |    [38;2;197;15;31msym.imp.scanf[0m([38;2;193;156;0m0x80486b2[0m, &[0mvar_78h[0m);
+    [38;2;19;161;14m0x0804858a[0m    |    [38;2;197;15;31msym.check[0m(([38;2;0;55;218mint32_t[0m)&[0mvar_78h[0m);
+    [38;2;19;161;14m0x0804859b[0m    |    [1;38;2;180;0;158mreturn[0m [38;2;193;156;0m0[0m;
+                  |}
+EOF
+CMDS=<<EOF
+s main
+af
+e scr.color=0
+pdg
+?e --
+pdgo
+?e --
+e scr.color=3
+pdg
+?e --
+pdgo
 EOF
 RUN

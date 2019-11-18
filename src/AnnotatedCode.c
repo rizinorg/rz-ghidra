@@ -118,7 +118,7 @@ R_API void r_annotated_code_print_json(RAnnotatedCode *code) {
 
 
 #define PALETTE(x) (cons && cons->context->pal.x)? cons->context->pal.x 
-#define PICK_COLOR(x)   ((code->color_enabled)? (x) : "")
+#define PRINT_COLOR(x) do { if (cons->context->color_mode) { r_cons_printf("%s", (x)); } } while (0)
 
 static void print_offset_in_binary_line_bar(RAnnotatedCode *code, ut64 offset) {
 	RCons *cons = r_cons_singleton();
@@ -127,15 +127,15 @@ static void print_offset_in_binary_line_bar(RAnnotatedCode *code, ut64 offset) {
 	} else {
 		char hex_str[0x10];
 		snprintf(hex_str, 11, "0x%08"PFMT64x, offset);
-		r_cons_printf("    "); 
-		r_cons_printf("%s", PICK_COLOR(PALETTE(offset): Color_GREEN));
+		r_cons_printf("    ");
+		PRINT_COLOR (PALETTE(offset): Color_GREEN);
 		r_cons_printf("%s", hex_str);
-		r_cons_printf("%s", PICK_COLOR(Color_RESET));
+		PRINT_COLOR (Color_RESET);
 		r_cons_printf("    |");
 	}
 }
 
-R_API void r_annotated_code_print(RAnnotatedCode* code, RVector *line_offsets) {
+R_API void r_annotated_code_print(RAnnotatedCode *code, RVector *line_offsets) {
 	if (code->annotations.len == 0) {
 		r_cons_printf("%s\n", code->code);
 		return;
@@ -194,7 +194,7 @@ R_API void r_annotated_code_print(RAnnotatedCode* code, RVector *line_offsets) {
 
 		// (3/3)
 		// everything in between the "start" and the "end" inclusive should be highlighted
-		r_cons_printf("%s", PICK_COLOR(color));
+		PRINT_COLOR (color);
 		for (; cur < annotation->end && cur < len; cur++) {
 			// if we are starting a new line and we are printing with offsets
 			// we need to prepare the bar with offsets on the left handside before that
@@ -203,14 +203,14 @@ R_API void r_annotated_code_print(RAnnotatedCode* code, RVector *line_offsets) {
 				if (line_idx < line_offsets->len) {
 					offset = *(ut64 *)r_vector_index_ptr(line_offsets, line_idx);
 				}
-				r_cons_printf("%s", PICK_COLOR(Color_RESET));
+				PRINT_COLOR (Color_RESET);
 				print_offset_in_binary_line_bar(code, offset);
-				r_cons_printf("%s", PICK_COLOR(color));
+				PRINT_COLOR (color);
 				line_idx++;
 			}
 			r_cons_printf("%c", code->code[cur]);
 		}
-		r_cons_printf("%s", PICK_COLOR(Color_RESET));
+		PRINT_COLOR (Color_RESET);
 	}
 	// the rest of the decompiled code should be printed
 	// without any highlighting since we don't have any annotations left
