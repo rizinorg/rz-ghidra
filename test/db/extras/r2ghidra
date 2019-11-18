@@ -124,6 +124,360 @@ undefined4 main(void)
     0x0804859b    |    return 0;
                   |}
 --
+s 0x8048566
+CCu base64:ICAgIHN5bS5pbXAucHJpbnRmKCJJT0xJIENyYWNrbWUgTGV2ZWwgMHgwNVxuIik=
+s 0x8048572
+CCu base64:OyAgICBzeW0uaW1wLnByaW50ZigiUGFzc3dvcmQ6ICIp
+s 0x8048585
+CCu base64:OyAgICBzeW0uaW1wLnNjYW5mKDB4ODA0ODZiMiwgJnZhcl83OGgp
+s 0x8048590
+CCu base64:OyAgICBzeW0uY2hlY2soKGludDMyX3QpJnZhcl83OGgp
+s 0x804859b
+CCu base64:OyAgICByZXR1cm4gMA==
+--
+<result><function><function name="main" size="92">
+<addr space="ram" offset="0x8048540"/>
+<localdb main="stack" lock="false">
+<scope name="main">
+<parent>
+<val></val>
+</parent>
+<rangelist>
+<range space="stack" first="0x4" last="0x1f7"/>
+<range space="stack" first="0xffffff68" last="0xfffffffb"/>
+</rangelist>
+<symbollist>
+<mapsym>
+<symbol name="var_78h" id="0xefa14170" namelock="true" typelock="true" cat="-1">
+<typeref name="int32_t" id="0xae3cc57433329ed9"/></symbol>
+<addr space="stack" offset="0xffffff84"/><rangelist>
+</rangelist>
+</mapsym>
+</symbollist>
+</scope>
+</localdb>
+<ast>
+<varnodes>
+<addr space="const" offset="0x0" size="4" ref="0x140"/>
+<addr space="const" offset="0x0" size="4" ref="0x15e"/>
+<addr space="const" offset="0x804868e" size="4" ref="0x281"/>
+<addr space="const" offset="0x80486a7" size="4" ref="0x282"/>
+<addr space="const" offset="0x80486b2" size="4" ref="0x276"/>
+<addr space="const" offset="0xffffff84" size="4" ref="0x27d"/>
+<addr space="const" offset="0xffffff84" size="4" ref="0x27f"/>
+<addr space="unique" offset="0x3a0" size="4" ref="0x113"/>
+<addr space="unique" offset="0x3a0" size="4" ref="0x12d"/>
+<addr space="unique" offset="0x10000047" size="4" ref="0x278"/>
+<addr space="unique" offset="0x1000004b" size="4" ref="0x27b"/>
+<addr space="unique" offset="0x10000057" size="4" ref="0x283"/>
+<addr space="register" offset="0x0" size="4" ref="0x13f"/>
+<addr space="register" offset="0x10" size="4" ref="0x1c9" unaff="true" input="true"/>
+<addr space="ram" offset="0x8048394" size="8" ref="0x105"/>
+<addr space="ram" offset="0x8048394" size="8" ref="0x112"/>
+<addr space="ram" offset="0x8048374" size="8" ref="0x12c"/>
+<addr space="ram" offset="0x80484c8" size="8" ref="0x13e"/>
+</varnodes>
+<block index="0">
+<rangelist>
+<range space="ram" first="0x8048540" last="0x804859b"/>
+</rangelist>
+<op code="1">
+<seqnum space="ram" offset="0x8048566" uniq="0xc2"/>
+<addr ref="0x278"/>
+<addr ref="0x281"/>
+</op>
+
+<op code="7">
+<seqnum space="ram" offset="0x8048566" uniq="0x5c"/>
+<void/>
+<addr ref="0x105"/>
+<addr ref="0x278"/>
+</op>
+
+<op code="1">
+<seqnum space="ram" offset="0x8048572" uniq="0xc3"/>
+<addr ref="0x27b"/>
+<addr ref="0x282"/>
+</op>
+
+<op code="7">
+<seqnum space="ram" offset="0x8048572" uniq="0x61"/>
+<void/>
+<addr ref="0x112"/>
+<addr ref="0x27b"/>
+</op>
+
+<op code="66">
+<seqnum space="ram" offset="0x8048577" uniq="0xc4"/>
+<addr ref="0x113"/>
+<addr ref="0x1c9"/>
+<addr ref="0x27d"/>
+</op>
+
+<op code="7">
+<seqnum space="ram" offset="0x8048585" uniq="0x6b"/>
+<void/>
+<addr ref="0x12c"/>
+<addr ref="0x276"/>
+<addr ref="0x113"/>
+</op>
+
+<op code="66">
+<seqnum space="ram" offset="0x804858a" uniq="0xc5"/>
+<addr ref="0x12d"/>
+<addr ref="0x1c9"/>
+<addr ref="0x27f"/>
+</op>
+
+<op code="64">
+<seqnum space="ram" offset="0x8048590" uniq="0xc6"/>
+<addr ref="0x283"/>
+<addr ref="0x12d"/>
+</op>
+
+<op code="7">
+<seqnum space="ram" offset="0x8048590" uniq="0x72"/>
+<void/>
+<addr ref="0x13e"/>
+<addr ref="0x283"/>
+</op>
+
+<op code="1">
+<seqnum space="ram" offset="0x8048595" uniq="0x73"/>
+<addr ref="0x13f"/>
+<addr ref="0x140"/>
+</op>
+
+<op code="10">
+<seqnum space="ram" offset="0x804859b" uniq="0x79"/>
+<void/>
+<addr ref="0x15e"/>
+<addr ref="0x13f"/>
+</op>
+
+</block>
+</ast>
+<highlist><high  repref="0x140" class="constant"><type name="undefined4" id="0xe465666a6c6d2ff9" size="4" metatype="unknown" core="true"/><addr  ref="0x140"/></high><high  repref="0x15e" class="constant"><type name="undefined4" id="0xe465666a6c6d2ff9" size="4" metatype="unknown" core="true"/><addr  ref="0x15e"/></high><high  repref="0x281" class="constant"><type name="" size="4" metatype="ptr" core="true"><typeref name="char" id="0x8000fed063689fd9"/></type><addr  ref="0x281"/></high><high  repref="0x282" class="constant"><type name="" size="4" metatype="ptr" core="true"><typeref name="char" id="0x8000fed063689fd9"/></type><addr  ref="0x282"/></high><high  repref="0x276" class="constant"><type name="undefined4" id="0xe465666a6c6d2ff9" size="4" metatype="unknown" core="true"/><addr  ref="0x276"/></high><high  repref="0x27d" class="constant"><type name="int32_t" id="0xae3cc57433329ed9" size="4" metatype="int" core="true"/><addr  ref="0x27d"/></high><high  repref="0x27f" class="constant"><type name="int32_t" id="0xae3cc57433329ed9" size="4" metatype="int" core="true"/><addr  ref="0x27f"/></high><high  repref="0x113" class="other"><type name="" size="4" metatype="ptr" core="true"><typeref name="int32_t" id="0xae3cc57433329ed9"/></type><addr  ref="0x113"/></high><high  repref="0x12d" class="other"><type name="" size="4" metatype="ptr" core="true"><typeref name="int32_t" id="0xae3cc57433329ed9"/></type><addr  ref="0x12d"/></high><high  repref="0x278" class="other" typelock="true"><type name="" size="4" metatype="ptr" core="true"><typeref name="char" id="0x8000fed063689fd9"/></type><addr  ref="0x278"/></high><high  repref="0x27b" class="other" typelock="true"><type name="" size="4" metatype="ptr" core="true"><typeref name="char" id="0x8000fed063689fd9"/></type><addr  ref="0x27b"/></high><high  repref="0x283" class="other"><type name="int32_t" id="0xae3cc57433329ed9" size="4" metatype="int" core="true"/><addr  ref="0x283"/></high><high  repref="0x13f" class="other"><type name="undefined4" id="0xe465666a6c6d2ff9" size="4" metatype="unknown" core="true"/><addr  ref="0x13f"/></high><high  repref="0x1c9" class="other" typelock="true"><type name="" size="4" metatype="ptr"><type name="" size="0" metatype="spacebase" space="stack"><addr space="ram" offset="0x8048540"/></type></type><addr  ref="0x1c9"/></high></highlist>
+ <prototype model="__cdecl" extrapop="4">
+  <returnsym>
+   <addr space="register" offset="0x0" size="4"/><type name="undefined4" id="0xe465666a6c6d2ff9" size="4" metatype="unknown" core="true"/>  </returnsym>
+ </prototype>
+</function>
+</function><code><function ><syntax ></syntax><break  indent="0x0"/><funcproto ><return_type  varref="0x13f"><type color="type" id="0xe465666a6c6d2ff9">undefined4</type><syntax ></syntax><syntax ></syntax></return_type><syntax > </syntax><funcname color="funcname">main</funcname><syntax ></syntax><syntax  open="92">(</syntax><syntax ></syntax><syntax color="keyword">void</syntax><syntax ></syntax><syntax  close="92">)</syntax></funcproto><break  indent="0x0"/><syntax >{</syntax><break  indent="0x4"/><vardecl  symref="0xefa14170"><type color="type" id="0xae3cc57433329ed9">int32_t</type><syntax > </syntax><variable color="var">var_78h</variable></vardecl><syntax ></syntax><syntax >;</syntax><break  indent="0x4"/><block  blockref="0x0"><syntax ></syntax><break  indent="0x4"/><statement  opref="0x5c"><funcname color="funcname" opref="0x5c">sym.imp.printf</funcname><syntax ></syntax><syntax  open="99">(</syntax><syntax ></syntax><variable color="const" varref="0x281" opref="0xc2">&quot;IOLI Crackme Level 0x05\n&quot;</variable><syntax ></syntax><syntax  close="99">)</syntax></statement><syntax ></syntax><syntax >;</syntax><break  indent="0x4"/><statement  opref="0x61"><funcname color="funcname" opref="0x61">sym.imp.printf</funcname><syntax ></syntax><syntax  open="102">(</syntax><syntax ></syntax><variable color="const" varref="0x282" opref="0xc3">&quot;Password: &quot;</variable><syntax ></syntax><syntax  close="102">)</syntax></statement><syntax ></syntax><syntax >;</syntax><break  indent="0x4"/><statement  opref="0x6b"><funcname color="funcname" opref="0x6b">sym.imp.scanf</funcname><syntax ></syntax><syntax  open="105">(</syntax><syntax ></syntax><variable color="const" varref="0x276" opref="0x6b">0x80486b2</variable><syntax ></syntax><op  opref="0x6b">, </op><syntax ></syntax><op  opref="0xc4">&amp;</op><syntax ></syntax><variable color="var" opref="0xc4">var_78h</variable><syntax ></syntax><syntax  close="105">)</syntax></statement><syntax ></syntax><syntax >;</syntax><break  indent="0x4"/><statement  opref="0x72"><funcname color="funcname" opref="0x72">sym.check</funcname><syntax ></syntax><syntax  open="110">(</syntax><syntax ></syntax><syntax  open="112">(</syntax><syntax ></syntax><type color="type" id="0xae3cc57433329ed9">int32_t</type><syntax ></syntax><syntax ></syntax><syntax ></syntax><syntax  close="112">)</syntax><syntax ></syntax><op  opref="0xc5">&amp;</op><syntax ></syntax><variable color="var" opref="0xc5">var_78h</variable><syntax ></syntax><syntax  close="110">)</syntax></statement><syntax ></syntax><syntax >;</syntax><break  indent="0x4"/><statement  opref="0x79"><op color="keyword" opref="0x79">return</op><syntax > </syntax><variable color="const" varref="0x140" opref="0x73">0</variable></statement><syntax ></syntax><syntax >;</syntax></block><break  indent="0x0"/><syntax >}</syntax><break  indent="0x0"/><syntax ></syntax></function></code></result>
+--
+<save_state loadersymbols="false">
+<typegrp intsize="4" structalign="4" enumsize="4" enumsigned="false">
+</typegrp>
+<db>
+<property_changepoint space="register" offset="0x1000" val="0x40000000"/>
+<property_changepoint space="register" offset="0x100a" val="0x40000000"/>
+<property_changepoint space="register" offset="0x1014" val="0x40000000"/>
+<property_changepoint space="register" offset="0x101e" val="0x40000000"/>
+<property_changepoint space="register" offset="0x1028" val="0x40000000"/>
+<property_changepoint space="register" offset="0x1032" val="0x40000000"/>
+<property_changepoint space="register" offset="0x103c" val="0x40000000"/>
+<property_changepoint space="register" offset="0x1046" val="0x40000000"/>
+<property_changepoint space="register" offset="0x1050" val="0x0"/>
+<scope name="radare2-internal">
+<parent>
+</parent>
+<rangelist>
+</rangelist>
+<symbollist>
+<mapsym>
+<function name="main" size="92">
+<addr space="ram" offset="0x8048540"/>
+<localdb main="stack" lock="false">
+<scope name="main">
+<parent>
+<val></val>
+</parent>
+<rangelist>
+<range space="stack" first="0x4" last="0x1f7"/>
+<range space="stack" first="0xffffff68" last="0xfffffffb"/>
+</rangelist>
+<symbollist>
+<mapsym>
+<symbol name="var_78h" id="0xef00ef50" namelock="true" typelock="true" cat="-1">
+<typeref name="int32_t" id="0xae3cc57433329ed9"/></symbol>
+<addr space="stack" offset="0xffffff84"/><rangelist>
+</rangelist>
+</mapsym>
+</symbollist>
+</scope>
+</localdb>
+ <prototype model="__cdecl" extrapop="4">
+  <returnsym>
+   <addr space="register" offset="0x0" size="4"/><type name="undefined4" id="0xe465666a6c6d2ff9" size="4" metatype="unknown" core="true"/>  </returnsym>
+ </prototype>
+</function>
+<addr space="ram" offset="0x8048540"/><rangelist>
+</rangelist>
+</mapsym>
+<mapsym>
+<symbol name="str.IOLI_Crackme_Level_0x05" id="0xee145e70" namelock="true" typelock="true" readonly="true" cat="-1">
+<type name="" size="25" metatype="array" arraysize="25"><typeref name="char" id="0x8000fed063689fd9"/></type></symbol>
+<addr space="ram" offset="0x804868e"/><rangelist>
+</rangelist>
+</mapsym>
+<mapsym>
+<symbol name="str.Password:" id="0xefa087e0" namelock="true" typelock="true" readonly="true" cat="-1">
+<type name="" size="11" metatype="array" arraysize="11"><typeref name="char" id="0x8000fed063689fd9"/></type></symbol>
+<addr space="ram" offset="0x80486a7"/><rangelist>
+</rangelist>
+</mapsym>
+<mapsym>
+<function name="sym.check" size="1">
+<addr space="ram" offset="0x80484c8"/>
+<localdb main="stack" lock="false">
+<scope name="sym.check">
+<parent>
+<val></val>
+</parent>
+<rangelist>
+<range space="stack" first="0x4" last="0x1f7"/>
+<range space="stack" first="0xfff0bdc0" last="0xffffffff"/>
+</rangelist>
+<symbollist>
+<mapsym>
+<symbol name="arg_8h" id="0xeeffc8a0" namelock="true" typelock="true" cat="0" index="0x0">
+<typeref name="int32_t" id="0xae3cc57433329ed9"/></symbol>
+<addr space="stack" offset="0x4"/><rangelist>
+</rangelist>
+</mapsym>
+<mapsym>
+<symbol name="var_8h" id="0xeeffbfa0" namelock="true" typelock="true" cat="-1">
+<typeref name="int32_t" id="0xae3cc57433329ed9"/></symbol>
+<addr space="stack" offset="0xfffffff4"/><rangelist>
+</rangelist>
+</mapsym>
+<mapsym>
+<symbol name="var_ch" id="0xeeffbf30" namelock="true" typelock="true" cat="-1">
+<typeref name="int32_t" id="0xae3cc57433329ed9"/></symbol>
+<addr space="stack" offset="0xfffffff0"/><rangelist>
+</rangelist>
+</mapsym>
+</symbollist>
+</scope>
+</localdb>
+ <prototype model="__cdecl" extrapop="4" modellock="true">
+  <returnsym>
+   <addr space="stack" offset="0x0" size="1"/><type name="undefined" id="0xc56465666a6c6d2f" size="1" metatype="unknown" core="true"/>  </returnsym>
+ </prototype>
+</function>
+<addr space="ram" offset="0x80484c8"/><rangelist>
+</rangelist>
+</mapsym>
+<mapsym>
+<function name="sym.imp.printf" size="1">
+<addr space="ram" offset="0x8048394"/>
+<localdb main="stack" lock="false">
+<scope name="sym.imp.printf">
+<parent>
+<val></val>
+</parent>
+<rangelist>
+<range space="stack" first="0x4" last="0x1f7"/>
+<range space="stack" first="0xfff0bdc0" last="0xffffffff"/>
+</rangelist>
+</scope>
+</localdb>
+ <prototype model="__cdecl" extrapop="4">
+  <returnsym>
+   <addr space="stack" offset="0x0" size="1"/><type name="undefined" id="0xc56465666a6c6d2f" size="1" metatype="unknown" core="true"/>  </returnsym>
+ </prototype>
+</function>
+<addr space="ram" offset="0x8048394"/><rangelist>
+</rangelist>
+</mapsym>
+<mapsym>
+<function name="sym.imp.scanf" size="1">
+<addr space="ram" offset="0x8048374"/>
+<localdb main="stack" lock="false">
+<scope name="sym.imp.scanf">
+<parent>
+<val></val>
+</parent>
+<rangelist>
+<range space="stack" first="0x4" last="0x1f7"/>
+<range space="stack" first="0xfff0bdc0" last="0xffffffff"/>
+</rangelist>
+</scope>
+</localdb>
+ <prototype model="__cdecl" extrapop="4">
+  <returnsym>
+   <addr space="stack" offset="0x0" size="1"/><type name="undefined" id="0xc56465666a6c6d2f" size="1" metatype="unknown" core="true"/>  </returnsym>
+ </prototype>
+</function>
+<addr space="ram" offset="0x8048374"/><rangelist>
+</rangelist>
+</mapsym>
+</symbollist>
+</scope>
+</db>
+<context_points>
+<context_pointset space="ram" offset="0x0">
+  <set name="addrsize" val="0x1"/>
+  <set name="bit64" val="0x0"/>
+  <set name="highseg" val="0x0"/>
+  <set name="instrPhase" val="0x0"/>
+  <set name="mandover" val="0x0"/>
+  <set name="opprefx" val="0x0"/>
+  <set name="opsize" val="0x1"/>
+  <set name="prefix_66" val="0x0"/>
+  <set name="prefix_f2" val="0x0"/>
+  <set name="prefix_f3" val="0x0"/>
+  <set name="protectedMode" val="0x0"/>
+  <set name="repneprefx" val="0x0"/>
+  <set name="repprefx" val="0x0"/>
+  <set name="rexBprefix" val="0x0"/>
+  <set name="rexRprefix" val="0x0"/>
+  <set name="rexWprefix" val="0x0"/>
+  <set name="rexXprefix" val="0x0"/>
+  <set name="rexprefix" val="0x0"/>
+  <set name="segover" val="0x0"/>
+  <set name="suffix3D" val="0x0"/>
+  <set name="vexL" val="0x0"/>
+  <set name="vexMMMMM" val="0x0"/>
+  <set name="vexMode" val="0x0"/>
+  <set name="vexVVVV" val="0x0"/>
+  <set name="vexVVVV_r64" val="0x0"/>
+</context_pointset>
+<context_pointset space="register" offset="0x0">
+  <set name="addrsize" val="0x0"/>
+  <set name="bit64" val="0x0"/>
+  <set name="highseg" val="0x0"/>
+  <set name="instrPhase" val="0x0"/>
+  <set name="mandover" val="0x0"/>
+  <set name="opprefx" val="0x0"/>
+  <set name="opsize" val="0x0"/>
+  <set name="prefix_66" val="0x0"/>
+  <set name="prefix_f2" val="0x0"/>
+  <set name="prefix_f3" val="0x0"/>
+  <set name="protectedMode" val="0x0"/>
+  <set name="repneprefx" val="0x0"/>
+  <set name="repprefx" val="0x0"/>
+  <set name="rexBprefix" val="0x0"/>
+  <set name="rexRprefix" val="0x0"/>
+  <set name="rexWprefix" val="0x0"/>
+  <set name="rexXprefix" val="0x0"/>
+  <set name="rexprefix" val="0x0"/>
+  <set name="segover" val="0x0"/>
+  <set name="suffix3D" val="0x0"/>
+  <set name="vexL" val="0x0"/>
+  <set name="vexMMMMM" val="0x0"/>
+  <set name="vexMode" val="0x0"/>
+  <set name="vexVVVV" val="0x0"/>
+  <set name="vexVVVV_r64" val="0x0"/>
+</context_pointset>
+<tracked_pointset space="ram" offset="0x0">
+  <set space="register" offset="0x20a" size="1" val="0x0"/>
+</tracked_pointset>
+</context_points>
+<commentdb>
+</commentdb>
+</save_state>
+--
 
 [38;2;0;55;218mundefined4[0m [38;2;197;15;31mmain[0m([1;38;2;180;0;158mvoid[0m)
 {
@@ -155,6 +509,12 @@ e scr.color=0
 pdg
 ?e --
 pdgo
+?e --
+pdg*
+?e --
+pdgx
+?e --
+pdgd
 ?e --
 e scr.color=3
 pdg
