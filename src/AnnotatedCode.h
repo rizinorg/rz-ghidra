@@ -58,6 +58,7 @@ R_API RPVector *r_annotated_code_annotations_range(RAnnotatedCode *code, size_t 
 R_API void r_annotated_code_print_json(RAnnotatedCode *code);
 R_API void r_annotated_code_print(RAnnotatedCode *code, RVector *line_offsets);
 R_API RVector *r_annotated_code_line_offsets(RAnnotatedCode *code);
+R_API void r_annotated_code_print_comment_cmds(RAnnotatedCode *code);
 
 #ifdef __cplusplus
 }

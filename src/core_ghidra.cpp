@@ -11,7 +11,6 @@
 
 #include <libdecomp.hh>
 #include <printc.hh>
-#include "R2PrintC.h"
 
 #include <r_core.h>
 
@@ -148,10 +147,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 
 		std::stringstream out_stream;
 		arch.print->setOutputStream(&out_stream);
-		arch.print_with_offsets->setOutputStream(&out_stream);
 
-		auto r2_print_c = dynamic_cast<R2PrintC *>(arch.print_with_offsets);
-		ApplyPrintCConfig(core->config, r2_print_c);
 		ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
 
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultSpace(), function->addr));
@@ -178,9 +174,10 @@ static void Decompile(RCore *core, DecompileMode mode)
 		switch (mode)
 		{
 			case DecompileMode::XML:
-			case DecompileMode::JSON:
 			case DecompileMode::DEFAULT:
+			case DecompileMode::JSON:
 			case DecompileMode::OFFSET:
+			case DecompileMode::STATEMENTS:
 				arch.print->setXML(true);
 				break;
 			default:
@@ -194,16 +191,21 @@ static void Decompile(RCore *core, DecompileMode mode)
 			out_stream << "</function><code>";
 		}
 
+		RAnnotatedCode *code = nullptr;
 		switch(mode)
 		{
 			case DecompileMode::XML:
 			case DecompileMode::DEFAULT:
 			case DecompileMode::JSON:
 			case DecompileMode::OFFSET:
-				arch.print->docFunction(func);
-				break;
 			case DecompileMode::STATEMENTS:
-				arch.print_with_offsets->docFunction(func);
+				arch.print->docFunction(func);
+				if(mode != DecompileMode::XML)
+				{
+					code = ParseCodeXML(func, out_stream.str().c_str());
+					if (!code)
+						throw LowlevelError("Failed to parse XML code from Decompiler");
+				}
 				break;
 			case DecompileMode::DEBUG_XML:
 				arch.saveXml(out_stream);
@@ -212,63 +214,33 @@ static void Decompile(RCore *core, DecompileMode mode)
 				break;
 		}
 
-		if(mode == DecompileMode::OFFSET)
+		switch(mode)
 		{
-			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
-			if (!code)
-				throw LowlevelError("Failed to parse XML code from Decompiler");
-			RVector *offsets = r_annotated_code_line_offsets(code);
-			r_annotated_code_print(code, offsets);
-			r_annotated_code_free(code);
-			r_vector_free(offsets);
-			return;
-		}
-		else if (mode == DecompileMode::DEFAULT)
-		{
-			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
-			if (!code)
-				throw LowlevelError("Failed to parse XML code from Decompiler");
-			r_annotated_code_print(code, NULL);
-			r_annotated_code_free(code);
-			return;
-		}
-		else if(mode == DecompileMode::STATEMENTS)
-		{
-			for (auto const& addr : r2_print_c->getStatementsMap())
+			case DecompileMode::OFFSET:
 			{
-				string statement = addr.second;
-				stringstream comment_stream;
-				size_t start_tag = statement.find("R2_OFFSET_START");
-				if(start_tag != -1)
-				{
-					size_t end_tag = statement.find("R2_OFFSET_STOP") + 15;
-					statement.erase(start_tag, end_tag-start_tag);
-				}
-				statement.erase(std::remove(statement.begin(), statement.end(), '\n'), statement.end() );
-
-				char *b64statement = r_base64_encode_dyn(statement.c_str(), statement.size());
-				comment_stream << "s " << "0x" << std::hex << addr.first.getOffset() << "\n";
-				comment_stream << "CCu base64:" << b64statement << "\n";
-				r_cons_print(comment_stream.str().c_str());
+				RVector *offsets = r_annotated_code_line_offsets(code);
+				r_annotated_code_print(code, offsets);
+				r_vector_free(offsets);
 			}
-		}
-		else if(mode == DecompileMode::JSON)
-		{
-			RAnnotatedCode *code = ParseCodeXML(func, out_stream.str().c_str());
-			if(!code)
-				throw LowlevelError("Failed to parse XML code from Decompiler");
-			r_annotated_code_print_json(code);
-			r_annotated_code_free(code);
-			return;
-		}
-		else
-		{
-			if(mode == DecompileMode::XML)
-			{
+			break;
+			case DecompileMode::DEFAULT:
+				r_annotated_code_print(code, nullptr);
+				break;
+			case DecompileMode::STATEMENTS:
+				r_annotated_code_print_comment_cmds(code);
+				break;
+			case DecompileMode::JSON:
+				r_annotated_code_print_json(code);
+				break;
+			case DecompileMode::XML:
 				out_stream << "</code></result>";
-			}
-			r_cons_print(out_stream.str().c_str());
+				// fallthrough
+			default:
+				r_cons_printf("%s\n", out_stream.str().c_str());
+				break;
 		}
+
+		r_annotated_code_free(code);
 #ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &error)

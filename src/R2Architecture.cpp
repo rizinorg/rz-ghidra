@@ -5,7 +5,6 @@
 #include "R2Architecture.h"
 #include "R2TypeFactory.h"
 #include "R2CommentDatabase.h"
-#include "R2PrintC.h"
 #include "R2Utils.h"
 #include "ArchMap.h"
 
@@ -34,7 +33,6 @@ R2Architecture::R2Architecture(RCore *core, const std::string &sleigh_id)
 	: SleighArchitecture(FilenameFromCore(core), sleigh_id.empty() ? SleighIdFromCore(core) : sleigh_id, &cout),
 	_core(core)
 {
-	print_with_offsets = new R2PrintC(this, string("tagged-c-language"));
 	caffeine_level = 1;
 	bed = nullptr;
 }
