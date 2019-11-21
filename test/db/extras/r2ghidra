@@ -392,7 +392,6 @@ CCu base64:Jg== @ 0x804858a
   <set name="prefix_66" val="0x0"/>
   <set name="prefix_f2" val="0x0"/>
   <set name="prefix_f3" val="0x0"/>
-  <set name="protectedMode" val="0x0"/>
   <set name="repneprefx" val="0x0"/>
   <set name="repprefx" val="0x0"/>
   <set name="rexBprefix" val="0x0"/>
@@ -419,7 +418,6 @@ CCu base64:Jg== @ 0x804858a
   <set name="prefix_66" val="0x0"/>
   <set name="prefix_f2" val="0x0"/>
   <set name="prefix_f3" val="0x0"/>
-  <set name="protectedMode" val="0x0"/>
   <set name="repneprefx" val="0x0"/>
   <set name="repprefx" val="0x0"/>
   <set name="rexBprefix" val="0x0"/>
