@@ -36,7 +36,9 @@ set(SOURCE
 		src/CodeXMLParse.h
 		src/CodeXMLParse.cpp
 		src/ArchMap.h
-		src/ArchMap.cpp)
+		src/ArchMap.cpp
+		src/R2PrintC.h
+		src/R2PrintC.cpp)
 
 find_package(Radare2 REQUIRED)
 

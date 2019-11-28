@@ -26,6 +26,8 @@ class R2Architecture : public SleighArchitecture
 		std::map<std::string, VarnodeData> registers;
 		std::vector<std::string> warnings;
 
+		bool rawptr = false;
+
 		void loadRegisters(const Translate *translate);
 
 	public:
@@ -43,6 +45,8 @@ class R2Architecture : public SleighArchitecture
 		const std::vector<std::string> getWarnings() const { return warnings; }
 		ContextDatabase *getContextDatabase();
 
+		void setRawPtr(bool rawptr) { this->rawptr = rawptr; }
+
 	protected:
 		Translate *buildTranslator(DocumentStorage &store) override;
 		void buildLoader(DocumentStorage &store) override;
@@ -50,6 +54,7 @@ class R2Architecture : public SleighArchitecture
 		void buildTypegrp(DocumentStorage &store) override;
 		void buildCommentDB(DocumentStorage &store) override;
 		void postSpecFile() override;
+		void buildAction(DocumentStorage &store) override;
 };
 
 class RCoreLock

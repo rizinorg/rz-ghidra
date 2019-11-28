@@ -9,6 +9,7 @@
 #include "ArchMap.h"
 
 #include <funcdata.hh>
+#include <coreaction.hh>
 
 #include <iostream>
 #include <cassert>
@@ -132,6 +133,15 @@ void R2Architecture::postSpecFile()
 			infd->getFuncProto().setNoReturn(true);
 		}
 	});
+}
+
+void R2Architecture::buildAction(DocumentStorage &store)
+{
+	parseExtraRules(store);	// Look for any additional rules
+	universal_action(this);
+	if(rawptr)
+		allacts.removeFromGroup("decompile", "fixateglobals"); // this action (ActionMapGlobals) will create these ugly uRam0x12345s
+	allacts.setCurrent("decompile");
 }
 
 void R2Architecture::buildLoader(DocumentStorage &store)

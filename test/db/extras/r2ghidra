@@ -78,7 +78,7 @@ void fcn.0000080e(void)
     uVar2 = 0xff;
     do {
         *(undefined *)((uint16_t)uVar2 + 0x3ff) = 0x41;
-        uVar1 = uRAM0824;
+        uVar1 = (*(undefined *)0x0824);
         uVar2 = uVar2 - 1;
     } while (uVar2 != 0);
     uVar2 = 0xff;
@@ -483,5 +483,59 @@ e scr.color=3
 pdg
 ?e --
 pdgo
+EOF
+RUN
+
+NAME=rawptr
+FILE=bins/dectest32
+EXPECT=<<EOF
+
+undefined4 sym.get_global_array_entry(void)
+{
+    return (*(undefined4 *)0x0804c020);
+}
+--
+
+undefined4 sym.get_global_array_entry(void)
+{
+    return uRam0804c020;
+}
+EOF
+CMDS=<<EOF
+s sym.get_global_array_entry
+af
+e r2ghidra.rawptr=1
+pdg
+?e --
+e r2ghidra.rawptr=0
+pdg
+EOF
+RUN
+
+NAME=global flag
+FILE=bins/dectest32
+EXPECT=<<EOF
+
+undefined4 sym.get_global_var(void)
+{
+    return _obj.global_var;
+}
+--
+
+// WARNING: Globals starting with '_' overlap smaller symbols at the same address
+
+undefined4 sym.get_global_var(void)
+{
+    return _obj.global_var;
+}
+EOF
+CMDS=<<EOF
+s sym.get_global_var
+af
+e r2ghidra.rawptr=1
+pdg
+?e --
+e r2ghidra.rawptr=0
+pdg
 EOF
 RUN

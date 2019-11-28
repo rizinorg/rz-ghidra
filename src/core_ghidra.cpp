@@ -53,14 +53,15 @@ std::vector<const ConfigVar *> ConfigVar::vars_all;
 
 bool SleighHomeConfig(void *user, void *data);
 
-static const ConfigVar cfg_var_sleighhome	("sleighhome",	"",			"SLEIGHHOME", SleighHomeConfig);
-static const ConfigVar cfg_var_sleighid		("lang",		"",			"Custom Sleigh ID to override auto-detection (e.g. x86:LE:32:default)");
-static const ConfigVar cfg_var_cmt_cpp		("cmt.cpp",		"true",		"C++ comment style");
-static const ConfigVar cfg_var_cmt_indent	("cmt.indent",	"4",		"Comment indent");
-static const ConfigVar cfg_var_nl_brace		("nl.brace",	"false",	"Newline before opening '{'");
-static const ConfigVar cfg_var_nl_else		("nl.else",		"false",	"Newline before else");
-static const ConfigVar cfg_var_indent		("indent",		"4",		"Indent increment");
-static const ConfigVar cfg_var_linelen		("linelen",		"120",		"Max line length");
+static const ConfigVar cfg_var_sleighhome   ("sleighhome",  "",         "SLEIGHHOME", SleighHomeConfig);
+static const ConfigVar cfg_var_sleighid     ("lang",        "",         "Custom Sleigh ID to override auto-detection (e.g. x86:LE:32:default)");
+static const ConfigVar cfg_var_cmt_cpp      ("cmt.cpp",     "true",     "C++ comment style");
+static const ConfigVar cfg_var_cmt_indent   ("cmt.indent",  "4",        "Comment indent");
+static const ConfigVar cfg_var_nl_brace     ("nl.brace",    "false",    "Newline before opening '{'");
+static const ConfigVar cfg_var_nl_else      ("nl.else",     "false",    "Newline before else");
+static const ConfigVar cfg_var_indent       ("indent",      "4",        "Indent increment");
+static const ConfigVar cfg_var_linelen      ("linelen",     "120",      "Max line length");
+static const ConfigVar cfg_var_rawptr       ("rawptr",      "true",     "Show unknown globals as raw addresses instead of variables");
 
 
 
@@ -143,11 +144,13 @@ static void Decompile(RCore *core, DecompileMode mode)
 
 		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 		DocumentStorage store;
+		arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 		arch.init(store);
 
 		std::stringstream out_stream;
 		arch.print->setOutputStream(&out_stream);
 
+		arch.setPrintLanguage("r2-c-language");
 		ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
 
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultSpace(), function->addr));
