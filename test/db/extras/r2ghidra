@@ -477,7 +477,7 @@ pdg*
 ?e --
 pdgx~!id=
 ?e --
-pdgd~!id=
+pdgd~!id=,protectedMode
 ?e --
 e scr.color=3
 pdg
