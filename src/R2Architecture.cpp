@@ -49,6 +49,13 @@ void R2Architecture::sleepEnd()
 	}
 }
 
+void R2Architecture::sleepEndForce()
+{
+	if(caffeine_level)
+		return;
+	sleepEnd();
+}
+
 void R2Architecture::sleepBegin()
 {
 	assert(caffeine_level > 0);

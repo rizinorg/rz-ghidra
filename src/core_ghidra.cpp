@@ -159,8 +159,17 @@ static void Decompile(RCore *core, DecompileMode mode)
 
 		arch.sleepBegin();
 		auto action = arch.allacts.getCurrent();
-		action->reset(*func);
-		int res = action->perform(*func);
+		int res;
+		try
+		{
+			action->reset(*func);
+			res = action->perform(*func);
+		}
+		catch(const LowlevelError &error)
+		{
+			arch.sleepEndForce();
+			throw error;
+		}
 		arch.sleepEnd();
 		if (res<0)
 			eprintf("break\n");

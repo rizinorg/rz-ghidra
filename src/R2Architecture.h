@@ -34,6 +34,7 @@ class R2Architecture : public SleighArchitecture
 		explicit R2Architecture(RCore *core, const std::string &sleigh_id);
 
 		void sleepEnd();
+		void sleepEndForce();
 		void sleepBegin();
 
 		R2TypeFactory *getTypeFactory() const { return r2TypeFactory; }
