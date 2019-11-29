@@ -123,19 +123,43 @@ R_API void r_annotated_code_print_json(RAnnotatedCode *code) {
 #define PALETTE(x) (cons && cons->context->pal.x)? cons->context->pal.x 
 #define PRINT_COLOR(x) do { if (cons->context->color_mode) { r_cons_printf("%s", (x)); } } while (0)
 
-static void print_offset_in_binary_line_bar(RAnnotatedCode *code, ut64 offset) {
-	RCons *cons = r_cons_singleton();
-	if (offset == UT64_MAX) {
-		r_cons_printf("                  |");
-	} else {
-		char hex_str[0x10];
-		snprintf(hex_str, 11, "0x%08"PFMT64x, offset);
-		r_cons_printf("    ");
-		PRINT_COLOR (PALETTE(offset): Color_GREEN);
-		r_cons_printf("%s", hex_str);
-		PRINT_COLOR (Color_RESET);
-		r_cons_printf("    |");
+/**
+ * @param width maximum nibbles per address
+ */
+static void print_offset_in_binary_line_bar(RAnnotatedCode *code, ut64 offset, size_t width) {
+	static const char *fmt[9] = {
+		"0x%08"PFMT64x,
+		"0x%09"PFMT64x,
+		"0x%010"PFMT64x,
+		"0x%011"PFMT64x,
+		"0x%012"PFMT64x,
+		"0x%013"PFMT64x,
+		"0x%014"PFMT64x,
+		"0x%015"PFMT64x,
+		"0x%016"PFMT64x
+	};
+	if (width < 8) {
+		width = 8;
 	}
+	if (width > 16) {
+		width = 16;
+	}
+	width -= 8;
+
+	RCons *cons = r_cons_singleton();
+	r_cons_printf("    ");
+	if (offset == UT64_MAX) {
+		r_cons_print ("          ");
+		while (width > 0) {
+			r_cons_print (" ");
+			width--;
+		}
+	} else {
+		PRINT_COLOR (PALETTE(offset): Color_GREEN);
+		r_cons_printf (fmt[width], offset);
+		PRINT_COLOR (Color_RESET);
+	}
+	r_cons_printf("    |");
 }
 
 R_API void r_annotated_code_print(RAnnotatedCode *code, RVector *line_offsets) {
@@ -144,10 +168,27 @@ R_API void r_annotated_code_print(RAnnotatedCode *code, RVector *line_offsets) {
 		return;
 	}
 
-
 	size_t cur = 0;
 	size_t line_idx = 0;
 	size_t len = strlen(code->code);
+
+	size_t offset_width = 0;
+	if (line_offsets) {
+		ut64 *offset;
+		ut64 offset_max = 0;
+		r_vector_foreach (line_offsets, offset) {
+			if (*offset != UT64_MAX && *offset > offset_max) {
+				offset_max = *offset;
+			}
+		}
+		while (offset_max) {
+			offset_width += 1;
+			offset_max >>= 4;
+		}
+		if (offset_width < 4) {
+			offset_width = 4;
+		}
+	}
 
 	RCons *cons = r_cons_singleton();
 	RCodeAnnotation *annotation;
@@ -189,7 +230,7 @@ R_API void r_annotated_code_print(RAnnotatedCode *code, RVector *line_offsets) {
 				if (line_idx < line_offsets->len) {
 					offset = *(ut64 *)r_vector_index_ptr(line_offsets, line_idx);
 				}
-				print_offset_in_binary_line_bar(code, offset);
+				print_offset_in_binary_line_bar(code, offset, offset_width);
 				line_idx++;
 			}
 			r_cons_printf("%c", code->code[cur]);
@@ -207,7 +248,7 @@ R_API void r_annotated_code_print(RAnnotatedCode *code, RVector *line_offsets) {
 					offset = *(ut64 *)r_vector_index_ptr(line_offsets, line_idx);
 				}
 				PRINT_COLOR (Color_RESET);
-				print_offset_in_binary_line_bar(code, offset);
+				print_offset_in_binary_line_bar(code, offset, offset_width);
 				PRINT_COLOR (color);
 				line_idx++;
 			}
@@ -225,7 +266,7 @@ R_API void r_annotated_code_print(RAnnotatedCode *code, RVector *line_offsets) {
 			if (line_idx < line_offsets->len) {
 				offset = *(ut64 *)r_vector_index_ptr(line_offsets, line_idx);
 			}
-			print_offset_in_binary_line_bar(code, offset);
+			print_offset_in_binary_line_bar(code, offset, offset_width);
 			line_idx++;
 		}
 		r_cons_printf("%c", code->code[cur]);

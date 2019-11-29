@@ -486,6 +486,44 @@ pdgo
 EOF
 RUN
 
+NAME=pdgo align
+FILE=r2r/bins/elf/hello_world
+ARGS=-B 0x1000000000000000
+EXPECT=<<EOF
+                          |
+                          |// WARNING: [r2ghidra] Detected overlap for variable var_1ch
+                          |// WARNING: [r2ghidra] Failed to find return address in ProtoModel
+                          |
+                          |void main(void)
+                          |{
+                          |    int32_t iVar1;
+                          |    int32_t iVar2;
+                          |    int64_t iVar3;
+                          |    int64_t var_20h;
+                          |    int64_t var_18h;
+                          |    int64_t var_10h;
+                          |    int64_t var_8h;
+                          |    
+    0x10000000000007cf    |    iVar1 = sym.imp.strlen("Hello");
+    0x10000000000007de    |    iVar2 = sym.imp.strlen(" r2-folks");
+    0x10000000000007f6    |    iVar3 = sym.imp.malloc((int64_t)(iVar2 + iVar1 + 1));
+    0x1000000000000804    |    if (iVar3 != 0) {
+    0x1000000000000814    |        sym.imp.strcpy(iVar3, "Hello", "Hello");
+    0x1000000000000827    |        sym.imp.strcat(iVar3, " r2-folks", " r2-folks");
+    0x1000000000000833    |        sym.imp.puts(iVar3);
+    0x100000000000083f    |        sym.imp.free(iVar3);
+                          |    }
+    0x1000000000000846    |    return;
+                          |}
+EOF
+CMDS=<<EOF
+s main
+af
+pdgo
+EOF
+RUN
+
+
 NAME=rawptr
 FILE=bins/dectest32
 EXPECT=<<EOF
