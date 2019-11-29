@@ -78,7 +78,7 @@ void fcn.0000080e(void)
     uVar2 = 0xff;
     do {
         *(undefined *)((uint16_t)uVar2 + 0x3ff) = 0x41;
-        uVar1 = (*(undefined *)0x0824);
+        uVar1 = *(undefined *)0x824;
         uVar2 = uVar2 - 1;
     } while (uVar2 != 0);
     uVar2 = 0xff;
@@ -530,7 +530,7 @@ EXPECT=<<EOF
 
 undefined4 sym.get_global_array_entry(void)
 {
-    return (*(undefined4 *)0x0804c020);
+    return *(undefined4 *)0x804c020;
 }
 --
 

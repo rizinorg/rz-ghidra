@@ -3,6 +3,7 @@
 #include "R2PrintC.h"
 
 #include <varnode.hh>
+#include <architecture.hh>
 
 // Constructing this registers the capability
 R2PrintCCapability R2PrintCCapability::inst;
@@ -25,14 +26,13 @@ R2PrintC::R2PrintC(Architecture *g, const string &nm)
 
 void R2PrintC::pushUnnamedLocation(const Address &addr, const Varnode *vn, const PcodeOp *op)
 {
-	// print (*(type *)0x0000...) instead of uRam00000...
-	if(addr.getSpace()->getType() == IPTR_PROCESSOR)
+	// print (*(type *)0x0000...) instead of ram00000...
+	AddrSpace *space = addr.getSpace();
+	if(space->getType() == IPTR_PROCESSOR)
 	{
-		ostringstream s;
-		s << "(*(" << vn->getType()->getName() << " *)";
-		addr.printRaw(s);
-		s << ")";
-		pushAtom(Atom(s.str(), vartoken, EmitXml::var_color, op, vn));
+		pushOp(&dereference, op);
+		auto type = glb->types->getTypePointer(space->getAddrSize(), vn->getType(), space->getWordSize());
+		pushConstant(addr.getOffset(), type, vn, op);
 	}
 	else
 	{
