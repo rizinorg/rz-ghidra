@@ -185,7 +185,8 @@ static void Decompile(RCore *core, DecompileMode mode)
 				eprintf("(no change)\n");
 		}*/
 
-		if (cfg_var_verbose.GetBool(core->config)) {
+		if(cfg_var_verbose.GetBool(core->config))
+		{
 			for(const auto &warning : arch.getWarnings())
 				func->warningHeader("[r2ghidra] " + warning);
 		}
