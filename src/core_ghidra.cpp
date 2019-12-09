@@ -62,6 +62,7 @@ static const ConfigVar cfg_var_nl_else      ("nl.else",     "false",    "Newline
 static const ConfigVar cfg_var_indent       ("indent",      "4",        "Indent increment");
 static const ConfigVar cfg_var_linelen      ("linelen",     "120",      "Max line length");
 static const ConfigVar cfg_var_rawptr       ("rawptr",      "true",     "Show unknown globals as raw addresses instead of variables");
+static const ConfigVar cfg_var_verbose      ("verbose",      "true",    "Show verbose warning messages while decompiling");
 
 
 
@@ -184,8 +185,10 @@ static void Decompile(RCore *core, DecompileMode mode)
 				eprintf("(no change)\n");
 		}*/
 
-		for(const auto &warning : arch.getWarnings())
-			func->warningHeader("[r2ghidra] " + warning);
+		if (cfg_var_verbose.GetBool(core->config)) {
+			for(const auto &warning : arch.getWarnings())
+				func->warningHeader("[r2ghidra] " + warning);
+		}
 
 		switch (mode)
 		{
