@@ -126,7 +126,12 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 	ProtoModel *proto = fcn->cc ? arch->protoModelFromR2CC(fcn->cc) : nullptr;
 	if(!proto)
-		arch->addWarning("Failed to match radare2 calling convention " + to_string(fcn->cc) + " to Decompiler ProtoModel");
+	{
+		if(fcn->cc)
+			arch->addWarning("Matching calling convention " + to_string(fcn->cc) + " of function " + to_string(fcn->name) + " failed, args may be inaccurate.");
+		else
+			arch->addWarning("Function " + to_string(fcn->name) + " has no calling convention set, args may be inaccurate.");
+	}
 
 	int4 extraPop = proto ? proto->getExtraPop() : arch->translate->getDefaultSize();
 	if(extraPop == ProtoModel::extrapop_unknown)
@@ -136,7 +141,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 	RList *vars = r_anal_var_all_list(core->anal, fcn);
 	auto stackSpace = arch->getStackSpace();
 
-	auto addrForVar = [&](RAnalVar *var) {
+	auto addrForVar = [&](RAnalVar *var, bool warn_on_fail) {
 		switch(var->kind)
 		{
 			case R_ANAL_VAR_KIND_BPV:
@@ -154,17 +159,24 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 				RRegItem *reg = r_reg_index_get(core->anal->reg, var->delta);
 				if(!reg)
 				{
-					arch->addWarning("Register for arg " + to_string(var->name) + " not found");
+					if(warn_on_fail)
+						arch->addWarning("Register for arg " + to_string(var->name) + " not found");
 					return Address();
 				}
 
 				auto ret = arch->registerAddressFromR2Reg(reg->name);
-				if(ret.isInvalid())
+				if(ret.isInvalid() && warn_on_fail)
 					arch->addWarning("Failed to match register " + to_string(var->name) + " for arg " + to_string(var->name));
 
 				return ret;
 			}
+			case R_ANAL_VAR_KIND_SPV:
+				if(warn_on_fail)
+					arch->addWarning("Var " + to_string(var->name) + " is stack pointer based, which is not supported for decompilation.");
+				return Address();
 			default:
+				if(warn_on_fail)
+					arch->addWarning("Failed to get address for var " + to_string(var->name));
 				return Address();
 		}
 	};
@@ -176,12 +188,9 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		r_list_foreach_cpp<RAnalVar>(vars, [&](RAnalVar *var) {
 			if(!var->isarg)
 				return;
-			auto addr = addrForVar(var);
+			auto addr = addrForVar(var, true);
 			if(addr.isInvalid())
-			{
-				arch->addWarning("Failed to get address for var " + to_string(var->name));
 				return;
-			}
 			params.registerTrial(addr, var->size);
 			int4 i = params.whichTrial(addr, var->size);
 			params.getTrial(i).markActive();
@@ -220,13 +229,9 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 					return;
 			}
 
-			auto addr = addrForVar(var);
+			auto addr = addrForVar(var, var->isarg /* Already emitted this warning before */);
 			if(addr.isInvalid())
-			{
-				if(var->isarg) // Already emitted this warning before
-					arch->addWarning("Failed to get address for var " + to_string(var->name));
 				return;
-			}
 
 			uintb last = addr.getOffset();
 			if(type->getSize() > 0)

@@ -66,8 +66,8 @@ ARGS=-F prg
 EXPECT=<<EOF
 6502:LE:16:default:
 
-// WARNING: [r2ghidra] Failed to match radare2 calling convention (null) to Decompiler ProtoModel
-// WARNING: [r2ghidra] Failed to get address for var arg_101h
+// WARNING: [r2ghidra] Function fcn.0000080e has no calling convention set, args may be inaccurate.
+// WARNING: [r2ghidra] Var arg_103h is stack pointer based, which is not supported for decompilation.
 // WARNING: [r2ghidra] Failed to find return address in ProtoModel
 
 void fcn.0000080e(void)
