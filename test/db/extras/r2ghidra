@@ -28,7 +28,6 @@ EXPECT=<<EOF
 x86:LE:64:default:gcc
 
 // WARNING: [r2ghidra] Detected overlap for variable var_1ch
-// WARNING: [r2ghidra] Failed to find return address in ProtoModel
 
 void main(void)
 {
@@ -68,7 +67,6 @@ EXPECT=<<EOF
 
 // WARNING: [r2ghidra] Function fcn.0000080e has no calling convention set, args may be inaccurate.
 // WARNING: [r2ghidra] Var arg_103h is stack pointer based, which is not supported for decompilation.
-// WARNING: [r2ghidra] Failed to find return address in ProtoModel
 
 void fcn.0000080e(void)
 {
@@ -492,7 +490,6 @@ ARGS=-B 0x1000000000000000
 EXPECT=<<EOF
                           |
                           |// WARNING: [r2ghidra] Detected overlap for variable var_1ch
-                          |// WARNING: [r2ghidra] Failed to find return address in ProtoModel
                           |
                           |void main(void)
                           |{

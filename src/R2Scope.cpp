@@ -354,10 +354,10 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 				break;
 			}
 		}
+		//if(!returnFound)
+		//	arch->addWarning("Failed to find return address in ProtoModel");
 	}
-
-	if(!returnFound)
-		arch->addWarning("Failed to find return address in ProtoModel");
+	// TODO: should we try to get the return address from r2's cc?
 
 	auto returnsymElement = child(prototypeElement, "returnsym");
 	childAddr(returnsymElement, "addr", returnAddr);
