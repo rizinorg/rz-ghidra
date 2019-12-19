@@ -101,7 +101,7 @@ static const std::map<std::string, ArchMapper> arch_map = {
 static const std::map<std::string, std::string> compiler_map = {
 	{ "elf", "gcc" },
 	{ "pe", "windows" },
-	{ "mach0", "macosx" }
+	{ "mach0", "gcc" }
 };
 
 std::string CompilerFromCore(RCore *core)

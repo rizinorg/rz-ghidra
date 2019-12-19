@@ -738,3 +738,25 @@ afvr rdx argv const char **
 pdg
 EOF
 RUN
+
+NAME=macos args
+FILE=r2r/bins/mach0/arg
+EXPECT=<<EOF
+
+// WARNING: Variable defined which should be unmapped: var_4h
+// WARNING: [r2ghidra] Detected overlap for variable var_14h
+
+void entry0(void)
+{
+    char *var_4h;
+    
+    sym._call("hello", (int64_t)"world");
+    return;
+}
+EOF
+CMDS=<<EOF
+aaa
+s main
+pdg
+EOF
+RUN
