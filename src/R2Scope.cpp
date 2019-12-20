@@ -415,10 +415,19 @@ Symbol *R2Scope::queryR2Absolute(ut64 addr) const
 
 	// TODO: register more things
 
-	RFlagItem *flag = r_flag_get_at(core->flags, addr, false);
-	if(flag)
-		return registerFlag(flag);
-
+	const RList *flags = r_flag_get_list(core->flags, addr);
+	if(flags)
+	{
+		RListIter *iter;
+		void *pos;
+		r_list_foreach(flags, iter, pos)
+		{
+			auto flag = reinterpret_cast<RFlagItem *>(pos);
+			if(flag->space && flag->space->name && !strcmp(flag->space->name, R_FLAGS_FS_SECTIONS))
+				continue;
+			return registerFlag(flag);
+		}
+	}
 	return nullptr;
 }
 
