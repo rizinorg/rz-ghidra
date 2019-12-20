@@ -27,7 +27,9 @@ static const std::map<std::string, std::string> cc_map = {
 
 std::string FilenameFromCore(RCore *core)
 {
-	return core->bin->file;
+	if(core && core->bin && core->bin->file)
+		return core->bin->file;
+	return std::string();
 }
 
 R2Architecture::R2Architecture(RCore *core, const std::string &sleigh_id)
