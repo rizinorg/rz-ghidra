@@ -1,5 +1,5 @@
 NAME=x86_32
-FILE=r2r/bins/elf/crackme0x05
+FILE=r2-testbins/elf/crackme0x05
 EXPECT=<<EOF
 x86:LE:32:default:gcc
 
@@ -23,7 +23,7 @@ EOF
 RUN
 
 NAME=x86_64
-FILE=r2r/bins/elf/hello_world
+FILE=r2-testbins/elf/hello_world
 EXPECT=<<EOF
 x86:LE:64:default:gcc
 
@@ -60,7 +60,7 @@ EOF
 RUN
 
 NAME=6502
-FILE=r2r/bins/prg/t01.prg
+FILE=r2-testbins/prg/t01.prg
 ARGS=-F prg
 EXPECT=<<EOF
 6502:LE:16:default:
@@ -96,7 +96,7 @@ EOF
 RUN
 
 NAME=code printing
-FILE=r2r/bins/elf/crackme0x05
+FILE=r2-testbins/elf/crackme0x05
 EXPECT=<<EOF
 
 undefined4 main(void)
@@ -485,7 +485,7 @@ EOF
 RUN
 
 NAME=pdgo align
-FILE=r2r/bins/elf/hello_world
+FILE=r2-testbins/elf/hello_world
 ARGS=-B 0x1000000000000000
 EXPECT=<<EOF
                           |
@@ -740,7 +740,7 @@ EOF
 RUN
 
 NAME=macos args
-FILE=r2r/bins/mach0/arg
+FILE=r2-testbins/mach0/arg
 EXPECT=<<EOF
 
 // WARNING: Variable defined which should be unmapped: var_4h

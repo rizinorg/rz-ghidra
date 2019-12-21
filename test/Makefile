@@ -8,12 +8,12 @@ node_modules:
 install: node_modules
 
 .PHONY: run
-run: node_modules r2r
+run: node_modules r2-testbins
 	npx r2r db/extras
 
 .PHONY: i
-i: node_modules r2r
+i: node_modules r2-testbins
 	npx r2r -i db/extras
 
-r2r:
-	git clone https://github.com/radareorg/radare2-regressions --depth 1 r2r
+r2-testbins:
+	git clone https://github.com/radareorg/radare2-testbins --depth 1 r2-testbins
