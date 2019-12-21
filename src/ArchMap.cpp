@@ -65,7 +65,12 @@ class ArchMapper
 
 // keys = asm.arch values
 static const std::map<std::string, ArchMapper> arch_map = {
-	{ "x86", { "x86" } },
+	{ "x86", {
+		"x86",
+		CUSTOM_FLAVOR((RCore *core) {
+			return BITS == 16 ? "Real Mode" : "default";
+		})}},
+
 	{ "mips", { "MIPS" } },
 	{ "dalvik", { "Dalvik" } },
 	{ "6502", { "6502", "default", 16 } },
@@ -108,11 +113,12 @@ std::string CompilerFromCore(RCore *core)
 {
 	RBinInfo *info = r_bin_get_info(core->bin);
 	if (!info || !info->rclass)
-		return std::string("");
+		return std::string();
 
 	auto comp_it = compiler_map.find(info->rclass);
 	if(comp_it == compiler_map.end())
-		throw LowlevelError("Could not match container" + std::string(info->rclass) + " to sleigh compiler.");
+		return std::string();
+
 	return comp_it->second;
 }
 
