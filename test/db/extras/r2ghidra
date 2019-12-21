@@ -59,6 +59,110 @@ pdg
 EOF
 RUN
 
+NAME=x86_16
+FILE=r2-testbins/mz/unzip.exe
+EXPECT=<<EOF
+x86:LE:16:Real Mode:
+
+// WARNING: Variable defined which should be unmapped: var_8h
+// WARNING: Variable defined which should be unmapped: var_4h
+// WARNING: Unknown calling convention yet parameter storage is locked
+// WARNING: [r2ghidra] Matching calling convention fastcall of function fcn.00001c98 failed, args may be inaccurate.
+
+undefined4 fcn.00001c98(int16_t arg3, int16_t arg_8h, int16_t arg_6h, int16_t arg_eh)
+{
+    int16_t *piVar1;
+    undefined2 unaff_CS;
+    undefined2 unaff_DS;
+    undefined2 in_stack_00000006;
+    int16_t in_stack_00000008;
+    undefined4 uStack0008;
+    int16_t in_stack_0000000c;
+    int16_t var_8h;
+    int16_t var_6h;
+    int16_t var_4h;
+    int16_t var_2h;
+    char cStack4;
+    
+    var_6h = 0x13da;
+    do {
+        func_0x0000ec24(unaff_CS, var_6h, unaff_DS, 0x401e);
+        func_0x0000ec24(0xdee, arg_8h, in_stack_00000006, 0x401e);
+        func_0x0000e59a(0xdee, 0x401e);
+        var_2h = 0;
+        do {
+            cStack4 = func_0x0000eb82(0xdee);
+            if (cStack4 == '\r') {
+                cStack4 = '\n';
+            }
+            if (var_2h < in_stack_0000000c) {
+                *(char *)(in_stack_00000008 + var_2h) = cStack4;
+                var_2h = var_2h + 1;
+            }
+        } while (cStack4 != '\n');
+        piVar1 = (int16_t *)0x4022;
+        *piVar1 = *piVar1 + -1;
+        if (*piVar1 < 0) {
+            func_0x0000e4ae(0xdee, 10, 0x401e);
+        } else {
+            *(undefined *)*(undefined4 *)0x401e = 10;
+            piVar1 = (int16_t *)0x401e;
+            *piVar1 = *piVar1 + 1;
+        }
+        unaff_CS = 0xdee;
+        func_0x0000e59a(0xdee, 0x401e);
+        var_6h = 0x13db;
+    } while (*(char *)(in_stack_00000008 + var_2h + -1) != '\n');
+    *(undefined *)(in_stack_00000008 + var_2h + -1) = 0;
+    return uStack0008;
+}
+EOF
+CMDS=<<EOF
+pdgss
+s 0x1c98
+af
+pdg
+EOF
+RUN
+
+NAME=x86_64
+FILE=r2-testbins/elf/hello_world
+EXPECT=<<EOF
+x86:LE:64:default:gcc
+
+// WARNING: [r2ghidra] Detected overlap for variable var_1ch
+
+void main(void)
+{
+    int32_t iVar1;
+    int32_t iVar2;
+    int64_t iVar3;
+    int64_t var_20h;
+    int64_t var_18h;
+    int64_t var_10h;
+    int64_t var_8h;
+    
+    iVar1 = sym.imp.strlen(0x8d4);
+    iVar2 = sym.imp.strlen(0x8da);
+    iVar3 = sym.imp.malloc((int64_t)(iVar2 + iVar1 + 1));
+    if (iVar3 != 0) {
+        sym.imp.strcpy(iVar3, 0x8d4, 0x8d4);
+        sym.imp.strcat(iVar3, 0x8da, 0x8da);
+        sym.imp.puts(iVar3);
+        sym.imp.free(iVar3);
+    }
+    return;
+}
+EOF
+CMDS=<<EOF
+pdgss
+s main
+af
+pdg
+EOF
+RUN
+
+
 NAME=6502
 FILE=r2-testbins/prg/t01.prg
 ARGS=-F prg
