@@ -18,6 +18,7 @@
 static const std::map<std::string, std::string> cc_map = {
 		{ "cdecl", "__cdecl" },
 		{ "fastcall", "__fastcall" },
+		{ "ms", "__fastcall" },
 		{ "stdcall", "__stdcall" },
 		{ "cdecl-thiscall-ms", "__thiscall" },
 		{ "sh32", "__stdcall" },
