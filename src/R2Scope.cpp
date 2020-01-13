@@ -399,7 +399,7 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 		type = arch->types->getTypeCode();
 	}
 
-	SymbolEntry *entry = cache->addSymbol(realnameEnabled ? flag->realname : flag->name, type, Address(arch->getDefaultSpace(), flag->offset), Address());
+	SymbolEntry *entry = cache->addSymbol(realname_enabled && flag->realname ? flag->realname : flag->name, type, Address(arch->getDefaultSpace(), flag->offset), Address());
 	if(!entry)
 		return nullptr;
 
