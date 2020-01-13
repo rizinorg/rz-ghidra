@@ -379,8 +379,12 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 {
+	RCoreLock core(arch);
+
 	uint4 attr = Varnode::namelock | Varnode::typelock;
 	Datatype *type = nullptr;
+	// Check whether flags should be displayed by their real name
+	bool realname_enabled = r_config_get_i(core->config, "asm.flags.real");
 	if(flag->space && !strcmp(flag->space->name, R_FLAGS_FS_STRINGS))
 	{
 		Datatype *ptype = arch->types->findByName("char");
@@ -395,7 +399,7 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 		type = arch->types->getTypeCode();
 	}
 
-	SymbolEntry *entry = cache->addSymbol(flag->name, type, Address(arch->getDefaultSpace(), flag->offset), Address());
+	SymbolEntry *entry = cache->addSymbol(realname_enabled && flag->realname ? flag->realname : flag->name, type, Address(arch->getDefaultSpace(), flag->offset), Address());
 	if(!entry)
 		return nullptr;
 
