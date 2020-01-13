@@ -384,7 +384,7 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 	uint4 attr = Varnode::namelock | Varnode::typelock;
 	Datatype *type = nullptr;
 	// Check whether flags should be displayed by their real name
-	bool realnameEnabled = r_config_get_i(core->config, "asm.flags.real");
+	bool realname_enabled = r_config_get_i(core->config, "asm.flags.real");
 	if(flag->space && !strcmp(flag->space->name, R_FLAGS_FS_STRINGS))
 	{
 		Datatype *ptype = arch->types->findByName("char");
