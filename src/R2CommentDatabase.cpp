@@ -17,7 +17,14 @@ void R2CommentDatabase::fillCache(const Address &fad) const
 {
 	RCoreLock core(arch);
 
-	RAnalFunction *fcn = r_anal_get_fcn_at(core->anal, fad.getOffset(), R_ANAL_FCN_TYPE_NULL);
+	RAnalFunction *fcn = r_anal_get_function_at(core->anal, fad.getOffset());
+	if(!fcn)
+	{
+		RList *fcns = r_anal_get_functions_in(core->anal, fad.getOffset());
+		if(!r_list_empty(fcns))
+			fcn = reinterpret_cast<RAnalFunction *>(r_list_first(fcns));
+		r_list_free(fcns);
+	}
 	if(!fcn)
 		return;
 
@@ -26,7 +33,7 @@ void R2CommentDatabase::fillCache(const Address &fad) const
 		return;
 
 	r_list_foreach_cpp<RAnalMetaItem>(comments, [fad, fcn, this](RAnalMetaItem *item) {
-		if(!r_anal_fcn_in(fcn, item->from))
+		if(!r_anal_function_contains(fcn, item->from))
 			return;
 		cache.addComment(Comment::user2, fad, Address(arch->getDefaultSpace(), item->from), item->str);
 	});

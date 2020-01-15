@@ -409,16 +409,24 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 	return symbol;
 }
 
-Symbol *R2Scope::queryR2Absolute(ut64 addr) const
+Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
 {
 	RCoreLock core(arch);
 
-	RAnalFunction *fcn = r_anal_get_fcn_at(core->anal, addr, R_ANAL_FCN_TYPE_NULL);
+	RAnalFunction *fcn = r_anal_get_function_at(core->anal, addr);
+	if(!fcn && contain)
+	{
+		RList *fcns = r_anal_get_functions_in(core->anal, addr);
+		if(!r_list_empty(fcns))
+			fcn = reinterpret_cast<RAnalFunction *>(r_list_first(fcns));
+		r_list_free(fcns);
+	}
 	if(fcn)
 		return registerFunction(fcn);
 
 	// TODO: register more things
 
+	// TODO: correctly handle contain for flags
 	const RList *flags = r_flag_get_list(core->flags, addr);
 	if(flags)
 	{
@@ -436,10 +444,10 @@ Symbol *R2Scope::queryR2Absolute(ut64 addr) const
 }
 
 
-Symbol *R2Scope::queryR2(const Address &addr) const
+Symbol *R2Scope::queryR2(const Address &addr, bool contain) const
 {
 	if(addr.getSpace() == arch->getDefaultSpace())
-		return queryR2Absolute(addr.getOffset());
+		return queryR2Absolute(addr.getOffset(), contain);
 	return nullptr;
 }
 
@@ -468,7 +476,7 @@ SymbolEntry *R2Scope::findAddr(const Address &addr, const Address &usepoint) con
 	if(entry) // Address is already queried, but symbol doesn't start at our address
 		return nullptr;
 
-	Symbol *sym = queryR2(addr);
+	Symbol *sym = queryR2(addr, false);
 	entry = sym ? sym->getMapEntry(addr) : nullptr;
 
 	return (entry && entry->getAddr() == addr) ? entry : nullptr;
@@ -480,7 +488,7 @@ SymbolEntry *R2Scope::findContainer(const Address &addr, int4 size, const Addres
 
 	if(!entry)
 	{
-		Symbol *sym = queryR2(addr);
+		Symbol *sym = queryR2(addr, true);
 		entry = sym ? sym->getMapEntry(addr) : nullptr;
 	}
 
@@ -507,7 +515,7 @@ Funcdata *R2Scope::findFunction(const Address &addr) const
 		return nullptr;
 
 	FunctionSymbol *sym;
-	sym = dynamic_cast<FunctionSymbol *>(queryR2(addr));
+	sym = dynamic_cast<FunctionSymbol *>(queryR2(addr, false));
 	if(sym)
 		return sym->getFunction();
 
@@ -525,7 +533,7 @@ ExternRefSymbol *R2Scope::findExternalRef(const Address &addr) const
 	if(cache->findContainer(addr, 1, Address()))
 		return nullptr;
 
-	return dynamic_cast<ExternRefSymbol *>(queryR2(addr));
+	return dynamic_cast<ExternRefSymbol *>(queryR2(addr, false));
 }
 
 LabSymbol *R2Scope::findCodeLabel(const Address &addr) const
@@ -536,7 +544,7 @@ LabSymbol *R2Scope::findCodeLabel(const Address &addr) const
 
 	// Check if this address has already been queried,
 	// (returning a symbol other than a code label)
-	SymbolEntry *entry = cache->findAddr(addr,Address());
+	SymbolEntry *entry = cache->findAddr(addr, Address());
 	if(entry)
 		return nullptr;
 
