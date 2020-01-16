@@ -109,7 +109,7 @@ static void PrintUsage(const RCore *const core)
 
 enum class DecompileMode { DEFAULT, XML, DEBUG_XML, OFFSET, STATEMENTS, JSON };
 
-//#define DEBUG_EXCEPTIONS
+#define DEBUG_EXCEPTIONS
 
 static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 {
