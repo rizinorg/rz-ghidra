@@ -103,8 +103,28 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		cdb->setVariable("TMode", Address(arch->getDefaultSpace(), fcn->addr), 1);
 	}
 
+	const char *fcn_name = fcn->name;
+	if (core->flags->realnames) {
+		const RList *flags = r_flag_get_list(core->flags, fcn->addr);
+		if(flags)
+		{
+			RListIter *iter;
+			void *pos;
+			r_list_foreach(flags, iter, pos)
+			{
+				auto flag = reinterpret_cast<RFlagItem *>(pos);
+				if(flag->space && flag->space->name && !strcmp(flag->space->name, R_FLAGS_FS_SECTIONS))
+					continue;
+				if (flag->realname && *flag->realname) {
+					fcn_name = flag->realname;
+					break;
+				}
+			}
+		}
+	}
+
 	auto functionElement = child(&doc, "function", {
-			{ "name", fcn->name },
+			{ "name", fcn_name },
 			{ "size", "1" }
 	});
 
@@ -116,7 +136,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 	});
 
 	auto scopeElement = child(localDbElement, "scope", {
-			{ "name", fcn->name }
+			{ "name", fcn_name }
 	});
 
 	child(child(scopeElement, "parent"), "val");
@@ -128,9 +148,9 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 	if(!proto)
 	{
 		if(fcn->cc)
-			arch->addWarning("Matching calling convention " + to_string(fcn->cc) + " of function " + to_string(fcn->name) + " failed, args may be inaccurate.");
+			arch->addWarning("Matching calling convention " + to_string(fcn->cc) + " of function " + to_string(fcn_name) + " failed, args may be inaccurate.");
 		else
-			arch->addWarning("Function " + to_string(fcn->name) + " has no calling convention set, args may be inaccurate.");
+			arch->addWarning("Function " + to_string(fcn_name) + " has no calling convention set, args may be inaccurate.");
 	}
 
 	int4 extraPop = proto ? proto->getExtraPop() : arch->translate->getDefaultSize();
@@ -383,8 +403,6 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 
 	uint4 attr = Varnode::namelock | Varnode::typelock;
 	Datatype *type = nullptr;
-	// Check whether flags should be displayed by their real name
-	bool realname_enabled = r_config_get_i(core->config, "asm.flags.real");
 	if(flag->space && !strcmp(flag->space->name, R_FLAGS_FS_STRINGS))
 	{
 		Datatype *ptype = arch->types->findByName("char");
@@ -399,7 +417,9 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 		type = arch->types->getTypeCode();
 	}
 
-	SymbolEntry *entry = cache->addSymbol(realname_enabled && flag->realname ? flag->realname : flag->name, type, Address(arch->getDefaultSpace(), flag->offset), Address());
+	// Check whether flags should be displayed by their real name
+	const char *name = (core->flags->realnames && flag->realname) ? flag->realname : flag->name;
+	SymbolEntry *entry = cache->addSymbol(name, type, Address(arch->getDefaultSpace(), flag->offset), Address());
 	if(!entry)
 		return nullptr;
 
