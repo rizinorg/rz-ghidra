@@ -434,6 +434,8 @@ Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
 	RCoreLock core(arch);
 
 	RAnalFunction *fcn = r_anal_get_function_at(core->anal, addr);
+#if 0
+	// This can cause functions to be registered twice (hello-arm test)
 	if(!fcn && contain)
 	{
 		RList *fcns = r_anal_get_functions_in(core->anal, addr);
@@ -441,6 +443,7 @@ Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
 			fcn = reinterpret_cast<RAnalFunction *>(r_list_first(fcns));
 		r_list_free(fcns);
 	}
+#endif
 	if(fcn)
 		return registerFunction(fcn);
 
