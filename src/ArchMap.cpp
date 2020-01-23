@@ -80,7 +80,21 @@ static const std::map<std::string, ArchMapper> arch_map = {
 	{ "sparc", { "sparc" } },
 	{ "sh", { "SuperH4" } },
 	{ "msp430", { "TI_MSP430" } },
-	{ "m68k", { "68000" } },
+	{ "m68k", {
+		"68000",
+		CUSTOM_FLAVOR((RCore *core) {
+			const char *cpu = r_config_get(core->config, "asm.cpu");
+			if(!cpu)
+				return "default";
+			if(strcmp(cpu, "68020") == 0)
+				return "MC68020";
+			if(strcmp(cpu, "68030") == 0)
+				return "MC68030";
+			if(strcmp(cpu, "68060") == 0)
+				return "Coldfire"; // may not be accurate!!
+			return "default";
+		}),
+		32 } },
 
 	{ "arm", {
 	 	CUSTOM_BASEID((RCore *core) {
