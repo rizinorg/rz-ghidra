@@ -12,15 +12,15 @@
 #undef LoadImage
 #endif
 
-class R2Architecture;
+class RCoreMutex;
 
 class R2LoadImage : public LoadImage
 {
 	private:
-		R2Architecture * const arch;
+		RCoreMutex *const coreMutex;
 
 	public:
-		explicit R2LoadImage(R2Architecture *arch);
+		explicit R2LoadImage(RCoreMutex *coreMutex);
 
 		void loadFill(uint1 *ptr, int4 size, const Address &addr) override;
 		string getArchType() const override;

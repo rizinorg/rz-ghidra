@@ -3,15 +3,15 @@
 #include "R2LoadImage.h"
 #include "R2Architecture.h"
 
-R2LoadImage::R2LoadImage(R2Architecture *arch)
+R2LoadImage::R2LoadImage(RCoreMutex *coreMutex)
 	: LoadImage("radare2_program"),
-	arch(arch)
+	coreMutex(coreMutex)
 {
 }
 
 void R2LoadImage::loadFill(uint1 *ptr, int4 size, const Address &addr)
 {
-	RCoreLock core(arch->getCore());
+	RCoreLock core(coreMutex);
 	r_io_read_at(core->io, addr.getOffset(), ptr, size);
 }
 

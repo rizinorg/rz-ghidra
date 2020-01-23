@@ -131,7 +131,7 @@ void R2Architecture::buildLoader(DocumentStorage &store)
 {
 	RCoreLock core(getCore());
 	collectSpecFiles(*errorstream);
-	loader = new R2LoadImage(this);
+	loader = new R2LoadImage(getCore());
 }
 
 Scope *R2Architecture::buildGlobalScope()
