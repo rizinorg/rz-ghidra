@@ -870,8 +870,6 @@ FILE=bins/hello-arm
 EXPECT=<<EOF
 
 // WARNING: Control flow encountered bad instruction data
-// WARNING: [r2ghidra] Matching calling convention arm32 of function entry0 failed, args may be inaccurate.
-// WARNING: [r2ghidra] Matching calling convention arm32 of function sym.imp.__libc_init failed, args may be inaccurate.
 
 void entry0(void)
 {
