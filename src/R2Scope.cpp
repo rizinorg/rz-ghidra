@@ -88,7 +88,7 @@ static std::string to_string(const char *str)
 
 FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 {
-	RCoreLock core(arch);
+	RCoreLock core(arch->getCore());
 
 	const std::string r2Arch(r_config_get(core->config, "asm.arch"));
 
@@ -399,7 +399,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 {
-	RCoreLock core(arch);
+	RCoreLock core(arch->getCore());
 
 	uint4 attr = Varnode::namelock | Varnode::typelock;
 	Datatype *type = nullptr;
@@ -431,7 +431,7 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 
 Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
 {
-	RCoreLock core(arch);
+	RCoreLock core(arch->getCore());
 
 	RAnalFunction *fcn = r_anal_get_function_at(core->anal, addr);
 #if 0
@@ -476,7 +476,7 @@ Symbol *R2Scope::queryR2(const Address &addr, bool contain) const
 
 LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 {
-	RCoreLock core(arch);
+	RCoreLock core(arch->getCore());
 
 	RAnalFunction *fcn = r_anal_get_fcn_in(core->anal, addr.getOffset(), R_ANAL_FCN_TYPE_NULL);
 	if(!fcn)

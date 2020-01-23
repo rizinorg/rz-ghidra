@@ -158,7 +158,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 		if(!func)
 			throw LowlevelError("No function in Scope");
 
-		arch.sleepBegin();
+		arch.getCore()->sleepBegin();
 		auto action = arch.allacts.getCurrent();
 		int res;
 #ifndef DEBUG_EXCEPTIONS
@@ -171,11 +171,11 @@ static void Decompile(RCore *core, DecompileMode mode)
 		}
 		catch(const LowlevelError &error)
 		{
-			arch.sleepEndForce();
+			arch.getCore()->sleepEndForce();
 			throw error;
 		}
 #endif
-		arch.sleepEnd();
+		arch.getCore()->sleepEnd();
 		if (res<0)
 			eprintf("break\n");
 		/*else

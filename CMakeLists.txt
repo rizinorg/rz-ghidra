@@ -38,7 +38,9 @@ set(SOURCE
 		src/ArchMap.h
 		src/ArchMap.cpp
 		src/R2PrintC.h
-		src/R2PrintC.cpp)
+		src/R2PrintC.cpp
+		src/RCoreMutex.h
+		src/RCoreMutex.cpp)
 
 find_package(Radare2 REQUIRED)
 

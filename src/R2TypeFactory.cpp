@@ -35,7 +35,7 @@ std::vector<std::string> splitSdbArray(const std::string& str)
 
 Datatype *R2TypeFactory::queryR2Struct(const string &n)
 {
-	RCoreLock core(arch);
+	RCoreLock core(arch->getCore());
 
 	Sdb *sdb = core->anal->sdb_types;
 
@@ -83,7 +83,7 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n)
 
 Datatype *R2TypeFactory::queryR2Enum(const string &n)
 {
-	RCoreLock core(arch);
+	RCoreLock core(arch->getCore());
 	RList *members = r_type_get_enum(core->anal->sdb_types, n.c_str());
 	if(!members)
 		return nullptr;
@@ -119,7 +119,7 @@ Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTy
 	}
 	stackTypes.insert(n);
 
-	RCoreLock core(arch);
+	RCoreLock core(arch->getCore());
 	int kind = r_type_kind(core->anal->sdb_types, n.c_str());
 	switch(kind)
 	{

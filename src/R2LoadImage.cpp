@@ -11,7 +11,7 @@ R2LoadImage::R2LoadImage(R2Architecture *arch)
 
 void R2LoadImage::loadFill(uint1 *ptr, int4 size, const Address &addr)
 {
-	RCoreLock core(arch);
+	RCoreLock core(arch->getCore());
 	r_io_read_at(core->io, addr.getOffset(), ptr, size);
 }
 

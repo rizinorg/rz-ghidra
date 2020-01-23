@@ -36,36 +36,8 @@ std::string FilenameFromCore(RCore *core)
 
 R2Architecture::R2Architecture(RCore *core, const std::string &sleigh_id)
 	: SleighArchitecture(FilenameFromCore(core), sleigh_id.empty() ? SleighIdFromCore(core) : sleigh_id, &cout),
-	_core(core)
+	coreMutex(core)
 {
-	caffeine_level = 1;
-	bed = nullptr;
-}
-
-void R2Architecture::sleepEnd()
-{
-	assert(caffeine_level >= 0);
-	caffeine_level++;
-	if(caffeine_level == 1)
-	{
-		r_cons_sleep_end(bed);
-		bed = nullptr;
-	}
-}
-
-void R2Architecture::sleepEndForce()
-{
-	if(caffeine_level)
-		return;
-	sleepEnd();
-}
-
-void R2Architecture::sleepBegin()
-{
-	assert(caffeine_level > 0);
-	caffeine_level--;
-	if(caffeine_level == 0)
-		bed = r_cons_sleep_begin();
 }
 
 ProtoModel *R2Architecture::protoModelFromR2CC(const char *cc)
@@ -135,7 +107,7 @@ ContextDatabase *R2Architecture::getContextDatabase()
 
 void R2Architecture::postSpecFile()
 {
-	RCoreLock core(this);
+	RCoreLock core(getCore());
 	r_list_foreach_cpp<RAnalFunction>(core->anal->fcns, [&](RAnalFunction *func) {
 		if (func->is_noreturn)
 		{
@@ -157,7 +129,7 @@ void R2Architecture::buildAction(DocumentStorage &store)
 
 void R2Architecture::buildLoader(DocumentStorage &store)
 {
-	RCoreLock core(this);
+	RCoreLock core(getCore());
 	collectSpecFiles(*errorstream);
 	loader = new R2LoadImage(this);
 }

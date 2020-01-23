@@ -6,22 +6,16 @@
 #include "architecture.hh"
 #include "sleigh_arch.hh"
 
+#include "RCoreMutex.h"
+
 class R2TypeFactory;
 typedef struct r_core_t RCore;
 
 class R2Architecture : public SleighArchitecture
 {
-	friend class RCoreLock;
-
 	private:
-		/**
-		 * > 0 => awake
-		 * == 0 => sleeping
-		 */
-		int caffeine_level;
-		void *bed;
+		RCoreMutex coreMutex;
 
-		RCore *_core;
 		R2TypeFactory *r2TypeFactory = nullptr;
 		std::map<std::string, VarnodeData> registers;
 		std::vector<std::string> warnings;
@@ -33,9 +27,7 @@ class R2Architecture : public SleighArchitecture
 	public:
 		explicit R2Architecture(RCore *core, const std::string &sleigh_id);
 
-		void sleepEnd();
-		void sleepEndForce();
-		void sleepBegin();
+		RCoreMutex *getCore() { return &coreMutex; }
 
 		R2TypeFactory *getTypeFactory() const { return r2TypeFactory; }
 
@@ -58,17 +50,5 @@ class R2Architecture : public SleighArchitecture
 		void buildAction(DocumentStorage &store) override;
 };
 
-class RCoreLock
-{
-	private:
-		R2Architecture * const arch;
-
-	public:
-		explicit RCoreLock(R2Architecture * arch) : arch(arch) { arch->sleepEnd(); }
-		~RCoreLock()				{ arch->sleepBegin(); }
-		operator RCore *() const	{ return arch->_core; }
-		RCore *operator->() const	{ return arch->_core; }
-
-};
 
 #endif //R2GHIDRA_R2ARCHITECTURE_H
