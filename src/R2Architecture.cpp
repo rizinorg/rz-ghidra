@@ -23,6 +23,7 @@ static const std::map<std::string, std::string> cc_map = {
 		{ "cdecl-thiscall-ms", "__thiscall" },
 		{ "sh32", "__stdcall" },
 		{ "amd64", "__stdcall" },
+		{ "arm32", "__stdcall" },
 		{ "arm16", "__stdcall" } /* not actually __stdcall */
 };
 
