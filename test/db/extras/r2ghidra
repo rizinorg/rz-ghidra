@@ -885,3 +885,230 @@ af
 pdg
 EOF
 RUN
+
+NAME=pdgs
+FILE=-
+EXPECT=<<EOF
+PIC-12:LE:16:PIC-12C5xx
+HCS12:BE:24:default
+ARM:LE:32:v8
+ARM:LE:32:v8T
+ARM:LEBE:32:v8LEInstruction
+ARM:BE:32:v8
+ARM:BE:32:v8T
+ARM:LE:32:v7
+ARM:LEBE:32:v7LEInstruction
+ARM:BE:32:v7
+ARM:LE:32:Cortex
+ARM:BE:32:Cortex
+ARM:LE:32:v6
+ARM:BE:32:v6
+ARM:LE:32:v5t
+ARM:BE:32:v5t
+ARM:LE:32:v5
+ARM:BE:32:v5
+ARM:LE:32:v4t
+ARM:BE:32:v4t
+ARM:LE:32:v4
+ARM:BE:32:v4
+TI_MSP430:LE:16:default
+TI_MSP430X:LE:32:default
+HC05:BE:16:default
+HC05:BE:16:M68HC05TB
+6502:LE:16:default
+6502:BE:16:default
+PIC-24E:LE:24:default
+PIC-24F:LE:24:default
+PIC-24H:LE:24:default
+dsPIC30F:LE:24:default
+dsPIC33F:LE:24:default
+dsPIC33E:LE:24:default
+avr8:LE:16:default
+avr8:LE:16:extended
+avr8:LE:16:atmega256
+PIC-17:LE:16:PIC-17C7xx
+x86:LE:32:default
+x86:LE:32:System Management Mode
+x86:LE:16:Real Mode
+x86:LE:16:Protected Mode
+x86:LE:64:default
+SuperH:BE:32:SH-2A
+SuperH:BE:32:SH-2
+SuperH:BE:32:SH-1
+z80:LE:16:default
+z8401x:LE:16:default
+z180:LE:16:default
+z182:LE:16:default
+68000:BE:32:default
+68000:BE:32:MC68030
+68000:BE:32:MC68020
+68000:BE:32:Coldfire
+DATA:LE:64:default
+DATA:BE:64:default
+sparc:BE:32:default
+sparc:BE:64:default
+MCS96:LE:16:default
+HC08:BE:16:default
+HC08:BE:16:MC68HC908QY4
+avr32:BE:32:default
+pa-risc:BE:32:default
+PIC-16:LE:16:PIC-16
+PIC-16:LE:16:PIC-16F
+AARCH64:LE:64:v8A
+AARCH64:BE:64:v8A
+SuperH4:BE:32:default
+SuperH4:LE:32:default
+8085:LE:16:default
+JVM:BE:32:default
+PowerPC:BE:32:default
+PowerPC:LE:32:default
+PowerPC:BE:64:default
+PowerPC:BE:64:64-32addr
+PowerPC:LE:64:64-32addr
+PowerPC:LE:64:default
+PowerPC:BE:32:4xx
+PowerPC:LE:32:4xx
+PowerPC:BE:32:MPC8270
+PowerPC:BE:32:QUICC
+PowerPC:LE:32:QUICC
+PowerPC:BE:64:A2-32addr
+PowerPC:LE:64:A2-32addr
+PowerPC:BE:64:A2ALT-32addr
+PowerPC:LE:64:A2ALT-32addr
+PowerPC:BE:64:A2ALT
+PowerPC:LE:64:A2ALT
+PowerPC:BE:64:VLE-32addr
+PowerPC:BE:64:VLEALT-32addr
+tricore:LE:32:default
+tricore:LE:32:tc29x
+tricore:LE:32:tc172x
+tricore:LE:32:tc176x
+Dalvik:LE:32:default
+8051:BE:16:default
+80251:BE:24:default
+80390:BE:24:default
+8051:BE:24:mx51
+HCS08:BE:16:default
+HCS08:BE:16:MC9S08GB60
+CR16C:LE:16:default
+8048:LE:16:default
+Toy:BE:32:default
+Toy:BE:32:posStack
+Toy:LE:32:default
+Toy:BE:32:wordSize2
+Toy:LE:32:wordSize2
+Toy:BE:64:default
+Toy:LE:64:default
+Toy:BE:32:builder
+Toy:LE:32:builder
+Toy:BE:32:builder.align2
+Toy:LE:32:builder.align2
+6805:BE:16:default
+MIPS:BE:32:default
+MIPS:LE:32:default
+MIPS:BE:32:R6
+MIPS:LE:32:R6
+MIPS:BE:64:default
+MIPS:LE:64:default
+MIPS:BE:64:micro
+MIPS:LE:64:micro
+MIPS:BE:64:R6
+MIPS:LE:64:R6
+MIPS:BE:64:64-32addr
+MIPS:LE:64:64-32addr
+MIPS:LE:64:micro64-32addr
+MIPS:BE:64:micro64-32addr
+MIPS:BE:64:64-32R6addr
+MIPS:LE:64:64-32R6addr
+MIPS:BE:32:micro
+MIPS:LE:32:micro
+PIC-18:LE:24:PIC-18
+PIC-16:LE:16:PIC-16C5x
+EOF
+CMDS=<<EOF
+pdgs
+EOF
+RUN
+
+NAME=pdgsd
+FILE=r2-testbins/elf/crackme0x05
+EXPECT=<<EOF
+push ebp
+mov ebp, esp
+sub esp, 0x88
+and esp, 0xfffffff0
+mov eax, 0
+add eax, 0xf
+add eax, 0xf
+shr eax, 4
+-----
+0x08048540: PUSH EBP
+    (unique,0x1310,4) = COPY (register,0x14,4)
+    (register,0x10,4) = INT_SUB (register,0x10,4) (const,0x4,4)
+    STORE (const,0x562fb20abee0,8) (register,0x10,4) (unique,0x1310,4)
+0x08048541: MOV EBP,ESP
+    (register,0x14,4) = COPY (register,0x10,4)
+0x08048543: SUB ESP,0x88
+    (register,0x200,1) = INT_LESS (register,0x10,4) (const,0x88,4)
+    (register,0x20b,1) = INT_SBORROW (register,0x10,4) (const,0x88,4)
+    (register,0x10,4) = INT_SUB (register,0x10,4) (const,0x88,4)
+    (register,0x207,1) = INT_SLESS (register,0x10,4) (const,0x0,4)
+    (register,0x206,1) = INT_EQUAL (register,0x10,4) (const,0x0,4)
+0x08048549: AND ESP,0xfffffff0
+    (register,0x200,1) = COPY (const,0x0,1)
+    (register,0x20b,1) = COPY (const,0x0,1)
+    (register,0x10,4) = INT_AND (register,0x10,4) (const,0xfffffff0,4)
+    (register,0x207,1) = INT_SLESS (register,0x10,4) (const,0x0,4)
+    (register,0x206,1) = INT_EQUAL (register,0x10,4) (const,0x0,4)
+0x0804854c: MOV EAX,0x0
+    (register,0x0,4) = COPY (const,0x0,4)
+0x08048551: ADD EAX,0xf
+    (register,0x200,1) = INT_CARRY (register,0x0,4) (const,0xf,4)
+    (register,0x20b,1) = INT_SCARRY (register,0x0,4) (const,0xf,4)
+    (register,0x0,4) = INT_ADD (register,0x0,4) (const,0xf,4)
+    (register,0x207,1) = INT_SLESS (register,0x0,4) (const,0x0,4)
+    (register,0x206,1) = INT_EQUAL (register,0x0,4) (const,0x0,4)
+0x08048554: ADD EAX,0xf
+    (register,0x200,1) = INT_CARRY (register,0x0,4) (const,0xf,4)
+    (register,0x20b,1) = INT_SCARRY (register,0x0,4) (const,0xf,4)
+    (register,0x0,4) = INT_ADD (register,0x0,4) (const,0xf,4)
+    (register,0x207,1) = INT_SLESS (register,0x0,4) (const,0x0,4)
+    (register,0x206,1) = INT_EQUAL (register,0x0,4) (const,0x0,4)
+0x08048557: SHR EAX,0x4
+    (unique,0x8210,4) = INT_AND (const,0x4,4) (const,0x1f,4)
+    (unique,0x8220,4) = COPY (register,0x0,4)
+    (register,0x0,4) = INT_RIGHT (register,0x0,4) (unique,0x8210,4)
+    (unique,0x2230,1) = INT_NOTEQUAL (unique,0x8210,4) (const,0x0,4)
+    (unique,0x2240,4) = INT_SUB (unique,0x8210,4) (const,0x1,4)
+    (unique,0x2250,4) = INT_RIGHT (unique,0x8220,4) (unique,0x2240,4)
+    (unique,0x2260,4) = INT_AND (unique,0x2250,4) (const,0x1,4)
+    (unique,0x2280,1) = INT_NOTEQUAL (unique,0x2260,4) (const,0x0,4)
+    (unique,0x2290,1) = BOOL_NEGATE (unique,0x2230,1)
+    (unique,0x22a0,1) = INT_AND (unique,0x2290,1) (register,0x200,1)
+    (unique,0x22b0,1) = INT_AND (unique,0x2230,1) (unique,0x2280,1)
+    (register,0x200,1) = INT_OR (unique,0x22a0,1) (unique,0x22b0,1)
+    (unique,0x22e0,1) = INT_EQUAL (unique,0x8210,4) (const,0x1,4)
+    (unique,0x2300,1) = INT_SLESS (unique,0x8220,4) (const,0x0,4)
+    (unique,0x2310,1) = BOOL_NEGATE (unique,0x22e0,1)
+    (unique,0x2320,1) = INT_AND (unique,0x2310,1) (register,0x20b,1)
+    (unique,0x2330,1) = INT_AND (unique,0x22e0,1) (unique,0x2300,1)
+    (register,0x20b,1) = INT_OR (unique,0x2320,1) (unique,0x2330,1)
+    (unique,0x1c50,1) = INT_NOTEQUAL (unique,0x8210,4) (const,0x0,4)
+    (unique,0x1c70,1) = INT_SLESS (register,0x0,4) (const,0x0,4)
+    (unique,0x1c80,1) = BOOL_NEGATE (unique,0x1c50,1)
+    (unique,0x1c90,1) = INT_AND (unique,0x1c80,1) (register,0x207,1)
+    (unique,0x1ca0,1) = INT_AND (unique,0x1c50,1) (unique,0x1c70,1)
+    (register,0x207,1) = INT_OR (unique,0x1c90,1) (unique,0x1ca0,1)
+    (unique,0x1cd0,1) = INT_EQUAL (register,0x0,4) (const,0x0,4)
+    (unique,0x1ce0,1) = BOOL_NEGATE (unique,0x1c50,1)
+    (unique,0x1cf0,1) = INT_AND (unique,0x1ce0,1) (register,0x206,1)
+    (unique,0x1d00,1) = INT_AND (unique,0x1c50,1) (unique,0x1cd0,1)
+    (register,0x206,1) = INT_OR (unique,0x1cf0,1) (unique,0x1d00,1)
+EOF
+CMDS=<<EOF
+s main
+pi 8
+?e -----
+pdgsd 8
+EOF
+RUN

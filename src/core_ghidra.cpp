@@ -91,14 +91,15 @@ static void PrintUsage(const RCore *const core)
 {
 	const char* help[] = {
 		"Usage: " CMD_PREFIX, "", "# Native Ghidra decompiler plugin",
-		CMD_PREFIX, "", "# Decompile current function with the Ghidra decompiler",
-		CMD_PREFIX, "d", "# Dump the debug XML Dump",
-		CMD_PREFIX, "x", "# Dump the XML of the current decompiled function",
-		CMD_PREFIX, "j", "# Dump the current decompiled function as JSON",
-		CMD_PREFIX, "o", "# Decompile current function side by side with offsets",
-		CMD_PREFIX, "s", "# Display loaded Sleigh Languages",
-		CMD_PREFIX, "ss", "# Display automatically matched Sleigh Language ID",
-		CMD_PREFIX, "*", "# Decompiled code is returned to r2 as comment",
+		CMD_PREFIX,     "", "# Decompile current function with the Ghidra decompiler",
+		CMD_PREFIX"d",  "", "# Dump the debug XML Dump",
+		CMD_PREFIX"x",  "", "# Dump the XML of the current decompiled function",
+		CMD_PREFIX"j",  "", "# Dump the current decompiled function as JSON",
+		CMD_PREFIX"o",  "", "# Decompile current function side by side with offsets",
+		CMD_PREFIX"s",  "", "# Display loaded Sleigh Languages",
+		CMD_PREFIX"ss", "", "# Display automatically matched Sleigh Language ID",
+		CMD_PREFIX"sd", " N", "# Disassemble N instructions with Sleigh and print pcode",
+		CMD_PREFIX"*",  "", "# Decompiled code is returned to r2 as comment",
 		"Environment:", "", "",
 		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
 		NULL
@@ -286,6 +287,71 @@ static void Decompile(RCore *core, DecompileMode mode)
 #endif
 }
 
+
+// see sleighexample.cc
+class AssemblyRaw : public AssemblyEmit
+{
+	public:
+		void dump(const Address &addr, const string &mnem, const string &body) override
+		{
+			std::stringstream ss;
+			addr.printRaw(ss);
+			ss << ": " << mnem << ' ' << body;
+			r_cons_printf("%s\n", ss.str().c_str());
+		}
+};
+
+class PcodeRawOut : public PcodeEmit
+{
+	private:
+		static void print_vardata(ostream &s, VarnodeData &data)
+		{
+			s << '(' << data.space->getName() << ',';
+			data.space->printOffset(s,data.offset);
+			s << ',' << dec << data.size << ')';
+		}
+
+	public:
+		void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars, int4 isize) override
+		{
+			std::stringstream ss;
+			if(outvar)
+			{
+				print_vardata(ss,*outvar);
+				ss << " = ";
+			}
+			ss << get_opname(opc);
+			// Possibly check for a code reference or a space reference
+			for(int4 i=0; i<isize; ++i)
+			{
+				ss << ' ';
+				print_vardata(ss, vars[i]);
+			}
+			r_cons_printf("    %s\n", ss.str().c_str());
+		}
+};
+
+static void Disassemble(RCore *core, ut64 ops)
+{
+	if(!ops)
+		ops = 10; // random default value
+
+	R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
+	DocumentStorage store;
+	arch.init(store);
+
+	const Translate *trans = arch.translate;
+	PcodeRawOut emit;
+	AssemblyRaw assememit;
+	Address addr(trans->getDefaultSpace(), core->offset);
+	for(ut64 i=0; i<ops; i++)
+	{
+		trans->printAssembly(assememit, addr);
+		auto length = trans->oneInstruction(emit, addr);
+		addr = addr + length;
+	}
+}
+
 static void ListSleighLangs()
 {
 	DecompilerLock lock;
@@ -339,10 +405,18 @@ static void _cmd(RCore *core, const char *input)
 			Decompile(core, DecompileMode::STATEMENTS);
 			break;
 		case 's': // "pdgs"
-			if (input[1] == 's') // "pdgss"
-				PrintAutoSleighLang(core);
-			else
-				ListSleighLangs();
+			switch(input[1])
+			{
+				case 's': // "pdgss"
+					PrintAutoSleighLang(core);
+					break;
+				case 'd': // "pdgsd"
+					Disassemble(core, (ut64)strtoull(input + 2, nullptr, 0));
+					break;
+				default:
+					ListSleighLangs();
+					break;
+			}
 			break;
 		default:
 			PrintUsage(core);
