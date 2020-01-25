@@ -1045,7 +1045,6 @@ shr eax, 4
 0x08048540: PUSH EBP
     (unique,0x1310,4) = COPY (register,0x14,4)
     (register,0x10,4) = INT_SUB (register,0x10,4) (const,0x4,4)
-    STORE (const,0x562fb20abee0,8) (register,0x10,4) (unique,0x1310,4)
 0x08048541: MOV EBP,ESP
     (register,0x14,4) = COPY (register,0x10,4)
 0x08048543: SUB ESP,0x88
@@ -1109,6 +1108,6 @@ CMDS=<<EOF
 s main
 pi 8
 ?e -----
-pdgsd 8
+pdgsd 8~!STORE
 EOF
 RUN
