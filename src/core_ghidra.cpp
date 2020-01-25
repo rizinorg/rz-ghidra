@@ -364,8 +364,12 @@ static void ListSleighLangs()
 		return;
 	}
 
-	for(const auto &lang : langs)
-		r_cons_printf("%s\n", lang.getId().c_str());
+	std::vector<std::string> ids;
+	std::transform(langs.begin(), langs.end(), std::back_inserter(ids), [](const LanguageDescription &lang) { return lang.getId(); });
+	std::sort(ids.begin(), ids.end());
+	std::for_each(ids.begin(), ids.end(), [](const std::string &id) {
+		r_cons_printf("%s\n", id.c_str());
+	});
 }
 
 static void PrintAutoSleighLang(RCore *core)
