@@ -256,6 +256,11 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			uintb last = addr.getOffset();
 			if(type->getSize() > 0)
 				last += type->getSize() - 1;
+			if(last < addr.getOffset())
+			{
+				arch->addWarning("Variable " + to_string(var->name) + " extends beyond the stackframe. Try changing its type to something smaller.");
+				return;
+			}
 			bool overlap = false;
 			if(typelock)
 			{
