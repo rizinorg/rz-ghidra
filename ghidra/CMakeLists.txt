@@ -61,6 +61,7 @@ set(DECOMPILER_SOURCE_BASE_CXX
 		memstate.cc
 		opbehavior.cc
 		paramid.cc
+		transform.cc
 		# callgraph.cc			// uncomment for debug
 		# ifacedecomp.cc		// uncomment for debug
 		# ifaceterm.cc			// uncomment for debug

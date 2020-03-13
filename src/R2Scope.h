@@ -53,6 +53,7 @@ class R2Scope : public Scope
 		Funcdata *findFunction(const Address &addr) const;
 		ExternRefSymbol *findExternalRef(const Address &addr) const;
 		LabSymbol *findCodeLabel(const Address &addr) const;
+		bool isNameUsed(const string &name) const override;
 		Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
 		SymbolEntry *findOverlap(const Address &addr,int4 size) const	{ throw LowlevelError("findOverlap unimplemented"); }
@@ -69,6 +70,7 @@ class R2Scope : public Scope
 		void clearUnlockedCategory(int4 cat) override					{ throw LowlevelError("clearUnlockedCategory unimplemented"); }
 		void clearUnlocked() override									{ throw LowlevelError("clearUnlocked unimplemented"); }
 		void restrictScope(Funcdata *f) override						{ throw LowlevelError("restrictScope unimplemented"); }
+		void removeSymbolMappings(Symbol *symbol) override				{ throw LowlevelError("removeSymbolMappings unimplemented"); }
 		void removeSymbol(Symbol *symbol) override						{ throw LowlevelError("removeSymbol unimplemented"); }
 		void renameSymbol(Symbol *sym,const string &newname) override	{ throw LowlevelError("renameSymbol unimplemented"); }
 		void retypeSymbol(Symbol *sym,Datatype *ct) override			{ throw LowlevelError("retypeSymbol unimplemented"); }

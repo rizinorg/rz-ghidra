@@ -195,7 +195,7 @@ Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error)
 			Datatype *sub = fromCType(ctype->pointer.type, error);
 			if(!sub)
 				return nullptr;
-			auto space = arch->getDefaultSpace();
+			auto space = arch->getDefaultCodeSpace();
 			return this->getTypePointer(space->getAddrSize(), sub, space->getWordSize());
 		}
 		case R_PARSE_CTYPE_TYPE_KIND_ARRAY:
