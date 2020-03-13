@@ -100,7 +100,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 	if (fcn->bits == 16 && !r2Arch.compare("arm")) {
 		ContextDatabase * cdb = arch->getContextDatabase();
-		cdb->setVariable("TMode", Address(arch->getDefaultSpace(), fcn->addr), 1);
+		cdb->setVariable("TMode", Address(arch->getDefaultCodeSpace(), fcn->addr), 1);
 	}
 
 	const char *fcn_name = fcn->name;
@@ -128,7 +128,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			{ "size", "1" }
 	});
 
-	childAddr(functionElement, "addr", Address(arch->getDefaultSpace(), fcn->addr));
+	childAddr(functionElement, "addr", Address(arch->getDefaultCodeSpace(), fcn->addr));
 
 	auto localDbElement = child(functionElement, "localdb", {
 			{ "lock", "false" },
@@ -225,7 +225,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		// This prevents the arg to be assigned as a local variable in the decompiled function,
 		// which can make the code confusing to read.
 		// (Ghidra does the same)
-		Address rangeAddr(arch->getDefaultSpace(), fcn->addr > 0 ? fcn->addr - 1 : 0);
+		Address rangeAddr(arch->getDefaultCodeSpace(), fcn->addr > 0 ? fcn->addr - 1 : 0);
 		child(e, "range", {
 				{ "space", rangeAddr.getSpace()->getName() },
 				{ "first", hex(rangeAddr.getOffset()) },
@@ -392,7 +392,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 	});
 
 	child(&doc, "addr", {
-			{ "space", arch->getDefaultSpace()->getName() },
+			{ "space", arch->getDefaultCodeSpace()->getName() },
 			{ "offset", hex(fcn->addr) }
 	});
 
@@ -424,7 +424,7 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 
 	// Check whether flags should be displayed by their real name
 	const char *name = (core->flags->realnames && flag->realname) ? flag->realname : flag->name;
-	SymbolEntry *entry = cache->addSymbol(name, type, Address(arch->getDefaultSpace(), flag->offset), Address());
+	SymbolEntry *entry = cache->addSymbol(name, type, Address(arch->getDefaultCodeSpace(), flag->offset), Address());
 	if(!entry)
 		return nullptr;
 
@@ -474,7 +474,7 @@ Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
 
 Symbol *R2Scope::queryR2(const Address &addr, bool contain) const
 {
-	if(addr.getSpace() == arch->getDefaultSpace())
+	if(addr.getSpace() == arch->getDefaultCodeSpace() || addr.getSpace() == arch->getDefaultDataSpace())
 		return queryR2Absolute(addr.getOffset(), contain);
 	return nullptr;
 }
@@ -577,6 +577,19 @@ LabSymbol *R2Scope::findCodeLabel(const Address &addr) const
 		return nullptr;
 
 	return queryR2FunctionLabel(addr);
+}
+
+bool R2Scope::isNameUsed(const string &name) const
+{
+	if(cache->isNameUsed(name))
+		return true;
+
+	RCoreLock core(arch->getCore());
+	if (r_flag_get(core->flags, name.c_str()))
+		return true;
+	if (r_anal_fcn_find_name(core->anal, name.c_str()))
+		return true;
+	return false;
 }
 
 Funcdata *R2Scope::resolveExternalRefFunction(ExternRefSymbol *sym) const

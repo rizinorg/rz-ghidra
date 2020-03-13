@@ -155,7 +155,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 		arch.setPrintLanguage("r2-c-language");
 		ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
 
-		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultSpace(), function->addr));
+		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
 		if(!func)
 			throw LowlevelError("No function in Scope");
 
@@ -208,7 +208,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 		if(mode == DecompileMode::XML)
 		{
 			out_stream << "<result><function>";
-			func->saveXml(out_stream, true);
+			func->saveXml(out_stream, 0, true);
 			out_stream << "</function><code>";
 		}
 
@@ -343,7 +343,7 @@ static void Disassemble(RCore *core, ut64 ops)
 	const Translate *trans = arch.translate;
 	PcodeRawOut emit;
 	AssemblyRaw assememit;
-	Address addr(trans->getDefaultSpace(), core->offset);
+	Address addr(trans->getDefaultCodeSpace(), core->offset);
 	for(ut64 i=0; i<ops; i++)
 	{
 		trans->printAssembly(assememit, addr);

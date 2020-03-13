@@ -179,13 +179,13 @@ void fcn.0000080e(void)
     
     uVar2 = 0xff;
     do {
-        *(undefined *)((uint16_t)uVar2 + 0x3ff) = 0x41;
+        *(undefined *)(uVar2 + 0x3ff) = 0x41;
         uVar1 = *(undefined *)0x824;
         uVar2 = uVar2 - 1;
     } while (uVar2 != 0);
     uVar2 = 0xff;
     do {
-        *(undefined *)((uint16_t)uVar2 + 0xd7ff) = uVar1;
+        *(undefined *)(uVar2 + 0xd7ff) = uVar1;
         uVar2 = uVar2 - 1;
     } while (uVar2 != 0);
     return;
@@ -255,91 +255,91 @@ CCu base64:Jg== @ 0x804858a
 </localdb>
 <ast>
 <varnodes>
-<addr space="const" offset="0x0" size="4" ref="0x140"/>
-<addr space="const" offset="0x0" size="4" ref="0x15e"/>
-<addr space="const" offset="0x804868e" size="4" ref="0x281"/>
-<addr space="const" offset="0x80486a7" size="4" ref="0x282"/>
-<addr space="const" offset="0x80486b2" size="4" ref="0x276"/>
-<addr space="const" offset="0xffffff84" size="4" ref="0x27d"/>
-<addr space="const" offset="0xffffff84" size="4" ref="0x27f"/>
-<addr space="unique" offset="0x3a0" size="4" ref="0x113"/>
-<addr space="unique" offset="0x3a0" size="4" ref="0x12d"/>
-<addr space="unique" offset="0x10000047" size="4" ref="0x278"/>
-<addr space="unique" offset="0x1000004b" size="4" ref="0x27b"/>
-<addr space="unique" offset="0x10000057" size="4" ref="0x283"/>
-<addr space="register" offset="0x0" size="4" ref="0x13f"/>
-<addr space="register" offset="0x10" size="4" ref="0x1c9" unaff="true" input="true"/>
-<addr space="ram" offset="0x8048394" size="8" ref="0x105"/>
-<addr space="ram" offset="0x8048394" size="8" ref="0x112"/>
-<addr space="ram" offset="0x8048374" size="8" ref="0x12c"/>
-<addr space="ram" offset="0x80484c8" size="8" ref="0x13e"/>
+<addr space="const" offset="0x0" size="4" ref="0x163"/>
+<addr space="const" offset="0x0" size="4" ref="0x181"/>
+<addr space="const" offset="0x804868e" size="4" ref="0x2b0"/>
+<addr space="const" offset="0x80486a7" size="4" ref="0x2b1"/>
+<addr space="const" offset="0x80486b2" size="4" ref="0x2a5"/>
+<addr space="const" offset="0xffffff84" size="4" ref="0x2ac"/>
+<addr space="const" offset="0xffffff84" size="4" ref="0x2ae"/>
+<addr space="unique" offset="0x3a0" size="4" ref="0x136"/>
+<addr space="unique" offset="0x3a0" size="4" ref="0x150"/>
+<addr space="unique" offset="0x10000047" size="4" ref="0x2a7"/>
+<addr space="unique" offset="0x1000004b" size="4" ref="0x2aa"/>
+<addr space="unique" offset="0x10000057" size="4" ref="0x2b2"/>
+<addr space="register" offset="0x0" size="4" ref="0x162"/>
+<addr space="register" offset="0x10" size="4" ref="0x1f8" unaff="true" input="true"/>
+<addr space="ram" offset="0x8048394" size="8" ref="0x135"/>
+<addr space="ram" offset="0x8048374" size="8" ref="0x14f"/>
+<addr space="ram" offset="0x80484c8" size="8" ref="0x161"/>
+<addr space="ram" offset="0x8048394" size="8" ref="0x128"/>
 </varnodes>
 <block index="0">
 <rangelist>
 <range space="ram" first="0x8048540" last="0x804859b"/>
 </rangelist>
 <op code="1">
-<seqnum space="ram" offset="0x8048566" uniq="0xc2"/>
-<addr ref="0x278"/>
-<addr ref="0x281"/>
+<seqnum space="ram" offset="0x8048566" uniq="0xd4"/>
+<addr ref="0x2a7"/>
+<addr ref="0x2b0"/>
 </op>
 <op code="7">
-<seqnum space="ram" offset="0x8048566" uniq="0x5c"/>
+<seqnum space="ram" offset="0x8048566" uniq="0x6a"/>
 <void/>
-<addr ref="0x105"/>
-<addr ref="0x278"/>
+<addr ref="0x128"/>
+<addr ref="0x2a7"/>
 </op>
 <op code="1">
-<seqnum space="ram" offset="0x8048572" uniq="0xc3"/>
-<addr ref="0x27b"/>
-<addr ref="0x282"/>
+<seqnum space="ram" offset="0x8048572" uniq="0xd5"/>
+<addr ref="0x2aa"/>
+<addr ref="0x2b1"/>
 </op>
 <op code="7">
-<seqnum space="ram" offset="0x8048572" uniq="0x61"/>
+<seqnum space="ram" offset="0x8048572" uniq="0x6f"/>
 <void/>
-<addr ref="0x112"/>
-<addr ref="0x27b"/>
+<addr ref="0x135"/>
+<addr ref="0x2aa"/>
 </op>
 <op code="66">
-<seqnum space="ram" offset="0x8048577" uniq="0xc4"/>
-<addr ref="0x113"/>
-<addr ref="0x1c9"/>
-<addr ref="0x27d"/>
+<seqnum space="ram" offset="0x8048577" uniq="0xd6"/>
+<addr ref="0x136"/>
+<addr ref="0x1f8"/>
+<addr ref="0x2ac"/>
 </op>
 <op code="7">
-<seqnum space="ram" offset="0x8048585" uniq="0x6b"/>
+<seqnum space="ram" offset="0x8048585" uniq="0x79"/>
 <void/>
-<addr ref="0x12c"/>
-<addr ref="0x276"/>
-<addr ref="0x113"/>
+<addr ref="0x14f"/>
+<addr ref="0x2a5"/>
+<addr ref="0x136"/>
 </op>
 <op code="66">
-<seqnum space="ram" offset="0x804858a" uniq="0xc5"/>
-<addr ref="0x12d"/>
-<addr ref="0x1c9"/>
-<addr ref="0x27f"/>
+<seqnum space="ram" offset="0x804858a" uniq="0xd7"/>
+<addr ref="0x150"/>
+<addr ref="0x1f8"/>
+<addr ref="0x2ae"/>
 </op>
 <op code="64">
-<seqnum space="ram" offset="0x8048590" uniq="0xc6"/>
-<addr ref="0x283"/>
-<addr ref="0x12d"/>
+<seqnum space="ram" offset="0x8048590" uniq="0xd8"/>
+<addr ref="0x2b2"/>
+<addr ref="0x150"/>
 </op>
 <op code="7">
-<seqnum space="ram" offset="0x8048590" uniq="0x72"/>
+<seqnum space="ram" offset="0x8048590" uniq="0x80"/>
 <void/>
-<addr ref="0x13e"/>
-<addr ref="0x283"/>
+<addr ref="0x161"/>
+<addr ref="0x2b2"/>
 </op>
 <op code="1">
-<seqnum space="ram" offset="0x8048595" uniq="0x73"/>
-<addr ref="0x13f"/>
-<addr ref="0x140"/>
+<seqnum space="ram" offset="0x8048595" uniq="0x81"/>
+<addr ref="0x162"/>
+<addr ref="0x163"/>
 </op>
 <op code="10">
-<seqnum space="ram" offset="0x804859b" uniq="0x79"/>
+<seqnum space="ram" offset="0x804859b" uniq="0x87"/>
 <void/>
-<addr ref="0x15e"/>
-<addr ref="0x13f"/>
+<addr ref="0x181"/>
+<addr ref="0x162"/>
 </op>
 </block>
 </ast>
@@ -368,7 +368,6 @@ CCu base64:Jg== @ 0x804858a
 </rangelist>
 <symbollist>
 <mapsym>
-<function name="main" size="92">
 <addr space="ram" offset="0x8048540"/>
 <localdb main="stack" lock="false">
 <scope name="main">
@@ -403,7 +402,6 @@ CCu base64:Jg== @ 0x804858a
 </rangelist>
 </mapsym>
 <mapsym>
-<function name="sym.check" size="1">
 <addr space="ram" offset="0x80484c8"/>
 <localdb main="stack" lock="false">
 <scope name="sym.check">
@@ -438,7 +436,6 @@ CCu base64:Jg== @ 0x804858a
 </rangelist>
 </mapsym>
 <mapsym>
-<function name="sym.imp.printf" size="1">
 <addr space="ram" offset="0x8048394"/>
 <localdb main="stack" lock="false">
 <scope name="sym.imp.printf">
@@ -459,7 +456,6 @@ CCu base64:Jg== @ 0x804858a
 </rangelist>
 </mapsym>
 <mapsym>
-<function name="sym.imp.scanf" size="1">
 <addr space="ram" offset="0x8048374"/>
 <localdb main="stack" lock="false">
 <scope name="sym.imp.scanf">
@@ -896,6 +892,7 @@ EXPECT=<<EOF
 68000:BE:32:MC68030
 68000:BE:32:default
 6805:BE:16:default
+6809:BE:16:default
 80251:BE:24:default
 80390:BE:24:default
 8048:LE:16:default
@@ -983,6 +980,17 @@ PowerPC:LE:64:A2-32addr
 PowerPC:LE:64:A2ALT
 PowerPC:LE:64:A2ALT-32addr
 PowerPC:LE:64:default
+RISCV:LE:32:RV32G
+RISCV:LE:32:RV32GC
+RISCV:LE:32:RV32I
+RISCV:LE:32:RV32IC
+RISCV:LE:32:RV32IMC
+RISCV:LE:32:default
+RISCV:LE:64:RV64G
+RISCV:LE:64:RV64GC
+RISCV:LE:64:RV64I
+RISCV:LE:64:RV64IC
+RISCV:LE:64:default
 SuperH4:BE:32:default
 SuperH4:LE:32:default
 SuperH:BE:32:SH-1
@@ -1043,7 +1051,7 @@ add eax, 0xf
 shr eax, 4
 -----
 0x08048540: PUSH EBP
-    (unique,0x1310,4) = COPY (register,0x14,4)
+    (unique,0x12f0,4) = COPY (register,0x14,4)
     (register,0x10,4) = INT_SUB (register,0x10,4) (const,0x4,4)
 0x08048541: MOV EBP,ESP
     (register,0x14,4) = COPY (register,0x10,4)
@@ -1053,12 +1061,16 @@ shr eax, 4
     (register,0x10,4) = INT_SUB (register,0x10,4) (const,0x88,4)
     (register,0x207,1) = INT_SLESS (register,0x10,4) (const,0x0,4)
     (register,0x206,1) = INT_EQUAL (register,0x10,4) (const,0x0,4)
+    (unique,0x1b20,1) = POPCOUNT (register,0x10,4)
+    (register,0x202,1) = INT_AND (unique,0x1b20,1) (const,0x1,1)
 0x08048549: AND ESP,0xfffffff0
     (register,0x200,1) = COPY (const,0x0,1)
     (register,0x20b,1) = COPY (const,0x0,1)
     (register,0x10,4) = INT_AND (register,0x10,4) (const,0xfffffff0,4)
     (register,0x207,1) = INT_SLESS (register,0x10,4) (const,0x0,4)
     (register,0x206,1) = INT_EQUAL (register,0x10,4) (const,0x0,4)
+    (unique,0x1b20,1) = POPCOUNT (register,0x10,4)
+    (register,0x202,1) = INT_AND (unique,0x1b20,1) (const,0x1,1)
 0x0804854c: MOV EAX,0x0
     (register,0x0,4) = COPY (const,0x0,4)
 0x08048551: ADD EAX,0xf
@@ -1067,42 +1079,48 @@ shr eax, 4
     (register,0x0,4) = INT_ADD (register,0x0,4) (const,0xf,4)
     (register,0x207,1) = INT_SLESS (register,0x0,4) (const,0x0,4)
     (register,0x206,1) = INT_EQUAL (register,0x0,4) (const,0x0,4)
+    (unique,0x1b20,1) = POPCOUNT (register,0x0,4)
+    (register,0x202,1) = INT_AND (unique,0x1b20,1) (const,0x1,1)
 0x08048554: ADD EAX,0xf
     (register,0x200,1) = INT_CARRY (register,0x0,4) (const,0xf,4)
     (register,0x20b,1) = INT_SCARRY (register,0x0,4) (const,0xf,4)
     (register,0x0,4) = INT_ADD (register,0x0,4) (const,0xf,4)
     (register,0x207,1) = INT_SLESS (register,0x0,4) (const,0x0,4)
     (register,0x206,1) = INT_EQUAL (register,0x0,4) (const,0x0,4)
+    (unique,0x1b20,1) = POPCOUNT (register,0x0,4)
+    (register,0x202,1) = INT_AND (unique,0x1b20,1) (const,0x1,1)
 0x08048557: SHR EAX,0x4
-    (unique,0x8210,4) = INT_AND (const,0x4,4) (const,0x1f,4)
-    (unique,0x8220,4) = COPY (register,0x0,4)
-    (register,0x0,4) = INT_RIGHT (register,0x0,4) (unique,0x8210,4)
-    (unique,0x2230,1) = INT_NOTEQUAL (unique,0x8210,4) (const,0x0,4)
-    (unique,0x2240,4) = INT_SUB (unique,0x8210,4) (const,0x1,4)
-    (unique,0x2250,4) = INT_RIGHT (unique,0x8220,4) (unique,0x2240,4)
-    (unique,0x2260,4) = INT_AND (unique,0x2250,4) (const,0x1,4)
-    (unique,0x2280,1) = INT_NOTEQUAL (unique,0x2260,4) (const,0x0,4)
-    (unique,0x2290,1) = BOOL_NEGATE (unique,0x2230,1)
-    (unique,0x22a0,1) = INT_AND (unique,0x2290,1) (register,0x200,1)
-    (unique,0x22b0,1) = INT_AND (unique,0x2230,1) (unique,0x2280,1)
-    (register,0x200,1) = INT_OR (unique,0x22a0,1) (unique,0x22b0,1)
-    (unique,0x22e0,1) = INT_EQUAL (unique,0x8210,4) (const,0x1,4)
-    (unique,0x2300,1) = INT_SLESS (unique,0x8220,4) (const,0x0,4)
-    (unique,0x2310,1) = BOOL_NEGATE (unique,0x22e0,1)
-    (unique,0x2320,1) = INT_AND (unique,0x2310,1) (register,0x20b,1)
-    (unique,0x2330,1) = INT_AND (unique,0x22e0,1) (unique,0x2300,1)
-    (register,0x20b,1) = INT_OR (unique,0x2320,1) (unique,0x2330,1)
-    (unique,0x1c50,1) = INT_NOTEQUAL (unique,0x8210,4) (const,0x0,4)
-    (unique,0x1c70,1) = INT_SLESS (register,0x0,4) (const,0x0,4)
-    (unique,0x1c80,1) = BOOL_NEGATE (unique,0x1c50,1)
-    (unique,0x1c90,1) = INT_AND (unique,0x1c80,1) (register,0x207,1)
-    (unique,0x1ca0,1) = INT_AND (unique,0x1c50,1) (unique,0x1c70,1)
-    (register,0x207,1) = INT_OR (unique,0x1c90,1) (unique,0x1ca0,1)
-    (unique,0x1cd0,1) = INT_EQUAL (register,0x0,4) (const,0x0,4)
-    (unique,0x1ce0,1) = BOOL_NEGATE (unique,0x1c50,1)
-    (unique,0x1cf0,1) = INT_AND (unique,0x1ce0,1) (register,0x206,1)
-    (unique,0x1d00,1) = INT_AND (unique,0x1c50,1) (unique,0x1cd0,1)
-    (register,0x206,1) = INT_OR (unique,0x1cf0,1) (unique,0x1d00,1)
+    (unique,0x8140,4) = INT_AND (const,0x4,4) (const,0x1f,4)
+    (unique,0x8150,4) = COPY (register,0x0,4)
+    (register,0x0,4) = INT_RIGHT (register,0x0,4) (unique,0x8140,4)
+    (unique,0x2150,1) = INT_NOTEQUAL (unique,0x8140,4) (const,0x0,4)
+    (unique,0x2160,4) = INT_SUB (unique,0x8140,4) (const,0x1,4)
+    (unique,0x2170,4) = INT_RIGHT (unique,0x8150,4) (unique,0x2160,4)
+    (unique,0x2180,4) = INT_AND (unique,0x2170,4) (const,0x1,4)
+    (unique,0x21a0,1) = INT_NOTEQUAL (unique,0x2180,4) (const,0x0,4)
+    (unique,0x21b0,1) = BOOL_NEGATE (unique,0x2150,1)
+    (unique,0x21c0,1) = INT_AND (unique,0x21b0,1) (register,0x200,1)
+    (unique,0x21d0,1) = INT_AND (unique,0x2150,1) (unique,0x21a0,1)
+    (register,0x200,1) = INT_OR (unique,0x21c0,1) (unique,0x21d0,1)
+    (unique,0x2200,1) = INT_EQUAL (unique,0x8140,4) (const,0x1,4)
+    (unique,0x2220,1) = INT_SLESS (unique,0x8150,4) (const,0x0,4)
+    (unique,0x2230,1) = BOOL_NEGATE (unique,0x2200,1)
+    (unique,0x2240,1) = INT_AND (unique,0x2230,1) (register,0x20b,1)
+    (unique,0x2250,1) = INT_AND (unique,0x2200,1) (unique,0x2220,1)
+    (register,0x20b,1) = INT_OR (unique,0x2240,1) (unique,0x2250,1)
+    (unique,0x1b50,1) = INT_NOTEQUAL (unique,0x8140,4) (const,0x0,4)
+    (unique,0x1b70,1) = INT_SLESS (register,0x0,4) (const,0x0,4)
+    (unique,0x1b80,1) = BOOL_NEGATE (unique,0x1b50,1)
+    (unique,0x1b90,1) = INT_AND (unique,0x1b80,1) (register,0x207,1)
+    (unique,0x1ba0,1) = INT_AND (unique,0x1b50,1) (unique,0x1b70,1)
+    (register,0x207,1) = INT_OR (unique,0x1b90,1) (unique,0x1ba0,1)
+    (unique,0x1bd0,1) = INT_EQUAL (register,0x0,4) (const,0x0,4)
+    (unique,0x1be0,1) = BOOL_NEGATE (unique,0x1b50,1)
+    (unique,0x1bf0,1) = INT_AND (unique,0x1be0,1) (register,0x206,1)
+    (unique,0x1c00,1) = INT_AND (unique,0x1b50,1) (unique,0x1bd0,1)
+    (register,0x206,1) = INT_OR (unique,0x1bf0,1) (unique,0x1c00,1)
+    (unique,0x1c20,1) = POPCOUNT (register,0x0,4)
+    (register,0x202,1) = INT_AND (unique,0x1c20,1) (const,0x1,1)
 EOF
 CMDS=<<EOF
 s main

@@ -35,7 +35,7 @@ void R2CommentDatabase::fillCache(const Address &fad) const
 	r_list_foreach_cpp<RAnalMetaItem>(comments, [fad, fcn, this](RAnalMetaItem *item) {
 		if(!r_anal_function_contains(fcn, item->from))
 			return;
-		cache.addComment(Comment::user2, fad, Address(arch->getDefaultSpace(), item->from), item->str);
+		cache.addComment(Comment::user2, fad, Address(arch->getDefaultCodeSpace(), item->from), item->str);
 	});
 
 	r_list_free(comments);
