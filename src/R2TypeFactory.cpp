@@ -39,46 +39,56 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n)
 
 	Sdb *sdb = core->anal->sdb_types;
 
-	// TODO: We need an API for this in r2
+	// TODO: We REALLY need an API for this in r2
 
 	const char *members = sdb_const_get(sdb, ("struct." + n).c_str(), nullptr);
 	if(!members)
 		return nullptr;
 
 	std::vector<TypeField> fields;
-	std::stringstream membersStream(members);
-	std::string memberName;
-	while(std::getline(membersStream, memberName, SDB_RS))
+	try
 	{
-		const char *memberContents = sdb_const_get(sdb, ("struct." + n + "." + memberName).c_str(), nullptr);
-		if(!memberContents)
-			continue;
-		auto memberTokens = splitSdbArray(memberContents);
-		if(memberTokens.size() < 3)
-			continue;
-		auto memberTypeName = memberTokens[0];
-		int4 offset = std::stoi(memberTokens[1]);
-		int4 elements = std::stoi(memberTokens[2]);
-		Datatype *memberType = fromCString(memberTypeName);
-		if(!memberType)
+		std::stringstream membersStream(members);
+		std::string memberName;
+		while(std::getline(membersStream, memberName, SDB_RS))
 		{
-			arch->addWarning("Failed to match type " + memberTypeName + " of member " + memberName + " in struct " + n);
-			continue;
+			const char *memberContents = sdb_const_get(sdb, ("struct." + n + "." + memberName).c_str(), nullptr);
+			if(!memberContents)
+				continue;
+			auto memberTokens = splitSdbArray(memberContents);
+			if(memberTokens.size() < 3)
+				continue;
+			auto memberTypeName = memberTokens[0];
+			for(size_t i=1; i<memberTokens.size() - 2; i++)
+				memberTypeName += "," + memberTokens[i];
+			int4 offset = std::stoi(memberTokens[memberTokens.size() - 2]);
+			int4 elements = std::stoi(memberTokens[memberTokens.size() - 1]);
+			Datatype *memberType = fromCString(memberTypeName);
+			if(!memberType)
+			{
+				arch->addWarning("Failed to match type " + memberTypeName + " of member " + memberName + " in struct " + n);
+				continue;
+			}
+
+			if(elements > 0)
+				memberType = getTypeArray(elements, memberType);
+
+			fields.push_back({
+				offset,
+				memberName,
+				memberType
+			});
 		}
 
-		if(elements > 0)
-			memberType = getTypeArray(elements, memberType);
-
-		fields.push_back({
-			offset,
-			memberName,
-			memberType
-		});
+		TypeStruct *r = getTypeStruct(n);
+		setFields(fields, r, 0);
+		return r;
 	}
-
-	TypeStruct *r = getTypeStruct(n);
-	setFields(fields, r, 0);
-	return r;
+	catch(std::invalid_argument &e)
+	{
+		arch->addWarning("Failed to load struct " + n + " from sdb.");
+		return nullptr;
+	}
 }
 
 Datatype *R2TypeFactory::queryR2Enum(const string &n)
