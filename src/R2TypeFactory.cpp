@@ -120,7 +120,7 @@ Datatype *R2TypeFactory::queryR2Enum(const string &n)
 	return enumType;
 }
 
-Datatype *R2TypeFactory::queryR2Typedef(const string &n)
+Datatype *R2TypeFactory::queryR2Typedef(const string &n, std::set<std::string> &stackTypes)
 {
 	RCoreLock core(arch->getCore());
 	Sdb *sdb = core->anal->sdb_types;
@@ -128,7 +128,7 @@ Datatype *R2TypeFactory::queryR2Typedef(const string &n)
 	if(!target)
 		return nullptr;
 
-	Datatype *resolved = fromCString(target);
+	Datatype *resolved = fromCString(target, nullptr, &stackTypes);
 	if(!resolved)
 		return nullptr;
 
@@ -155,23 +155,27 @@ Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTy
 		case R_TYPE_ENUM:
 			return queryR2Enum(n);
 		case R_TYPE_TYPEDEF:
-			return queryR2Typedef(n);
+			return queryR2Typedef(n, stackTypes);
 		default:
 			return nullptr;
 	}
 }
 
-Datatype *R2TypeFactory::findById(const string &n, uint8 id)
+Datatype *R2TypeFactory::findById(const string &n, uint8 id, std::set<std::string> &stackTypes)
 {
 	Datatype *r = TypeFactory::findById(n, id);
 	if(r)
 		return r;
-
-	std::set<std::string> stackTypes; // to detect recursion
 	return queryR2(n, stackTypes);
 }
 
-Datatype *R2TypeFactory::fromCString(const string &str, string *error)
+Datatype *R2TypeFactory::findById(const string &n, uint8 id)
+{
+	std::set<std::string> stackTypes; // to detect recursion
+	return findById(n, id, stackTypes);
+}
+
+Datatype *R2TypeFactory::fromCString(const string &str, string *error, std::set<std::string> *stackTypes)
 {
 	char *error_cstr = nullptr;
 	RParseCTypeType *type = r_parse_ctype_parse(ctype, str.c_str(), &error_cstr);
@@ -180,12 +184,12 @@ Datatype *R2TypeFactory::fromCString(const string &str, string *error)
 	if(!type)
 		return nullptr;
 
-	Datatype *r = fromCType(type, error);
+	Datatype *r = fromCType(type, error, stackTypes);
 	r_parse_ctype_type_free(type);
 	return r;
 }
 
-Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error)
+Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error, std::set<std::string> *stackTypes)
 {
 	switch(ctype->kind)
 	{
@@ -198,7 +202,7 @@ Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error)
 				return nullptr;
 			}
 
-			Datatype *r = findByName(ctype->identifier.name);
+			Datatype *r = stackTypes ? findByName(ctype->identifier.name, *stackTypes) : findByName(ctype->identifier.name);
 			if(!r)
 			{
 				if(error)
