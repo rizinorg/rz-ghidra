@@ -110,6 +110,23 @@ Datatype *R2TypeFactory::queryR2Enum(const string &n)
 	return enumType;
 }
 
+Datatype *R2TypeFactory::queryR2Typedef(const string &n)
+{
+	RCoreLock core(arch->getCore());
+	Sdb *sdb = core->anal->sdb_types;
+	const char *target = sdb_const_get(sdb, ("typedef." + n).c_str(), nullptr);
+	if(!target)
+		return nullptr;
+
+	Datatype *resolved = fromCString(target);
+	if(!resolved)
+		return nullptr;
+
+	Datatype *typedefd = resolved->clone();
+	setName(typedefd, n);
+	return typedefd;
+}
+
 Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTypes)
 {
 	if(stackTypes.find(n) != stackTypes.end())
@@ -127,6 +144,8 @@ Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTy
 			return queryR2Struct(n);
 		case R_TYPE_ENUM:
 			return queryR2Enum(n);
+		case R_TYPE_TYPEDEF:
+			return queryR2Typedef(n);
 		default:
 			return nullptr;
 	}
