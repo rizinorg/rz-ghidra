@@ -235,7 +235,6 @@ CCu base64:c3ltLmltcC5wcmludGYoIlBhc3N3b3JkOiAiKQ== @ 0x8048572
 CCu base64:Jg== @ 0x804858a
 --
 <result><function><function name="main" size="92">
-<addr space="ram" offset="0x8048540"/>
 <localdb main="stack" lock="false">
 <scope name="main">
 <parent>
@@ -247,7 +246,6 @@ CCu base64:Jg== @ 0x804858a
 </rangelist>
 <symbollist>
 <mapsym>
-<addr space="stack" offset="0xffffff84"/><rangelist>
 </rangelist>
 </mapsym>
 </symbollist>
@@ -255,24 +253,6 @@ CCu base64:Jg== @ 0x804858a
 </localdb>
 <ast>
 <varnodes>
-<addr space="const" offset="0x0" size="4" ref="0x163"/>
-<addr space="const" offset="0x0" size="4" ref="0x181"/>
-<addr space="const" offset="0x804868e" size="4" ref="0x2b0"/>
-<addr space="const" offset="0x80486a7" size="4" ref="0x2b1"/>
-<addr space="const" offset="0x80486b2" size="4" ref="0x2a5"/>
-<addr space="const" offset="0xffffff84" size="4" ref="0x2ac"/>
-<addr space="const" offset="0xffffff84" size="4" ref="0x2ae"/>
-<addr space="unique" offset="0x3a0" size="4" ref="0x136"/>
-<addr space="unique" offset="0x3a0" size="4" ref="0x150"/>
-<addr space="unique" offset="0x10000047" size="4" ref="0x2a7"/>
-<addr space="unique" offset="0x1000004b" size="4" ref="0x2aa"/>
-<addr space="unique" offset="0x10000057" size="4" ref="0x2b2"/>
-<addr space="register" offset="0x0" size="4" ref="0x162"/>
-<addr space="register" offset="0x10" size="4" ref="0x1f8" unaff="true" input="true"/>
-<addr space="ram" offset="0x8048394" size="8" ref="0x135"/>
-<addr space="ram" offset="0x8048374" size="8" ref="0x14f"/>
-<addr space="ram" offset="0x80484c8" size="8" ref="0x161"/>
-<addr space="ram" offset="0x8048394" size="8" ref="0x128"/>
 </varnodes>
 <block index="0">
 <rangelist>
@@ -280,66 +260,41 @@ CCu base64:Jg== @ 0x804858a
 </rangelist>
 <op code="1">
 <seqnum space="ram" offset="0x8048566" uniq="0xd4"/>
-<addr ref="0x2a7"/>
-<addr ref="0x2b0"/>
 </op>
 <op code="7">
 <seqnum space="ram" offset="0x8048566" uniq="0x6a"/>
 <void/>
-<addr ref="0x128"/>
-<addr ref="0x2a7"/>
 </op>
 <op code="1">
 <seqnum space="ram" offset="0x8048572" uniq="0xd5"/>
-<addr ref="0x2aa"/>
-<addr ref="0x2b1"/>
 </op>
 <op code="7">
 <seqnum space="ram" offset="0x8048572" uniq="0x6f"/>
 <void/>
-<addr ref="0x135"/>
-<addr ref="0x2aa"/>
 </op>
 <op code="66">
 <seqnum space="ram" offset="0x8048577" uniq="0xd6"/>
-<addr ref="0x136"/>
-<addr ref="0x1f8"/>
-<addr ref="0x2ac"/>
 </op>
 <op code="7">
 <seqnum space="ram" offset="0x8048585" uniq="0x79"/>
 <void/>
-<addr ref="0x14f"/>
-<addr ref="0x2a5"/>
-<addr ref="0x136"/>
 </op>
 <op code="66">
 <seqnum space="ram" offset="0x804858a" uniq="0xd7"/>
-<addr ref="0x150"/>
-<addr ref="0x1f8"/>
-<addr ref="0x2ae"/>
 </op>
 <op code="64">
 <seqnum space="ram" offset="0x8048590" uniq="0xd8"/>
-<addr ref="0x2b2"/>
-<addr ref="0x150"/>
 </op>
 <op code="7">
 <seqnum space="ram" offset="0x8048590" uniq="0x80"/>
 <void/>
-<addr ref="0x161"/>
-<addr ref="0x2b2"/>
 </op>
 <op code="1">
 <seqnum space="ram" offset="0x8048595" uniq="0x81"/>
-<addr ref="0x162"/>
-<addr ref="0x163"/>
 </op>
 <op code="10">
 <seqnum space="ram" offset="0x804859b" uniq="0x87"/>
 <void/>
-<addr ref="0x181"/>
-<addr ref="0x162"/>
 </op>
 </block>
 </ast>
@@ -573,7 +528,7 @@ pdgo
 ?e --
 pdg*
 ?e --
-pdgx~!id=,0x8048394
+pdgx~!id=,<addr
 ?e --
 pdgd~!id=,protectedMode
 ?e --
