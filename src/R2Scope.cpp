@@ -587,7 +587,7 @@ bool R2Scope::isNameUsed(const string &name) const
 	RCoreLock core(arch->getCore());
 	if (r_flag_get(core->flags, name.c_str()))
 		return true;
-	if (r_anal_fcn_find_name(core->anal, name.c_str()))
+	if (r_anal_get_function_byname(core->anal, name.c_str()))
 		return true;
 	return false;
 }
