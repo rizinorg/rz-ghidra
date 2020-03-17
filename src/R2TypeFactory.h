@@ -18,6 +18,7 @@ class R2TypeFactory : public TypeFactory
 
 		Datatype *queryR2Struct(const string &n);
 		Datatype *queryR2Enum(const string &n);
+		Datatype *queryR2Typedef(const string &n);
 		Datatype *queryR2(const string &n, std::set<std::string> &stackTypes);
 
 	protected:

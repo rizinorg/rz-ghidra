@@ -54,7 +54,7 @@ static Element *childType(Element *el, Datatype *type)
 	if(pointer)
 	{
 		Element *r = child(el, "type", {
-				{ "name", "" },
+				{ "name", type->getName() },
 				{ "size", to_string(pointer->getSize()) },
 				{ "metatype", "ptr" }
 		});

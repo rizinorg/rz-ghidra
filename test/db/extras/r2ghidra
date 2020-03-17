@@ -199,6 +199,470 @@ pdg
 EOF
 RUN
 
+
+NAME=rawptr
+FILE=bins/dectest32
+EXPECT=<<EOF
+
+undefined4 sym.get_global_array_entry(void)
+{
+    return *(undefined4 *)0x804c034;
+}
+--
+
+undefined4 sym.get_global_array_entry(void)
+{
+    return uRam0804c034;
+}
+EOF
+CMDS=<<EOF
+s sym.get_global_array_entry
+af
+e r2ghidra.rawptr=1
+pdg
+?e --
+e r2ghidra.rawptr=0
+pdg
+EOF
+RUN
+
+NAME=global flag
+FILE=bins/dectest32
+EXPECT=<<EOF
+
+undefined4 sym.get_global_var(void)
+{
+    return _obj.global_var;
+}
+--
+
+// WARNING: Globals starting with '_' overlap smaller symbols at the same address
+
+undefined4 sym.get_global_var(void)
+{
+    return _obj.global_var;
+}
+EOF
+CMDS=<<EOF
+s sym.get_global_var
+af
+e r2ghidra.rawptr=1
+pdg
+?e --
+e r2ghidra.rawptr=0
+pdg
+EOF
+RUN
+
+NAME=aeropause32 (many features combined)
+FILE=bins/dectest32
+EXPECT=<<EOF
+
+void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
+{
+    Morning *pMVar1;
+    int32_t iVar2;
+    
+    pMVar1 = (Morning *)sym.imp.malloc(8);
+    bright->morning = pMVar1;
+    bright->morning->saved_argc = argc;
+    bright->morning->saved_argv = argv;
+    if (bright->morning->saved_argc < 2) {
+        bright->ambassador = AMBASSADOR_PURE;
+    } else {
+        (bright->window).sunlight = bright->morning->saved_argv[1];
+        iVar2 = sym.imp.strcmp((bright->window).sunlight, 0x804a05c);
+        if (iVar2 == 0) {
+            bright->ambassador = AMBASSADOR_REASON;
+        } else {
+            iVar2 = sym.imp.strcmp((bright->window).sunlight, "dark");
+            if (iVar2 == 0) {
+                bright->ambassador = AMBASSADOR_REVOLUTION;
+            } else {
+                iVar2 = sym.imp.strcmp((bright->window).sunlight, "third");
+                if (iVar2 == 0) {
+                    bright->ambassador = AMBASSADOR_ECHOES;
+                } else {
+                    bright->ambassador = AMBASSADOR_MILLION;
+                }
+            }
+        }
+    }
+    // switch table (5 cases) at 0x804a070
+    switch(bright->ambassador) {
+    case AMBASSADOR_PURE:
+        sym.imp.printf("pure");
+        break;
+    case AMBASSADOR_REASON:
+        sym.imp.printf("reason");
+        break;
+    case AMBASSADOR_REVOLUTION:
+        sym.imp.printf("revolution");
+        break;
+    case AMBASSADOR_ECHOES:
+        sym.imp.printf("echoes");
+        break;
+    case AMBASSADOR_WALL:
+        sym.imp.printf("wall");
+        break;
+    default:
+        if (bright->ambassador == AMBASSADOR_MILLION) {
+            sym.imp.printf("million");
+        }
+        break;
+    case 0xbad1abe1:
+        break;
+    }
+    sym.PrintAmbassador(bright->ambassador);
+    return;
+}
+EOF
+CMDS=<<EOF
+aaa
+to bins/types.h
+s sym.Aeropause
+afvb 8 bright Bright *
+afvb 12 argc int32_t
+afvb 16 argv const char **
+pdg
+EOF
+RUN
+
+NAME=aeropause64 (many features combined)
+FILE=bins/dectest64
+EXPECT=<<EOF
+
+// WARNING: [r2ghidra] Detected overlap for variable var_ch
+// WARNING: [r2ghidra] Failed to match type size_t for variable size to Decompiler type: Unknown type identifier size_t
+
+void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
+{
+    int32_t iVar1;
+    Morning *pMVar2;
+    int64_t var_18h;
+    void **var_8h;
+    
+    pMVar2 = (Morning *)sym.imp.malloc(0x10);
+    bright->morning = pMVar2;
+    bright->morning->saved_argc = argc;
+    *(char ***)((int64_t)&bright->morning->saved_argv + 4) = argv;
+    if (bright->morning->saved_argc < 2) {
+        *(undefined4 *)&bright->ambassador = 0;
+    } else {
+        (bright->window).sunlight = *(char **)(*(int64_t *)((int64_t)&bright->morning->saved_argv + 4) + 8);
+        iVar1 = sym.imp.strcmp((bright->window).sunlight, "the  ");
+        if (iVar1 == 0) {
+            *(undefined4 *)&bright->ambassador = 1;
+        } else {
+            iVar1 = sym.imp.strcmp((bright->window).sunlight, "dark");
+            if (iVar1 == 0) {
+                *(undefined4 *)&bright->ambassador = 2;
+            } else {
+                iVar1 = sym.imp.strcmp((bright->window).sunlight, "third");
+                if (iVar1 == 0) {
+                    *(undefined4 *)&bright->ambassador = 3;
+                } else {
+                    *(undefined4 *)&bright->ambassador = 1000000;
+                }
+            }
+        }
+    }
+    // switch table (5 cases) at 0x402088
+    switch(*(int32_t *)&bright->ambassador) {
+    case 0:
+        sym.imp.printf("pure");
+        break;
+    case 1:
+        sym.imp.printf("reason");
+        break;
+    case 2:
+        sym.imp.printf("revolution");
+        break;
+    case 3:
+        sym.imp.printf("echoes");
+        break;
+    case 4:
+        sym.imp.printf("wall");
+        break;
+    default:
+        if (*(int32_t *)&bright->ambassador == 1000000) {
+            sym.imp.printf("million");
+        }
+        break;
+    case -0x452e541f:
+        break;
+    }
+    sym.PrintAmbassador(*(uint32_t *)&bright->ambassador);
+    return;
+}
+EOF
+CMDS=<<EOF
+aaa
+
+# TODO: remove these when r2 can do it automatically
+afvr rdi format const char * @ sym.imp.printf
+afvr rdi size size_t @ sym.imp.malloc
+afvr rdi s1 const char * @ sym.imp.strcmp
+afvr rsi s2 const char * @ sym.imp.strcmp
+
+to bins/types.h
+# TODO: remove when parsed struct from r2 is correct
+k anal/types/struct.Bright.ambassador=enum Ambassador,16,0
+k anal/types/struct.Bright.window=struct Window,8,0
+
+s sym.Aeropause
+afvr rdi bright Bright *
+afvr rsi argc int32_t
+afvr rdx argv const char **
+pdg
+EOF
+RUN
+
+NAME=typedef
+FILE=bins/dectest32
+EXPECT=<<EOF
+
+void sym.Aeropause(BrightPtr bright, Bright *argc, char **argv)
+{
+    Morning *pMVar1;
+    int32_t iVar2;
+    
+    pMVar1 = (Morning *)sym.imp.malloc(8);
+    bright->morning = pMVar1;
+    bright->morning->saved_argc = (uint32_t)argc;
+    bright->morning->saved_argv = argv;
+    if (bright->morning->saved_argc < 2) {
+        bright->ambassador = AMBASSADOR_PURE;
+    } else {
+        (bright->window).sunlight = bright->morning->saved_argv[1];
+        iVar2 = sym.imp.strcmp((bright->window).sunlight, 0x804a05c);
+        if (iVar2 == 0) {
+            bright->ambassador = AMBASSADOR_REASON;
+        } else {
+            iVar2 = sym.imp.strcmp((bright->window).sunlight, "dark");
+            if (iVar2 == 0) {
+                bright->ambassador = AMBASSADOR_REVOLUTION;
+            } else {
+                iVar2 = sym.imp.strcmp((bright->window).sunlight, "third");
+                if (iVar2 == 0) {
+                    bright->ambassador = AMBASSADOR_ECHOES;
+                } else {
+                    bright->ambassador = AMBASSADOR_MILLION;
+                }
+            }
+        }
+    }
+    // switch table (5 cases) at 0x804a070
+    switch(bright->ambassador) {
+    case AMBASSADOR_PURE:
+        sym.imp.printf("pure");
+        break;
+    case AMBASSADOR_REASON:
+        sym.imp.printf("reason");
+        break;
+    case AMBASSADOR_REVOLUTION:
+        sym.imp.printf("revolution");
+        break;
+    case AMBASSADOR_ECHOES:
+        sym.imp.printf("echoes");
+        break;
+    case AMBASSADOR_WALL:
+        sym.imp.printf("wall");
+        break;
+    default:
+        if (bright->ambassador == AMBASSADOR_MILLION) {
+            sym.imp.printf("million");
+        }
+        break;
+    case 0xbad1abe1:
+        break;
+    }
+    sym.PrintAmbassador(bright->ambassador);
+    return;
+}
+--
+
+void sym.Aeropause(BrightTypedefd *bright, int32_t argc, char **argv)
+{
+    Morning *pMVar1;
+    int32_t iVar2;
+    
+    pMVar1 = (Morning *)sym.imp.malloc(8);
+    bright->morning = pMVar1;
+    bright->morning->saved_argc = argc;
+    bright->morning->saved_argv = argv;
+    if (bright->morning->saved_argc < 2) {
+        bright->ambassador = AMBASSADOR_PURE;
+    } else {
+        (bright->window).sunlight = bright->morning->saved_argv[1];
+        iVar2 = sym.imp.strcmp((bright->window).sunlight, 0x804a05c);
+        if (iVar2 == 0) {
+            bright->ambassador = AMBASSADOR_REASON;
+        } else {
+            iVar2 = sym.imp.strcmp((bright->window).sunlight, "dark");
+            if (iVar2 == 0) {
+                bright->ambassador = AMBASSADOR_REVOLUTION;
+            } else {
+                iVar2 = sym.imp.strcmp((bright->window).sunlight, "third");
+                if (iVar2 == 0) {
+                    bright->ambassador = AMBASSADOR_ECHOES;
+                } else {
+                    bright->ambassador = AMBASSADOR_MILLION;
+                }
+            }
+        }
+    }
+    // switch table (5 cases) at 0x804a070
+    switch(bright->ambassador) {
+    case AMBASSADOR_PURE:
+        sym.imp.printf("pure");
+        break;
+    case AMBASSADOR_REASON:
+        sym.imp.printf("reason");
+        break;
+    case AMBASSADOR_REVOLUTION:
+        sym.imp.printf("revolution");
+        break;
+    case AMBASSADOR_ECHOES:
+        sym.imp.printf("echoes");
+        break;
+    case AMBASSADOR_WALL:
+        sym.imp.printf("wall");
+        break;
+    default:
+        if (bright->ambassador == AMBASSADOR_MILLION) {
+            sym.imp.printf("million");
+        }
+        break;
+    case 0xbad1abe1:
+        break;
+    }
+    sym.PrintAmbassador(bright->ambassador);
+    return;
+}
+--
+
+void sym.Aeropause(BrightTypedefdPtr bright, int32_t argc, char **argv)
+{
+    Morning *pMVar1;
+    int32_t iVar2;
+    
+    pMVar1 = (Morning *)sym.imp.malloc(8);
+    bright->morning = pMVar1;
+    bright->morning->saved_argc = argc;
+    bright->morning->saved_argv = argv;
+    if (bright->morning->saved_argc < 2) {
+        bright->ambassador = AMBASSADOR_PURE;
+    } else {
+        (bright->window).sunlight = bright->morning->saved_argv[1];
+        iVar2 = sym.imp.strcmp((bright->window).sunlight, 0x804a05c);
+        if (iVar2 == 0) {
+            bright->ambassador = AMBASSADOR_REASON;
+        } else {
+            iVar2 = sym.imp.strcmp((bright->window).sunlight, "dark");
+            if (iVar2 == 0) {
+                bright->ambassador = AMBASSADOR_REVOLUTION;
+            } else {
+                iVar2 = sym.imp.strcmp((bright->window).sunlight, "third");
+                if (iVar2 == 0) {
+                    bright->ambassador = AMBASSADOR_ECHOES;
+                } else {
+                    bright->ambassador = AMBASSADOR_MILLION;
+                }
+            }
+        }
+    }
+    // switch table (5 cases) at 0x804a070
+    switch(bright->ambassador) {
+    case AMBASSADOR_PURE:
+        sym.imp.printf("pure");
+        break;
+    case AMBASSADOR_REASON:
+        sym.imp.printf("reason");
+        break;
+    case AMBASSADOR_REVOLUTION:
+        sym.imp.printf("revolution");
+        break;
+    case AMBASSADOR_ECHOES:
+        sym.imp.printf("echoes");
+        break;
+    case AMBASSADOR_WALL:
+        sym.imp.printf("wall");
+        break;
+    default:
+        if (bright->ambassador == AMBASSADOR_MILLION) {
+            sym.imp.printf("million");
+        }
+        break;
+    case 0xbad1abe1:
+        break;
+    }
+    sym.PrintAmbassador(bright->ambassador);
+    return;
+}
+EOF
+CMDS=<<EOF
+aaa
+to bins/types.h
+s sym.Aeropause
+afvb 8 bright BrightPtr
+afvb 12 argc Bright *
+afvb 16 argv const char **
+pdg
+?e --
+afvb 8 bright BrightTypedefd *
+afvb 12 argc int32_t
+afvb 16 argv const char **
+pdg
+?e --
+afvb 8 bright BrightTypedefdPtr
+pdg
+EOF
+RUN
+
+NAME=macos args
+FILE=r2-testbins/mach0/arg
+EXPECT=<<EOF
+
+// WARNING: Variable defined which should be unmapped: var_4h
+// WARNING: [r2ghidra] Detected overlap for variable var_14h
+
+void entry0(void)
+{
+    char *var_4h;
+    
+    sym._call("hello", (int64_t)"world");
+    return;
+}
+EOF
+CMDS=<<EOF
+aaa
+s main
+pdg
+EOF
+RUN
+
+NAME=Nodup function on container query
+FILE=bins/hello-arm
+EXPECT=<<EOF
+
+// WARNING: Control flow encountered bad instruction data
+
+void entry0(void)
+{
+    // [11] -r-x section size 200 named .text
+    sym.imp.__libc_init();
+    // WARNING: Bad instruction - Truncating control flow here
+    halt_baddata();
+}
+EOF
+CMDS=<<EOF
+s entry0
+af
+pdg
+EOF
+RUN
+
 NAME=code printing
 FILE=r2-testbins/elf/crackme0x05
 EXPECT=<<EOF
@@ -572,268 +1036,6 @@ CMDS=<<EOF
 s main
 af
 pdgo
-EOF
-RUN
-
-
-NAME=rawptr
-FILE=bins/dectest32
-EXPECT=<<EOF
-
-undefined4 sym.get_global_array_entry(void)
-{
-    return *(undefined4 *)0x804c034;
-}
---
-
-undefined4 sym.get_global_array_entry(void)
-{
-    return uRam0804c034;
-}
-EOF
-CMDS=<<EOF
-s sym.get_global_array_entry
-af
-e r2ghidra.rawptr=1
-pdg
-?e --
-e r2ghidra.rawptr=0
-pdg
-EOF
-RUN
-
-NAME=global flag
-FILE=bins/dectest32
-EXPECT=<<EOF
-
-undefined4 sym.get_global_var(void)
-{
-    return _obj.global_var;
-}
---
-
-// WARNING: Globals starting with '_' overlap smaller symbols at the same address
-
-undefined4 sym.get_global_var(void)
-{
-    return _obj.global_var;
-}
-EOF
-CMDS=<<EOF
-s sym.get_global_var
-af
-e r2ghidra.rawptr=1
-pdg
-?e --
-e r2ghidra.rawptr=0
-pdg
-EOF
-RUN
-
-NAME=aeropause32 (many features combined)
-FILE=bins/dectest32
-EXPECT=<<EOF
-
-void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
-{
-    Morning *pMVar1;
-    int32_t iVar2;
-    
-    pMVar1 = (Morning *)sym.imp.malloc(8);
-    bright->morning = pMVar1;
-    bright->morning->saved_argc = argc;
-    bright->morning->saved_argv = argv;
-    if (bright->morning->saved_argc < 2) {
-        bright->ambassador = AMBASSADOR_PURE;
-    } else {
-        (bright->window).sunlight = bright->morning->saved_argv[1];
-        iVar2 = sym.imp.strcmp((bright->window).sunlight, 0x804a05c);
-        if (iVar2 == 0) {
-            bright->ambassador = AMBASSADOR_REASON;
-        } else {
-            iVar2 = sym.imp.strcmp((bright->window).sunlight, "dark");
-            if (iVar2 == 0) {
-                bright->ambassador = AMBASSADOR_REVOLUTION;
-            } else {
-                iVar2 = sym.imp.strcmp((bright->window).sunlight, "third");
-                if (iVar2 == 0) {
-                    bright->ambassador = AMBASSADOR_ECHOES;
-                } else {
-                    bright->ambassador = AMBASSADOR_MILLION;
-                }
-            }
-        }
-    }
-    // switch table (5 cases) at 0x804a070
-    switch(bright->ambassador) {
-    case AMBASSADOR_PURE:
-        sym.imp.printf("pure");
-        break;
-    case AMBASSADOR_REASON:
-        sym.imp.printf("reason");
-        break;
-    case AMBASSADOR_REVOLUTION:
-        sym.imp.printf("revolution");
-        break;
-    case AMBASSADOR_ECHOES:
-        sym.imp.printf("echoes");
-        break;
-    case AMBASSADOR_WALL:
-        sym.imp.printf("wall");
-        break;
-    default:
-        if (bright->ambassador == AMBASSADOR_MILLION) {
-            sym.imp.printf("million");
-        }
-        break;
-    case 0xbad1abe1:
-        break;
-    }
-    sym.PrintAmbassador(bright->ambassador);
-    return;
-}
-EOF
-CMDS=<<EOF
-aaa
-to bins/types.h
-s sym.Aeropause
-afvb 8 bright Bright *
-afvb 12 argc int32_t
-afvb 16 argv const char **
-pdg
-EOF
-RUN
-
-NAME=aeropause64 (many features combined)
-FILE=bins/dectest64
-EXPECT=<<EOF
-
-// WARNING: [r2ghidra] Detected overlap for variable var_ch
-// WARNING: [r2ghidra] Failed to match type size_t for variable size to Decompiler type: Unknown type identifier size_t
-
-void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
-{
-    int32_t iVar1;
-    Morning *pMVar2;
-    int64_t var_18h;
-    void **var_8h;
-    
-    pMVar2 = (Morning *)sym.imp.malloc(0x10);
-    bright->morning = pMVar2;
-    bright->morning->saved_argc = argc;
-    *(char ***)((int64_t)&bright->morning->saved_argv + 4) = argv;
-    if (bright->morning->saved_argc < 2) {
-        *(undefined4 *)&bright->ambassador = 0;
-    } else {
-        (bright->window).sunlight = *(char **)(*(int64_t *)((int64_t)&bright->morning->saved_argv + 4) + 8);
-        iVar1 = sym.imp.strcmp((bright->window).sunlight, "the  ");
-        if (iVar1 == 0) {
-            *(undefined4 *)&bright->ambassador = 1;
-        } else {
-            iVar1 = sym.imp.strcmp((bright->window).sunlight, "dark");
-            if (iVar1 == 0) {
-                *(undefined4 *)&bright->ambassador = 2;
-            } else {
-                iVar1 = sym.imp.strcmp((bright->window).sunlight, "third");
-                if (iVar1 == 0) {
-                    *(undefined4 *)&bright->ambassador = 3;
-                } else {
-                    *(undefined4 *)&bright->ambassador = 1000000;
-                }
-            }
-        }
-    }
-    // switch table (5 cases) at 0x402088
-    switch(*(int32_t *)&bright->ambassador) {
-    case 0:
-        sym.imp.printf("pure");
-        break;
-    case 1:
-        sym.imp.printf("reason");
-        break;
-    case 2:
-        sym.imp.printf("revolution");
-        break;
-    case 3:
-        sym.imp.printf("echoes");
-        break;
-    case 4:
-        sym.imp.printf("wall");
-        break;
-    default:
-        if (*(int32_t *)&bright->ambassador == 1000000) {
-            sym.imp.printf("million");
-        }
-        break;
-    case -0x452e541f:
-        break;
-    }
-    sym.PrintAmbassador(*(uint32_t *)&bright->ambassador);
-    return;
-}
-EOF
-CMDS=<<EOF
-aaa
-
-# TODO: remove these when r2 can do it automatically
-afvr rdi format const char * @ sym.imp.printf
-afvr rdi size size_t @ sym.imp.malloc
-afvr rdi s1 const char * @ sym.imp.strcmp
-afvr rsi s2 const char * @ sym.imp.strcmp
-
-to bins/types.h
-# TODO: remove when parsed struct from r2 is correct
-k anal/types/struct.Bright.ambassador=enum Ambassador,16,0
-k anal/types/struct.Bright.window=struct Window,8,0
-
-s sym.Aeropause
-afvr rdi bright Bright *
-afvr rsi argc int32_t
-afvr rdx argv const char **
-pdg
-EOF
-RUN
-
-NAME=macos args
-FILE=r2-testbins/mach0/arg
-EXPECT=<<EOF
-
-// WARNING: Variable defined which should be unmapped: var_4h
-// WARNING: [r2ghidra] Detected overlap for variable var_14h
-
-void entry0(void)
-{
-    char *var_4h;
-    
-    sym._call("hello", (int64_t)"world");
-    return;
-}
-EOF
-CMDS=<<EOF
-aaa
-s main
-pdg
-EOF
-RUN
-
-NAME=Nodup function on container query
-FILE=bins/hello-arm
-EXPECT=<<EOF
-
-// WARNING: Control flow encountered bad instruction data
-
-void entry0(void)
-{
-    // [11] -r-x section size 200 named .text
-    sym.imp.__libc_init();
-    // WARNING: Bad instruction - Truncating control flow here
-    halt_baddata();
-}
-EOF
-CMDS=<<EOF
-s entry0
-af
-pdg
 EOF
 RUN
 

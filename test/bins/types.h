@@ -26,3 +26,7 @@ struct Bright
 	struct Window window;
 	enum Ambassador ambassador;
 };
+
+typedef struct Bright *BrightPtr;
+typedef struct Bright BrightTypedefd;
+typedef struct BrightTypedefd *BrightTypedefdPtr;
