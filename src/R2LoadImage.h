@@ -5,7 +5,13 @@
 
 #include "loadimage.hh"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <r_core.h>
+#ifdef __cplusplus
+}
+#endif
 
 // Windows defines LoadImage to LoadImageA
 #ifdef LoadImage

@@ -2,9 +2,15 @@
 #ifndef R2GHIDRA_ANNOTATEDCODE_H
 #define R2GHIDRA_ANNOTATEDCODE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <r_core.h>
 #include <r_types.h>
 #include <r_vector.h>
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef __cplusplus
 extern "C" {

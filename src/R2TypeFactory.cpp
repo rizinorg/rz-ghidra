@@ -3,8 +3,14 @@
 #include "R2TypeFactory.h"
 #include "R2Architecture.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <r_parse.h>
 #include <r_core.h>
+#ifdef __cplusplus
+}
+#endif
 
 #include "R2Utils.h"
 

@@ -12,7 +12,13 @@
 #include <libdecomp.hh>
 #include <printc.hh>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <r_core.h>
+#ifdef __cplusplus
+}
+#endif
 
 #include <vector>
 #include <mutex>

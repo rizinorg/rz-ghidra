@@ -3,7 +3,13 @@
 #ifndef R2GHIDRA_ARCHMAP_H
 #define R2GHIDRA_ARCHMAP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <r_core.h>
+#ifdef __cplusplus
+}
+#endif
 
 #include <string>
 
