@@ -114,6 +114,8 @@ void R2Architecture::postSpecFile()
 		{
 			// Configure noreturn functions
 			Funcdata *infd = symboltab->getGlobalScope()->queryFunction(Address(getDefaultCodeSpace(), func->addr));
+			if(!infd)
+				return;
 			infd->getFuncProto().setNoReturn(true);
 		}
 	});
