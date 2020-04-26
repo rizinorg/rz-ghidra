@@ -201,18 +201,31 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		}
 	};
 
+	std::map<RAnalVar *, Datatype *> var_types;
+
 	ParamActive params(false);
 
 	if(vars)
 	{
 		r_list_foreach_cpp<RAnalVar>(vars, [&](RAnalVar *var) {
+			std::string typeError;
+			Datatype *type = var->type ? arch->getTypeFactory()->fromCString(var->type, &typeError) : nullptr;
+			if(!type)
+			{
+				arch->addWarning("Failed to match type " + to_string(var->type) + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
+				type = arch->types->getBase(core->anal->bits / 8, TYPE_UNKNOWN);
+				if(!type)
+					return;
+			}
+			var_types[var] = type;
+
 			if(!var->isarg)
 				return;
 			auto addr = addrForVar(var, true);
 			if(addr.isInvalid())
 				return;
-			params.registerTrial(addr, var->size);
-			int4 i = params.whichTrial(addr, var->size);
+			params.registerTrial(addr, type->getSize());
+			int4 i = params.whichTrial(addr, type->getSize());
 			params.getTrial(i).markActive();
 		});
 	}
@@ -238,16 +251,11 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		std::vector<Element *> argsByIndex;
 
 		r_list_foreach_cpp<RAnalVar>(vars, [&](RAnalVar *var) {
-			std::string typeError;
-			Datatype *type = var->type ? arch->getTypeFactory()->fromCString(var->type, &typeError) : nullptr;
+			auto type_it = var_types.find(var);
+			if(type_it == var_types.end())
+				return;
+			Datatype *type = type_it->second;
 			bool typelock = true;
-			if(!type)
-			{
-				arch->addWarning("Failed to match type " + to_string(var->type) + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
-				type = arch->types->getBase(var->size, TYPE_UNKNOWN);
-				if(!type)
-					return;
-			}
 
 			auto addr = addrForVar(var, var->isarg /* Already emitted this warning before */);
 			if(addr.isInvalid())
@@ -262,19 +270,16 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 				return;
 			}
 			bool overlap = false;
-			if(typelock)
+			for(const auto &range : varRanges)
 			{
-				for(const auto &range : varRanges)
-				{
-					if(range.getSpace() != addr.getSpace())
-						continue;
-					if(range.getFirst() > last)
-						continue;
-					if(range.getLast() < addr.getOffset())
-						continue;
-					overlap = true;
-					break;
-				}
+				if(range.getSpace() != addr.getSpace())
+					continue;
+				if(range.getFirst() > last)
+					continue;
+				if(range.getLast() < addr.getOffset())
+					continue;
+				overlap = true;
+				break;
 			}
 
 			if(overlap)
@@ -287,7 +292,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 				typelock = false;
 			}
 
-			if(var->isarg && proto && !proto->possibleInputParam(addr, var->size))
+			if(var->isarg && proto && !proto->possibleInputParam(addr, type->getSize()))
 			{
 				// Prevent segfaults in the Decompiler
 				arch->addWarning("Removing arg " + to_string(var->name) + " because it doesn't fit into ProtoModel");
@@ -307,7 +312,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 			if(var->isarg)
 			{
-				int4 paramIndex = params.whichTrial(addr, var->size);
+				int4 paramIndex = params.whichTrial(addr, type->getSize());
 
 				if(paramIndex < 0)
 					arch->addWarning("Failed to determine arg index of " + to_string(var->name));
