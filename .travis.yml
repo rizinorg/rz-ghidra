@@ -6,7 +6,7 @@ branches:
     - master
 
 os: linux
-dist: trusty
+dist: stretch
 
 addons:
   apt:
