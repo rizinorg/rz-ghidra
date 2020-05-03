@@ -6,7 +6,7 @@ branches:
     - master
 
 os: linux
-dist: bionic
+dist: trusty
 
 addons:
   apt:
@@ -48,4 +48,9 @@ script:
   - export R2_LIBR_PLUGINS="$INSTALL_PREFIX/share/radare2/plugins"
   - cd ../test
   - NOOK=0 make
+
+after_success:
+  - make -C dist/debian
+  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  - compgen -G dist/debian/*.deb > /dev/null && bash upload.sh dist/debian/*.deb
 
