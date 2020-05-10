@@ -1286,3 +1286,34 @@ pi 8
 pdgsd 8~!STORE
 EOF
 RUN
+
+NAME=comments
+FILE=r2-testbins/elf/crackme0x05
+EXPECT=<<EOF
+
+undefined4 main(void)
+{
+    int32_t var_78h;
+    
+    // main starts here
+    // printf call here
+    sym.imp.printf("IOLI Crackme Level 0x05\n");
+    sym.imp.printf("Password: ");
+    // scanf call here
+    sym.imp.scanf(0x80486b2, &var_78h);
+    sym.check((int32_t)&var_78h);
+    // main returns here
+    return 0;
+}
+EOF
+CMDS=<<EOF
+CCu base64:bWFpbiBzdGFydHMgaGVyZQ== @ 0x08048540
+CCu base64:cHJpbnRmIGNhbGwgaGVyZQ== @ 0x08048566
+CCu base64:bWFpbiByZXR1cm5zIGhlcmU= @ 0x0804859b
+CCu base64:bm90aGluZyB0byBzZWUgaGVyZQ== @ 0x0804859c
+CCu base64:c2NhbmYgY2FsbCBoZXJl @ 0x08048585
+s main
+af
+pdg
+EOF
+RUN
