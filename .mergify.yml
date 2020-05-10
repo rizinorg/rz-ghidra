@@ -1,0 +1,8 @@
+pull_request_rules:
+  - name: merge on green with label
+    conditions:
+      - base=master
+      - label=merge-on-green
+    actions:
+      merge:
+        method: squash
