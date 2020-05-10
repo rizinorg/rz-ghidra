@@ -28,17 +28,14 @@ void R2CommentDatabase::fillCache(const Address &fad) const
 	if(!fcn)
 		return;
 
-	RList *comments = r_meta_enumerate(core->anal, R_META_TYPE_COMMENT);
-	if (!comments)
-		return;
-
-	r_list_foreach_cpp<RAnalMetaItem>(comments, [fad, fcn, this](RAnalMetaItem *item) {
-		if(!r_anal_function_contains(fcn, item->from))
+	r_interval_tree_foreach_cpp<RAnalMetaItem>(&core->anal->meta, [fad, fcn, this](RIntervalNode *node, RAnalMetaItem *meta) {
+		if(!meta || meta->type != R_META_TYPE_COMMENT || !meta->str)
 			return;
-		cache.addComment(Comment::user2, fad, Address(arch->getDefaultCodeSpace(), item->from), item->str);
+		if(!r_anal_function_contains(fcn, node->start))
+			return;
+		cache.addComment(Comment::user2, fad, Address(arch->getDefaultCodeSpace(), node->start), meta->str);
 	});
 
-	r_list_free(comments);
 	cache_filled = true;
 }
 
