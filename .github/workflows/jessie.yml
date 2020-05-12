@@ -1,0 +1,18 @@
+name: Jessie
+on: [push]
+
+jobs:
+  build:
+    name: Jessie
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Checkout submodules
+        run: |
+            git submodule init
+            git submodule update
+      - name: Docker Build
+        run: cd dist && docker build -t r2ghidra-jessie . -f Dockerfile.jessie && cd ..
+      - name: Build and Test
+        run: docker run --rm -v "`pwd`:/build" -t r2ghidra-jessie /bin/bash -c "cd /build && dist/ci-script"
+
