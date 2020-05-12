@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+set -x
+
+mkdir build && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/.local
+make -j8
+make install
+
+cd ../test
+make
