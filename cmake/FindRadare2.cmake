@@ -19,9 +19,9 @@ if(WIN32)
 	find_path(Radare2_INCLUDE_DIRS
 			NAMES r_core.h r_bin.h r_util.h
 			HINTS
-				"$ENV{HOME}/bin/prefix/radare2/include/libr"
-				/usr/local/include/libr
-				/usr/include/libr)
+			"$ENV{HOME}/bin/prefix/radare2/include/libr"
+			/usr/local/include/libr
+			/usr/include/libr)
 
 	set(Radare2_LIBRARY_NAMES
 			core
@@ -54,9 +54,9 @@ if(WIN32)
 		find_library(Radare2_LIBRARY_${libname}
 				r_${libname}
 				HINTS
-					"$ENV{HOME}/bin/prefix/radare2/lib"
-					/usr/local/lib
-					/usr/lib)
+				"$ENV{HOME}/bin/prefix/radare2/lib"
+				/usr/local/lib
+				/usr/lib)
 
 		list(APPEND Radare2_LIBRARIES ${Radare2_LIBRARY_${libname}})
 		list(APPEND Radare2_LIBRARIES_VARS "Radare2_LIBRARY_${libname}")
@@ -72,28 +72,34 @@ if(WIN32)
 			INTERFACE_INCLUDE_DIRECTORIES "${Radare2_INCLUDE_DIRS}")
 	set(Radare2_TARGET Radare2::libr)
 else()
-	# support sys/user.sh install
+	# support installation locations used by r2 scripts like sys/user.sh and sys/install.sh
 	set(Radare2_CMAKE_PREFIX_PATH_TEMP ${CMAKE_PREFIX_PATH})
-	list(APPEND CMAKE_PREFIX_PATH "$ENV{HOME}/bin/prefix/radare2")
+	list(APPEND CMAKE_PREFIX_PATH "$ENV{HOME}/bin/prefix/radare2") # sys/user.sh
+	list(APPEND CMAKE_PREFIX_PATH "/usr/local") # sys/install.sh
 
 	find_package(PkgConfig REQUIRED)
-	pkg_search_module(Radare2 IMPORTED_TARGET REQUIRED r_core)
+	if(CMAKE_VERSION VERSION_LESS "3.6")
+		pkg_search_module(Radare2 REQUIRED r_core)
+	else()
+		pkg_search_module(Radare2 IMPORTED_TARGET REQUIRED r_core)
+	endif()
 
 	# reset CMAKE_PREFIX_PATH
 	set(CMAKE_PREFIX_PATH ${Radare2_CMAKE_PREFIX_PATH_TEMP})
-	mark_as_advanced(Radare2_CMAKE_PREFIX_PATH_TEMP)
 
-	if(TARGET PkgConfig::Radare2)
+	if((TARGET PkgConfig::Radare2) AND (NOT CMAKE_VERSION VERSION_LESS "3.11.0"))
 		set_target_properties(PkgConfig::Radare2 PROPERTIES IMPORTED_GLOBAL ON)
 		add_library(Radare2::libr ALIAS PkgConfig::Radare2)
 		set(Radare2_TARGET Radare2::libr)
-	else()
-		set(Radare2_TARGET Radare2_TARGET-NOTFOUND)
+	elseif(Radare2_FOUND)
+		add_library(Radare2::libr INTERFACE IMPORTED)
+		set_target_properties(Radare2::libr PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${Radare2_INCLUDE_DIRS}")
+		set_target_properties(Radare2::libr PROPERTIES
+				INTERFACE_LINK_LIBRARIES "${Radare2_LIBRARIES}")
+		set(Radare2_TARGET Radare2::libr)
 	endif()
-
 endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Radare2 REQUIRED_VARS Radare2_TARGET Radare2_LIBRARIES Radare2_INCLUDE_DIRS)
-
-mark_as_advanced(Radare2_LIBRARIES_VARS Radare2_CORE_LIBRARY Radare2_TARGET)
