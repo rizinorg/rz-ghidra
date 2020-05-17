@@ -38,8 +38,6 @@ set(SOURCE
 		src/R2TypeFactory.h
 		src/R2CommentDatabase.cpp
 		src/R2CommentDatabase.h
-		src/AnnotatedCode.h
-		src/AnnotatedCode.c
 		src/CodeXMLParse.h
 		src/CodeXMLParse.cpp
 		src/ArchMap.h
