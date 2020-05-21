@@ -15,15 +15,23 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 }
 
 RAsmPlugin r_asm_plugin_ghidra = {
-    .name = "r2ghidra",
-    .arch = "sleigh",
-    .author = "FXTi",
-    .version = "0.0.1",
-    .desc = "SLEIGH Disassembler from Ghidra",
-	.license = "GPL3",
-    .disassemble = &disassemble,
-    /*.init = */
-	/*.fini = */ 
+    /* .name = */ "r2ghidra",
+    /* .arch = */ "sleigh",
+    /* .author = */ "FXTi",
+    /* .version = */ nullptr,
+    /* .cpus = */ nullptr,
+    /* .desc = */ "SLEIGH Disassembler from Ghidra",
+	/* .license = */ "GPL3",
+    /* .user = */ nullptr,
+    /* .bits = */ 0,
+    /* .endian = */ 0,
+    /*.init = */ nullptr,
+	/*.fini = */ nullptr,
+    /* .disassemble = */ &disassemble,
+    /* .assemble = */ nullptr,
+    /* .modify */ nullptr,
+    /* .mnemonics = */ nullptr,
+    /* .features = */ nullptr
 };
 
 #ifndef CORELIB

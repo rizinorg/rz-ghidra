@@ -50,6 +50,7 @@ set(CORE_SOURCE
 		src/RCoreMutex.cpp)
 
 set(ASM_SOURCE
+		src/SleighAsm.h
 		src/SleighAsm.cpp
 		src/asm_ghidra.cpp)
 
