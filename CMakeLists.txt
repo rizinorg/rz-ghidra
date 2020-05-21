@@ -26,7 +26,7 @@ endif()
 add_subdirectory(ghidra)
 add_subdirectory(third-party)
 
-set(SOURCE
+set(CORE_SOURCE
 		src/core_ghidra.cpp
 		src/R2Architecture.cpp
 		src/R2Architecture.h
@@ -49,13 +49,17 @@ set(SOURCE
 		src/RCoreMutex.h
 		src/RCoreMutex.cpp)
 
+set(ASM_SOURCE
+		src/SleighAsm.cpp
+		src/asm_ghidra.cpp)
+
 find_package(Radare2 REQUIRED)
 
 if(BUILD_CUTTER_PLUGIN)
 	add_subdirectory(cutter-plugin)
 endif()
 
-add_library(core_ghidra SHARED ${SOURCE})
+add_library(core_ghidra SHARED ${CORE_SOURCE})
 target_link_libraries(core_ghidra ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
 target_link_libraries(core_ghidra pugixml)
 target_link_libraries(core_ghidra Radare2::libr)
@@ -63,8 +67,16 @@ set_target_properties(core_ghidra PROPERTIES
 		OUTPUT_NAME core_ghidra
 		PREFIX "")
 
+add_library(asm_ghidra SHARED ${ASM_SOURCE})
+target_link_libraries(asm_ghidra ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
+target_link_libraries(asm_ghidra Radare2::libr)
+set_target_properties(asm_ghidra PROPERTIES
+		OUTPUT_NAME asm_ghidra
+		PREFIX "")
+
 if(SLEIGHHOME_DEFAULT)
 	target_compile_definitions(core_ghidra PRIVATE "-DR2GHIDRA_SLEIGHHOME_DEFAULT=\"${SLEIGHHOME_DEFAULT}\"")
 endif()
 
 install(TARGETS core_ghidra DESTINATION "${RADARE2_INSTALL_PLUGDIR}")
+install(TARGETS asm_ghidra DESTINATION "${RADARE2_INSTALL_PLUGDIR}")
