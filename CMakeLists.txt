@@ -69,14 +69,16 @@ set_target_properties(core_ghidra PROPERTIES
 		PREFIX "")
 
 add_library(asm_ghidra SHARED ${ASM_SOURCE})
-target_link_libraries(asm_ghidra ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
-target_link_libraries(asm_ghidra Radare2::libr)
+target_link_libraries(asm_ghidra core_ghidra)
 set_target_properties(asm_ghidra PROPERTIES
 		OUTPUT_NAME asm_ghidra
+		BUILD_RPATH "\$ORIGIN"
+		INSTALL_RPATH "\$ORIGIN"
 		PREFIX "")
 
 if(SLEIGHHOME_DEFAULT)
 	target_compile_definitions(core_ghidra PRIVATE "-DR2GHIDRA_SLEIGHHOME_DEFAULT=\"${SLEIGHHOME_DEFAULT}\"")
+	target_compile_definitions(asm_ghidra PRIVATE "-DR2GHIDRA_SLEIGHHOME_DEFAULT=\"${SLEIGHHOME_DEFAULT}\"")
 endif()
 
 install(TARGETS core_ghidra DESTINATION "${RADARE2_INSTALL_PLUGDIR}")
