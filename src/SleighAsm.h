@@ -10,7 +10,7 @@
 class AsmLoadImage : public LoadImage
 {
     private: 
-        RIO *io;
+        RIO *io = nullptr;
 
     public: 
         AsmLoadImage(RIO *io) : LoadImage("radare2_program"), io(io) {}
@@ -32,7 +32,7 @@ class AssemblySlg : public AssemblyEmit
 
 		void dump(const Address &addr, const string &mnem, const string &body) override
 		{
-            str = r_str_newf("%s %s", mnem.c_str(), body.c_str());
+			str = r_str_newf("%s %s", mnem.c_str(), body.c_str());
 		}
 
         ~AssemblySlg() { if (str) free (str); }
