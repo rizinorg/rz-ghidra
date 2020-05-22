@@ -49,6 +49,7 @@ class SleighAsm
         FileManage specpaths;
         std::vector<LanguageDescription> description;
         int languageindex;
+        int alignment;
 
         RConfig *get_config(RAsm *a);
         std::string get_sleigh_home(RConfig *cfg);
@@ -58,6 +59,7 @@ class SleighAsm
         void build_specfile(DocumentStorage &store);
         void parse_proc_config(DocumentStorage &store);
         void loadLanguageDescription(const string &specfile);
+        void parse_alignment(DocumentStorage &doc);
 
     public:
         SleighAsm() : loader(nullptr), trans(nullptr, nullptr) {}

@@ -26,8 +26,20 @@ void SleighAsm::init(RAsm *a)
 	trans.reset(&loader, &context);
 	trans.initialize(docstorage);
 	parse_proc_config(docstorage);
+	parse_alignment(docstorage);
 
 	sleigh_id = a->cpu;
+}
+
+void SleighAsm::parse_alignment(DocumentStorage &doc)
+{
+	const Element *el = doc.getTag("sleigh");
+	if (!el)
+		throw LowlevelError("Could not find sleigh tag");
+
+	istringstream s(el->getAttributeValue("align"));
+	s.unsetf(ios::dec | ios::hex | ios::oct);
+	s >> alignment;
 }
 
 void SleighAsm::parse_proc_config(DocumentStorage &store)
@@ -277,7 +289,17 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 {
 	AssemblySlg assem;
 	Address addr(trans.getDefaultCodeSpace(), offset);
-	int length = trans.printAssembly(assem, addr);
-	r_strbuf_set(&op->buf_asm, assem.str);
+	int length = 0;
+	try
+	{
+		length = trans.printAssembly(assem, addr);
+		r_strbuf_set(&op->buf_asm, assem.str);
+	}
+	catch(BadDataError &err)
+	{
+		/* Meet Unknown data -> invalid opcode */
+		r_strbuf_set(&op->buf_asm, "invalid");
+		length = alignment;
+	}
 	return length;
 }
