@@ -3,8 +3,7 @@
 #ifndef R2GHIDRA_CODEXMLPARSE_H
 #define R2GHIDRA_CODEXMLPARSE_H
 
-// #include "AnnotatedCode.h"
-#include <r_util/AnnotatedCode.h>
+#include <r_util/r_annotated_code.h>
 
 class Funcdata;
 
