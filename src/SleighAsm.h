@@ -14,11 +14,13 @@ class AsmLoadImage : public LoadImage
 
     public: 
         AsmLoadImage(RIO *io) : LoadImage("radare2_program"), io(io) {}
-        virtual void loadFill(uint1 *ptr,int4 size,const Address &addr) {
-            r_io_read_at (io, addr.getOffset(), ptr, size);
+        virtual void loadFill(uint1 *ptr,int4 size,const Address &addr)
+        {
+            r_io_read_at(io, addr.getOffset(), ptr, size);
         }
         virtual string getArchType(void) const { return "radare2"; }
-        virtual void adjustVma(long adjust) { 
+        virtual void adjustVma(long adjust)
+        {
             throw LowlevelError("Cannot adjust radare2 virtual memory");
         }
 };
@@ -30,7 +32,7 @@ class AssemblySlg : public AssemblyEmit
 
 		void dump(const Address &addr, const string &mnem, const string &body) override
 		{
-            str = r_str_newf ("%s %s", mnem.c_str(), body.c_str());
+            str = r_str_newf("%s %s", mnem.c_str(), body.c_str());
 		}
 
         ~AssemblySlg() { if (str) free (str); }
