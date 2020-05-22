@@ -278,7 +278,7 @@ std::string SleighAsm::get_sleigh_home(RConfig *cfg)
 	{
 		r_config_set(cfg, varname, path);
 		std::string res(path);
-		free(path);
+		free((void *)path);
 		return res;
 	}
 	else

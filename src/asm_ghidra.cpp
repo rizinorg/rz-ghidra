@@ -39,14 +39,13 @@ RAsmPlugin r_asm_plugin_ghidra = {
 #ifdef __cplusplus
 extern "C"
 #endif
-    R_API RLibStruct radare_plugin = {
+R_API RLibStruct radare_plugin = {
 	/* .type = */ R_LIB_TYPE_ASM,
 	/* .data = */ &r_asm_plugin_ghidra,
 	/* .version = */ R2_VERSION,
 	/* .free = */ nullptr
 #if R2_VERSION_MAJOR >= 4 && R2_VERSION_MINOR >= 2
-	,
-	"r2ghidra-dec"
+	, "r2ghidra-dec"
 #endif
-    };
+};
 #endif

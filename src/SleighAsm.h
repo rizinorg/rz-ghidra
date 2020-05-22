@@ -28,7 +28,7 @@ class AsmLoadImage : public LoadImage
 class AssemblySlg : public AssemblyEmit
 {
 	public:
-        char *str;
+        char *str = nullptr;
 
 		void dump(const Address &addr, const string &mnem, const string &body) override
 		{
