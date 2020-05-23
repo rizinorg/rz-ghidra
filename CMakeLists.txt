@@ -12,6 +12,7 @@ option(BUILD_CUTTER_PLUGIN "Build r2ghidra plugin for Cutter" OFF)
 option(BUILD_DECOMPILE_EXECUTABLE "Build \"decompile\" executable as used by Ghidra (not needed for r2)" OFF)
 option(BUILD_DECOMPILE_CLI_EXECUTABLE "Build REPL decompiler (not needed for r2)" OFF)
 option(BUILD_SLASPECS "Build Sleigh specs for architectures from Ghidra" ON)
+option(BUILD_SLEIGH_PLUGIN "Build asm plugin to use sleigh as a disassembler in r2" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -26,7 +27,7 @@ endif()
 add_subdirectory(ghidra)
 add_subdirectory(third-party)
 
-set(SOURCE
+set(CORE_SOURCE
 		src/core_ghidra.cpp
 		src/R2Architecture.cpp
 		src/R2Architecture.h
@@ -49,13 +50,20 @@ set(SOURCE
 		src/RCoreMutex.h
 		src/RCoreMutex.cpp)
 
+if(BUILD_SLEIGH_PLUGIN)
+set(ASM_SOURCE
+		src/SleighAsm.h
+		src/SleighAsm.cpp
+		src/asm_ghidra.cpp)
+endif()
+
 find_package(Radare2 REQUIRED)
 
 if(BUILD_CUTTER_PLUGIN)
 	add_subdirectory(cutter-plugin)
 endif()
 
-add_library(core_ghidra SHARED ${SOURCE})
+add_library(core_ghidra SHARED ${CORE_SOURCE})
 target_link_libraries(core_ghidra ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
 target_link_libraries(core_ghidra pugixml)
 target_link_libraries(core_ghidra Radare2::libr)
@@ -63,8 +71,24 @@ set_target_properties(core_ghidra PROPERTIES
 		OUTPUT_NAME core_ghidra
 		PREFIX "")
 
+if(BUILD_SLEIGH_PLUGIN)
+add_library(asm_ghidra SHARED ${ASM_SOURCE})
+target_link_libraries(asm_ghidra core_ghidra)
+set_target_properties(asm_ghidra PROPERTIES
+		OUTPUT_NAME asm_ghidra
+		BUILD_RPATH "\$ORIGIN"
+		INSTALL_RPATH "\$ORIGIN"
+		PREFIX "")
+endif()
+
 if(SLEIGHHOME_DEFAULT)
 	target_compile_definitions(core_ghidra PRIVATE "-DR2GHIDRA_SLEIGHHOME_DEFAULT=\"${SLEIGHHOME_DEFAULT}\"")
+	if(BUILD_SLEIGH_PLUGIN)
+	target_compile_definitions(asm_ghidra PRIVATE "-DR2GHIDRA_SLEIGHHOME_DEFAULT=\"${SLEIGHHOME_DEFAULT}\"")
+	endif()
 endif()
 
 install(TARGETS core_ghidra DESTINATION "${RADARE2_INSTALL_PLUGDIR}")
+if(BUILD_SLEIGH_PLUGIN)
+install(TARGETS asm_ghidra DESTINATION "${RADARE2_INSTALL_PLUGDIR}")
+endif()

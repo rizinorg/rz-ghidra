@@ -4,3 +4,4 @@ build
 *.swp
 compile_commands.json
 ghidra/flex/
+.vscode
