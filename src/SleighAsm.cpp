@@ -5,8 +5,8 @@ void SleighAsm::init(RAsm *a)
 	if(description.empty())
 	{
 	/* Initialize sleigh spec files */
-		scan_sleigh(get_sleigh_home(get_config(a)));
-		collect_specfiles();
+		scanSleigh(getSleighHome(getConfig(a)));
+		collectSpecfiles();
 	}
 
 	if(!sleigh_id.empty() && sleigh_id == std::string(a->cpu))
@@ -20,18 +20,19 @@ void SleighAsm::init(RAsm *a)
 	/* Initialize Sleigh */
 	loader = std::move(AsmLoadImage(io));
 	docstorage = std::move(DocumentStorage());
-	resolve_arch(a->cpu);
-	build_specfile(docstorage);
+	resolveArch(a->cpu);
+	buildSpecfile(docstorage);
 	context = std::move(ContextInternal());
 	trans.reset(&loader, &context);
 	trans.initialize(docstorage);
-	parse_proc_config(docstorage);
-	parse_alignment(docstorage);
+	parseProcConfig(docstorage);
+	parseAlignment(docstorage);
 
 	sleigh_id = a->cpu;
 }
 
-void SleighAsm::parse_alignment(DocumentStorage &doc)
+/* This function will be removed in upcoming RAnal PR */
+void SleighAsm::parseAlignment(DocumentStorage &doc)
 {
 	const Element *el = doc.getTag("sleigh");
 	if (!el)
@@ -42,7 +43,13 @@ void SleighAsm::parse_alignment(DocumentStorage &doc)
 	s >> alignment;
 }
 
-void SleighAsm::parse_proc_config(DocumentStorage &store)
+/*
+ * From architecture.cc's parseProcessorConfig()
+ * This function is used to parse processor config.
+ * It is stripped to only parse context_data.
+ * Context data is used to fill contextreg.
+ */
+void SleighAsm::parseProcConfig(DocumentStorage &store)
 {
 	const Element *el = store.getTag("processor_spec");
 	if(!el)
@@ -59,7 +66,12 @@ void SleighAsm::parse_proc_config(DocumentStorage &store)
 	}
 }
 
-void SleighAsm::build_specfile(DocumentStorage &store)
+/*
+ * From sleigh_arch.cc's buildSpecFile()
+ * This function is used to fill DocumentStorage with sleigh files.
+ * It is stripped compiler specs, since Asm doesn't need them.
+ */
+void SleighAsm::buildSpecfile(DocumentStorage &store)
 {
 	const LanguageDescription &language(description[languageindex]);
 	//std::string compiler = archid.substr(archid.rfind(':')+1);
@@ -131,7 +143,12 @@ void SleighAsm::build_specfile(DocumentStorage &store)
 	}
 }
 
-void SleighAsm::resolve_arch(const string &archid)
+/*
+ * From sleigh_arch.cc's resolveArchitecture()
+ * This function is used to reolve the index of asm.cpu in description.
+ * It is stripped because asm.cpu is the result of normalizeArchitecture().
+ */
+void SleighAsm::resolveArch(const string &archid)
 {
 	std::string baseid = archid.substr(0, archid.rfind(':'));
 	languageindex = -1;
@@ -150,7 +167,11 @@ void SleighAsm::resolve_arch(const string &archid)
 		throw LowlevelError("No sleigh specification for " + baseid);
 }
 
-void SleighAsm::scan_sleigh(const string &rootpath)
+/*
+ * From sleigh_arch.cc's scanForSleighDirectories()
+ * This function is used to scan directories for SLEIGH specification files.
+ */
+void SleighAsm::scanSleigh(const string &rootpath)
 {
 	specpaths = FileManage(); // Empty specpaths
 
@@ -194,6 +215,10 @@ void SleighAsm::scan_sleigh(const string &rootpath)
 		specpaths.addDir2Path(languagesubdirs[i]);
 }
 
+/*
+ * From sleigh_arch.cc's loadLanguageDescription()
+ * This function is used to read a SLEIGH .ldefs file.
+ */
 void SleighAsm::loadLanguageDescription(const string &specfile)
 {
 	ifstream s(specfile.c_str());
@@ -224,7 +249,11 @@ void SleighAsm::loadLanguageDescription(const string &specfile)
 	delete doc;
 }
 
-void SleighAsm::collect_specfiles(void)
+/*
+ * From sleigh_arch.cc's collectSpecFiles()
+ * This function is used to collect all .ldefs files.
+ */
+void SleighAsm::collectSpecfiles(void)
 {
 	if(!description.empty())
 		return;
@@ -236,7 +265,7 @@ void SleighAsm::collect_specfiles(void)
 		loadLanguageDescription(*iter);
 }
 
-RConfig *SleighAsm::get_config(RAsm *a)
+RConfig *SleighAsm::getConfig(RAsm *a)
 {
 	RCore *core = a->num ? (RCore *)(a->num->userptr) : NULL;
 	if(!core)
@@ -244,7 +273,7 @@ RConfig *SleighAsm::get_config(RAsm *a)
 	return core->config;
 }
 
-std::string SleighAsm::get_sleigh_home(RConfig *cfg)
+std::string SleighAsm::getSleighHome(RConfig *cfg)
 {
 	const char varname[] = "r2ghidra.sleighhome";
 	const char *path = nullptr;

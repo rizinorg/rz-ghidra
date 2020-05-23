@@ -1,3 +1,5 @@
+/* radare - LGPL - Copyright 2020 - FXTi */
+
 #ifndef R2GHIDRA_SLEIGHASM_H
 #define R2GHIDRA_SLEIGHASM_H
 
@@ -35,7 +37,7 @@ class AssemblySlg : public AssemblyEmit
 			str = r_str_newf("%s %s", mnem.c_str(), body.c_str());
 		}
 
-        ~AssemblySlg() { if (str) free (str); }
+        ~AssemblySlg() { if(str) free(str); }
 };
 
 class SleighAsm
@@ -49,17 +51,17 @@ class SleighAsm
         FileManage specpaths;
         std::vector<LanguageDescription> description;
         int languageindex;
-        int alignment;
+        int alignment = 1;
 
-        RConfig *get_config(RAsm *a);
-        std::string get_sleigh_home(RConfig *cfg);
-        void collect_specfiles(void);
-        void scan_sleigh(const string &rootpath);
-        void resolve_arch(const string &archid);
-        void build_specfile(DocumentStorage &store);
-        void parse_proc_config(DocumentStorage &store);
+        RConfig *getConfig(RAsm *a);
+        std::string getSleighHome(RConfig *cfg);
+        void collectSpecfiles(void);
+        void scanSleigh(const string &rootpath);
+        void resolveArch(const string &archid);
+        void buildSpecfile(DocumentStorage &store);
+        void parseProcConfig(DocumentStorage &store);
         void loadLanguageDescription(const string &specfile);
-        void parse_alignment(DocumentStorage &doc);
+        void parseAlignment(DocumentStorage &doc);
 
     public:
         SleighAsm() : loader(nullptr), trans(nullptr, nullptr) {}

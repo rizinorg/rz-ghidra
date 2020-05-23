@@ -6,11 +6,25 @@
 
 static SleighAsm sasm;
 
+//#define DEBUG_EXCEPTIONS
+
 static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 {
-    sasm.init(a);
-
-    int r = sasm.disassemble(op, a->pc);
+	int r = 0;
+#ifndef DEBUG_EXCEPTIONS
+	try
+	{
+#endif
+		sasm.init(a);
+		r = sasm.disassemble(op, a->pc);
+#ifndef DEBUG_EXCEPTIONS
+	}
+	catch(const LowlevelError &e)
+	{
+		r_strbuf_set(&op->buf_asm, e.explain.c_str());
+		r = 1;
+	}
+#endif
     op->size = r;
     return r;
 }
@@ -26,8 +40,8 @@ RAsmPlugin r_asm_plugin_ghidra = {
     /* .user = */ nullptr,
     /* .bits = */ 0,
     /* .endian = */ 0,
-    /*.init = */ nullptr,
-    /*.fini = */ nullptr,
+    /* .init = */ nullptr,
+    /* .fini = */ nullptr,
     /* .disassemble = */ &disassemble,
     /* .assemble = */ nullptr,
     /* .modify */ nullptr,
