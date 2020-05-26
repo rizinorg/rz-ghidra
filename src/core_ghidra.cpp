@@ -240,18 +240,18 @@ static void Decompile(RCore *core, DecompileMode mode)
 			case DecompileMode::OFFSET:
 			{
 				RVector *offsets = r_annotated_code_line_offsets(code);
-				r_annotated_code_print(code, offsets);
+				r_core_annotated_code_print(code, offsets);
 				r_vector_free(offsets);
 			}
 			break;
 			case DecompileMode::DEFAULT:
-				r_annotated_code_print(code, nullptr);
+				r_core_annotated_code_print(code, nullptr);
 				break;
 			case DecompileMode::STATEMENTS:
-				r_annotated_code_print_comment_cmds(code);
+				r_core_annotated_code_print_comment_cmds(code);
 				break;
 			case DecompileMode::JSON:
-				r_annotated_code_print_json(code);
+				r_core_annotated_code_print_json(code);
 				break;
 			case DecompileMode::XML:
 				out_stream << "</code></result>";
