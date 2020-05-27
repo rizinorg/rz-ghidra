@@ -167,7 +167,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			case R_ANAL_VAR_KIND_BPV:
 			{
 				uintb off;
-				int delta = var->delta - extraPop; // not 100% sure if extraPop is correct here
+				int delta = var->delta + fcn->bp_off - extraPop; // not 100% sure if extraPop is correct here
 				if(delta >= 0)
 					off = delta;
 				else

@@ -170,7 +170,6 @@ EXPECT=<<EOF
 6502:LE:16:default:
 
 // WARNING: [r2ghidra] Function fcn.0000080e has no calling convention set, args may be inaccurate.
-// WARNING: [r2ghidra] Var arg_103h is stack pointer based, which is not supported for decompilation.
 
 void fcn.0000080e(void)
 {
