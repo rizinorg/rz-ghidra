@@ -33,6 +33,7 @@ install:
   - git clone --depth 1 https://github.com/radareorg/cutter
 
 script:
+  - scripts/ci-script
   - mkdir build && cd build
   - cmake
       -DCMAKE_BUILD_TYPE=Release
@@ -48,5 +49,5 @@ script:
   - export PATH="$INSTALL_PREFIX/bin:$PATH"
   - export R2_LIBR_PLUGINS="$INSTALL_PREFIX/share/radare2/plugins"
   - cd ../test
-  - NOOK=0 make
+  - make
 

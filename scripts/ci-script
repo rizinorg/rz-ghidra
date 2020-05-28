@@ -4,7 +4,7 @@ set -e
 set -x
 
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/.local
+cmake .. -DBUILD_SLEIGH_PLUGIN=ON -DCMAKE_INSTALL_PREFIX=$HOME/.local "$@"
 make -j8
 make install
 
