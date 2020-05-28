@@ -12,7 +12,7 @@ jobs:
             git submodule init
             git submodule update
       - name: Docker Build
-        run: cd dist && docker build -t r2ghidra-jessie . -f Dockerfile.jessie && cd ..
+        run: cd scripts && docker build -t r2ghidra-jessie . -f Dockerfile.jessie && cd ..
       - name: Build and Test
-        run: docker run --rm -v "`pwd`:/build" -t r2ghidra-jessie /bin/bash -c "cd /build && dist/ci-script"
+        run: docker run --rm -v "`pwd`:/build" -t r2ghidra-jessie /bin/bash -c "cd /build && scripts/ci-script"
 
