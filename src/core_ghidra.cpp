@@ -3,6 +3,7 @@
 #include "R2Architecture.h"
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
+#include "RAnnotatedCode.h"
 
 // Windows clash
 #ifdef restrict
@@ -130,6 +131,86 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 	print_c->setIndentIncrement(cfg_var_indent.GetInt(cfg));
 	print_c->setLineCommentIndent(cfg_var_cmt_indent.GetInt(cfg));
 	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
+}
+
+RAnnotatedCode* DecompileToRAnnotatedCode(RCore *core){
+	DecompilerLock lock;
+	RAnnotatedCode *code = nullptr;
+#ifndef DEBUG_EXCEPTIONS
+	try
+	{
+#endif
+		RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
+		if(!function)
+			throw LowlevelError("No function at this offset");
+
+		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
+		DocumentStorage store;
+		arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
+		arch.init(store);
+
+		std::stringstream out_stream;
+		arch.print->setOutputStream(&out_stream);
+
+		arch.setPrintLanguage("r2-c-language");
+		ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
+
+		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
+		if(!func){
+			throw LowlevelError("No function in Scope");
+		}
+		arch.getCore()->sleepBegin();
+		auto action = arch.allacts.getCurrent();
+		int res;
+#ifndef DEBUG_EXCEPTIONS
+		try
+		{
+#endif
+			action->reset(*func);
+			res = action->perform(*func);
+#ifndef DEBUG_EXCEPTIONS
+		}
+		catch(const LowlevelError &error)
+		{
+			arch.getCore()->sleepEndForce();
+			throw error;
+		}
+#endif
+		arch.getCore()->sleepEnd();
+		if (res<0)
+			eprintf("break\n");
+		/*else
+		{
+			eprintf("Decompilation complete\n");
+			if(res==0)
+				eprintf("(no change)\n");
+		}*/
+
+		if(cfg_var_verbose.GetBool(core->config))
+		{
+			for(const auto &warning : arch.getWarnings())
+				func->warningHeader("[r2ghidra] " + warning);
+		}
+		arch.print->setXML(true);
+		
+		
+		arch.print->docFunction(func);
+		code = ParseCodeXML(func, out_stream.str().c_str());
+		if (!code){
+			throw LowlevelError("Failed to parse XML code from Decompiler");
+		}
+		return code;
+#ifndef DEBUG_EXCEPTIONS
+	}
+	catch(const LowlevelError &error)
+	{
+		std::string s = "Ghidra Decompiler Error: " + error.explain;
+		char *err = strdup (s.c_str());
+ 		code = r_annotated_code_new(err);
+		// Push an annotation with: range = full string, type = error
+		return code;
+	}
+#endif
 }
 
 static void Decompile(RCore *core, DecompileMode mode)

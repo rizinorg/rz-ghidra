@@ -46,7 +46,8 @@ set(CORE_SOURCE
 		src/R2PrintC.h
 		src/R2PrintC.cpp
 		src/RCoreMutex.h
-		src/RCoreMutex.cpp)
+		src/RCoreMutex.cpp
+		src/RAnnotatedCode.h)
 
 if(BUILD_SLEIGH_PLUGIN)
 set(ASM_SOURCE
