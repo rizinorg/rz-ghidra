@@ -33,7 +33,6 @@ install:
   - git clone --depth 1 https://github.com/radareorg/cutter
 
 script:
-  - scripts/ci-script
   - mkdir build && cd build
   - cmake
       -DCMAKE_BUILD_TYPE=Release
