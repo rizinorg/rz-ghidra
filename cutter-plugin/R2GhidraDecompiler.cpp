@@ -1,7 +1,7 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
 #include "R2GhidraDecompiler.h"
-#include "../src/RAnnotatedCode.h"
+#include "../src/r2ghidra_annotated_code.h"
 
 #include <Cutter.h>
 
@@ -17,6 +17,6 @@ R2GhidraDecompiler::R2GhidraDecompiler(QObject *parent)
 
 void R2GhidraDecompiler::decompileAt(RVA addr)
 {
-	RAnnotatedCode *code = DecompileToRAnnotatedCode(Core()->core());
+	RAnnotatedCode *code = r2ghidra_decompile_annotated_code(Core()->core());
 	emit finished(code); //Here, we emit RAnnotatedCode *code or by value
 }

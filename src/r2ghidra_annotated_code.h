@@ -6,6 +6,6 @@
 #include <r_util/r_annotated_code.h>
 #include <r_core.h>
 
-R_API RAnnotatedCode* DecompileToRAnnotatedCode(RCore *core);
+R_API RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core);
 
 #endif //R2GHIDRA_RANNOTATEDCODE_H

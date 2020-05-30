@@ -3,7 +3,7 @@
 #include "R2Architecture.h"
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
-#include "RAnnotatedCode.h"
+#include "r2ghidra_annotated_code.h"
 
 // Windows clash
 #ifdef restrict
@@ -133,7 +133,7 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
 }
 
-RAnnotatedCode* DecompileToRAnnotatedCode(RCore *core){
+RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core){
 	DecompilerLock lock;
 	RAnnotatedCode *code = nullptr;
 #ifndef DEBUG_EXCEPTIONS
@@ -141,9 +141,9 @@ RAnnotatedCode* DecompileToRAnnotatedCode(RCore *core){
 	{
 #endif
 		RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
-		if(!function)
+		if(!function){
 			throw LowlevelError("No function at this offset");
-
+		}
 		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 		DocumentStorage store;
 		arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
@@ -208,6 +208,7 @@ RAnnotatedCode* DecompileToRAnnotatedCode(RCore *core){
 		char *err = strdup (s.c_str());
  		code = r_annotated_code_new(err);
 		// Push an annotation with: range = full string, type = error
+		// For this, we have to modify RAnnotatedCode to have one more type; for errors
 		return code;
 	}
 #endif
