@@ -133,14 +133,14 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
 }
 
-RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core){
+RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 	DecompilerLock lock;
 	RAnnotatedCode *code = nullptr;
 #ifndef DEBUG_EXCEPTIONS
 	try
 	{
 #endif
-		RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
+		RAnalFunction *function = r_anal_get_fcn_in(core->anal, addr, R_ANAL_FCN_TYPE_NULL);
 		if(!function){
 			throw LowlevelError("No function at this offset");
 		}

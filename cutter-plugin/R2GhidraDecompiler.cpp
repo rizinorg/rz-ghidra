@@ -15,8 +15,8 @@ R2GhidraDecompiler::R2GhidraDecompiler(QObject *parent)
 	task = nullptr;
 }
 
-void R2GhidraDecompiler::decompileAt(RVA addr)
+void R2GhidraDecompiler::decompileAt(ut64 addr)
 {
-	RAnnotatedCode *code = r2ghidra_decompile_annotated_code(Core()->core());
+	RAnnotatedCode *code = r2ghidra_decompile_annotated_code(Core()->core(), addr);
 	emit finished(code); //Here, we emit RAnnotatedCode *code or by value
 }
