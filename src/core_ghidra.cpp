@@ -133,74 +133,67 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
 }
 
+// static void refactored_decompile(RCore* &core, RAnalFunction* &function, R2Architecture &arch, std::stringstream &out_stream, Funcdata* &func){
+static void refactored_decompile(RCore *&core, RAnalFunction *&function, R2Architecture &arch, std::stringstream &out_stream, Funcdata *func){
+	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
+	arch.print->setOutputStream(&out_stream);
+	arch.setPrintLanguage("r2-c-language");
+	ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
+	if(!func)
+	{
+		throw LowlevelError("No function in Scope");
+	}
+	arch.getCore()->sleepBegin();
+	auto action = arch.allacts.getCurrent();
+	int res;
+	try
+	{
+		action->reset(*func);
+		res = action->perform(*func);
+	}
+	catch(const LowlevelError &error)
+	{
+		arch.getCore()->sleepEndForce();
+		throw error;
+	}
+	arch.getCore()->sleepEnd();
+	if (res<0)
+	{
+		eprintf("break\n");
+	}
+	if(cfg_var_verbose.GetBool(core->config))
+	{
+		for(const auto &warning : arch.getWarnings())
+		{
+			func->warningHeader("[r2ghidra] " + warning);
+		}
+	}
+}
+
 RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 	DecompilerLock lock;
 	RAnnotatedCode *code = nullptr;
-#ifndef DEBUG_EXCEPTIONS
 	try
 	{
-#endif
 		RAnalFunction *function = r_anal_get_fcn_in(core->anal, addr, R_ANAL_FCN_TYPE_NULL);
-		if(!function){
+		if(!function)
+		{
 			throw LowlevelError("No function at this offset");
 		}
 		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 		DocumentStorage store;
-		arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
-		arch.init(store);
-
+		arch.init(store);		
 		std::stringstream out_stream;
-		arch.print->setOutputStream(&out_stream);
-
-		arch.setPrintLanguage("r2-c-language");
-		ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
-
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
-		if(!func){
-			throw LowlevelError("No function in Scope");
-		}
-		arch.getCore()->sleepBegin();
-		auto action = arch.allacts.getCurrent();
-		int res;
-#ifndef DEBUG_EXCEPTIONS
-		try
-		{
-#endif
-			action->reset(*func);
-			res = action->perform(*func);
-#ifndef DEBUG_EXCEPTIONS
-		}
-		catch(const LowlevelError &error)
-		{
-			arch.getCore()->sleepEndForce();
-			throw error;
-		}
-#endif
-		arch.getCore()->sleepEnd();
-		if (res<0)
-			eprintf("break\n");
-		/*else
-		{
-			eprintf("Decompilation complete\n");
-			if(res==0)
-				eprintf("(no change)\n");
-		}*/
-
-		if(cfg_var_verbose.GetBool(core->config))
-		{
-			for(const auto &warning : arch.getWarnings())
-				func->warningHeader("[r2ghidra] " + warning);
-		}
+		refactored_decompile(core, function, arch, out_stream, func);
 		arch.print->setXML(true);
-		
-		
 		arch.print->docFunction(func);
 		code = ParseCodeXML(func, out_stream.str().c_str());
-		if (!code){
+		if (!code)
+		{
 			throw LowlevelError("Failed to parse XML code from Decompiler");
 		}
 		return code;
-#ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &error)
 	{
@@ -211,7 +204,6 @@ RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 		// For this, we have to modify RAnnotatedCode to have one more type; for errors
 		return code;
 	}
-#endif
 }
 
 static void Decompile(RCore *core, DecompileMode mode)
@@ -225,55 +217,13 @@ static void Decompile(RCore *core, DecompileMode mode)
 		RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
 		if(!function)
 			throw LowlevelError("No function at this offset");
-
 		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 		DocumentStorage store;
-		arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 		arch.init(store);
-
 		std::stringstream out_stream;
-		arch.print->setOutputStream(&out_stream);
-
-		arch.setPrintLanguage("r2-c-language");
-		ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
-
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
-		if(!func)
-			throw LowlevelError("No function in Scope");
-
-		arch.getCore()->sleepBegin();
-		auto action = arch.allacts.getCurrent();
-		int res;
-#ifndef DEBUG_EXCEPTIONS
-		try
-		{
-#endif
-			action->reset(*func);
-			res = action->perform(*func);
-#ifndef DEBUG_EXCEPTIONS
-		}
-		catch(const LowlevelError &error)
-		{
-			arch.getCore()->sleepEndForce();
-			throw error;
-		}
-#endif
-		arch.getCore()->sleepEnd();
-		if (res<0)
-			eprintf("break\n");
-		/*else
-		{
-			eprintf("Decompilation complete\n");
-			if(res==0)
-				eprintf("(no change)\n");
-		}*/
-
-		if(cfg_var_verbose.GetBool(core->config))
-		{
-			for(const auto &warning : arch.getWarnings())
-				func->warningHeader("[r2ghidra] " + warning);
-		}
-
+		refactored_decompile(core, function, arch, out_stream, func);
+		
 		switch (mode)
 		{
 			case DecompileMode::XML:
