@@ -134,7 +134,8 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 }
 
 // static void refactored_decompile(RCore* &core, RAnalFunction* &function, R2Architecture &arch, std::stringstream &out_stream, Funcdata* &func){
-static void refactored_decompile(RCore *&core, RAnalFunction *&function, R2Architecture &arch, std::stringstream &out_stream, Funcdata *func){
+static void refactored_decompile(RCore *&core, RAnalFunction *&function, R2Architecture &arch, std::stringstream &out_stream, Funcdata *func,
+								DecompileMode mode, RAnnotatedCode *&code){
 	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 	arch.print->setOutputStream(&out_stream);
 	arch.setPrintLanguage("r2-c-language");
@@ -168,6 +169,47 @@ static void refactored_decompile(RCore *&core, RAnalFunction *&function, R2Archi
 			func->warningHeader("[r2ghidra] " + warning);
 		}
 	}
+	switch (mode)
+	{
+		case DecompileMode::XML:
+		case DecompileMode::DEFAULT:
+		case DecompileMode::JSON:
+		case DecompileMode::OFFSET:
+		case DecompileMode::STATEMENTS:
+			arch.print->setXML(true);
+			break;
+		default:
+			break;
+	}
+	if(mode == DecompileMode::XML)
+	{
+		out_stream << "<result><function>";
+		func->saveXml(out_stream, 0, true);
+		out_stream << "</function><code>";
+	}
+	switch(mode)
+	{
+		case DecompileMode::XML:
+		case DecompileMode::DEFAULT:
+		case DecompileMode::JSON:
+		case DecompileMode::OFFSET:
+		case DecompileMode::STATEMENTS:
+			arch.print->docFunction(func);
+			if(mode != DecompileMode::XML)
+			{
+				code = ParseCodeXML(func, out_stream.str().c_str());
+				if (!code)
+				{
+					throw LowlevelError("Failed to parse XML code from Decompiler");
+				}
+			}
+			break;
+		case DecompileMode::DEBUG_XML:
+			arch.saveXml(out_stream);
+			break;
+		default:
+			break;
+	}
 }
 
 RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
@@ -185,14 +227,7 @@ RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 		arch.init(store);	
 		std::stringstream out_stream;
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
-		refactored_decompile(core, function, arch, out_stream, func);
-		arch.print->setXML(true);
-		arch.print->docFunction(func);
-		code = ParseCodeXML(func, out_stream.str().c_str());
-		if (!code)
-		{
-			throw LowlevelError("Failed to parse XML code from Decompiler");
-		}
+		refactored_decompile(core, function, arch, out_stream, func, DecompileMode::DEFAULT, code);
 		return code;
 	}
 	catch(const LowlevelError &error)
@@ -223,51 +258,8 @@ static void Decompile(RCore *core, DecompileMode mode)
 		arch.init(store);
 		std::stringstream out_stream;
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
-		refactored_decompile(core, function, arch, out_stream, func);
-		
-		switch (mode)
-		{
-			case DecompileMode::XML:
-			case DecompileMode::DEFAULT:
-			case DecompileMode::JSON:
-			case DecompileMode::OFFSET:
-			case DecompileMode::STATEMENTS:
-				arch.print->setXML(true);
-				break;
-			default:
-				break;
-		}
-
-		if(mode == DecompileMode::XML)
-		{
-			out_stream << "<result><function>";
-			func->saveXml(out_stream, 0, true);
-			out_stream << "</function><code>";
-		}
-
 		RAnnotatedCode *code = nullptr;
-		switch(mode)
-		{
-			case DecompileMode::XML:
-			case DecompileMode::DEFAULT:
-			case DecompileMode::JSON:
-			case DecompileMode::OFFSET:
-			case DecompileMode::STATEMENTS:
-				arch.print->docFunction(func);
-				if(mode != DecompileMode::XML)
-				{
-					code = ParseCodeXML(func, out_stream.str().c_str());
-					if (!code)
-						throw LowlevelError("Failed to parse XML code from Decompiler");
-				}
-				break;
-			case DecompileMode::DEBUG_XML:
-				arch.saveXml(out_stream);
-				break;
-			default:
-				break;
-		}
-
+		refactored_decompile(core, function, arch, out_stream, func, mode, code);
 		switch(mode)
 		{
 			case DecompileMode::OFFSET:
@@ -293,9 +285,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 				r_cons_printf("%s\n", out_stream.str().c_str());
 				break;
 		}
-
 		r_annotated_code_free(code);
-#ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &error)
 	{
@@ -304,7 +294,9 @@ static void Decompile(RCore *core, DecompileMode mode)
 		{
 			PJ *pj = pj_new ();
 			if(!pj)
+			{
 				return;
+			}
 			pj_o(pj);
 			pj_k(pj, "errors");
 			pj_a(pj);
@@ -315,9 +307,10 @@ static void Decompile(RCore *core, DecompileMode mode)
 			pj_free(pj);
 		}
 		else
+		{
 			eprintf("%s\n", s.c_str());
+		}
 	}
-#endif
 }
 
 
