@@ -154,16 +154,20 @@ static void refactored_decompile(RCore *&core, std::stringstream &out_stream,
 	arch.getCore()->sleepBegin();
 	auto action = arch.allacts.getCurrent();
 	int res;
+#ifndef DEBUG_EXCEPTIONS
 	try
 	{
+#endif
 		action->reset(*func);
 		res = action->perform(*func);
+#ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &error)
 	{
 		arch.getCore()->sleepEndForce();
 		throw error;
 	}
+#endif
 	arch.getCore()->sleepEnd();
 	if (res<0)
 	{
@@ -222,11 +226,14 @@ static void refactored_decompile(RCore *&core, std::stringstream &out_stream,
 RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 	DecompilerLock lock;
 	RAnnotatedCode *code = nullptr;
+#ifndef DEBUG_EXCEPTIONS
 	try
 	{
+#endif
 		std::stringstream out_stream;
 		refactored_decompile(core, out_stream, DecompileMode::DEFAULT, code, addr);
 		return code;
+#ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &error)
 	{
@@ -237,13 +244,17 @@ RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 		// For this, we have to modify RAnnotatedCode to have one more type; for errors
 		return code;
 	}
+#endif
 }
 
 static void Decompile(RCore *core, DecompileMode mode)
 {
 	DecompilerLock lock;
+
+#ifndef DEBUG_EXCEPTIONS
 	try
 	{
+#endif
 		RAnnotatedCode *code = nullptr;
 		std::stringstream out_stream;
 		refactored_decompile(core, out_stream, mode, code, core->offset);
@@ -273,6 +284,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 				break;
 		}
 		r_annotated_code_free(code);
+#ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &error)
 	{
@@ -298,6 +310,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 			eprintf("%s\n", s.c_str());
 		}
 	}
+#endif
 }
 
 
