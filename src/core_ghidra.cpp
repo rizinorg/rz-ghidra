@@ -133,10 +133,9 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
 }
 
-// static void refactored_decompile(RCore* &core, RAnalFunction* &function, R2Architecture &arch, std::stringstream &out_stream, Funcdata* &func){
 static void refactored_decompile(RCore *&core, std::stringstream &out_stream,
-								DecompileMode mode, RAnnotatedCode *&code){
-	RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
+								DecompileMode mode, RAnnotatedCode *&code, ut64 addr){
+	RAnalFunction *function = r_anal_get_fcn_in(core->anal, addr, R_ANAL_FCN_TYPE_NULL);
 	if(!function){
 		throw LowlevelError("No function at this offset");
 	}
@@ -226,7 +225,7 @@ RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 	try
 	{
 		std::stringstream out_stream;
-		refactored_decompile(core, out_stream, DecompileMode::DEFAULT, code);
+		refactored_decompile(core, out_stream, DecompileMode::DEFAULT, code, addr);
 		return code;
 	}
 	catch(const LowlevelError &error)
@@ -247,7 +246,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 	{
 		RAnnotatedCode *code = nullptr;
 		std::stringstream out_stream;
-		refactored_decompile(core, out_stream, mode, code);
+		refactored_decompile(core, out_stream, mode, code, core->offset);
 		switch(mode)
 		{
 			case DecompileMode::OFFSET:
