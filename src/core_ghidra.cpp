@@ -3,7 +3,7 @@
 #include "R2Architecture.h"
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
-#include "r2ghidra_annotated_code.h"
+#include "r2ghidra.h"
 
 // Windows clash
 #ifdef restrict
@@ -133,12 +133,11 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
 }
 
-static void refactored_decompile(RCore *&core, std::stringstream &out_stream,
-								DecompileMode mode, RAnnotatedCode *&code, ut64 addr){
+static void Decompile(RCore *core, ut64 addr, DecompileMode mode, std::stringstream &out_stream, RAnnotatedCode **out_code)
+{
 	RAnalFunction *function = r_anal_get_fcn_in(core->anal, addr, R_ANAL_FCN_TYPE_NULL);
-	if(!function){
+	if(!function)
 		throw LowlevelError("No function at this offset");
-	}
 	R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 	DocumentStorage store;
 	arch.init(store);
@@ -148,9 +147,7 @@ static void refactored_decompile(RCore *&core, std::stringstream &out_stream,
 	arch.setPrintLanguage("r2-c-language");
 	ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
 	if(!func)
-	{
 		throw LowlevelError("No function in Scope");
-	}
 	arch.getCore()->sleepBegin();
 	auto action = arch.allacts.getCurrent();
 	int res;
@@ -170,15 +167,17 @@ static void refactored_decompile(RCore *&core, std::stringstream &out_stream,
 #endif
 	arch.getCore()->sleepEnd();
 	if (res<0)
-	{
 		eprintf("break\n");
-	}
+	/*else
+	{
+		eprintf("Decompilation complete\n");
+		if(res==0)
+			eprintf("(no change)\n");
+	}*/
 	if(cfg_var_verbose.GetBool(core->config))
 	{
 		for(const auto &warning : arch.getWarnings())
-		{
 			func->warningHeader("[r2ghidra] " + warning);
-		}
 	}
 	switch (mode)
 	{
@@ -208,11 +207,9 @@ static void refactored_decompile(RCore *&core, std::stringstream &out_stream,
 			arch.print->docFunction(func);
 			if(mode != DecompileMode::XML)
 			{
-				code = ParseCodeXML(func, out_stream.str().c_str());
-				if (!code)
-				{
+				*out_code = ParseCodeXML(func, out_stream.str().c_str());
+				if (!*out_code)
 					throw LowlevelError("Failed to parse XML code from Decompiler");
-				}
 			}
 			break;
 		case DecompileMode::DEBUG_XML:
@@ -223,7 +220,8 @@ static void refactored_decompile(RCore *&core, std::stringstream &out_stream,
 	}
 }
 
-RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
+RAnnotatedCode *r2ghidra_decompile_annotated_code(RCore *core, ut64 addr)
+{
 	DecompilerLock lock;
 	RAnnotatedCode *code = nullptr;
 #ifndef DEBUG_EXCEPTIONS
@@ -231,7 +229,7 @@ RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 	{
 #endif
 		std::stringstream out_stream;
-		refactored_decompile(core, out_stream, DecompileMode::DEFAULT, code, addr);
+		Decompile(core, addr, DecompileMode::DEFAULT, out_stream, &code);
 		return code;
 #ifndef DEBUG_EXCEPTIONS
 	}
@@ -247,7 +245,7 @@ RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 #endif
 }
 
-static void Decompile(RCore *core, DecompileMode mode)
+static void DecompileCmd(RCore *core, DecompileMode mode)
 {
 	DecompilerLock lock;
 
@@ -257,7 +255,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 #endif
 		RAnnotatedCode *code = nullptr;
 		std::stringstream out_stream;
-		refactored_decompile(core, out_stream, mode, code, core->offset);
+		Decompile(core, core->offset, mode, out_stream, &code);
 		switch(mode)
 		{
 			case DecompileMode::OFFSET:
@@ -293,9 +291,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 		{
 			PJ *pj = pj_new ();
 			if(!pj)
-			{
 				return;
-			}
 			pj_o(pj);
 			pj_k(pj, "errors");
 			pj_a(pj);
@@ -306,9 +302,7 @@ static void Decompile(RCore *core, DecompileMode mode)
 			pj_free(pj);
 		}
 		else
-		{
 			eprintf("%s\n", s.c_str());
-		}
 	}
 #endif
 }
@@ -417,22 +411,22 @@ static void _cmd(RCore *core, const char *input)
 	switch (*input)
 	{
 		case 'd': // "pdgd"
-			Decompile(core, DecompileMode::DEBUG_XML);
+			DecompileCmd(core, DecompileMode::DEBUG_XML);
 			break;
 		case '\0': // "pdg"
-			Decompile(core, DecompileMode::DEFAULT);
+			DecompileCmd(core, DecompileMode::DEFAULT);
 			break;
 		case 'x': // "pdgx"
-			Decompile(core, DecompileMode::XML);
+			DecompileCmd(core, DecompileMode::XML);
 			break;
 		case 'j': // "pdgj"
-			Decompile(core, DecompileMode::JSON);
+			DecompileCmd(core, DecompileMode::JSON);
 			break;
 		case 'o': // "pdgo"
-			Decompile(core, DecompileMode::OFFSET);
+			DecompileCmd(core, DecompileMode::OFFSET);
 			break;
 		case '*': // "pdg*"
-			Decompile(core, DecompileMode::STATEMENTS);
+			DecompileCmd(core, DecompileMode::STATEMENTS);
 			break;
 		case 's': // "pdgs"
 			switch(input[1])

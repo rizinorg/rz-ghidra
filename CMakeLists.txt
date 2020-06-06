@@ -47,7 +47,7 @@ set(CORE_SOURCE
 		src/R2PrintC.cpp
 		src/RCoreMutex.h
 		src/RCoreMutex.cpp
-		src/r2ghidra_annotated_code.h)
+		src/r2ghidra.h)
 
 if(BUILD_SLEIGH_PLUGIN)
 set(ASM_SOURCE
