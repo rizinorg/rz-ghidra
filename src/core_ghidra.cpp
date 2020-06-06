@@ -182,7 +182,7 @@ RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 		}
 		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 		DocumentStorage store;
-		arch.init(store);		
+		arch.init(store);	
 		std::stringstream out_stream;
 		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
 		refactored_decompile(core, function, arch, out_stream, func);
@@ -215,8 +215,9 @@ static void Decompile(RCore *core, DecompileMode mode)
 	{
 #endif
 		RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
-		if(!function)
+		if(!function){
 			throw LowlevelError("No function at this offset");
+		}
 		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 		DocumentStorage store;
 		arch.init(store);
