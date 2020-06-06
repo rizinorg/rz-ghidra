@@ -134,8 +134,16 @@ static void ApplyPrintCConfig(RConfig *cfg, PrintC *print_c)
 }
 
 // static void refactored_decompile(RCore* &core, RAnalFunction* &function, R2Architecture &arch, std::stringstream &out_stream, Funcdata* &func){
-static void refactored_decompile(RCore *&core, RAnalFunction *&function, R2Architecture &arch, std::stringstream &out_stream, Funcdata *func,
+static void refactored_decompile(RCore *&core, std::stringstream &out_stream,
 								DecompileMode mode, RAnnotatedCode *&code){
+	RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
+	if(!function){
+		throw LowlevelError("No function at this offset");
+	}
+	R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
+	DocumentStorage store;
+	arch.init(store);
+	Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
 	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 	arch.print->setOutputStream(&out_stream);
 	arch.setPrintLanguage("r2-c-language");
@@ -217,17 +225,8 @@ RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 	RAnnotatedCode *code = nullptr;
 	try
 	{
-		RAnalFunction *function = r_anal_get_fcn_in(core->anal, addr, R_ANAL_FCN_TYPE_NULL);
-		if(!function)
-		{
-			throw LowlevelError("No function at this offset");
-		}
-		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
-		DocumentStorage store;
-		arch.init(store);	
 		std::stringstream out_stream;
-		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
-		refactored_decompile(core, function, arch, out_stream, func, DecompileMode::DEFAULT, code);
+		refactored_decompile(core, out_stream, DecompileMode::DEFAULT, code);
 		return code;
 	}
 	catch(const LowlevelError &error)
@@ -244,22 +243,11 @@ RAnnotatedCode* r2ghidra_decompile_annotated_code(RCore *core, ut64 addr){
 static void Decompile(RCore *core, DecompileMode mode)
 {
 	DecompilerLock lock;
-
-#ifndef DEBUG_EXCEPTIONS
 	try
 	{
-#endif
-		RAnalFunction *function = r_anal_get_fcn_in(core->anal, core->offset, R_ANAL_FCN_TYPE_NULL);
-		if(!function){
-			throw LowlevelError("No function at this offset");
-		}
-		R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
-		DocumentStorage store;
-		arch.init(store);
-		std::stringstream out_stream;
-		Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
 		RAnnotatedCode *code = nullptr;
-		refactored_decompile(core, function, arch, out_stream, func, mode, code);
+		std::stringstream out_stream;
+		refactored_decompile(core, out_stream, mode, code);
 		switch(mode)
 		{
 			case DecompileMode::OFFSET:
