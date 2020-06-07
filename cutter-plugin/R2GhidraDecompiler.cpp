@@ -1,6 +1,7 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
 #include "R2GhidraDecompiler.h"
+#include "../src/r2ghidra.h"
 
 #include <Cutter.h>
 
@@ -14,53 +15,8 @@ R2GhidraDecompiler::R2GhidraDecompiler(QObject *parent)
 	task = nullptr;
 }
 
-void R2GhidraDecompiler::decompileAt(RVA addr)
+void R2GhidraDecompiler::decompileAt(ut64 addr)
 {
-	if(task)
-		return;
-
-	AnnotatedCode code = {};
-
-	task = new R2Task ("pdgj @ " + QString::number(addr));
-
-	connect(task, &R2Task::finished, this, [this]() {
-		AnnotatedCode code = {};
-		QString s;
-
-		QJsonObject json = task->getResultJson().object();
-		delete task;
-		task = nullptr;
-		if(json.isEmpty())
-		{
-			code.code = tr("Failed to parse JSON from r2ghidra");
-			emit finished(code);
-			return;
-		}
-
-		auto root = json;
-		code.code = root["code"].toString();
-
-		for(QJsonValueRef annotationValue : root["annotations"].toArray())
-		{
-			QJsonObject annotationObject = annotationValue.toObject();
-			CodeAnnotation annotation = {};
-			annotation.start = (size_t)annotationObject["start"].toVariant().toULongLong();
-			annotation.end = (size_t)annotationObject["end"].toVariant().toULongLong();
-			if(annotationObject["type"].toString() == "offset")
-			{
-				annotation.type = CodeAnnotation::Type::Offset;
-				annotation.offset.offset = annotationObject["offset"].toVariant().toULongLong();
-			}
-			else
-				continue;
-			code.annotations.push_back(annotation);
-		}
-
-		for(QJsonValueRef error : json["errors"].toArray())
-			code.code += "// " + error.toString() + "\n";
-
-		emit finished(code);
-	});
-	task->startTask();
-
+	RAnnotatedCode *code = r2ghidra_decompile_annotated_code(Core()->core(), addr);
+	emit finished(code); //Here, we emit RAnnotatedCode *code or by value
 }
