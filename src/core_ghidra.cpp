@@ -140,9 +140,9 @@ static void Decompile(RCore *core, ut64 addr, DecompileMode mode, std::stringstr
 		throw LowlevelError("No function at this offset");
 	R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
 	DocumentStorage store;
+	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 	arch.init(store);
 	Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
-	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 	arch.print->setOutputStream(&out_stream);
 	arch.setPrintLanguage("r2-c-language");
 	ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
