@@ -124,10 +124,14 @@ void R2Architecture::postSpecFile()
 void R2Architecture::buildAction(DocumentStorage &store)
 {
 	parseExtraRules(store);	// Look for any additional rules
-	universal_action(this);
+	allacts.universalAction(this);
+	allacts.resetDefaults();
 	if(rawptr)
-		allacts.removeFromGroup("decompile", "fixateglobals"); // this action (ActionMapGlobals) will create these ugly uRam0x12345s
-	allacts.setCurrent("decompile");
+	{
+		allacts.cloneGroup("decompile", "decompile-deuglified");
+		allacts.removeFromGroup("decompile-deuglified", "fixateglobals"); // this action (ActionMapGlobals) will create these ugly uRam0x12345s
+		allacts.setCurrent("decompile-deuglified");
+	}
 }
 
 void R2Architecture::buildLoader(DocumentStorage &store)

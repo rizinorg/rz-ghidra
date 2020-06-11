@@ -81,7 +81,7 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n)
 		}
 
 		TypeStruct *r = getTypeStruct(n);
-		setFields(fields, r, 0);
+		setFields(fields, r, 0, 0);
 		return r;
 	}
 	catch(std::invalid_argument &e)
