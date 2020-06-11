@@ -770,14 +770,14 @@ CCu base64:Jg== @ 0x804858a
 <typegrp intsize="4" structalign="4" enumsize="4" enumsigned="false">
 </typegrp>
 <db>
-<property_changepoint space="register" offset="0x1000" val="0x40000000"/>
-<property_changepoint space="register" offset="0x100a" val="0x40000000"/>
-<property_changepoint space="register" offset="0x1014" val="0x40000000"/>
-<property_changepoint space="register" offset="0x101e" val="0x40000000"/>
-<property_changepoint space="register" offset="0x1028" val="0x40000000"/>
-<property_changepoint space="register" offset="0x1032" val="0x40000000"/>
-<property_changepoint space="register" offset="0x103c" val="0x40000000"/>
-<property_changepoint space="register" offset="0x1046" val="0x40000000"/>
+<property_changepoint space="register" offset="0x1000" val="0x20000000"/>
+<property_changepoint space="register" offset="0x100a" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1014" val="0x20000000"/>
+<property_changepoint space="register" offset="0x101e" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1028" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1032" val="0x20000000"/>
+<property_changepoint space="register" offset="0x103c" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1046" val="0x20000000"/>
 <property_changepoint space="register" offset="0x1050" val="0x0"/>
 <scope name="radare2-internal">
 <parent>
@@ -955,6 +955,18 @@ CCu base64:Jg== @ 0x804858a
 </context_points>
 <commentdb>
 </commentdb>
+<stringmanage>
+<string>
+<addr space="ram" offset="0x804868e"/> <bytes trunc="false">
+494f4c4920437261636b6d65204c6576656c2030
+  7830350a0050617373776f72
+ </bytes>
+<string>
+<addr space="ram" offset="0x80486a7"/> <bytes trunc="false">
+50617373776f72643a2000257300000000000000
+  00ffffffffffffffffffffff
+ </bytes>
+</stringmanage>
 </save_state>
 --
 
@@ -1170,6 +1182,7 @@ avr8:LE:16:atmega256
 avr8:LE:16:default
 avr8:LE:16:extended
 dsPIC30F:LE:24:default
+dsPIC33C:LE:24:default
 dsPIC33E:LE:24:default
 dsPIC33F:LE:24:default
 pa-risc:BE:32:default
