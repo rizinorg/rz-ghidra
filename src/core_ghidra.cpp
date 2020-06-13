@@ -220,7 +220,7 @@ static void Decompile(RCore *core, ut64 addr, DecompileMode mode, std::stringstr
 	}
 }
 
-RAnnotatedCode *r2ghidra_decompile_annotated_code(RCore *core, ut64 addr)
+R_API RAnnotatedCode *r2ghidra_decompile_annotated_code(RCore *core, ut64 addr)
 {
 	DecompilerLock lock;
 	RAnnotatedCode *code = nullptr;
