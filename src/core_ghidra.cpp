@@ -324,11 +324,36 @@ class AssemblyRaw : public AssemblyEmit
 class PcodeRawOut : public PcodeEmit
 {
 	private:
-		static void print_vardata(ostream &s, VarnodeData &data)
+		void print_vardata(ostream &s, VarnodeData &data)
 		{
-			s << '(' << data.space->getName() << ',';
-			data.space->printOffset(s,data.offset);
-			s << ',' << dec << data.size << ')';
+			AddrSpace *space = data.space;
+			if(space->getName() == "register")
+				s << space->getTrans()->getRegisterName(data.space, data.offset, data.size);
+			else if(space->getName() == "ram") 
+			{
+				if(data.size == 1)
+					s << "byte ptr ";
+				if(data.size == 2)
+					s << "word ptr ";
+				if(data.size == 4)
+					s << "dword ptr ";
+				if(data.size == 8)
+					s << "qword ptr ";
+				s << '[' << data.offset << ']';
+			}
+			else if(space->getName() == "const") 
+				space->printRaw(s, data.offset);
+			else if(space->getName() == "unique") 
+			{
+				s << '(' << data.space->getName() << ',';
+				data.space->printOffset(s,data.offset);
+				s << ',' << dec << data.size << ')';
+			}
+			else
+			{
+				throw LowlevelError("Unsupported AddrSpace type appear.");
+			}
+			
 		}
 
 	public:
@@ -342,9 +367,11 @@ class PcodeRawOut : public PcodeEmit
 			}
 			ss << get_opname(opc);
 			// Possibly check for a code reference or a space reference
-			for(int4 i=0; i<isize; ++i)
+			ss << ' ';
+			print_vardata(ss, vars[0]);
+			for(int4 i=1; i<isize; ++i)
 			{
-				ss << ' ';
+				ss << ", ";
 				print_vardata(ss, vars[i]);
 			}
 			r_cons_printf("    %s\n", ss.str().c_str());
@@ -361,7 +388,7 @@ static void Disassemble(RCore *core, ut64 ops)
 	arch.init(store);
 
 	const Translate *trans = arch.translate;
-	PcodeRawOut emit;
+	PcodeRawOut emit; 
 	AssemblyRaw assememit;
 	Address addr(trans->getDefaultCodeSpace(), core->offset);
 	for(ut64 i=0; i<ops; i++)

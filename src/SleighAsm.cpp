@@ -4,7 +4,7 @@ void SleighAsm::init(RAsm *a)
 {
 	if(description.empty())
 	{
-	/* Initialize sleigh spec files */
+		/* Initialize sleigh spec files */
 		scanSleigh(getSleighHome(getConfig(a)));
 		collectSpecfiles();
 	}
@@ -17,30 +17,98 @@ void SleighAsm::init(RAsm *a)
 	if(!io)
 		throw LowlevelError("Can't get RIO from RBin");
 
+	initInner(io, a->cpu);
+}
+
+void SleighAsm::init(RAnal *a)
+{
+	if(description.empty())
+	{
+		/* Initialize sleigh spec files */
+		scanSleigh(getSleighHome(getConfig(a)));
+		collectSpecfiles();
+	}
+
+	if(!sleigh_id.empty() && sleigh_id == std::string(a->cpu))
+		return;
+
+	RIO *io = a ? a->iob.io : nullptr;
+	if(!io)
+		throw LowlevelError("Can't get RIO from RBin");
+
+	initInner(io, a->cpu);
+}
+
+void SleighAsm::initInner(RIO *io, char *cpu)
+{
 	/* Initialize Sleigh */
 	loader = std::move(AsmLoadImage(io));
 	docstorage = std::move(DocumentStorage());
-	resolveArch(a->cpu);
+	resolveArch(cpu);
 	buildSpecfile(docstorage);
 	context = std::move(ContextInternal());
 	trans.reset(&loader, &context);
 	trans.initialize(docstorage);
 	parseProcConfig(docstorage);
-	parseAlignment(docstorage);
+	parseCompConfig(docstorage);
+	alignment = trans.getAlignment();
 
-	sleigh_id = a->cpu;
+	sleigh_id = cpu;
 }
 
-/* This function will be removed in upcoming RAnal PR */
-void SleighAsm::parseAlignment(DocumentStorage &doc)
+void SleighAsm::parseCompConfig(DocumentStorage &store)
 {
-	const Element *el = doc.getTag("sleigh");
-	if (!el)
-		throw LowlevelError("Could not find sleigh tag");
+	const Element *el = store.getTag("compiler_spec");
+	if(!el)
+		throw LowlevelError("No compiler configuration tag found");
 
-	istringstream s(el->getAttributeValue("align"));
-	s.unsetf(ios::dec | ios::hex | ios::oct);
-	s >> alignment;
+	const List &list(el->getChildren());
+	List::const_iterator iter;
+
+	for(iter = list.begin(); iter != list.end(); iter++)
+	{
+		const string &elname((*iter)->getName());
+		if(elname == "stackpointer")
+			sp_name = (*iter)->getAttributeValue("register");
+	}
+}
+
+static std::unordered_map<std::string, std::string> parseRegisterData(const Element *el)
+{
+	const List &child_list(el->getChildren());
+	List::const_iterator iter;
+
+	std::unordered_map<std::string, std::string> reg_group;
+
+	for(iter = child_list.begin(); iter != child_list.end(); iter++)
+	{
+		if((*iter)->getName() != "register")
+			throw LowlevelError("Unexpected node get from register_data in processor spec!");
+
+		const std::string &name = (*iter)->getAttributeValue("name");
+		std::string group, hidden, unused, rename;
+		try
+		{
+			group = (*iter)->getAttributeValue("group");
+			hidden = (*iter)->getAttributeValue("hidden");
+			unused = (*iter)->getAttributeValue("unused");
+			rename = (*iter)->getAttributeValue("rename");
+		}
+		catch(const XmlError &e)
+		{
+			std::string err_prefix("Unknown attribute: ");
+			if(e.explain == err_prefix + "group") { /* nothing */ }
+			else if(e.explain == err_prefix + "hidden") { /* nothing */ }
+			else if(e.explain == err_prefix + "unused") { /* nothing */ }
+			else if(e.explain == err_prefix + "rename") { /* nothing */ }
+			else
+				throw;
+		}
+
+		reg_group.insert({name, group});
+	}
+
+	return reg_group;
 }
 
 /*
@@ -63,26 +131,33 @@ void SleighAsm::parseProcConfig(DocumentStorage &store)
 		const string &elname((*iter)->getName());
 		if(elname == "context_data")
 			context.restoreFromSpec(*iter, &trans);
+
+		if(elname == "programcounter")
+			pc_name = (*iter)->getAttributeValue("register");
+
+		if(elname == "register_data")
+		{
+			reg_group = parseRegisterData(*iter);
+		}
 	}
 }
 
 /*
  * From sleigh_arch.cc's buildSpecFile()
  * This function is used to fill DocumentStorage with sleigh files.
- * It is stripped compiler specs, since Asm doesn't need them.
  */
 void SleighAsm::buildSpecfile(DocumentStorage &store)
 {
 	const LanguageDescription &language(description[languageindex]);
-	//std::string compiler = archid.substr(archid.rfind(':')+1);
-	//const CompilerTag &compilertag( language.getCompiler(compiler));
+	std::string compiler = sleigh_id.substr(sleigh_id.rfind(':')+1);
+	const CompilerTag &compilertag( language.getCompiler(compiler));
 
 	std::string processorfile;
-	//std::string compilerfile;
+	std::string compilerfile;
 	std::string slafile;
 
 	specpaths.findFile(processorfile, language.getProcessorSpec());
-	//specpaths.findFile(compilerfile,compilertag.getSpec());
+	specpaths.findFile(compilerfile,compilertag.getSpec());
 	specpaths.findFile(slafile, language.getSlaFile());
 
 	try
@@ -105,7 +180,6 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 		throw SleighError(serr.str());
 	}
 
-	/*
 	try {
 		Document *doc = store.openDocument(compilerfile);
 		store.registerTag(doc->getRoot());
@@ -120,7 +194,6 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 		serr << "\n " << err.explain;
 		throw SleighError(serr.str());
 	}
-	*/
 
 	try
 	{
@@ -273,8 +346,18 @@ RConfig *SleighAsm::getConfig(RAsm *a)
 	return core->config;
 }
 
+RConfig *SleighAsm::getConfig(RAnal *a)
+{
+	RCore *core = a ? (RCore *)a->coreb.core : nullptr;
+	if(!core)
+		throw LowlevelError("Can't get RCore from RAnal's RCoreBind");
+	return core->config;
+}
+
 std::string SleighAsm::getSleighHome(RConfig *cfg)
 {
+	if(!cfg)
+		throw LowlevelError("SleighAsm::get_sleigh_home: cfg is nullptr.");
 	const char varname[] = "r2ghidra.sleighhome";
 	const char *path = nullptr;
 
@@ -331,4 +414,50 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 		length = alignment;
 	}
 	return length;
+}
+
+int SleighAsm::genOpcode(RAnalOp *op, unsigned long long offset)
+{
+	if(!op)
+		throw LowlevelError("gen_opcode: op is nullptr.");
+
+	PcodeSlg pcode_slg(&trans);
+	Address addr(trans.getDefaultCodeSpace(), offset);
+	int length = 0;
+	try
+	{
+		/* RAnalOp *op is just to keep sync with disassemble() */
+		length = trans.oneInstruction(pcode_slg, addr);
+	}
+	catch(BadDataError &err)
+	{
+		/* Meet Unknown data -> invalid opcode */
+		length = alignment;
+	}
+	return length;
+}
+
+std::vector<R2Reg> SleighAsm::getRegs(void)
+{
+	std::map<VarnodeData, std::string> reglist;
+	std::vector<R2Reg> r2_reglist;
+	trans.getAllRegisters(reglist);
+
+	size_t offset = 0, offset_last = reglist.begin()->first.size;
+	size_t sleigh_offset = reglist.begin()->first.offset;
+	size_t sleigh_last = reglist.begin()->first.size + sleigh_offset;
+
+	for(auto p = reglist.begin(); p != reglist.end(); p++)
+	{
+		if(sleigh_last <= p->first.offset) // Assume reg's size must be > 0, but mips???
+		{
+			offset = offset_last;
+			offset_last += p->first.size;
+			sleigh_offset = p->first.offset;
+			sleigh_last = sleigh_offset + p->first.size;
+		}
+		r2_reglist.push_back(R2Reg{p->second, p->first.size, p->first.offset - sleigh_offset + offset});
+	}
+
+	return r2_reglist;
 }
