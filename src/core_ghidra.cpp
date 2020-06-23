@@ -329,7 +329,7 @@ class PcodeRawOut : public PcodeEmit
 			AddrSpace *space = data.space;
 			if(space->getName() == "register")
 				s << space->getTrans()->getRegisterName(data.space, data.offset, data.size);
-			else if(space->getName() == "ram") 
+			else if(space->getName() == "ram")
 			{
 				if(data.size == 1)
 					s << "byte ptr ";
@@ -341,9 +341,9 @@ class PcodeRawOut : public PcodeEmit
 					s << "qword ptr ";
 				s << '[' << data.offset << ']';
 			}
-			else if(space->getName() == "const") 
-				space->printRaw(s, data.offset);
-			else if(space->getName() == "unique") 
+			else if(space->getName() == "const")
+				static_cast<ConstantSpace*>(space)->printRaw(s, data.offset);
+			else if(space->getName() == "unique")
 			{
 				s << '(' << data.space->getName() << ',';
 				data.space->printOffset(s,data.offset);
@@ -353,7 +353,6 @@ class PcodeRawOut : public PcodeEmit
 			{
 				throw LowlevelError("Unsupported AddrSpace type appear.");
 			}
-			
 		}
 
 	public:
@@ -388,7 +387,7 @@ static void Disassemble(RCore *core, ut64 ops)
 	arch.init(store);
 
 	const Translate *trans = arch.translate;
-	PcodeRawOut emit; 
+	PcodeRawOut emit;
 	AssemblyRaw assememit;
 	Address addr(trans->getDefaultCodeSpace(), core->offset);
 	for(ut64 i=0; i<ops; i++)

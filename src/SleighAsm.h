@@ -41,49 +41,126 @@ class AssemblySlg : public AssemblyEmit
         ~AssemblySlg() { if(str) free(str); }
 };
 
+struct PcodeOperand
+{
+	public:
+		PcodeOperand(uintb offset, uint4 size): type(RAM), offset(offset), size(size) {}
+		PcodeOperand(uintb number): type(CONST), number(number) {}
+		PcodeOperand(const std::string &name): type(REGISTER), name(name) {}
+		~PcodeOperand() { if(type == REGISTER) name.~string(); }
+
+		union
+		{
+			std::string name;
+			struct
+			{
+				uintb offset;
+				uint4 size;
+			};
+			uintb number;
+		};
+
+		enum {REGISTER, RAM, CONST, UNIQUE} type;
+
+		bool operator==(const PcodeOperand &rhs) const
+		{
+			if(type != rhs.type)
+				return false;
+
+			switch(type)
+			{
+				case REGISTER: return name == rhs.name;
+				case UNIQUE: /* Same as RAM */
+				case RAM: return offset == rhs.offset && size == rhs.size;
+				case CONST: return number == rhs.number;
+				default: throw LowlevelError("Unexpected type of PcodeOperand found in operator==.");
+			}
+		}
+};
+
+typedef OpCode PcodeOpType;
+
+struct Pcodeop
+{
+	PcodeOpType type;
+
+	PcodeOperand *output = nullptr;
+	PcodeOperand *input0 = nullptr;
+	PcodeOperand *input1 = nullptr;
+	/* input2 for STORE will use output to save memory space */
+
+	Pcodeop(PcodeOpType opc, PcodeOperand *in0, PcodeOperand *in1, PcodeOperand *out):
+		type(opc), input0(in0), input1(in1), output(out) {}
+
+	void fini()
+	{
+		if(output) delete output;
+		if(input0) delete input0;
+		if(input1) delete input1;
+	}
+};
+
 class PcodeSlg : public PcodeEmit
 {
 	private:
-		Sleigh *base_ptr;
-
-		void print_vardata(ostream &s, VarnodeData &data)
+		PcodeOperand *parse_vardata(VarnodeData &data)
 		{
-			/*
-			s << '(' << data.space->getName() << ',';
-			data.space->printOffset(s,data.offset);
-			s << ',' << dec << data.size << ')';
-			*/
-			s << base_ptr->getRegisterName(data.space, data.offset, data.size);
+			AddrSpace *space = data.space;
+			PcodeOperand *operand = nullptr;
+			if(space->getName() == "register")
+			{
+				operand = new PcodeOperand(space->getTrans()->getRegisterName(data.space, data.offset, data.size));
+				operand->type = PcodeOperand::REGISTER;
+			}
+			else if(space->getName() == "ram")
+			{
+				operand = new PcodeOperand(data.offset, data.size);
+				operand->type = PcodeOperand::RAM;
+			}
+			else if(space->getName() == "const")
+			{
+				// space.cc's ConstantSpace::printRaw()
+				operand = new PcodeOperand(data.offset);
+				operand->type = PcodeOperand::CONST;
+			}
+			else if(space->getName() == "unique")
+			{
+				operand = new PcodeOperand(data.offset, data.size);
+				operand->type = PcodeOperand::UNIQUE;
+			}
+			else
+			{
+				throw LowlevelError("Unsupported AddrSpace type appear.");
+			}
+			return operand;
 		}
 
 	public:
-		std::vector<char *> pcodes;
-
-		PcodeSlg(Sleigh *ptr): base_ptr(ptr) {}
+		std::vector<Pcodeop> pcodes;
 
 		void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars, int4 isize) override
 		{
-			std::stringstream ss;
+			PcodeOperand *out = nullptr, *in0 = nullptr, *in1 = nullptr;
 			if(outvar)
+				out = parse_vardata(*outvar);
+
+			switch(isize)
 			{
-				print_vardata(ss,*outvar);
-				ss << " = ";
+				case 3: out = parse_vardata(vars[2]); // Only for STORE
+				case 2: in1 = parse_vardata(vars[1]);
+				case 1: in0 = parse_vardata(vars[0]);
+				case 0: break;
+				default: throw LowlevelError("Unexpexted isize in PcodeSlg::dump()");
 			}
-			ss << get_opname(opc);
-			// Possibly check for a code reference or a space reference
-			for(int4 i=0; i<isize; ++i)
-			{
-				ss << ' ';
-				print_vardata(ss, vars[i]);
-			}
-			pcodes.push_back(r_str_new(ss.str().c_str()));
+
+			pcodes.push_back(Pcodeop(opc, in0, in1, out));
 		}
 
 		~PcodeSlg()
 		{
 			while(!pcodes.empty())
 			{
-				free(pcodes.back());
+				pcodes.back().fini();
 				pcodes.pop_back();
 			}
 		}
@@ -100,7 +177,6 @@ class SleighAsm
 {
     private:
 		AsmLoadImage loader;
-		Sleigh trans;
 		ContextInternal context;
 		DocumentStorage docstorage;
 		std::string sleigh_id;
@@ -121,6 +197,7 @@ class SleighAsm
 		void loadLanguageDescription(const string &specfile);
 
 	public:
+		Sleigh trans;
 		int alignment = 1;
 		std::string pc_name;
 		std::string sp_name;
@@ -129,7 +206,7 @@ class SleighAsm
 		void init(RAsm *a);
 		void init(RAnal *a);
 		int disassemble(RAsmOp *op, unsigned long long offset);
-		int genOpcode(RAnalOp *op, unsigned long long offset);
+		int genOpcode(PcodeSlg &pcode_slg, unsigned long long offset);
 		std::vector<R2Reg> getRegs(void);
 };
 

@@ -18,8 +18,44 @@ static int archinfo(RAnal *anal, int query)
 		return -1;
 }
 
-static int sleigh_op(RAnal *a, RAnalOp *op, ut64 addr, const ut8 *data, int len, RAnalOpMask mask)
+static void anal_type(RAnalOp *anal_op, PcodeSlg &pcode_slg, AssemblySlg &assem)
 {
+	std::string dis_operand = r_str_ichr(assem.str, ' ') + 1;
+
+	std::vector<Pcodeop> filtered;
+
+	for(auto iter = pcode_slg.pcodes.cbegin(); iter != pcode_slg.pcodes.cend(); iter++)
+	{
+		const Pcodeop &pcode_op = *iter;
+		switch(pcode_op.type)
+		{
+			case CPUI_COPY:
+				break;
+			default: throw LowlevelError("Unexpected Pcode operator type. This should never happen!");
+		}
+
+	}
+}
+
+static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len, RAnalOpMask mask)
+{
+	anal_op->jump = UT64_MAX;
+	anal_op->fail = UT64_MAX;
+	anal_op->ptr = anal_op->val = UT64_MAX;
+	anal_op->addr = addr;
+	anal_op->sign = true;
+	anal_op->type = R_ANAL_OP_TYPE_ILL;
+	anal_op->id = -1;
+
+	PcodeSlg pcode_slg;
+	AssemblySlg assem;
+	anal_op->size = sanal.genOpcode(pcode_slg, addr);
+	if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, Address(sanal.trans.getDefaultCodeSpace(), addr)) < 1))
+		return anal_op->size;
+
+	anal_type(anal_op, pcode_slg, assem); // Label each instruction based on a series of P-codes.
+
+	return anal_op->size;
 }
 
 static char *get_reg_profile(RAnal *anal)
@@ -32,8 +68,8 @@ static char *get_reg_profile(RAnal *anal)
 	/*
 	 * By 2020-05-24, there are 17 kinds of group of registers in SLEIGH.
 	 * I map them to r_reg.h's RRegisterType:
-	 * R_REG_TYPE_XMM: 
-	 * R_REG_TYPE_SEG: 
+	 * R_REG_TYPE_XMM:
+	 * R_REG_TYPE_SEG:
 	 * R_REG_TYPE_DRX: DEBUG
 	 * R_REG_TYPE_FPU: ST FPU
 	 * R_REG_TYPE_MMX: MMX
@@ -93,7 +129,7 @@ static char *get_reg_profile(RAnal *anal)
 		buf << p->name << "\t." << p->size * 8 << "\t" << p->offset << "\t" << "0\n";
 	}
 	const std::string &res = buf.str();
-	fprintf(stderr, res.c_str());
+	//fprintf(stderr, res.c_str());
 	return strdup(res.c_str());
 }
 

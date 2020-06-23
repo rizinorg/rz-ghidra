@@ -416,17 +416,12 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 	return length;
 }
 
-int SleighAsm::genOpcode(RAnalOp *op, unsigned long long offset)
+int SleighAsm::genOpcode(PcodeSlg &pcode_slg, unsigned long long offset)
 {
-	if(!op)
-		throw LowlevelError("gen_opcode: op is nullptr.");
-
-	PcodeSlg pcode_slg(&trans);
 	Address addr(trans.getDefaultCodeSpace(), offset);
 	int length = 0;
 	try
 	{
-		/* RAnalOp *op is just to keep sync with disassemble() */
 		length = trans.oneInstruction(pcode_slg, addr);
 	}
 	catch(BadDataError &err)
