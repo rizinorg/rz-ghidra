@@ -1018,8 +1018,8 @@ NAME=pdgo align
 FILE=r2-testbins/elf/hello_world
 ARGS=-B 0x1000000000000000
 EXPECT=<<EOF
-                          |
-                          |// WARNING: [r2ghidra] Detected overlap for variable var_1ch
+    0x10000000000007aa    |
+    0x10000000000007aa    |// WARNING: [r2ghidra] Detected overlap for variable var_1ch
                           |
                           |void main(void)
                           |{
