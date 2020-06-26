@@ -47,6 +47,20 @@ void AnnotateOpref(ANNOTATOR_PARAMS)
 	annotation.offset.offset = op->getAddr().getOffset();
 }
 
+void AnnotateCommentOffset(ANNOTATOR_PARAMS){
+	pugi::xml_attribute attr = node.attribute("off");
+	if(attr.empty())
+		return;
+	unsigned long long off = attr.as_ullong(ULLONG_MAX);
+	if(off == ULLONG_MAX)
+		return;
+	out->emplace_back();
+	auto &annotation = out->back();
+	annotation = {};
+	annotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
+	annotation.offset.offset = off;
+}
+
 /**
  * Translate Ghidra's color annotations, which are essentially
  * loose token classes of the high level decompiled source code.
@@ -89,7 +103,7 @@ void AnnotateColor(ANNOTATOR_PARAMS)
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
 	{ "statement", { AnnotateOpref } },
 	{ "op", { AnnotateOpref, AnnotateColor } },
-	{ "comment", { AnnotateColor } },
+	{ "comment", { AnnotateCommentOffset, AnnotateColor } },
 	{ "variable", { AnnotateColor } },
 	{ "funcname", { AnnotateColor } },
 	{ "type", { AnnotateColor } },
