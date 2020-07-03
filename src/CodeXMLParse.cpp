@@ -46,6 +46,15 @@ void AnnotateOpref(ANNOTATOR_PARAMS)
 	annotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
 	annotation.offset.offset = op->getAddr().getOffset();
 }
+void AnnotateFunctionName(ANNOTATOR_PARAMS){
+	auto func_name = node.child_value();
+	if(!func_name)
+		return;
+	RCodeAnnotation annotation = {};
+	annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_NAME;
+	annotation.function_name.name = func_name;
+	out->push_back(annotation);
+}
 
 void AnnotateCommentOffset(ANNOTATOR_PARAMS){
 	pugi::xml_attribute attr = node.attribute("off");
@@ -105,7 +114,7 @@ static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > an
 	{ "op", { AnnotateOpref, AnnotateColor } },
 	{ "comment", { AnnotateCommentOffset, AnnotateColor } },
 	{ "variable", { AnnotateColor } },
-	{ "funcname", { AnnotateColor } },
+	{ "funcname", { AnnotateFunctionName, AnnotateColor } },
 	{ "type", { AnnotateColor } },
 	{ "syntax", { AnnotateColor } }
 };
