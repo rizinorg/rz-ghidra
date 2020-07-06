@@ -52,7 +52,37 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS){
 		return;
 	RCodeAnnotation annotation = {};
 	annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_NAME;
-	annotation.function_name.name = func_name;
+	annotation.function_name.offset = 123;
+	return;
+	
+	pugi::xml_attribute attr = node.attribute("opref");
+	if(attr.empty()){
+		annotation.function_name.offset = 123;
+		out->push_back(annotation);
+		return;
+	}
+	unsigned long long opref = attr.as_ullong(ULLONG_MAX);
+	if(opref == ULLONG_MAX){
+		annotation.function_name.offset = 123;
+		out->push_back(annotation);
+		return;
+	}
+	auto opit = ctx->ops.find((uintm)opref);
+	if(opit == ctx->ops.end()){
+		annotation.function_name.offset = 123;
+		out->push_back(annotation);
+		return;	
+	}
+	auto op = opit->second;
+	auto temp_off = 100;
+	for(int i = 0; i < op->numInput(); i++){
+		const Varnode *vn = op->getIn(i);
+		if (vn->getSpace()->getType() == IPTR_FSPEC){
+			// temp_off = vn->getOffset();
+			temp_off = 1234;
+		}
+	}
+	annotation.function_name.offset = temp_off;
 	out->push_back(annotation);
 }
 
