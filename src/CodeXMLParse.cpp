@@ -1,7 +1,7 @@
 
 #include "CodeXMLParse.h"
 #include <r_util/r_annotated_code.h>
-
+#include <iostream>
 #ifdef LoadImage
 #undef LoadImage
 #endif
@@ -11,7 +11,7 @@
 #include <pugixml.hpp>
 #include <sstream>
 #include <string>
-
+pugi::xml_node document_node;
 struct ParseCodeXMLContext
 {
 	Funcdata *func;
@@ -52,9 +52,18 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS){
 		return;
 	RCodeAnnotation annotation = {};
 	annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_NAME;
+
+	// auto no_node = document_node.child("comment");
+
+	// auto debug_node = document_node;
+	// pugi::xml_attribute attr_name = no_node.attribute("name");
+	// if (attr_name.empty())
+	// 	return;
+
+	// std::string fun_name = attr_name.as_string();
+
+	auto sdfsdf = ctx->func;
 	annotation.function_name.offset = 123;
-	return;
-	
 	pugi::xml_attribute attr = node.attribute("opref");
 	if(attr.empty()){
 		annotation.function_name.offset = 123;
@@ -73,17 +82,47 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS){
 		out->push_back(annotation);
 		return;	
 	}
-	auto op = opit->second;
-	auto temp_off = 100;
+	PcodeOp *op = opit->second;
+	uintb temp_off = 0;
 	for(int i = 0; i < op->numInput(); i++){
 		const Varnode *vn = op->getIn(i);
+		std::cout << "getaddr().getoffset: " << vn->getAddr().getOffset() << " ";
+		std::cout << "vn.getOffset: " << vn->getOffset();
+		switch(vn->getSpace()->getType()){
+			case IPTR_CONSTANT:
+				std::cout << "CONSTANT ";
+				break;
+			case IPTR_PROCESSOR:
+				std::cout << "IPTR_PROCESSOR ";
+				break;
+			case IPTR_SPACEBASE:
+				std::cout << "IPTR_SPACEBASE ";
+				break;
+			case IPTR_INTERNAL:
+				std::cout << "IPTR_INTERNAL ";
+				break;
+			case IPTR_FSPEC:
+				std::cout << "IPTR_FSPEC ";
+				break;
+			case IPTR_IOP:
+				std::cout << "IPTR_IOP ";
+				break;
+			case IPTR_JOIN:
+				std::cout << "IPTR_JOIN ";
+				break;
+			default:
+				std::cout << "RANDOM ";
+				break;
+		}
+		std::cout << std::endl;
 		if (vn->getSpace()->getType() == IPTR_FSPEC){
-			// temp_off = vn->getOffset();
-			temp_off = 1234;
+			temp_off = vn->getOffset();
+			// temp_off++;d
 		}
 	}
 	annotation.function_name.offset = temp_off;
 	out->push_back(annotation);
+	std::cout << "HELLO: "<< temp_off << std::endl;
 }
 
 void AnnotateCommentOffset(ANNOTATOR_PARAMS){
@@ -222,8 +261,11 @@ static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostrea
 R_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
 {
 	pugi::xml_document doc;
+
 	if(!doc.load_string(xml, pugi::parse_default | pugi::parse_ws_pcdata))
 		return nullptr;
+
+	document_node = doc.child("function");
 
 	std::stringstream ss;
 	RAnnotatedCode *code = r_annotated_code_new(nullptr);
