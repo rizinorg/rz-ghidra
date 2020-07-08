@@ -63,64 +63,33 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS){
 	// std::string fun_name = attr_name.as_string();
 
 	auto sdfsdf = ctx->func;
-	annotation.function_name.offset = 123;
+	annotation.function_name.offset = UINT64_MAX;
 	pugi::xml_attribute attr = node.attribute("opref");
 	if(attr.empty()){
-		annotation.function_name.offset = 123;
+		annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;
 	}
 	unsigned long long opref = attr.as_ullong(ULLONG_MAX);
 	if(opref == ULLONG_MAX){
-		annotation.function_name.offset = 123;
+		annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;
 	}
 	auto opit = ctx->ops.find((uintm)opref);
 	if(opit == ctx->ops.end()){
-		annotation.function_name.offset = 123;
+		annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;	
 	}
 	PcodeOp *op = opit->second;
 	uintb temp_off = 0;
-	for(int i = 0; i < op->numInput(); i++){
-		const Varnode *vn = op->getIn(i);
-		std::cout << "getaddr().getoffset: " << vn->getAddr().getOffset() << " ";
-		std::cout << "vn.getOffset: " << vn->getOffset();
-		switch(vn->getSpace()->getType()){
-			case IPTR_CONSTANT:
-				std::cout << "CONSTANT ";
-				break;
-			case IPTR_PROCESSOR:
-				std::cout << "IPTR_PROCESSOR ";
-				break;
-			case IPTR_SPACEBASE:
-				std::cout << "IPTR_SPACEBASE ";
-				break;
-			case IPTR_INTERNAL:
-				std::cout << "IPTR_INTERNAL ";
-				break;
-			case IPTR_FSPEC:
-				std::cout << "IPTR_FSPEC ";
-				break;
-			case IPTR_IOP:
-				std::cout << "IPTR_IOP ";
-				break;
-			case IPTR_JOIN:
-				std::cout << "IPTR_JOIN ";
-				break;
-			default:
-				std::cout << "RANDOM ";
-				break;
-		}
-		std::cout << std::endl;
-		if (vn->getSpace()->getType() == IPTR_FSPEC){
-			temp_off = vn->getOffset();
-			// temp_off++;d
-		}
+	auto call_func_spec = ctx->func->getCallSpecs(const_cast<PcodeOp *>(op));
+	if(call_func_spec){
+		annotation.function_name.offset = call_func_spec->getEntryAddress().getOffset();
+	}else {	
+		annotation.function_name.offset = UINT64_MAX;
 	}
-	annotation.function_name.offset = temp_off;
 	out->push_back(annotation);
 	std::cout << "HELLO: "<< temp_off << std::endl;
 }
