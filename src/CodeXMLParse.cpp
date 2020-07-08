@@ -11,7 +11,6 @@
 #include <pugixml.hpp>
 #include <sstream>
 #include <string>
-pugi::xml_node document_node;
 struct ParseCodeXMLContext
 {
 	Funcdata *func;
@@ -46,55 +45,49 @@ void AnnotateOpref(ANNOTATOR_PARAMS)
 	annotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
 	annotation.offset.offset = op->getAddr().getOffset();
 }
-void AnnotateFunctionName(ANNOTATOR_PARAMS){
+void AnnotateFunctionName(ANNOTATOR_PARAMS)
+{
 	auto func_name = node.child_value();
 	if(!func_name)
 		return;
 	RCodeAnnotation annotation = {};
 	annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_NAME;
-
-	// auto no_node = document_node.child("comment");
-
-	// auto debug_node = document_node;
-	// pugi::xml_attribute attr_name = no_node.attribute("name");
-	// if (attr_name.empty())
-	// 	return;
-
-	// std::string fun_name = attr_name.as_string();
-
-	auto sdfsdf = ctx->func;
 	annotation.function_name.offset = UINT64_MAX;
 	pugi::xml_attribute attr = node.attribute("opref");
-	if(attr.empty()){
-		annotation.function_name.offset = UINT64_MAX;
+	if(attr.empty())
+	{
+		if(ctx->func->getName() == func_name)
+			annotation.function_name.offset = ctx->func->getAddress().getOffset();
+		else
+			annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;
 	}
 	unsigned long long opref = attr.as_ullong(ULLONG_MAX);
-	if(opref == ULLONG_MAX){
+	if(opref == ULLONG_MAX)
+	{
 		annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;
 	}
 	auto opit = ctx->ops.find((uintm)opref);
-	if(opit == ctx->ops.end()){
+	if(opit == ctx->ops.end())
+	{
 		annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;	
 	}
 	PcodeOp *op = opit->second;
-	uintb temp_off = 0;
 	auto call_func_spec = ctx->func->getCallSpecs(const_cast<PcodeOp *>(op));
-	if(call_func_spec){
+	if(call_func_spec)
 		annotation.function_name.offset = call_func_spec->getEntryAddress().getOffset();
-	}else {	
+	else	
 		annotation.function_name.offset = UINT64_MAX;
-	}
 	out->push_back(annotation);
-	std::cout << "HELLO: "<< temp_off << std::endl;
 }
 
-void AnnotateCommentOffset(ANNOTATOR_PARAMS){
+void AnnotateCommentOffset(ANNOTATOR_PARAMS)
+{
 	pugi::xml_attribute attr = node.attribute("off");
 	if(attr.empty())
 		return;
@@ -233,8 +226,6 @@ R_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
 
 	if(!doc.load_string(xml, pugi::parse_default | pugi::parse_ws_pcdata))
 		return nullptr;
-
-	document_node = doc.child("function");
 
 	std::stringstream ss;
 	RAnnotatedCode *code = r_annotated_code_new(nullptr);
