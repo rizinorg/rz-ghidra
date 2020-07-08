@@ -3,7 +3,7 @@ language: cpp
 
 branches:
   only:
-    - master
+    - decompiler-refactoring
 
 os: linux
 dist: bionic
