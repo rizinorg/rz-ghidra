@@ -47,25 +47,36 @@ void AnnotateOpref(ANNOTATOR_PARAMS)
 }
 void AnnotateFunctionName(ANNOTATOR_PARAMS)
 {
-	auto func_name = node.child_value();
+	const char *func_name = node.child_value();
 	if(!func_name)
 		return;
 	RCodeAnnotation annotation = {};
 	annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_NAME;
-	annotation.function_name.offset = UINT64_MAX;
 	pugi::xml_attribute attr = node.attribute("opref");
 	if(attr.empty())
 	{
 		if(ctx->func->getName() == func_name)
+		{
+			annotation.function_name.name = strdup(ctx->func->getName().c_str());
 			annotation.function_name.offset = ctx->func->getAddress().getOffset();
+			// Code below makes an offset annotation for the function name(for the currently decompiled function)
+			RCodeAnnotation offsetAnnotation = {};
+			offsetAnnotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
+			offsetAnnotation.offset.offset = annotation.function_name.offset;
+			out->push_back(offsetAnnotation);
+		}
 		else
+		{
+			annotation.function_name.name = strdup("INVALID: Doesn't look like a function.");
 			annotation.function_name.offset = UINT64_MAX;
+		}
 		out->push_back(annotation);
 		return;
 	}
 	unsigned long long opref = attr.as_ullong(ULLONG_MAX);
 	if(opref == ULLONG_MAX)
 	{
+		annotation.function_name.name = strdup("INVALID: Doesn't look like a function.");
 		annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;
@@ -73,16 +84,23 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	auto opit = ctx->ops.find((uintm)opref);
 	if(opit == ctx->ops.end())
 	{
+		annotation.function_name.name = strdup("INVALID: Doesn't look like a function.");
 		annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;	
 	}
 	PcodeOp *op = opit->second;
-	auto call_func_spec = ctx->func->getCallSpecs(const_cast<PcodeOp *>(op));
+	FuncCallSpecs *call_func_spec = ctx->func->getCallSpecs(const_cast<PcodeOp *>(op));
 	if(call_func_spec)
+	{
+		annotation.function_name.name = strdup(call_func_spec->getName().c_str());
 		annotation.function_name.offset = call_func_spec->getEntryAddress().getOffset();
-	else	
+	}
+	else
+	{
+		annotation.function_name.name = strdup("INVALID: Doesn't look like a function.");
 		annotation.function_name.offset = UINT64_MAX;
+	}
 	out->push_back(annotation);
 }
 
