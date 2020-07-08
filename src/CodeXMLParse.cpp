@@ -90,7 +90,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 		return;	
 	}
 	PcodeOp *op = opit->second;
-	FuncCallSpecs *call_func_spec = ctx->func->getCallSpecs(const_cast<PcodeOp *>(op));
+	FuncCallSpecs *call_func_spec = ctx->func->getCallSpecs(op);
 	if(call_func_spec)
 	{
 		annotation.function_name.name = strdup(call_func_spec->getName().c_str());
