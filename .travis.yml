@@ -26,6 +26,7 @@ install:
   - pip3 install meson
   - git clone --depth 1 https://github.com/radareorg/radare2
   - cd radare2 && mkdir build && cd build
+  - git checkout decompiler-refactoring
   - meson --prefix="$INSTALL_PREFIX" ..
   - ninja
   - ninja install
@@ -34,6 +35,7 @@ install:
 
 script:
   - mkdir build && cd build
+  - git checkout decompiler-refactoring
   - cmake
       -DCMAKE_BUILD_TYPE=Release
       -DCMAKE_PREFIX_PATH="$TRAVIS_BUILD_DIR/radare2-prefix;/opt/qt512"
