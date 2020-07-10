@@ -1,7 +1,7 @@
 
 #include "CodeXMLParse.h"
 #include <r_util/r_annotated_code.h>
-#include <iostream>
+
 #ifdef LoadImage
 #undef LoadImage
 #endif
@@ -11,6 +11,7 @@
 #include <pugixml.hpp>
 #include <sstream>
 #include <string>
+
 struct ParseCodeXMLContext
 {
 	Funcdata *func;
@@ -67,7 +68,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 		}
 		else
 		{
-			annotation.function_name.name = strdup("INVALID: Doesn't look like a function.");
+			annotation.function_name.name = strdup("INVALID");
 			annotation.function_name.offset = UINT64_MAX;
 		}
 		out->push_back(annotation);
@@ -76,7 +77,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	unsigned long long opref = attr.as_ullong(ULLONG_MAX);
 	if(opref == ULLONG_MAX)
 	{
-		annotation.function_name.name = strdup("INVALID: Doesn't look like a function.");
+		annotation.function_name.name = strdup("INVALID");
 		annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;
@@ -84,7 +85,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	auto opit = ctx->ops.find((uintm)opref);
 	if(opit == ctx->ops.end())
 	{
-		annotation.function_name.name = strdup("INVALID: Doesn't look like a function.");
+		annotation.function_name.name = strdup("INVALID");
 		annotation.function_name.offset = UINT64_MAX;
 		out->push_back(annotation);
 		return;	
@@ -98,7 +99,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	}
 	else
 	{
-		annotation.function_name.name = strdup("INVALID: Doesn't look like a function.");
+		annotation.function_name.name = strdup("INVALID");
 		annotation.function_name.offset = UINT64_MAX;
 	}
 	out->push_back(annotation);
@@ -241,7 +242,6 @@ static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostrea
 R_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
 {
 	pugi::xml_document doc;
-
 	if(!doc.load_string(xml, pugi::parse_default | pugi::parse_ws_pcdata))
 		return nullptr;
 
