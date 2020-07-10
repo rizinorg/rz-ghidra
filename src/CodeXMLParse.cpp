@@ -60,34 +60,23 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 		{
 			annotation.function_name.name = strdup(ctx->func->getName().c_str());
 			annotation.function_name.offset = ctx->func->getAddress().getOffset();
+			out->push_back(annotation);
 			// Code below makes an offset annotation for the function name(for the currently decompiled function)
 			RCodeAnnotation offsetAnnotation = {};
 			offsetAnnotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
 			offsetAnnotation.offset.offset = annotation.function_name.offset;
 			out->push_back(offsetAnnotation);
 		}
-		else
-		{
-			annotation.function_name.name = strdup("INVALID");
-			annotation.function_name.offset = UINT64_MAX;
-		}
-		out->push_back(annotation);
 		return;
 	}
 	unsigned long long opref = attr.as_ullong(ULLONG_MAX);
 	if(opref == ULLONG_MAX)
 	{
-		annotation.function_name.name = strdup("INVALID");
-		annotation.function_name.offset = UINT64_MAX;
-		out->push_back(annotation);
 		return;
 	}
 	auto opit = ctx->ops.find((uintm)opref);
 	if(opit == ctx->ops.end())
 	{
-		annotation.function_name.name = strdup("INVALID");
-		annotation.function_name.offset = UINT64_MAX;
-		out->push_back(annotation);
 		return;	
 	}
 	PcodeOp *op = opit->second;
@@ -96,13 +85,8 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	{
 		annotation.function_name.name = strdup(call_func_spec->getName().c_str());
 		annotation.function_name.offset = call_func_spec->getEntryAddress().getOffset();
+		out->push_back(annotation);
 	}
-	else
-	{
-		annotation.function_name.name = strdup("INVALID");
-		annotation.function_name.offset = UINT64_MAX;
-	}
-	out->push_back(annotation);
 }
 
 void AnnotateCommentOffset(ANNOTATOR_PARAMS)
