@@ -678,7 +678,7 @@ undefined4 main(void)
 }
 --
                   |
-                  |undefined4 main(void)
+    0x08048540    |undefined4 main(void)
                   |{
                   |    int32_t var_78h;
                   |    
@@ -690,9 +690,10 @@ undefined4 main(void)
                   |}
 --
 CCu base64:Jg== @ 0x8048577
+CCu base64:bWFpbg== @ 0x8048540
 CCu base64:c3ltLmltcC5zY2FuZigweDgwNDg2YjIsICZ2YXJfNzhoKQ== @ 0x8048585
-CCu base64:cmV0dXJuIDA= @ 0x804859b
 CCu base64:c3ltLmNoZWNrKChpbnQzMl90KSZ2YXJfNzhoKQ== @ 0x8048590
+CCu base64:cmV0dXJuIDA= @ 0x804859b
 CCu base64:c3ltLmltcC5wcmludGYoIklPTEkgQ3JhY2ttZSBMZXZlbCAweDA1XG4iKQ== @ 0x8048566
 CCu base64:c3ltLmltcC5wcmludGYoIlBhc3N3b3JkOiAiKQ== @ 0x8048572
 CCu base64:Jg== @ 0x804858a
@@ -982,7 +983,7 @@ CCu base64:Jg== @ 0x804858a
 }
 --
                   |
-[38;2;0;55;218m[0m                  |[38;2;0;55;218mundefined4[0m [38;2;197;15;31mmain[0m([1;38;2;180;0;158mvoid[0m)
+[38;2;0;55;218m[0m    [38;2;19;161;14m0x08048540[0m    |[38;2;0;55;218mundefined4[0m [38;2;197;15;31mmain[0m([1;38;2;180;0;158mvoid[0m)
                   |{
                   |    [38;2;0;55;218mint32_t[0m [0mvar_78h[0m;
                   |    
@@ -1021,7 +1022,7 @@ EXPECT=<<EOF
     0x10000000000007aa    |
     0x10000000000007aa    |// WARNING: [r2ghidra] Detected overlap for variable var_1ch
                           |
-                          |void main(void)
+    0x10000000000007aa    |void main(void)
                           |{
                           |    int32_t iVar1;
                           |    int32_t iVar2;
@@ -1330,11 +1331,11 @@ pdg
 EOF
 RUN
 
-NAME=comments-offset
+NAME=comment-function_name-offset
 FILE=r2-testbins/elf/crackme0x05
 EXPECT=<<EOF
                   |
-                  |undefined4 main(void)
+    0x08048540    |undefined4 main(void)
                   |{
                   |    int32_t var_78h;
                   |    
