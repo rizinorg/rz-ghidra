@@ -46,8 +46,51 @@ void AnnotateOpref(ANNOTATOR_PARAMS)
 	annotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
 	annotation.offset.offset = op->getAddr().getOffset();
 }
+void AnnotateFunctionName(ANNOTATOR_PARAMS)
+{
+	const char *func_name = node.child_value();
+	if(!func_name)
+		return;
+	RCodeAnnotation annotation = {};
+	annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_NAME;
+	pugi::xml_attribute attr = node.attribute("opref");
+	if(attr.empty())
+	{
+		if(ctx->func->getName() == func_name)
+		{
+			annotation.function_name.name = strdup(ctx->func->getName().c_str());
+			annotation.function_name.offset = ctx->func->getAddress().getOffset();
+			out->push_back(annotation);
+			// Code below makes an offset annotation for the function name(for the currently decompiled function)
+			RCodeAnnotation offsetAnnotation = {};
+			offsetAnnotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
+			offsetAnnotation.offset.offset = annotation.function_name.offset;
+			out->push_back(offsetAnnotation);
+		}
+		return;
+	}
+	unsigned long long opref = attr.as_ullong(ULLONG_MAX);
+	if(opref == ULLONG_MAX)
+	{
+		return;
+	}
+	auto opit = ctx->ops.find((uintm)opref);
+	if(opit == ctx->ops.end())
+	{
+		return;	
+	}
+	PcodeOp *op = opit->second;
+	FuncCallSpecs *call_func_spec = ctx->func->getCallSpecs(op);
+	if(call_func_spec)
+	{
+		annotation.function_name.name = strdup(call_func_spec->getName().c_str());
+		annotation.function_name.offset = call_func_spec->getEntryAddress().getOffset();
+		out->push_back(annotation);
+	}
+}
 
-void AnnotateCommentOffset(ANNOTATOR_PARAMS){
+void AnnotateCommentOffset(ANNOTATOR_PARAMS)
+{
 	pugi::xml_attribute attr = node.attribute("off");
 	if(attr.empty())
 		return;
@@ -105,7 +148,7 @@ static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > an
 	{ "op", { AnnotateOpref, AnnotateColor } },
 	{ "comment", { AnnotateCommentOffset, AnnotateColor } },
 	{ "variable", { AnnotateColor } },
-	{ "funcname", { AnnotateColor } },
+	{ "funcname", { AnnotateFunctionName, AnnotateColor } },
 	{ "type", { AnnotateColor } },
 	{ "syntax", { AnnotateColor } }
 };
