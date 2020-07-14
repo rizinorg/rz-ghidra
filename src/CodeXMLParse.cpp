@@ -27,6 +27,15 @@ struct ParseCodeXMLContext
 #define ANNOTATOR_PARAMS pugi::xml_node node, ParseCodeXMLContext *ctx, std::vector<RCodeAnnotation> *out
 #define ANNOTATOR [](ANNOTATOR_PARAMS) -> void
 
+static Varnode *getVarnodeForVariable(unsigned long long varref, ParseCodeXMLContext *ctx)
+{
+	for(auto it = ctx->func->beginLoc(); it != ctx->func->endLoc(); it++)
+	{
+		if((*it)->getCreateIndex() == varref)
+			return *it;
+	}
+}
+
 void AnnotateOpref(ANNOTATOR_PARAMS)
 {
 	pugi::xml_attribute attr = node.attribute("opref");
@@ -142,14 +151,6 @@ void AnnotateColor(ANNOTATOR_PARAMS)
 	annotation.syntax_highlight.type = type;
 	out->push_back(annotation);
 }
-static Varnode *getVarnodeForVariable(unsigned long long varref, ParseCodeXMLContext *ctx)
-{
-	for(auto it = ctx->func->beginLoc(); it != ctx->func->endLoc(); it++)
-	{
-		if((*it)->getCreateIndex() == varref)
-			return *it;
-	}
-}
 
 void AnnotateVariable(ANNOTATOR_PARAMS)
 {
@@ -160,6 +161,19 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 	if(varref == ULLONG_MAX)
 		return;
 	Varnode *varnode = getVarnodeForVariable(varref, ctx);
+	if(varnode->getHigh()->isConstant()){
+		if(varnode->getSpace()->getName()=="ram"){
+			RCodeAnnotation annotation = {};
+			annotation.type = R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
+			annotation.constant_variable.offset = varnode->getOffset();
+			out->push_back(annotation);
+		}
+	}else if(varnode->getHigh()->isPersist() && varnode->getHigh()->isAddrTied()){
+		RCodeAnnotation annotation = {};
+		annotation.type = R_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE;
+		annotation.global_variable.offset = varnode->getOffset();
+		out->push_back(annotation);
+	}
 }
 
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
