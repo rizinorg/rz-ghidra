@@ -142,16 +142,37 @@ void AnnotateColor(ANNOTATOR_PARAMS)
 	annotation.syntax_highlight.type = type;
 	out->push_back(annotation);
 }
+static Varnode *getVarnodeForVariable(unsigned long long varref, ParseCodeXMLContext *ctx)
+{
+	for(auto it = ctx->func->beginLoc(); it != ctx->func->endLoc(); it++)
+	{
+		if((*it)->getCreateIndex() == varref)
+			return *it;
+	}
+}
+
+void AnnotateVariable(ANNOTATOR_PARAMS)
+{
+	pugi::xml_attribute attr = node.attribute("varref");
+	if(attr.empty())
+		return;
+	unsigned long long varref = attr.as_ullong(ULLONG_MAX);
+	if(varref == ULLONG_MAX)
+		return;
+	Varnode *varnode = getVarnodeForVariable(varref, ctx);
+}
 
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
 	{ "statement", { AnnotateOpref } },
 	{ "op", { AnnotateOpref, AnnotateColor } },
 	{ "comment", { AnnotateCommentOffset, AnnotateColor } },
-	{ "variable", { AnnotateColor } },
+	{ "variable", { AnnotateVariable, AnnotateColor } },
 	{ "funcname", { AnnotateFunctionName, AnnotateColor } },
 	{ "type", { AnnotateColor } },
 	{ "syntax", { AnnotateColor } }
 };
+
+
 
 //#define TEST_UNKNOWN_NODES
 
