@@ -161,13 +161,11 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 	if(varref == ULLONG_MAX)
 		return;
 	Varnode *varnode = getVarnodeForVariable(varref, ctx);
-	if(varnode->getHigh()->isConstant()){
-		if(varnode->getSpace()->getName()=="ram"){
-			RCodeAnnotation annotation = {};
-			annotation.type = R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
-			annotation.constant_variable.offset = varnode->getOffset();
-			out->push_back(annotation);
-		}
+	if(varnode->getHigh()->isConstant() && varnode->getSpace()->getName()=="ram"){
+		RCodeAnnotation annotation = {};
+		annotation.type = R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
+		annotation.constant_variable.offset = varnode->getOffset();
+		out->push_back(annotation);
 	}else if(varnode->getHigh()->isPersist() && varnode->getHigh()->isAddrTied()){
 		RCodeAnnotation annotation = {};
 		annotation.type = R_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE;
@@ -185,8 +183,6 @@ static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > an
 	{ "type", { AnnotateColor } },
 	{ "syntax", { AnnotateColor } }
 };
-
-
 
 //#define TEST_UNKNOWN_NODES
 
