@@ -67,13 +67,13 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	{
 		if(ctx->func->getName() == func_name)
 		{
-			annotation.function_name.name = strdup(ctx->func->getName().c_str());
-			annotation.function_name.offset = ctx->func->getAddress().getOffset();
+			annotation.reference.name = strdup(ctx->func->getName().c_str());
+			annotation.reference.offset = ctx->func->getAddress().getOffset();
 			out->push_back(annotation);
 			// Code below makes an offset annotation for the function name(for the currently decompiled function)
 			RCodeAnnotation offsetAnnotation = {};
 			offsetAnnotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
-			offsetAnnotation.offset.offset = annotation.function_name.offset;
+			offsetAnnotation.offset.offset = annotation.reference.offset;
 			out->push_back(offsetAnnotation);
 		}
 		return;
@@ -92,8 +92,8 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	FuncCallSpecs *call_func_spec = ctx->func->getCallSpecs(op);
 	if(call_func_spec)
 	{
-		annotation.function_name.name = strdup(call_func_spec->getName().c_str());
-		annotation.function_name.offset = call_func_spec->getEntryAddress().getOffset();
+		annotation.reference.name = strdup(call_func_spec->getName().c_str());
+		annotation.reference.offset = call_func_spec->getEntryAddress().getOffset();
 		out->push_back(annotation);
 	}
 }
@@ -165,14 +165,14 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 	{
 		RCodeAnnotation annotation = {};
 		annotation.type = R_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE;
-		annotation.global_variable.offset = varnode->getOffset();
+		annotation.reference.offset = varnode->getOffset();
 		out->push_back(annotation);
 	}
 	else if(varnode->getHigh()->isConstant() && varnode->getSpace()->getName()=="ram")
 	{
 		RCodeAnnotation annotation = {};
 		annotation.type = R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
-		annotation.constant_variable.offset = varnode->getOffset();
+		annotation.reference.offset = varnode->getOffset();
 		out->push_back(annotation);
 	}
 }
