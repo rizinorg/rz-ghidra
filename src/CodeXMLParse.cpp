@@ -168,7 +168,7 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 		annotation.reference.offset = varnode->getOffset();
 		out->push_back(annotation);
 	}
-	else if(varnode->getHigh()->isConstant() && varnode->getSpace()->getName()=="ram")
+	else if(varnode->getHigh()->isConstant() && varnode->getSpace()->getName() == "ram")
 	{
 		RCodeAnnotation annotation = {};
 		annotation.type = R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
