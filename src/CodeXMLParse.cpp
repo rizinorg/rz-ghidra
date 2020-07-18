@@ -16,25 +16,19 @@ struct ParseCodeXMLContext
 {
 	Funcdata *func;
 	std::map<uintm, PcodeOp *> ops;
+	std::map<unsigned long long, Varnode *> varnodes;
 
 	explicit ParseCodeXMLContext(Funcdata *func) : func(func)
 	{
 		for(auto it=func->beginOpAll(); it!=func->endOpAll(); it++)
 			ops[it->first.getTime()] = it->second;
+		for(auto it = func->beginLoc(); it != func->endLoc(); it++)
+			varnodes[(*it)->getCreateIndex()] = *it;
 	}
 };
 
 #define ANNOTATOR_PARAMS pugi::xml_node node, ParseCodeXMLContext *ctx, std::vector<RCodeAnnotation> *out
 #define ANNOTATOR [](ANNOTATOR_PARAMS) -> void
-
-static Varnode *getVarnodeForVariable(unsigned long long varref, ParseCodeXMLContext *ctx)
-{
-	for(auto it = ctx->func->beginLoc(); it != ctx->func->endLoc(); it++)
-	{
-		if((*it)->getCreateIndex() == varref)
-			return *it;
-	}
-}
 
 void AnnotateOpref(ANNOTATOR_PARAMS)
 {
@@ -160,7 +154,10 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 	unsigned long long varref = attr.as_ullong(ULLONG_MAX);
 	if(varref == ULLONG_MAX)
 		return;
-	Varnode *varnode = getVarnodeForVariable(varref, ctx);
+	auto varrefnode = ctx->varnodes.find(varref);
+	if(varrefnode == ctx->varnodes.end())
+		return;
+	Varnode *varnode = varrefnode->second;
 	if(varnode->getHigh()->isPersist() && varnode->getHigh()->isAddrTied())
 	{
 		RCodeAnnotation annotation = {};
