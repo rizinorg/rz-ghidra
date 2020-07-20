@@ -256,12 +256,89 @@ RUN
 NAME=global variable annotation
 FILE=bins/dectest32
 EXPECT=<<EOF
-{"code":"\nundefined4 sym.get_global_array_entry(void)\n{\n    return *(undefined4 *)0x804c034;\n}\n","annotations":[{"start":1,"end":11,"type":"syntax_highlight","syntax_highlight":"datatype"},{"start":12,"end":38,"type":"function_name","name":"sym.get_global_array_entry","offset":134517184},{"start":12,"end":38,"type":"offset","offset":134517184},{"start":12,"end":38,"type":"syntax_highlight","syntax_highlight":"function_name"},{"start":39,"end":43,"type":"syntax_highlight","syntax_highlight":"keyword"},{"start":51,"end":57,"type":"offset","offset":134517193},{"start":51,"end":57,"type":"syntax_highlight","syntax_highlight":"keyword"},{"start":58,"end":59,"type":"offset","offset":134517187},{"start":60,"end":70,"type":"syntax_highlight","syntax_highlight":"datatype"},{"start":73,"end":82,"type":"global_variable","offset":134529076},{"start":73,"end":82,"type":"syntax_highlight","syntax_highlight":"constant_variable"},{"start":51,"end":82,"type":"offset","offset":134517193}]}
+{
+  "code": "\nundefined4 sym.get_global_array_entry(void)\n{\n    return *(undefined4 *)0x804c034;\n}\n",
+  "annotations": [
+    {
+      "start": 1,
+      "end": 11,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 12,
+      "end": 38,
+      "type": "function_name",
+      "name": "sym.get_global_array_entry",
+      "offset": 134517184
+    },
+    {
+      "start": 12,
+      "end": 38,
+      "type": "offset",
+      "offset": 134517184
+    },
+    {
+      "start": 12,
+      "end": 38,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 39,
+      "end": 43,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 51,
+      "end": 57,
+      "type": "offset",
+      "offset": 134517193
+    },
+    {
+      "start": 51,
+      "end": 57,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 58,
+      "end": 59,
+      "type": "offset",
+      "offset": 134517187
+    },
+    {
+      "start": 60,
+      "end": 70,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 73,
+      "end": 82,
+      "type": "global_variable",
+      "offset": 134529076
+    },
+    {
+      "start": 73,
+      "end": 82,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 51,
+      "end": 82,
+      "type": "offset",
+      "offset": 134517193
+    }
+  ]
+}
 EOF
 CMDS=<<EOF
 s sym.get_global_array_entry
 af
-pdgj
+pdgj~{}
 EOF
 RUN
 
