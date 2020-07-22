@@ -146,6 +146,22 @@ void AnnotateColor(ANNOTATOR_PARAMS)
 	out->push_back(annotation);
 }
 
+void AnnotateGlobalVariable(Varnode *varnode, std::vector<RCodeAnnotation> *out)
+{
+	RCodeAnnotation annotation = {};
+	annotation.type = R_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE;
+	annotation.reference.offset = varnode->getOffset();
+	out->push_back(annotation);
+}
+
+void AnnotateConstantVariable(Varnode *varnode, std::vector<RCodeAnnotation> *out)
+{
+	RCodeAnnotation annotation = {};
+	annotation.type = R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
+	annotation.reference.offset = varnode->getOffset();
+	out->push_back(annotation);
+}
+
 void AnnotateVariable(ANNOTATOR_PARAMS)
 {
 	pugi::xml_attribute attr = node.attribute("varref");
@@ -158,20 +174,10 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 	if(varrefnode == ctx->varnodes.end())
 		return;
 	Varnode *varnode = varrefnode->second;
-	if(varnode->getHigh()->isPersist() && varnode->getHigh()->isAddrTied())
-	{
-		RCodeAnnotation annotation = {};
-		annotation.type = R_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE;
-		annotation.reference.offset = varnode->getOffset();
-		out->push_back(annotation);
-	}
-	else if(varnode->getHigh()->isConstant() && varnode->getSpace()->getName() == "ram")
-	{
-		RCodeAnnotation annotation = {};
-		annotation.type = R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
-		annotation.reference.offset = varnode->getOffset();
-		out->push_back(annotation);
-	}
+	if (varnode->getHigh()->isPersist() && varnode->getHigh()->isAddrTied())
+		AnnotateGlobalVariable(varnode, out);
+	else if (varnode->getHigh()->isConstant() && varnode->getHigh()->getType()->getMetatype() == TYPE_PTR) 
+		AnnotateConstantVariable(varnode, out);
 }
 
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
