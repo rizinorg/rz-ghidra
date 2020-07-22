@@ -419,6 +419,7 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 int SleighAsm::genOpcode(PcodeSlg &pcode_slg, unsigned long long offset)
 {
 	Address addr(trans.getDefaultCodeSpace(), offset);
+	trans.baseaddr = addr;
 	int length = 0;
 	try
 	{
@@ -427,7 +428,7 @@ int SleighAsm::genOpcode(PcodeSlg &pcode_slg, unsigned long long offset)
 	catch(BadDataError &err)
 	{
 		/* Meet Unknown data -> invalid opcode */
-		length = alignment;
+		length = -1;
 	}
 	return length;
 }

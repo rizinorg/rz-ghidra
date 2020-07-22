@@ -58,6 +58,8 @@ set(ASM_SOURCE
 set(ANAL_SOURCE
 		src/SleighAsm.h
 		src/SleighAsm.cpp
+		src/SleighInstruction.h
+		src/SleighInstruction.cpp
 		src/anal_ghidra.cpp)
 endif()
 

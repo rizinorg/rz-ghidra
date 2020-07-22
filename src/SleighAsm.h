@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include "architecture.hh"
 #include "sleigh_arch.hh"
+#include "SleighInstruction.h"
 
 class AsmLoadImage : public LoadImage
 {
@@ -197,7 +198,7 @@ class SleighAsm
 		void loadLanguageDescription(const string &specfile);
 
 	public:
-		Sleigh trans;
+		SleighInstruction trans;
 		int alignment = 1;
 		std::string pc_name;
 		std::string sp_name;
