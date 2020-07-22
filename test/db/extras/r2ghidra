@@ -342,6 +342,523 @@ pdgj~{}
 EOF
 RUN
 
+NAME=constant variable annotation
+FILE=bins/dectest32
+EXPECT=<<EOF
+{
+  "code": "\nvoid sym.PrintAmbassador(int32_t arg_8h)\n{\n    func_0x08049050(\"Ambassador value: \");\n    switch(arg_8h) {\n    case 0:\n        func_0x08049050(\"pure\");\n        break;\n    case 1:\n        func_0x08049050(\"reason\");\n        break;\n    case 2:\n        func_0x08049050(\"revolution\");\n        break;\n    case 3:\n        func_0x08049050(\"echoes\");\n        break;\n    case 4:\n        func_0x08049050(\"wall\");\n        break;\n    default:\n        if (arg_8h == 1000000) {\n            func_0x08049050(\"million\");\n        }\n        break;\n    case -0x452e541f:\n        break;\n    }\n    func_0x08049090(10);\n    return;\n}\n",
+  "annotations": [
+    {
+      "start": 1,
+      "end": 5,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 6,
+      "end": 25,
+      "type": "function_name",
+      "name": "sym.PrintAmbassador",
+      "offset": 134517281
+    },
+    {
+      "start": 6,
+      "end": 25,
+      "type": "offset",
+      "offset": 134517281
+    },
+    {
+      "start": 6,
+      "end": 25,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 26,
+      "end": 33,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 34,
+      "end": 40,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_parameter"
+    },
+    {
+      "start": 48,
+      "end": 63,
+      "type": "function_name",
+      "name": "",
+      "offset": 134516816
+    },
+    {
+      "start": 48,
+      "end": 63,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 64,
+      "end": 84,
+      "type": "constant_variable",
+      "offset": 134520840
+    },
+    {
+      "start": 64,
+      "end": 84,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 48,
+      "end": 85,
+      "type": "offset",
+      "offset": 134517295
+    },
+    {
+      "start": 91,
+      "end": 97,
+      "type": "offset",
+      "offset": 134517332
+    },
+    {
+      "start": 91,
+      "end": 97,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 98,
+      "end": 104,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_parameter"
+    },
+    {
+      "start": 112,
+      "end": 116,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 117,
+      "end": 118,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 128,
+      "end": 143,
+      "type": "function_name",
+      "name": "",
+      "offset": 134516816
+    },
+    {
+      "start": 128,
+      "end": 143,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 144,
+      "end": 150,
+      "type": "constant_variable",
+      "offset": 134520859
+    },
+    {
+      "start": 144,
+      "end": 150,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 128,
+      "end": 151,
+      "type": "offset",
+      "offset": 134517353
+    },
+    {
+      "start": 161,
+      "end": 166,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 161,
+      "end": 167,
+      "type": "offset",
+      "offset": 134517361
+    },
+    {
+      "start": 172,
+      "end": 176,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 177,
+      "end": 178,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 188,
+      "end": 203,
+      "type": "function_name",
+      "name": "",
+      "offset": 134516816
+    },
+    {
+      "start": 188,
+      "end": 203,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 204,
+      "end": 212,
+      "type": "constant_variable",
+      "offset": 134520864
+    },
+    {
+      "start": 204,
+      "end": 212,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 188,
+      "end": 213,
+      "type": "offset",
+      "offset": 134517371
+    },
+    {
+      "start": 223,
+      "end": 228,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 223,
+      "end": 229,
+      "type": "offset",
+      "offset": 134517379
+    },
+    {
+      "start": 234,
+      "end": 238,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 239,
+      "end": 240,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 250,
+      "end": 265,
+      "type": "function_name",
+      "name": "",
+      "offset": 134516816
+    },
+    {
+      "start": 250,
+      "end": 265,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 266,
+      "end": 278,
+      "type": "constant_variable",
+      "offset": 134520871
+    },
+    {
+      "start": 266,
+      "end": 278,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 250,
+      "end": 279,
+      "type": "offset",
+      "offset": 134517389
+    },
+    {
+      "start": 289,
+      "end": 294,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 289,
+      "end": 295,
+      "type": "offset",
+      "offset": 134517397
+    },
+    {
+      "start": 300,
+      "end": 304,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 305,
+      "end": 306,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 316,
+      "end": 331,
+      "type": "function_name",
+      "name": "",
+      "offset": 134516816
+    },
+    {
+      "start": 316,
+      "end": 331,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 332,
+      "end": 340,
+      "type": "constant_variable",
+      "offset": 134520882
+    },
+    {
+      "start": 332,
+      "end": 340,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 316,
+      "end": 341,
+      "type": "offset",
+      "offset": 134517407
+    },
+    {
+      "start": 351,
+      "end": 356,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 351,
+      "end": 357,
+      "type": "offset",
+      "offset": 134517415
+    },
+    {
+      "start": 362,
+      "end": 366,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 367,
+      "end": 368,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 378,
+      "end": 393,
+      "type": "function_name",
+      "name": "",
+      "offset": 134516816
+    },
+    {
+      "start": 378,
+      "end": 393,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 394,
+      "end": 400,
+      "type": "constant_variable",
+      "offset": 134520889
+    },
+    {
+      "start": 394,
+      "end": 400,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 378,
+      "end": 401,
+      "type": "offset",
+      "offset": 134517425
+    },
+    {
+      "start": 411,
+      "end": 416,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 411,
+      "end": 417,
+      "type": "offset",
+      "offset": 134517433
+    },
+    {
+      "start": 422,
+      "end": 429,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 439,
+      "end": 441,
+      "type": "offset",
+      "offset": 134517341
+    },
+    {
+      "start": 439,
+      "end": 441,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 443,
+      "end": 449,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_parameter"
+    },
+    {
+      "start": 450,
+      "end": 452,
+      "type": "offset",
+      "offset": 134517334
+    },
+    {
+      "start": 453,
+      "end": 460,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 476,
+      "end": 491,
+      "type": "function_name",
+      "name": "",
+      "offset": 134516816
+    },
+    {
+      "start": 476,
+      "end": 491,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 492,
+      "end": 501,
+      "type": "constant_variable",
+      "offset": 134520894
+    },
+    {
+      "start": 492,
+      "end": 501,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 476,
+      "end": 502,
+      "type": "offset",
+      "offset": 134517443
+    },
+    {
+      "start": 522,
+      "end": 527,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 533,
+      "end": 537,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 538,
+      "end": 549,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 559,
+      "end": 564,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 559,
+      "end": 565,
+      "type": "offset",
+      "offset": 134517332
+    },
+    {
+      "start": 576,
+      "end": 591,
+      "type": "function_name",
+      "name": "",
+      "offset": 134516880
+    },
+    {
+      "start": 576,
+      "end": 591,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_name"
+    },
+    {
+      "start": 592,
+      "end": 594,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 576,
+      "end": 595,
+      "type": "offset",
+      "offset": 134517459
+    },
+    {
+      "start": 601,
+      "end": 607,
+      "type": "offset",
+      "offset": 134517469
+    },
+    {
+      "start": 601,
+      "end": 607,
+      "type": "syntax_highlight",
+      "syntax_highlight": "keyword"
+    },
+    {
+      "start": 601,
+      "end": 607,
+      "type": "offset",
+      "offset": 134517469
+    }
+  ]
+}
+EOF
+CMDS=<<EOF
+s sym.PrintAmbassador
+af
+pdgj~{}
+EOF
+RUN
+
 NAME=aeropause32 (many features combined)
 FILE=bins/dectest32
 EXPECT=<<EOF
