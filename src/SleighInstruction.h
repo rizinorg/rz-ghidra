@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include "architecture.hh"
 #include "sleigh_arch.hh"
+#include "SleighAsm.h"
 
 typedef enum 
 {
@@ -27,53 +28,134 @@ typedef enum
 	CONDITIONAL_TERMINATOR,
 } FlowType;
 
-class InstructionPcodeSlg : public PcodeEmit, public PcodeOpBank // Just for calling PcodeOp's private function
-{
+/**
+ * Class for walking pcode templates OpTpl in the correct order
+ * Supports walking the tree of an entire SleighInstructionPrototype or just a single ConstructTpl
+ *
+ */
+class OpTplWalker {
 	private:
-		uintm uniq_id = 0;				///< Counter for producing unique id's for each op
-		//TypeFactory *types;		///< List of types for this binary
+		ConstructState *point = nullptr;		// The current node being visited
+		vector<OpTpl *> *oparray = nullptr;		// current array of ops being traversed
+		int4 depth;					// Depth of current node within the tree
+		int4 breadcrumb[64];			// Path of operands from the root
+		int maxsize;				// Maximum number of directives for this point
+		int sectionnum;
 
-		PcodeOp *newOp(int4 inputs,const Address &pc) { 
-			PcodeOp *op = new PcodeOp(inputs,SeqNum(pc,uniq_id++));
-  			op->setFlag(PcodeOp::dead);		// Start out life as dead
-  			return op;
-		}
-
-		Varnode *newVarnode(int4 s,const Address &m,PcodeOp *op) {
-			//Datatype *ct = types->getBase(s,TYPE_UNKNOWN);
-			Datatype *ct = new Datatype(s, TYPE_UNKNOWN);
-			Varnode *vn = new Varnode(s,m,ct);
-  			op->setOutput(vn);
-  			return vn;
+		void setupPoint() {
+			maxsize = 0;
+			oparray = nullptr;
+			Constructor *ct = point->ct;
+			if (ct == nullptr)
+				return;
+			const ConstructTpl *tpl;
+			if (sectionnum < 0) {
+				tpl = ct->getTempl();
+				if (tpl == nullptr)
+					return;
+			}
+			else
+				tpl = ct->getNamedTempl(sectionnum);
+			if (tpl == nullptr) {			// Empty named section implies straight list of build directives
+				maxsize = ct->getNumOperands();
+			}
+			else {
+				oparray = &const_cast<std::vector<OpTpl *>&>(tpl->getOpvec());
+				maxsize = oparray->size();
+			}
 		}
 
 	public:
-		std::vector<PcodeOp> oplist;
+		/**
+		 * Constructor for walking an entire parse tree
+		 * @param root is the root ConstructState of the tree
+		 * @param sectionnum is the named section to traverse (or -1 for main section)
+		 */
+		OpTplWalker(ConstructState *root,int sectionnum) : point(root), sectionnum(sectionnum) {
+			// NOTE: breadcrumb array size limits depth of parse
+			depth = 0;
+			breadcrumb[0] = 0;
+			setupPoint();
+		}
 
-		//InstructionPcodeSlg(TypeFactory *t) : types(t) {}
+		/**
+		 * Constructor for walking a single template
+		 * @param tpl
+		 */
+		OpTplWalker(ConstructTpl *tpl) {
+			depth = 0;
+			breadcrumb[0] = 0;
+			oparray = &const_cast<std::vector<OpTpl *>&>(tpl->getOpvec());
+			maxsize = oparray->size();
+		}
 
-		void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars, int4 isize) override
-		{
-			PcodeOp *op = newOp(isize,addr);
+		ConstructState *getState() {
+			return point;
+		}
 
-			if (outvar != nullptr) {
-    			Address oaddr(outvar->space,outvar->offset);
-				op->setOutput(newVarnode(outvar->size,oaddr,op));
-  			} 
+		bool isState() {
+			if (point != nullptr)
+				return true;
+			return (maxsize > 0);
+		}
 
-			op->setOpcode(opc);
+		/**
+		 * While walking the OpTpl's in order, follow a particular BUILD directive into its respective Constructor and ContructTpl
+		 * Use popBuild to backtrack
+		 * @param buildnum is the operand number of the BUILD directive to follow
+		 */
+		void pushBuild(int buildnum) {
+			point = point->resolve[buildnum];
+			depth += 1;
+			breadcrumb[depth] = 0;
+			setupPoint();
+		}
 
-  			for(int4 i = 0; i < isize; ++i) {
-    			Address iaddr(vars[i].space,vars[i].offset);
-				op->setInput(newVarnode(vars[i].size,iaddr,op),i);
-  			}
+		/**
+		 * Move to the parent of the current node
+		 */
+		void popBuild() {
+			if (point == nullptr) {
+				maxsize = 0;
+				oparray = nullptr;
+				return;
+			}
+			point = point->parent;
+			depth -= 1;
+			if (point != nullptr)
+				setupPoint();
+			else {
+				maxsize = 0;
+				oparray = nullptr;
+			}
+		}
 
-			oplist.push_back(op);
+		int nextOpTpl(OpTpl *(&lastop)) {
+			int curind = breadcrumb[depth]++;
+			if (curind >= maxsize)
+				return -1;
+			if (oparray == nullptr)
+				// Plus one to avoid overlay when zero appear, which means return truly lastop
+				return curind + 1;				// Virtual build directive
+			OpTpl *op = (*oparray)[curind];
+			if (op->getOpcode() != OpCode::CPUI_MULTIEQUAL) {	// if NOT a build directive
+				lastop = op;
+				return 0;								// return ordinary OpTpl
+			}
+			curind = (int)op->getIn(0)->getOffset().getReal();		// Get the operand index from the build directive
+			return curind + 1;
 		}
 };
 
-class SleighInstruction : public Sleigh
+class SleighAsm;
+
+class SleighInstruction
 {
+	/* Compared to Java version of SleighInstructionPrototype,
+	 * Java choose to resolve all the constructors involved in instruction in ctor
+	 * and cache all SleighInstructionPrototype.
+	 * C++ choose to cache all constructors in Sleigh's contextcache.
+	 */
     private:
 		enum FlowFlags 
 		{
@@ -90,31 +172,40 @@ class SleighInstruction : public Sleigh
 
 		struct FlowRecord
 		{
-			ConstructState addressnode;		// Constructor state containing destination address of flow
-			OpTpl op;						// The pcode template producing the flow
+			ConstructState *addressnode = nullptr;		// Constructor state containing destination address of flow
+			OpTpl *op = nullptr;						// The pcode template producing the flow
 			FlowFlags flowFlags;					// flags associated with this flow		
+		};
+
+		struct FlowSummary {
+			int delay = 0;
+			bool hasCrossBuilds = false;
+			std::vector<FlowRecord *> flowState;
+			OpTpl *lastop = nullptr;
 		};
 
 		std::vector<FlowRecord> flowStateList;
 		std::vector<std::vector<FlowRecord>> flowStateListNamed;
+		SleighAsm *sleigh = nullptr;
 
 		FlowType convertFlowFlags(FlowFlags flags);
 		FlowFlags gatherFlags(FlowFlags curflags, int secnum);
 		void gatherFlows(std::vector<Address> &res, ParserContext *parsecontext, int secnum);
 		Address getHandleAddr(FixedHandle &hand, AddrSpace *curSpace);
-		bool handleIsInvalid(FixedHandle &hand);
-		// void getInputObjects(PcodeOp pcode, unordered_set<Varnode> inputObjects, unordered_set<Varnode> writtenObjects);
-		// void getResultObject(PcodeOp pcode, unordered_set<Varnode> results);
-		std::vector<PcodeOp> getPcode(Address &addr);
+		static bool handleIsInvalid(FixedHandle &hand);
+		static FlowSummary walkTemplates(OpTplWalker &walker);
+		static void addExplicitFlow(ConstructState *state, OpTpl *op, FlowFlags flags, FlowSummary &summary);
 
 	public:
 		Address baseaddr;
 
-		SleighInstruction(LoadImage *ld,ContextDatabase *c_db) : Sleigh(ld, c_db) {}
+		SleighInstruction(SleighAsm *s, Address addr) : sleigh(s), baseaddr(addr) {
+			if(sleigh == nullptr)
+				throw LowlevelError("Null pointer in SleighInstruction ctor");
+		}
+
 		FlowType getFlowType();
 		std::vector<Address> getFlows();
-		// std::vector<Varnode> getInputObjects();
-		// std::vector<Varnode> getResultObjects();
 };
 
 class SubParserWalker : public ParserWalker

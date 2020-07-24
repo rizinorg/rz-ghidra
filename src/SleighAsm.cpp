@@ -419,7 +419,7 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 int SleighAsm::genOpcode(PcodeSlg &pcode_slg, unsigned long long offset)
 {
 	Address addr(trans.getDefaultCodeSpace(), offset);
-	trans.baseaddr = addr;
+	// trans.baseaddr = addr; This line is useless
 	int length = 0;
 	try
 	{

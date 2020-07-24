@@ -63,6 +63,107 @@ FlowType SleighInstruction::convertFlowFlags(FlowFlags flags)
 		return FlowType::INVALID;
 }
 
+ void SleighInstruction::addExplicitFlow(ConstructState *state, OpTpl *op, FlowFlags flags, FlowSummary &summary) {
+	FlowRecord *res = new FlowRecord();
+	summary.flowState.push_back(res);
+	res->flowFlags = flags;
+	res->op = op;
+	res->addressnode = nullptr;
+	VarnodeTpl *dest = op->getIn(0);		// First varnode input contains the destination address
+	if ((flags & (FLOW_JUMPOUT | FLOW_CALL | FLOW_CROSSBUILD)) == 0)
+		return;
+	// If the flow is out of the instruction, store the ConstructState so we can easily calculate address
+	if (state == nullptr)
+		return;
+	if ((flags & FLOW_CROSSBUILD) != 0) {
+		res->addressnode = state;
+	}
+	else if (dest->getOffset().getType() == ConstTpl::handle) {
+		int oper = dest->getOffset().getHandleIndex();
+		Constructor *ct = state->ct;
+		OperandSymbol *sym = ct->getOperand(oper);
+		if (sym->isCodeAddress()) {
+			res->addressnode = state->resolve[oper];
+		}
+	}
+}
+
+/**
+ * Walk the pcode templates in the order they would be emitted.
+ * Collect flowFlags FlowRecords
+ * @param walker the pcode template walker
+ */
+SleighInstruction::FlowSummary SleighInstruction::walkTemplates(OpTplWalker &walker)
+{
+	FlowSummary res;
+	ConstTpl::const_type destType;
+	FlowFlags flags;
+
+	while (walker.isState()) {
+		OpTpl *lastop = nullptr;
+		int state = walker.nextOpTpl(lastop);
+		if (state == -1) {
+			walker.popBuild();
+			continue;
+		}
+		else if (state > 0) {
+			walker.pushBuild(state - 1);
+			continue;
+		}
+		res.lastop = lastop;
+		switch (res.lastop->getOpcode()) {
+			case OpCode::CPUI_PTRSUB:			// encoded crossbuild directive
+				res.hasCrossBuilds = true;
+				addExplicitFlow(walker.getState(), res.lastop, FLOW_CROSSBUILD, res);
+				break;
+			case OpCode::CPUI_BRANCHIND:
+				addExplicitFlow(nullptr, res.lastop, FlowFlags(FlowFlags::FLOW_BRANCH_INDIRECT | FlowFlags::FLOW_NO_FALLTHRU), res);
+				break;
+			case OpCode::CPUI_BRANCH:
+				destType = res.lastop->getIn(0)->getOffset().getType();
+				if (destType == ConstTpl::j_next)
+					flags = FlowFlags::FLOW_BRANCH_TO_END;
+				else if (destType == ConstTpl::j_start)
+					flags = FlowFlags::FLOW_NO_FALLTHRU;
+				else if (destType == ConstTpl::j_relative)
+					flags = FlowFlags::FLOW_NO_FALLTHRU;
+				else
+					flags = FlowFlags(FlowFlags::FLOW_JUMPOUT | FlowFlags::FLOW_NO_FALLTHRU);
+				addExplicitFlow(walker.getState(), res.lastop, flags, res);
+				break;
+			case OpCode::CPUI_CBRANCH:
+				destType = res.lastop->getIn(0)->getOffset().getType();
+				if (destType == ConstTpl::j_next)
+					flags = FlowFlags::FLOW_BRANCH_TO_END;
+				else if ((destType != ConstTpl::j_start) && (destType != ConstTpl::j_relative))
+					flags = FlowFlags::FLOW_JUMPOUT;
+				else
+					flags = FlowFlags(0);
+				addExplicitFlow(walker.getState(), res.lastop, flags, res);
+				break;
+			case OpCode::CPUI_CALL:
+				addExplicitFlow(walker.getState(), res.lastop, FlowFlags::FLOW_CALL, res);
+				break;
+			case OpCode::CPUI_CALLIND:
+				addExplicitFlow(nullptr, res.lastop, FlowFlags::FLOW_CALL_INDIRECT, res);
+				break;
+			case OpCode::CPUI_RETURN:
+				addExplicitFlow(nullptr, res.lastop, FlowFlags(FlowFlags::FLOW_RETURN | FlowFlags::FLOW_NO_FALLTHRU), res);
+				break;
+			case OpCode::CPUI_PTRADD:			// Encoded label build directive
+				addExplicitFlow(nullptr, res.lastop, FlowFlags::FLOW_LABEL, res);
+				break;
+			case OpCode::CPUI_INDIRECT:			// Encode delayslot
+				destType = res.lastop->getIn(0)->getOffset().getType();
+				if (destType > res.delay)
+					res.delay = destType;
+			default:
+				break;
+		}
+	}
+	return res;
+}
+
 SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, int secnum)
 {
 	std::vector<FlowRecord> curlist;
@@ -76,18 +177,18 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 
 	for (FlowRecord rec : curlist) {
 		if ((rec.flowFlags & FLOW_CROSSBUILD) != 0) {
-			ParserContext *pos = obtainContext(baseaddr,ParserContext::pcode);
+			ParserContext *pos = sleigh->trans.obtainContext(baseaddr,ParserContext::pcode);
   			pos->applyCommits();
 			SubParserWalker walker(pos);
-			walker.subTreeState(&rec.addressnode);
+			walker.subTreeState(rec.addressnode);
 
-			VarnodeTpl *vn = rec.op.getIn(0);
+			VarnodeTpl *vn = rec.op->getIn(0);
 			AddrSpace *spc = vn->getSpace().fixSpace(walker);
 			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
 			Address newaddr(spc,addr);
-			ParserContext *crosscontext = obtainContext(newaddr,ParserContext::pcode);
+			ParserContext *crosscontext = sleigh->trans.obtainContext(newaddr,ParserContext::pcode);
 			crosscontext->applyCommits();
-			int newsecnum = rec.op.getIn(1)->getOffset().getReal();
+			int newsecnum = rec.op->getIn(1)->getOffset().getReal();
 			SleighInstruction crossproto = crosscontext.getPrototype();
 			curflags = crossproto.gatherFlags(curflags, newsecnum);
 		}
@@ -113,20 +214,20 @@ void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *pa
 	for (FlowRecord rec : curlist) {
 		if ((rec.flowFlags & FLOW_CROSSBUILD) != 0) {
 			SubParserWalker walker(parsecontext);
-			walker.subTreeState(&rec.addressnode);
+			walker.subTreeState(rec.addressnode);
 
-			VarnodeTpl *vn = rec.op.getIn(0);
+			VarnodeTpl *vn = rec.op->getIn(0);
 			AddrSpace *spc = vn->getSpace().fixSpace(walker);
 			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
 			Address newaddr(spc,addr);
-			ParserContext *crosscontext = obtainContext(newaddr,ParserContext::pcode);
+			ParserContext *crosscontext = sleigh->trans.obtainContext(newaddr,ParserContext::pcode);
 			crosscontext->applyCommits();
-			int newsecnum = rec.op.getIn(1)->getOffset().getReal();
+			int newsecnum = rec.op->getIn(1)->getOffset().getReal();
 			SleighInstruction crossproto = crosscontext.getPrototype();
 			crossproto.gatherFlows(res, crosscontext, newsecnum);
 		}
 		else if ((rec.flowFlags & (FLOW_JUMPOUT | FLOW_CALL)) != 0) {
-			FixedHandle &hand = rec.addressnode.hand;
+			FixedHandle &hand = rec.addressnode->hand;
 			if (!handleIsInvalid(hand) && hand.offset_space == nullptr) {
 				Address addr = getHandleAddr(hand, parsecontext->getAddr().getSpace());
 				res.push_back(addr);
@@ -156,12 +257,14 @@ bool SleighInstruction::handleIsInvalid(FixedHandle &hand)
 	return hand.space == nullptr;
 }
 
+/*
 std::vector<PcodeOp> SleighInstruction::getPcode(Address &addr)
 {
 	InstructionPcodeSlg emit();
-	oneInstruction(emit, addr);
+	sleigh->trans.oneInstruction(emit, addr);
 	return emit.oplist;
 }
+*/
 
 FlowType SleighInstruction::getFlowType()
 {
@@ -177,7 +280,7 @@ std::vector<Address> SleighInstruction::getFlows()
 	if (flowStateList.empty())
 		return addresses;
 
-	ParserContext *pos = obtainContext(baseaddr,ParserContext::pcode);
+	ParserContext *pos = sleigh->trans.obtainContext(baseaddr,ParserContext::pcode);
   	pos->applyCommits();
 	gatherFlows(addresses, pos, -1);
 

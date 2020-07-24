@@ -174,6 +174,16 @@ struct R2Reg
 	size_t offset;
 };
 
+class SleighInstruction;
+
+class R2Sleigh : public Sleigh
+{
+	friend SleighInstruction;
+
+	public:
+		R2Sleigh(LoadImage *ld,ContextDatabase *c_db) : Sleigh(ld, c_db) {}
+};
+
 class SleighAsm
 {
     private:
@@ -198,7 +208,7 @@ class SleighAsm
 		void loadLanguageDescription(const string &specfile);
 
 	public:
-		SleighInstruction trans;
+		R2Sleigh trans;
 		int alignment = 1;
 		std::string pc_name;
 		std::string sp_name;
