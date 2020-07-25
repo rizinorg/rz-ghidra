@@ -1,5 +1,11 @@
 #include "SleighInstruction.h"
 
+R2DisassemblyCache *R2Sleigh::initPCCache(SleighInstruction *ins) {
+	if (pccache == nullptr)
+		pccache = new R2DisassemblyCache(ExportHelper::getCache(this), getConstantSpace(), 8, 256);
+	return pccache;
+}
+
 FlowType SleighInstruction::convertFlowFlags(FlowFlags flags)
 {
 		if ((flags & FLOW_LABEL) != 0)
@@ -193,7 +199,7 @@ void SleighInstruction::cacheTreeInfo()
 		flowType = FlowType::FALL_THROUGH;
 	}
 
-	for (uint4 i = 0; i < sleigh->trans.numSections; i++) {
+	for (uint4 i = 0; i < sleigh->numSections; i++) {
 		walker = OpTplWalker(&rootState, i);
 		summary = walkTemplates(walker);
 		flowStateListNamed.push_back(summary.flowState);
@@ -225,8 +231,8 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 			SleighParserContext *crosscontext = getParserContext(newaddr);
 			crosscontext->applyCommits();
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
-			SleighInstruction crossproto = crosscontext.getPrototype();
-			curflags = crossproto.gatherFlags(curflags, newsecnum);
+			SleighInstruction *crossproto = crosscontext->getPrototype();
+			curflags = crossproto->gatherFlags(curflags, newsecnum);
 		}
 		else {
 			curflags = FlowFlags(curflags & (~(FLOW_CROSSBUILD | FLOW_LABEL | FLOW_NO_FALLTHRU)));
@@ -259,8 +265,8 @@ void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *pa
 			SleighParserContext *crosscontext = getParserContext(newaddr);
 			crosscontext->applyCommits();
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
-			SleighInstruction crossproto = crosscontext.getPrototype();
-			crossproto.gatherFlows(res, crosscontext, newsecnum);
+			SleighInstruction *crossproto = crosscontext->getPrototype();
+			crossproto->gatherFlows(res, crosscontext, newsecnum);
 		}
 		else if ((rec->flowFlags & (FLOW_JUMPOUT | FLOW_CALL)) != 0) {
 			FixedHandle &hand = rec->addressnode->hand;
@@ -315,14 +321,14 @@ std::vector<Address> SleighInstruction::getFlows()
 }
 
 SleighParserContext *SleighInstruction::getParserContext(const Address &addr, SleighInstruction *proto) {
-	ParserContext *pos = sleigh->trans.pccache->getParserContext(addr);
+	SleighParserContext *pos = (SleighParserContext *)sleigh->pccache->getParserContext(addr);
 
 	if(proto != nullptr)
-		((SleighParserContext *)pos)->setPrototype(proto);
+		pos->setPrototype(proto);
 
 	if (pos->getParserState() == ParserContext::uninitialized) {
-		sleigh->trans.resolve(*pos);
-		sleigh->trans.resolveHandles(*pos);
+		sleigh->resolve(*pos);
+		sleigh->resolveHandles(*pos);
 	}
 
 	return pos;
