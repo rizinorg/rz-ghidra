@@ -147,6 +147,22 @@ class OpTplWalker {
 		}
 };
 
+class SleighParserContext : public ParserContext
+{
+	private:
+		SleighInstruction *prototype = nullptr;
+
+	public:
+		SleighParserContext(ContextCache *ccache): ParserContext(ccache) {}
+		SleighInstruction *getPrototype() { return prototype; }
+		void setPrototype(SleighInstruction *p) { prototype = p; }
+
+		void initialize(int4 maxstate,int4 maxparam,AddrSpace *spc) {
+			ParserContext::initialize(maxstate, maxparam, spc);
+			base_state = &prototype->rootState;
+		}
+};
+
 class SleighAsm;
 
 class SleighInstruction
@@ -174,7 +190,7 @@ class SleighInstruction
 		{
 			ConstructState *addressnode = nullptr;		// Constructor state containing destination address of flow
 			OpTpl *op = nullptr;						// The pcode template producing the flow
-			FlowFlags flowFlags;					// flags associated with this flow		
+			FlowFlags flowFlags = FlowFlags(0);					// flags associated with this flow
 		};
 
 		struct FlowSummary {
@@ -184,28 +200,52 @@ class SleighInstruction
 			OpTpl *lastop = nullptr;
 		};
 
-		std::vector<FlowRecord> flowStateList;
-		std::vector<std::vector<FlowRecord>> flowStateListNamed;
+		FlowType flowType = FlowType::INVALID;
+		int delaySlotByteCnt = 0;
+		bool hasCrossBuilds = false;
+		std::vector<FlowRecord *> flowStateList;
+		std::vector<std::vector<FlowRecord *>> flowStateListNamed;
 		SleighAsm *sleigh = nullptr;
+		SleighParserContext *protoContext = nullptr;
 
-		FlowType convertFlowFlags(FlowFlags flags);
 		FlowFlags gatherFlags(FlowFlags curflags, int secnum);
 		void gatherFlows(std::vector<Address> &res, ParserContext *parsecontext, int secnum);
 		Address getHandleAddr(FixedHandle &hand, AddrSpace *curSpace);
+		void cacheTreeInfo(); // It could be renamed to parse(), but keep original name to ease later update
+		static FlowType convertFlowFlags(FlowFlags flags);
+		static FlowType flowListToFlowType(std::vector<FlowRecord *> &flowstate);
 		static bool handleIsInvalid(FixedHandle &hand);
 		static FlowSummary walkTemplates(OpTplWalker &walker);
 		static void addExplicitFlow(ConstructState *state, OpTpl *op, FlowFlags flags, FlowSummary &summary);
+		void initPCCache() {
+			if(sleigh->trans.pccache == nullptr)
+				sleigh->trans.pccache = new R2Sleigh::R2DisassemblyCache(sleigh->trans.cache, sleigh->trans.getConstantSpace(), 8, 256);
+		}
 
 	public:
 		Address baseaddr;
+		ConstructState rootState;
 
-		SleighInstruction(SleighAsm *s, Address addr) : sleigh(s), baseaddr(addr) {
+		SleighInstruction(SleighAsm *s, Address &addr) : sleigh(s), baseaddr(addr) {
 			if(sleigh == nullptr)
 				throw LowlevelError("Null pointer in SleighInstruction ctor");
+
+			initPCCache();
+
+			rootState.parent = nullptr; // rootState = new ConstructState(null);
+
+			//protoContext = new SleighParserContext(sleigh->trans.cache, this); // SleighParserContext protoContext = new SleighParserContext(buf, this, context);
+
+			getParserContext(baseaddr, this);
+
+			cacheTreeInfo();
 		}
+
+		~SleighInstruction() { if(protoContext) delete protoContext; }
 
 		FlowType getFlowType();
 		std::vector<Address> getFlows();
+		SleighParserContext *getParserContext(const Address &addr);
 };
 
 class SubParserWalker : public ParserWalker

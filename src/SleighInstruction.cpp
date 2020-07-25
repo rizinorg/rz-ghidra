@@ -164,9 +164,45 @@ SleighInstruction::FlowSummary SleighInstruction::walkTemplates(OpTplWalker &wal
 	return res;
 }
 
+FlowType SleighInstruction::flowListToFlowType(std::vector<FlowRecord *> &flowstate) {
+	if (flowstate.empty())
+		return FlowType::FALL_THROUGH;
+	FlowFlags flags = FlowFlags(0);
+	for (FlowRecord *rec : flowstate) {
+		flags = FlowFlags(flags & (~(FLOW_NO_FALLTHRU | FLOW_CROSSBUILD | FLOW_LABEL)));
+		flags = FlowFlags(flags | rec->flowFlags);
+	}
+	return convertFlowFlags(flags);
+}
+
+/**
+ * Walk the Constructor tree gathering ConstructStates which are flow destinations (flowStateList)
+ * flowFlags and delayslot directives
+ */
+void SleighInstruction::cacheTreeInfo()
+{
+	OpTplWalker walker(&rootState, -1);
+	FlowSummary summary = walkTemplates(walker);
+
+	delaySlotByteCnt = summary.delay;
+	hasCrossBuilds = summary.hasCrossBuilds;
+	if (!summary.flowState.empty()) {
+		flowStateList = summary.flowState;
+		flowType = flowListToFlowType(summary.flowState);
+	} else {
+		flowType = FlowType::FALL_THROUGH;
+	}
+
+	for (uint4 i = 0; i < sleigh->trans.numSections; i++) {
+		walker = OpTplWalker(&rootState, i);
+		summary = walkTemplates(walker);
+		flowStateListNamed.push_back(summary.flowState);
+	}
+}
+
 SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, int secnum)
 {
-	std::vector<FlowRecord> curlist;
+	std::vector<FlowRecord *> curlist;
 	if (secnum < 0)
 		curlist = flowStateList;
 	else if ((!flowStateListNamed.empty()) && (secnum < flowStateListNamed.size()))
@@ -175,26 +211,26 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 	if (curlist.empty())
 		return curflags;
 
-	for (FlowRecord rec : curlist) {
-		if ((rec.flowFlags & FLOW_CROSSBUILD) != 0) {
-			ParserContext *pos = sleigh->trans.obtainContext(baseaddr,ParserContext::pcode);
+	for (FlowRecord *rec : curlist) {
+		if ((rec->flowFlags & FLOW_CROSSBUILD) != 0) {
+			SleighParserContext *pos = getParserContext(baseaddr, this);
   			pos->applyCommits();
 			SubParserWalker walker(pos);
-			walker.subTreeState(rec.addressnode);
+			walker.subTreeState(rec->addressnode);
 
-			VarnodeTpl *vn = rec.op->getIn(0);
+			VarnodeTpl *vn = rec->op->getIn(0);
 			AddrSpace *spc = vn->getSpace().fixSpace(walker);
 			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
 			Address newaddr(spc,addr);
-			ParserContext *crosscontext = sleigh->trans.obtainContext(newaddr,ParserContext::pcode);
+			SleighParserContext *crosscontext = getParserContext(newaddr);
 			crosscontext->applyCommits();
-			int newsecnum = rec.op->getIn(1)->getOffset().getReal();
+			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
 			SleighInstruction crossproto = crosscontext.getPrototype();
 			curflags = crossproto.gatherFlags(curflags, newsecnum);
 		}
 		else {
 			curflags = FlowFlags(curflags & (~(FLOW_CROSSBUILD | FLOW_LABEL | FLOW_NO_FALLTHRU)));
-			curflags = FlowFlags(curflags | rec.flowFlags);
+			curflags = FlowFlags(curflags | rec->flowFlags);
 		}
 	}
 	return curflags;
@@ -202,7 +238,7 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 
 void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *parsecontext, int secnum)
 {
-	std::vector<FlowRecord> curlist;
+	std::vector<FlowRecord *> curlist;
 	if (secnum < 0)
 		curlist = flowStateList;
 	else if ((!flowStateListNamed.empty()) && (secnum < flowStateListNamed.size()))
@@ -211,23 +247,23 @@ void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *pa
 	if (curlist.empty())
 		return;
 
-	for (FlowRecord rec : curlist) {
-		if ((rec.flowFlags & FLOW_CROSSBUILD) != 0) {
+	for (FlowRecord *rec : curlist) {
+		if ((rec->flowFlags & FLOW_CROSSBUILD) != 0) {
 			SubParserWalker walker(parsecontext);
-			walker.subTreeState(rec.addressnode);
+			walker.subTreeState(rec->addressnode);
 
-			VarnodeTpl *vn = rec.op->getIn(0);
+			VarnodeTpl *vn = rec->op->getIn(0);
 			AddrSpace *spc = vn->getSpace().fixSpace(walker);
 			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
 			Address newaddr(spc,addr);
-			ParserContext *crosscontext = sleigh->trans.obtainContext(newaddr,ParserContext::pcode);
+			SleighParserContext *crosscontext = getParserContext(newaddr);
 			crosscontext->applyCommits();
-			int newsecnum = rec.op->getIn(1)->getOffset().getReal();
+			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
 			SleighInstruction crossproto = crosscontext.getPrototype();
 			crossproto.gatherFlows(res, crosscontext, newsecnum);
 		}
-		else if ((rec.flowFlags & (FLOW_JUMPOUT | FLOW_CALL)) != 0) {
-			FixedHandle &hand = rec.addressnode->hand;
+		else if ((rec->flowFlags & (FLOW_JUMPOUT | FLOW_CALL)) != 0) {
+			FixedHandle &hand = rec->addressnode->hand;
 			if (!handleIsInvalid(hand) && hand.offset_space == nullptr) {
 				Address addr = getHandleAddr(hand, parsecontext->getAddr().getSpace());
 				res.push_back(addr);
@@ -257,15 +293,6 @@ bool SleighInstruction::handleIsInvalid(FixedHandle &hand)
 	return hand.space == nullptr;
 }
 
-/*
-std::vector<PcodeOp> SleighInstruction::getPcode(Address &addr)
-{
-	InstructionPcodeSlg emit();
-	sleigh->trans.oneInstruction(emit, addr);
-	return emit.oplist;
-}
-*/
-
 FlowType SleighInstruction::getFlowType()
 {
 	if (!hasCrossBuilds)
@@ -280,9 +307,23 @@ std::vector<Address> SleighInstruction::getFlows()
 	if (flowStateList.empty())
 		return addresses;
 
-	ParserContext *pos = sleigh->trans.obtainContext(baseaddr,ParserContext::pcode);
+	SleighParserContext *pos = getParserContext(baseaddr, this);
   	pos->applyCommits();
 	gatherFlows(addresses, pos, -1);
 
 	return addresses;
+}
+
+SleighParserContext *SleighInstruction::getParserContext(const Address &addr, SleighInstruction *proto) {
+	ParserContext *pos = sleigh->trans.pccache->getParserContext(addr);
+
+	if(proto != nullptr)
+		((SleighParserContext *)pos)->setPrototype(proto);
+
+	if (pos->getParserState() == ParserContext::uninitialized) {
+		sleigh->trans.resolve(*pos);
+		sleigh->trans.resolveHandles(*pos);
+	}
+
+	return pos;
 }

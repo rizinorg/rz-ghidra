@@ -174,14 +174,33 @@ struct R2Reg
 	size_t offset;
 };
 
+class SleighParserContext;
 class SleighInstruction;
 
 class R2Sleigh : public Sleigh
 {
+	// To export protected member functions to SleighInstruction
 	friend SleighInstruction;
+
+	class R2DisassemblyCache : public DisassemblyCache {
+		public:
+			R2DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize) :
+				DisassemblyCache(ccache, cspace, cachesize, windowsize) {
+				for(int4 i=0;i<minimumreuse;++i) {
+					delete list[i];
+					SleighParserContext *pos = new SleighParserContext(contextcache);
+					pos->initialize(75,20,constspace);
+					list[i] = pos;
+				}
+			}
+	};
+
+	private:
+		mutable R2DisassemblyCache *pccache = nullptr;
 
 	public:
 		R2Sleigh(LoadImage *ld,ContextDatabase *c_db) : Sleigh(ld, c_db) {}
+		~R2Sleigh() { if(pccache) ~(*pccache); }
 };
 
 class SleighAsm
