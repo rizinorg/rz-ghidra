@@ -1,9 +1,54 @@
 #include "SleighInstruction.h"
 
-R2DisassemblyCache *R2Sleigh::initPCCache(SleighInstruction *ins) {
+R2DisassemblyCache *R2Sleigh::initPCCache() {
 	if (pccache == nullptr)
 		pccache = new R2DisassemblyCache(ExportHelper::getCache(this), getConstantSpace(), 8, 256);
 	return pccache;
+}
+
+void SleighParserContext::setPrototype(SleighInstruction *p) {
+	prototype = p;
+	prototype->rootState.resolve.resize(20);
+	*ExportHelper::getBasestate(this) = &prototype->rootState;
+}
+
+const char *SleighInstruction::printFlowType(FlowType t) {
+	switch (t)
+	{
+		case FlowType::INVALID:
+			return "INVALID";
+		case FlowType::CONDITIONAL_COMPUTED_CALL:
+			return "CONDITIONAL_COMPUTED_CALL";
+		case FlowType::COMPUTED_CALL:
+			return "COMPUTED_CALL";
+		case FlowType::CONDITIONAL_CALL:
+			return "CONDITIONAL_CALL";
+		case FlowType::JUMP_TERMINATOR:
+			return "JUMP_TERMINATOR";
+		case FlowType::CONDITIONAL_JUMP:
+			return "CONDITIONAL_JUMP";
+		case FlowType::COMPUTED_CALL_TERMINATOR:
+			return "COMPUTED_CALL_TERMINATOR";
+		case FlowType::CALL_TERMINATOR:
+			return "CALL_TERMINATOR";
+		case FlowType::TERMINATOR:
+			return "TERMINATOR";
+		case FlowType::CONDITIONAL_COMPUTED_JUMP:
+			return "CONDITIONAL_COMPUTED_JUMP";
+		case FlowType::UNCONDITIONAL_JUMP:
+			return "UNCONDITIONAL_JUMP";
+		case FlowType::COMPUTED_JUMP:
+			return "COMPUTED_JUMP";
+		case FlowType::FALL_THROUGH:
+			return "FALL_THROUGH";
+		case FlowType::UNCONDITIONAL_CALL:
+			return "UNCONDITIONAL_CALL";
+		case FlowType::CONDITIONAL_TERMINATOR:
+			return "CONDITIONAL_TERMINATOR";
+
+	default:
+		throw LowlevelError("printFlowType() out of bound.");
+	}
 }
 
 FlowType SleighInstruction::convertFlowFlags(FlowFlags flags)
@@ -12,7 +57,7 @@ FlowType SleighInstruction::convertFlowFlags(FlowFlags flags)
 			flags = FlowFlags(flags | FLOW_BRANCH_TO_END);
 		flags = FlowFlags(flags & (~(FLOW_CROSSBUILD | FLOW_LABEL)));
 		// NOTE: If prototype has cross-build, flow must be determined dynamically
-		switch (flags) 
+		switch (flags)
 		{ // Convert flags to a standard flowtype
 			case 0:
 			case FLOW_BRANCH_TO_END:
@@ -220,7 +265,7 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 	for (FlowRecord *rec : curlist) {
 		if ((rec->flowFlags & FLOW_CROSSBUILD) != 0) {
 			SleighParserContext *pos = getParserContext(baseaddr, this);
-  			pos->applyCommits();
+			pos->applyCommits(); pos->clearCommits();
 			SubParserWalker walker(pos);
 			walker.subTreeState(rec->addressnode);
 
@@ -229,7 +274,7 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
 			Address newaddr(spc,addr);
 			SleighParserContext *crosscontext = getParserContext(newaddr);
-			crosscontext->applyCommits();
+			crosscontext->applyCommits(); crosscontext->clearCommits();
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
 			SleighInstruction *crossproto = crosscontext->getPrototype();
 			curflags = crossproto->gatherFlags(curflags, newsecnum);
@@ -263,7 +308,7 @@ void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *pa
 			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
 			Address newaddr(spc,addr);
 			SleighParserContext *crosscontext = getParserContext(newaddr);
-			crosscontext->applyCommits();
+			crosscontext->applyCommits(); crosscontext->clearCommits();
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
 			SleighInstruction *crossproto = crosscontext->getPrototype();
 			crossproto->gatherFlows(res, crosscontext, newsecnum);
@@ -314,7 +359,7 @@ std::vector<Address> SleighInstruction::getFlows()
 		return addresses;
 
 	SleighParserContext *pos = getParserContext(baseaddr, this);
-  	pos->applyCommits();
+	pos->applyCommits(); pos->clearCommits();
 	gatherFlows(addresses, pos, -1);
 
 	return addresses;
@@ -327,8 +372,8 @@ SleighParserContext *SleighInstruction::getParserContext(const Address &addr, Sl
 		pos->setPrototype(proto);
 
 	if (pos->getParserState() == ParserContext::uninitialized) {
-		sleigh->resolve(*pos);
-		sleigh->resolveHandles(*pos);
+		sleigh->resolve(*pos); // Resolve ALL the constructors involved in the instruction at this address
+		sleigh->resolveHandles(*pos); // Resolve handles (assuming Constructors already resolved)
 	}
 
 	return pos;

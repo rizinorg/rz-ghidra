@@ -11,16 +11,17 @@
 class R2Sleigh;
 class R2DisassemblyCache;
 class SubParserWalker;
+class SleighParserContext;
 class ExportHelper {
-	// Please keep all structure in this class sync with origin!!!
+	// Please keep all structures in this class sync with origin!!!
 	// A bit hacking here.
 
 	struct ParserWalker { // ghidra/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/context.hh
 		const ParserContext *const_context;
 		const ParserContext *cross_context;
-  		ConstructState *point;
-  		int4 depth;
-  		int4 breadcrumb[32];
+		ConstructState *point;
+		int4 depth;
+		int4 breadcrumb[32];
 	};
 
 	struct DisassemblyCache { // ghidra/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
@@ -34,36 +35,54 @@ class ExportHelper {
 	};
 
 	struct Sleigh : public SleighBase { // ghidra/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
-  		LoadImage *loader;
-  		ContextDatabase *context_db;
-  		ContextCache *cache;
-  		mutable DisassemblyCache *discache;
-  		mutable PcodeCacher pcode_cache;
-  		void clearForDelete(void);
-  		ParserContext *obtainContext(const Address &addr,int4 state) const;
-  		void resolve(ParserContext &pos) const;
-  		void resolveHandles(ParserContext &pos) const;
-  		Sleigh(LoadImage *ld,ContextDatabase *c_db);
-  		virtual ~Sleigh(void);
-  		void reset(LoadImage *ld,ContextDatabase *c_db);
-  		virtual void initialize(DocumentStorage &store);
-  		virtual void registerContext(const string &name,int4 sbit,int4 ebit);
-  		virtual void setContextDefault(const string &nm,uintm val);
-  		virtual void allowContextSet(bool val) const;
-  		virtual int4 instructionLength(const Address &baseaddr) const;
-  		virtual int4 oneInstruction(PcodeEmit &emit,const Address &baseaddr) const;
-  		virtual int4 printAssembly(AssemblyEmit &emit,const Address &baseaddr) const;
-};
+		LoadImage *loader;
+		ContextDatabase *context_db;
+		ContextCache *cache;
+		mutable DisassemblyCache *discache;
+		mutable PcodeCacher pcode_cache;
+		void clearForDelete(void);
+		ParserContext *obtainContext(const Address &addr,int4 state) const;
+		void resolve(ParserContext &pos) const;
+		void resolveHandles(ParserContext &pos) const;
+		Sleigh(LoadImage *ld,ContextDatabase *c_db);
+		virtual ~Sleigh(void);
+		void reset(LoadImage *ld,ContextDatabase *c_db);
+		virtual void initialize(DocumentStorage &store);
+		virtual void registerContext(const string &name,int4 sbit,int4 ebit);
+		virtual void setContextDefault(const string &nm,uintm val);
+		virtual void allowContextSet(bool val) const;
+		virtual int4 instructionLength(const Address &baseaddr) const;
+		virtual int4 oneInstruction(PcodeEmit &emit,const Address &baseaddr) const;
+		virtual int4 printAssembly(AssemblyEmit &emit,const Address &baseaddr) const;
+	};
+
+	struct ParserContext { // ghidra/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/context.hh
+		int4 parsestate;
+		AddrSpace *const_space;
+		uint1 buf[16];
+		uintm *context;
+		int4 contextsize;
+		ContextCache *contcache;
+		vector<ContextSet> contextcommit;
+		Address addr;
+		Address naddr;
+		Address calladdr;
+		vector<ConstructState> state;
+		ConstructState *base_state;
+		int4 alloc;
+		int4 delayslot;
+	};
 
 	public:
-	static const ParserContext *getConstcontext(SubParserWalker *xxx)  { return ((ExportHelper::ParserWalker *)xxx)->const_context; }
-	static ParserContext **getList(R2DisassemblyCache *xxx) { return ((ExportHelper::DisassemblyCache *)xxx)->list; }
-	static ContextCache *getContextcache(R2DisassemblyCache *xxx) { return ((ExportHelper::DisassemblyCache *)xxx)->contextcache; }
-	static AddrSpace *getConstspace(R2DisassemblyCache *xxx) { return ((ExportHelper::DisassemblyCache *)xxx)->constspace; }
-	static ContextCache *getCache(R2Sleigh *xxx) { return ((ExportHelper::Sleigh *)xxx)->cache; }
+		static const ::ParserContext *getConstcontext(SubParserWalker *xxx)  { return ((ExportHelper::ParserWalker *)xxx)->const_context; }
+		static ::ParserContext **getList(R2DisassemblyCache *xxx) { return ((ExportHelper::DisassemblyCache *)xxx)->list; }
+		static ::ContextCache *getContextcache(R2DisassemblyCache *xxx) { return ((ExportHelper::DisassemblyCache *)xxx)->contextcache; }
+		static ::AddrSpace *getConstspace(R2DisassemblyCache *xxx) { return ((ExportHelper::DisassemblyCache *)xxx)->constspace; }
+		static ::ContextCache *getCache(R2Sleigh *xxx) { return ((ExportHelper::Sleigh *)xxx)->cache; }
+		static ::ConstructState **getBasestate(SleighParserContext *xxx) { return &((ExportHelper::ParserContext *)xxx)->base_state; }
 };
 
-typedef enum 
+typedef enum
 {
 	INVALID,
 	CONDITIONAL_COMPUTED_CALL,
@@ -90,7 +109,7 @@ typedef enum
 class OpTplWalker {
 	private:
 		ConstructState *point = nullptr;		// The current node being visited
-		vector<OpTpl *> *oparray = nullptr;		// current array of ops being traversed
+		const vector<OpTpl *> *oparray = nullptr;		// current array of ops being traversed
 		int4 depth;					// Depth of current node within the tree
 		int4 breadcrumb[64];			// Path of operands from the root
 		int maxsize;				// Maximum number of directives for this point
@@ -114,7 +133,7 @@ class OpTplWalker {
 				maxsize = ct->getNumOperands();
 			}
 			else {
-				oparray = &const_cast<std::vector<OpTpl *>&>(tpl->getOpvec());
+				oparray = &tpl->getOpvec();
 				maxsize = oparray->size();
 			}
 		}
@@ -139,7 +158,7 @@ class OpTplWalker {
 		OpTplWalker(ConstructTpl *tpl) {
 			depth = 0;
 			breadcrumb[0] = 0;
-			oparray = &const_cast<std::vector<OpTpl *>&>(tpl->getOpvec());
+			oparray = &tpl->getOpvec();
 			maxsize = oparray->size();
 		}
 
@@ -210,7 +229,7 @@ class SleighParserContext : public ParserContext
 	public:
 		SleighParserContext(ContextCache *ccache): ParserContext(ccache) {}
 		SleighInstruction *getPrototype() { return prototype; }
-		void setPrototype(SleighInstruction *p) { prototype = p; }
+		void setPrototype(SleighInstruction *p);
 };
 
 class R2DisassemblyCache : public DisassemblyCache {
@@ -237,7 +256,7 @@ class R2Sleigh : public Sleigh
 	public:
 		R2Sleigh(LoadImage *ld,ContextDatabase *c_db) : Sleigh(ld, c_db) {}
 		~R2Sleigh() { if(pccache) delete pccache; }
-		R2DisassemblyCache *initPCCache(SleighInstruction *ins);
+		R2DisassemblyCache *initPCCache();
 };
 
 
@@ -249,7 +268,7 @@ class SleighInstruction
 	 * C++ choose to cache all constructors in Sleigh's contextcache.
 	 */
     private:
-		enum FlowFlags 
+		enum FlowFlags
 		{
 			FLOW_RETURN = 0x01,
 			FLOW_CALL_INDIRECT = 0x02,
@@ -282,7 +301,7 @@ class SleighInstruction
 		std::vector<FlowRecord *> flowStateList;
 		std::vector<std::vector<FlowRecord *>> flowStateListNamed;
 		R2Sleigh *sleigh = nullptr;
-		SleighParserContext *protoContext = nullptr;
+		//SleighParserContext *protoContext = nullptr;
 
 		FlowFlags gatherFlags(FlowFlags curflags, int secnum);
 		void gatherFlows(std::vector<Address> &res, ParserContext *parsecontext, int secnum);
@@ -301,12 +320,13 @@ class SleighInstruction
 		SleighParserContext *getParserContext(const Address &addr, SleighInstruction *proto = nullptr);
 		FlowType getFlowType();
 		std::vector<Address> getFlows();
+		static const char *printFlowType(FlowType t);
 
 		SleighInstruction(R2Sleigh *s, Address &addr) : sleigh(s), baseaddr(addr) {
 			if(sleigh == nullptr)
 				throw LowlevelError("Null pointer in SleighInstruction ctor");
 
-			sleigh->initPCCache(this);
+			sleigh->initPCCache();
 
 			rootState.parent = nullptr; // rootState = new ConstructState(null);
 
@@ -317,19 +337,18 @@ class SleighInstruction
 			cacheTreeInfo();
 		}
 
-		~SleighInstruction() { if(protoContext) delete protoContext; }
+		~SleighInstruction() { //if(protoContext) delete protoContext;
+			flowStateListNamed.push_back(flowStateList);
+			for(auto outer = flowStateListNamed.begin(); outer != flowStateListNamed.end(); outer++)
+				for(auto inner = outer->begin(); inner != outer->end(); inner++)
+					delete *inner;
+		}
 };
 
 class SubParserWalker : public ParserWalker
 {
 	public:
 		SubParserWalker(const ParserContext *c) : ParserWalker(c) {}
-
-		void baseState() {
-			point = &((SleighParserContext *)ExportHelper::getConstcontext(this))->getPrototype()->rootState;
-			depth=0;
-			breadcrumb[0] = 0;
-		}
 
 		void subTreeState(ConstructState *subtree)
 		{

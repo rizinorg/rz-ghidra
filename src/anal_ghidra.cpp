@@ -53,7 +53,7 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, Address(sanal.trans.getDefaultCodeSpace(), addr)) < 1))
 		return anal_op->size;
 
-	anal_type(anal_op, pcode_slg, assem); // Label each instruction based on a series of P-codes.
+	//anal_type(anal_op, pcode_slg, assem); // Label each instruction based on a series of P-codes.
 
 	return anal_op->size;
 }
