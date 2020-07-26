@@ -16,11 +16,14 @@ struct ParseCodeXMLContext
 {
 	Funcdata *func;
 	std::map<uintm, PcodeOp *> ops;
+	std::map<unsigned long long, Varnode *> varnodes;
 
 	explicit ParseCodeXMLContext(Funcdata *func) : func(func)
 	{
 		for(auto it=func->beginOpAll(); it!=func->endOpAll(); it++)
 			ops[it->first.getTime()] = it->second;
+		for(auto it = func->beginLoc(); it != func->endLoc(); it++)
+			varnodes[(*it)->getCreateIndex()] = *it;
 	}
 };
 
@@ -58,13 +61,13 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	{
 		if(ctx->func->getName() == func_name)
 		{
-			annotation.function_name.name = strdup(ctx->func->getName().c_str());
-			annotation.function_name.offset = ctx->func->getAddress().getOffset();
+			annotation.reference.name = strdup(ctx->func->getName().c_str());
+			annotation.reference.offset = ctx->func->getAddress().getOffset();
 			out->push_back(annotation);
 			// Code below makes an offset annotation for the function name(for the currently decompiled function)
 			RCodeAnnotation offsetAnnotation = {};
 			offsetAnnotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
-			offsetAnnotation.offset.offset = annotation.function_name.offset;
+			offsetAnnotation.offset.offset = annotation.reference.offset;
 			out->push_back(offsetAnnotation);
 		}
 		return;
@@ -83,8 +86,8 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	FuncCallSpecs *call_func_spec = ctx->func->getCallSpecs(op);
 	if(call_func_spec)
 	{
-		annotation.function_name.name = strdup(call_func_spec->getName().c_str());
-		annotation.function_name.offset = call_func_spec->getEntryAddress().getOffset();
+		annotation.reference.name = strdup(call_func_spec->getName().c_str());
+		annotation.reference.offset = call_func_spec->getEntryAddress().getOffset();
 		out->push_back(annotation);
 	}
 }
@@ -143,11 +146,45 @@ void AnnotateColor(ANNOTATOR_PARAMS)
 	out->push_back(annotation);
 }
 
+void AnnotateGlobalVariable(Varnode *varnode, std::vector<RCodeAnnotation> *out)
+{
+	RCodeAnnotation annotation = {};
+	annotation.type = R_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE;
+	annotation.reference.offset = varnode->getOffset();
+	out->push_back(annotation);
+}
+
+void AnnotateConstantVariable(Varnode *varnode, std::vector<RCodeAnnotation> *out)
+{
+	RCodeAnnotation annotation = {};
+	annotation.type = R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
+	annotation.reference.offset = varnode->getOffset();
+	out->push_back(annotation);
+}
+
+void AnnotateVariable(ANNOTATOR_PARAMS)
+{
+	pugi::xml_attribute attr = node.attribute("varref");
+	if(attr.empty())
+		return;
+	unsigned long long varref = attr.as_ullong(ULLONG_MAX);
+	if(varref == ULLONG_MAX)
+		return;
+	auto varrefnode = ctx->varnodes.find(varref);
+	if(varrefnode == ctx->varnodes.end())
+		return;
+	Varnode *varnode = varrefnode->second;
+	if (varnode->getHigh()->isPersist() && varnode->getHigh()->isAddrTied())
+		AnnotateGlobalVariable(varnode, out);
+	else if (varnode->getHigh()->isConstant() && varnode->getHigh()->getType()->getMetatype() == TYPE_PTR) 
+		AnnotateConstantVariable(varnode, out);
+}
+
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
 	{ "statement", { AnnotateOpref } },
 	{ "op", { AnnotateOpref, AnnotateColor } },
 	{ "comment", { AnnotateCommentOffset, AnnotateColor } },
-	{ "variable", { AnnotateColor } },
+	{ "variable", { AnnotateVariable, AnnotateColor } },
 	{ "funcname", { AnnotateFunctionName, AnnotateColor } },
 	{ "type", { AnnotateColor } },
 	{ "syntax", { AnnotateColor } }
