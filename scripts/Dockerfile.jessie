@@ -4,7 +4,7 @@ FROM debian:jessie
 RUN apt-get update
 RUN apt-get -y install git g++ cmake pkg-config flex bison
 
-RUN cd /root &&  git clone --depth 1 --single-branch --branch decompiler-refactoring https://github.com/radareorg/radare2 && cd radare2 && ./configure && make -j4 && make install
+RUN cd /root && git clone --depth 1 --single-branch --branch decompiler-refactoring https://github.com/radareorg/radare2 && cd radare2 && ./configure && make -j4 && make install
 
 CMD []
 
