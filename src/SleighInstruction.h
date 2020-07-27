@@ -85,21 +85,50 @@ class ExportHelper {
 typedef enum
 {
 	INVALID,
-	CONDITIONAL_COMPUTED_CALL,
-	COMPUTED_CALL,
-	CONDITIONAL_CALL,
-	JUMP_TERMINATOR,
-	CONDITIONAL_JUMP,
-	COMPUTED_CALL_TERMINATOR,
-	CALL_TERMINATOR,
-	TERMINATOR,
-	CONDITIONAL_COMPUTED_JUMP,
-	UNCONDITIONAL_JUMP,
-	COMPUTED_JUMP,
+	FLOW,
 	FALL_THROUGH,
+	UNCONDITIONAL_JUMP,
+	CONDITIONAL_JUMP,
 	UNCONDITIONAL_CALL,
+	CONDITIONAL_CALL,
+	TERMINATOR,
+	COMPUTED_JUMP,
 	CONDITIONAL_TERMINATOR,
+	COMPUTED_CALL,
+	CALL_TERMINATOR,
+	COMPUTED_CALL_TERMINATOR,
+	CONDITIONAL_CALL_TERMINATOR,
+	CONDITIONAL_COMPUTED_CALL,
+	CONDITIONAL_COMPUTED_JUMP,
+	JUMP_TERMINATOR,
+	INDIRECTION,
+	CALL_OVERRIDE_UNCONDITIONAL,
+	JUMP_OVERRIDE_UNCONDITIONAL,
+	CALLOTHER_OVERRIDE_CALL,
+	CALLOTHER_OVERRIDE_JUMP,
 } FlowType;
+
+static bool flowTypeHasFallthrough(FlowType t) {
+	switch (t)
+	{
+	case FlowType::INVALID:
+	case FlowType::FLOW:
+	case FlowType::FALL_THROUGH:
+	case FlowType::CONDITIONAL_JUMP:
+	case FlowType::UNCONDITIONAL_CALL:
+	case FlowType::CONDITIONAL_CALL:
+	case FlowType::CONDITIONAL_TERMINATOR:
+	case FlowType::COMPUTED_CALL:
+	case FlowType::CONDITIONAL_COMPUTED_CALL:
+	case FlowType::CONDITIONAL_COMPUTED_JUMP:
+	case FlowType::CALL_OVERRIDE_UNCONDITIONAL:
+	case FlowType::CALLOTHER_OVERRIDE_CALL:
+		return true;
+
+	default:
+		return false;
+	}
+}
 
 /**
  * Class for walking pcode templates OpTpl in the correct order
@@ -297,6 +326,7 @@ class SleighInstruction
 
 		FlowType flowType = FlowType::INVALID;
 		int delaySlotByteCnt = 0;
+		int4 length = 0;
 		bool hasCrossBuilds = false;
 		std::vector<FlowRecord *> flowStateList;
 		std::vector<std::vector<FlowRecord *>> flowStateListNamed;
@@ -321,6 +351,9 @@ class SleighInstruction
 		FlowType getFlowType();
 		std::vector<Address> getFlows();
 		static const char *printFlowType(FlowType t);
+		int getLength() { return length; }
+		Address getFallThrough();
+		int getFallThroughOffset();
 
 		SleighInstruction(R2Sleigh *s, Address &addr) : sleigh(s), baseaddr(addr) {
 			if(sleigh == nullptr)
@@ -333,6 +366,8 @@ class SleighInstruction
 			//protoContext = new SleighParserContext(sleigh->trans.cache, this); // SleighParserContext protoContext = new SleighParserContext(buf, this, context);
 
 			getParserContext(baseaddr, this);
+
+			length = rootState.length;
 
 			cacheTreeInfo();
 		}

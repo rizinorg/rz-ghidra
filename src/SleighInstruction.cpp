@@ -378,3 +378,28 @@ SleighParserContext *SleighInstruction::getParserContext(const Address &addr, Sl
 
 	return pos;
 }
+
+Address SleighInstruction::getFallThrough() {
+	if (flowTypeHasFallthrough(flowType)) {
+		return baseaddr + getFallThroughOffset();
+	}
+	return Address();
+}
+
+int SleighInstruction::getFallThroughOffset() {
+	if (delaySlotByteCnt <= 0) {
+		return getLength();
+	}
+
+	int offset = getLength();
+	int bytecount = 0;
+	do {
+		Address off_addr = baseaddr + offset;
+		SleighInstruction ins(sleigh, off_addr);
+		int len = ins.getLength();
+		offset += len;
+		bytecount += len;
+	}
+	while (bytecount < delaySlotByteCnt);
+	return offset;
+}
