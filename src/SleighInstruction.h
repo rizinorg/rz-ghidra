@@ -7,6 +7,21 @@
 #include <unordered_set>
 #include "architecture.hh"
 #include "sleigh_arch.hh"
+#include "crc32.hh"
+
+/**
+ * There is still room for optimization, Now SleighInstruction
+ * is actually SleighInstructionPrototype in JAVA codebase.
+ * But changes to per-instruction implementation.
+ * In JAVA codebase, SleighInstructionPrototype is Constructor
+ * pattern of one kind of instructions. And concrete flow destination
+ * address will be resolved on actual buffer of specified instruction.
+ * That's why JAVA codebase cache SleighInstructionPrototype in SleighLanguage.
+ * Multiple InstructionContext will be mapped to one single cache prototype,
+ * which will save time and space of collecting Constructors.
+ * But to implement that in C++ codebase, you will have to create something
+ * like InstructionContext and move necessary status and API to that.
+ */
 
 class R2Sleigh;
 class R2DisassemblyCache;
@@ -128,6 +143,21 @@ static bool flowTypeHasFallthrough(FlowType t) {
 	default:
 		return false;
 	}
+}
+
+static uint4 hashConstructState(ConstructState *cs, uint4 hashCode) {
+	if(cs->ct == nullptr)
+		return hashCode;
+
+	uint4 id = cs->ct->getId();
+	hashCode = crc_update(hashCode, id >> 8);
+	hashCode = crc_update(hashCode, id);
+
+	for(ConstructState *p : cs->resolve)
+		if(p != nullptr)
+			hashCode = hashConstructState(p, hashCode);
+
+	return hashCode;
 }
 
 /**
@@ -346,6 +376,7 @@ class SleighInstruction
 	public:
 		Address baseaddr;
 		ConstructState rootState;
+		uint4 hashCode = 0;
 
 		SleighParserContext *getParserContext(const Address &addr, SleighInstruction *proto = nullptr);
 		FlowType getFlowType();
@@ -366,6 +397,7 @@ class SleighInstruction
 			//protoContext = new SleighParserContext(sleigh->trans.cache, this); // SleighParserContext protoContext = new SleighParserContext(buf, this, context);
 
 			getParserContext(baseaddr, this);
+			hashCode = hashConstructState(&rootState, 0x56c93c59);
 
 			length = rootState.length;
 
