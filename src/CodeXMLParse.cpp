@@ -162,11 +162,30 @@ void AnnotateConstantVariable(Varnode *varnode, std::vector<RCodeAnnotation> *ou
 	out->push_back(annotation);
 }
 
+// Annotates local variables and function parameters
+void AnnotateLocalVariable(pugi::xml_node node, std::vector<RCodeAnnotation> *out)
+{
+	pugi::xml_attribute attr = node.attribute("color");
+	if (attr.empty())
+		return;
+	std::string color = attr.as_string();
+	if (color == "")
+		return;
+	
+	RCodeAnnotation annotation = {};
+	annotation.variable.name = strdup(node.child_value());
+	if (color == "param")
+		annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_PARAMETER;
+    else if (color == "var")
+		annotation.type = R_CODE_ANNOTATION_TYPE_LOCAL_VARIABLE;
+	out->push_back(annotation);
+}
+
 void AnnotateVariable(ANNOTATOR_PARAMS)
 {
 	pugi::xml_attribute attr = node.attribute("varref");
 	if(attr.empty())
-		return;
+		AnnotateLocalVariable(node, out);
 	unsigned long long varref = attr.as_ullong(ULLONG_MAX);
 	if(varref == ULLONG_MAX)
 		return;
@@ -178,6 +197,8 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 		AnnotateGlobalVariable(varnode, out);
 	else if (varnode->getHigh()->isConstant() && varnode->getHigh()->getType()->getMetatype() == TYPE_PTR) 
 		AnnotateConstantVariable(varnode, out);
+	else
+		AnnotateLocalVariable(node, out);
 }
 
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
