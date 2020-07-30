@@ -197,7 +197,7 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 		AnnotateGlobalVariable(varnode, out);
 	else if (varnode->getHigh()->isConstant() && varnode->getHigh()->getType()->getMetatype() == TYPE_PTR) 
 		AnnotateConstantVariable(varnode, out);
-	else (!varnode->getHigh()->isPersist() && (varnode->getHigh()->getSymbol() != (Symbol *)0))
+	else if (!varnode->getHigh()->isPersist() && (varnode->getHigh()->getSymbol() != (Symbol *)0))
 		AnnotateLocalVariable(node, out);
 }
 
