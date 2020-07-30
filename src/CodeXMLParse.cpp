@@ -176,7 +176,7 @@ void AnnotateLocalVariable(pugi::xml_node node, std::vector<RCodeAnnotation> *ou
 	annotation.variable.name = strdup(node.child_value());
 	if (color == "param")
 		annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_PARAMETER;
-    else if (color == "var")
+	else if (color == "var")
 		annotation.type = R_CODE_ANNOTATION_TYPE_LOCAL_VARIABLE;
 	out->push_back(annotation);
 }
@@ -197,7 +197,7 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 		AnnotateGlobalVariable(varnode, out);
 	else if (varnode->getHigh()->isConstant() && varnode->getHigh()->getType()->getMetatype() == TYPE_PTR) 
 		AnnotateConstantVariable(varnode, out);
-	else
+	else (!varnode->getHigh()->isPersist() && (varnode->getHigh()->getSymbol() != (Symbol *)0))
 		AnnotateLocalVariable(node, out);
 }
 
