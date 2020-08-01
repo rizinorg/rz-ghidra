@@ -18,6 +18,7 @@ struct ParseCodeXMLContext
 	std::map<uintm, PcodeOp *> ops;
 	std::map<unsigned long long, Varnode *> varnodes;
 	std::map<unsigned long long, Symbol *> symbols;
+	
 	explicit ParseCodeXMLContext(Funcdata *func) : func(func)
 	{
 		for(auto it=func->beginOpAll(); it!=func->endOpAll(); it++)
@@ -28,15 +29,12 @@ struct ParseCodeXMLContext
 		ScopeLocal *mapLocal = func->getScopeLocal();
 		MapIterator iter = mapLocal->begin();
 		MapIterator enditer = mapLocal->end();
-		set<Symbol *> numTree;
 		for (; iter!=enditer; ++iter)
 		{
 			const SymbolEntry *entry = *iter;
 			Symbol *sym = entry->getSymbol();
-			numTree.insert(sym);
 			symbols[sym->getId()] = sym;
 		}
-		int kcik = 123;
 	}
 };
 
