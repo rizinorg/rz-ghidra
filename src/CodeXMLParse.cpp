@@ -24,62 +24,17 @@ struct ParseCodeXMLContext
 			ops[it->first.getTime()] = it->second;
 		for(auto it = func->beginLoc(); it != func->endLoc(); it++)
 			varnodes[(*it)->getCreateIndex()] = *it;
-		for(auto key: varnodes)
-		{
-			Varnode *varnode = key.second;
-			if(varnode != (Varnode *)0)
-			{
-				HighVariable *variable; 
-				try
-				{
-					variable = varnode->getHigh();
-				}
-				catch(LowlevelError &err)
-				{
-					continue;
-				}
-				if(variable != (HighVariable *)0)
-				{
-					Symbol *symbol = variable->getSymbol();
-					if(symbol != (Symbol *)0)
-					{
-						symbols[symbol->getId()] = symbol;
-					}
-				}
-			}
-			
-		}
+
 		ScopeLocal *mapLocal = func->getScopeLocal();
-		// SymbolNameTree nametree = mapLocal->nametree;
-		// SymbolNameTree multiEntrySet = mapLocal->beginMultiEntry();
-		set<Symbol *> num;
-		auto nil = mapLocal->beginMultiEntry();
-		auto nilpotent = *nil;
-		Symbol *noice = nilpotent;
-		// auto nilkopotent = *nilpotent;
-		for (auto star = mapLocal->beginMultiEntry(); star != mapLocal->endMultiEntry(); star++) {
-			num.insert(*star);
-		}
-		// SymbolNameTree::const_iterator iter = mapLocal->beginMultiEntry();
-		// SymbolNameTree::const_iterator enditer = mapLocal->endMultiEntry();
-		// for(;iter!=enditer;++iter) {
-		// 	// vector<Varnode *> mergeList;
-    	// 	Symbol *symbol = *iter;
-		// 	int ususi = 10;
-		// }
-		int xcfsdfss = 10;
-		SymbolNameTree nametree = mapLocal->getNameTree();
-		int kiliol=1;
-		// auto xkoi = mapLocal->begin();
-		
 		MapIterator iter = mapLocal->begin();
 		MapIterator enditer = mapLocal->end();
 		set<Symbol *> numTree;
-		for(;iter!=enditer;++iter) {
+		for (; iter!=enditer; ++iter)
+		{
 			const SymbolEntry *entry = *iter;
-			if (entry->isPiece()) continue; // Don't do a partial entry
 			Symbol *sym = entry->getSymbol();
-			num.insert(sym);
+			numTree.insert(sym);
+			symbols[sym->getId()] = sym;
 		}
 		int kcik = 123;
 	}
