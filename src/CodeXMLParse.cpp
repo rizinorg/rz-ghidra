@@ -49,6 +49,39 @@ struct ParseCodeXMLContext
 			}
 			
 		}
+		ScopeLocal *mapLocal = func->getScopeLocal();
+		// SymbolNameTree nametree = mapLocal->nametree;
+		// SymbolNameTree multiEntrySet = mapLocal->beginMultiEntry();
+		set<Symbol *> num;
+		auto nil = mapLocal->beginMultiEntry();
+		auto nilpotent = *nil;
+		Symbol *noice = nilpotent;
+		// auto nilkopotent = *nilpotent;
+		for (auto star = mapLocal->beginMultiEntry(); star != mapLocal->endMultiEntry(); star++) {
+			num.insert(*star);
+		}
+		// SymbolNameTree::const_iterator iter = mapLocal->beginMultiEntry();
+		// SymbolNameTree::const_iterator enditer = mapLocal->endMultiEntry();
+		// for(;iter!=enditer;++iter) {
+		// 	// vector<Varnode *> mergeList;
+    	// 	Symbol *symbol = *iter;
+		// 	int ususi = 10;
+		// }
+		int xcfsdfss = 10;
+		SymbolNameTree nametree = mapLocal->getNameTree();
+		int kiliol=1;
+		// auto xkoi = mapLocal->begin();
+		
+		MapIterator iter = mapLocal->begin();
+		MapIterator enditer = mapLocal->end();
+		set<Symbol *> numTree;
+		for(;iter!=enditer;++iter) {
+			const SymbolEntry *entry = *iter;
+			if (entry->isPiece()) continue; // Don't do a partial entry
+			Symbol *sym = entry->getSymbol();
+			num.insert(sym);
+		}
+		int kcik = 123;
 	}
 };
 
