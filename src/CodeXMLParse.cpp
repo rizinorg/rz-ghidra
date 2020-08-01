@@ -17,13 +17,38 @@ struct ParseCodeXMLContext
 	Funcdata *func;
 	std::map<uintm, PcodeOp *> ops;
 	std::map<unsigned long long, Varnode *> varnodes;
-
+	std::map<unsigned long long, Symbol *> symbols;
 	explicit ParseCodeXMLContext(Funcdata *func) : func(func)
 	{
 		for(auto it=func->beginOpAll(); it!=func->endOpAll(); it++)
 			ops[it->first.getTime()] = it->second;
 		for(auto it = func->beginLoc(); it != func->endLoc(); it++)
 			varnodes[(*it)->getCreateIndex()] = *it;
+		for(auto key: varnodes)
+		{
+			Varnode *varnode = key.second;
+			if(varnode != (Varnode *)0)
+			{
+				HighVariable *variable; 
+				try
+				{
+					variable = varnode->getHigh();
+				}
+				catch(LowlevelError &err)
+				{
+					continue;
+				}
+				if(variable != (HighVariable *)0)
+				{
+					Symbol *symbol = variable->getSymbol();
+					if(symbol != (Symbol *)0)
+					{
+						symbols[symbol->getId()] = symbol;
+					}
+				}
+			}
+			
+		}
 	}
 };
 
