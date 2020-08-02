@@ -8,6 +8,7 @@
 #include "architecture.hh"
 #include "sleigh_arch.hh"
 #include "crc32.hh"
+#include <unordered_map>
 
 /**
  * There is still room for optimization, Now SleighInstruction
@@ -37,16 +38,6 @@ class ExportHelper {
 		ConstructState *point;
 		int4 depth;
 		int4 breadcrumb[32];
-	};
-
-	struct DisassemblyCache { // ghidra/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
-		ContextCache *contextcache;
-		AddrSpace *constspace;
-		int4 minimumreuse;
-		uint4 mask;
-		ParserContext **list;
-		int4 nextfree;
-		ParserContext **hashtable;
 	};
 
 	struct Sleigh : public SleighBase { // ghidra/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
@@ -90,9 +81,6 @@ class ExportHelper {
 
 	public:
 		static const ::ParserContext *getConstcontext(SubParserWalker *xxx)  { return ((ExportHelper::ParserWalker *)xxx)->const_context; }
-		static ::ParserContext **getList(R2DisassemblyCache *xxx) { return ((ExportHelper::DisassemblyCache *)xxx)->list; }
-		static ::ContextCache *getContextcache(R2DisassemblyCache *xxx) { return ((ExportHelper::DisassemblyCache *)xxx)->contextcache; }
-		static ::AddrSpace *getConstspace(R2DisassemblyCache *xxx) { return ((ExportHelper::DisassemblyCache *)xxx)->constspace; }
 		static ::ContextCache *getCache(R2Sleigh *xxx) { return ((ExportHelper::Sleigh *)xxx)->cache; }
 		static ::ConstructState **getBasestate(SleighParserContext *xxx) { return &((ExportHelper::ParserContext *)xxx)->base_state; }
 };
@@ -288,22 +276,10 @@ class SleighParserContext : public ParserContext
 	public:
 		SleighParserContext(ContextCache *ccache): ParserContext(ccache) {}
 		SleighInstruction *getPrototype() { return prototype; }
-		void setPrototype(SleighInstruction *p);
+		void setPrototype(SleighInstruction *p, int4 maxparam);
 };
 
-class R2DisassemblyCache : public DisassemblyCache {
-	public:
-		R2DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize) :
-			DisassemblyCache(ccache, cspace, cachesize, windowsize) {
-			for(int4 i=0;i<cachesize;++i) {
-				delete ExportHelper::getList(this)[i];
-				SleighParserContext *pos = new SleighParserContext(ExportHelper::getContextcache(this));
-				pos->initialize(75,20,ExportHelper::getConstspace(this));
-				ExportHelper::getList(this)[i] = pos;
-			}
-		}
-};
-
+class SleighInstruction;
 class R2Sleigh : public Sleigh
 {
 	// To export protected member functions to SleighInstruction
@@ -311,11 +287,15 @@ class R2Sleigh : public Sleigh
 
 	private:
 		mutable R2DisassemblyCache *pccache = nullptr;
+		mutable std::unordered_map<uintm, SleighInstruction *> ins_cache;
 
 	public:
 		R2Sleigh(LoadImage *ld,ContextDatabase *c_db) : Sleigh(ld, c_db) {}
-		~R2Sleigh() { if(pccache) delete pccache; }
-		R2DisassemblyCache *initPCCache();
+		~R2Sleigh();
+
+		SleighParserContext *getParserContext(SleighInstruction *proto);
+
+		SleighInstruction *getInstruction(Address &addr);
 };
 
 
@@ -361,7 +341,7 @@ class SleighInstruction
 		std::vector<FlowRecord *> flowStateList;
 		std::vector<std::vector<FlowRecord *>> flowStateListNamed;
 		R2Sleigh *sleigh = nullptr;
-		//SleighParserContext *protoContext = nullptr;
+		SleighParserContext *protoContext = nullptr;
 
 		FlowFlags gatherFlags(FlowFlags curflags, int secnum);
 		void gatherFlows(std::vector<Address> &res, ParserContext *parsecontext, int secnum);
@@ -385,18 +365,16 @@ class SleighInstruction
 		int getLength() { return length; }
 		Address getFallThrough();
 		int getFallThroughOffset();
+		bool isFallthrough() { return flowTypeHasFallthrough(getFlowType()); }
 
 		SleighInstruction(R2Sleigh *s, Address &addr) : sleigh(s), baseaddr(addr) {
 			if(sleigh == nullptr)
 				throw LowlevelError("Null pointer in SleighInstruction ctor");
 
-			sleigh->initPCCache();
-
 			rootState.parent = nullptr; // rootState = new ConstructState(null);
 
-			//protoContext = new SleighParserContext(sleigh->trans.cache, this); // SleighParserContext protoContext = new SleighParserContext(buf, this, context);
+			protoContext = sleigh->getParserContext(this);
 
-			getParserContext(baseaddr, this);
 			hashCode = hashConstructState(&rootState, 0x56c93c59);
 
 			length = rootState.length;
@@ -404,8 +382,12 @@ class SleighInstruction
 			cacheTreeInfo();
 		}
 
-		~SleighInstruction() { //if(protoContext) delete protoContext;
+		~SleighInstruction() { 
+			if(protoContext) 
+				delete protoContext;
+
 			flowStateListNamed.push_back(flowStateList);
+
 			for(auto outer = flowStateListNamed.begin(); outer != flowStateListNamed.end(); outer++)
 				for(auto inner = outer->begin(); inner != outer->end(); inner++)
 					delete *inner;

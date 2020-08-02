@@ -2,6 +2,7 @@
 
 #include <r_lib.h>
 #include <r_anal.h>
+#include <algorithm>
 #include "SleighAsm.h"
 
 static SleighAsm sanal;
@@ -18,13 +19,58 @@ static int archinfo(RAnal *anal, int query)
 		return -1;
 }
 
-static void anal_type(RAnalOp *anal_op, PcodeSlg &pcode_slg, AssemblySlg &assem)
+static std::vector<std::string> string_split(const std::string& s, const char& delim = ' ') {
+	std::vector<std::string> tokens;
+    size_t lastPos = s.find_first_not_of(delim, 0);
+    size_t pos = s.find(delim, lastPos);
+    while (lastPos != string::npos) {
+        tokens.emplace_back(s.substr(lastPos, pos - lastPos));
+        lastPos = s.find_first_not_of(delim, pos);
+        pos = s.find(delim, lastPos);
+    }
+	return tokens;
+}
+
+static std::string string_trim(std::string s) {
+    if (!s.empty()) {
+    	s.erase(0,s.find_first_not_of(" "));
+    	s.erase(s.find_last_not_of(" ") + 1);
+	}
+	return s;
+}
+
+class InnerAssemblyEmit : public AssemblyEmit
 {
-	std::string dis_operand = r_str_ichr(assem.str, ' ') + 1;
+	public:
+		std::string args;
 
-	std::vector<Pcodeop> filtered;
+		void dump(const Address &addr, const string &mnem, const string &body) override
+		{
+			args = body;
+		}
+};
 
-	for(auto iter = pcode_slg.pcodes.cbegin(); iter != pcode_slg.pcodes.cend(); iter++)
+static void anal_type(RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
+{
+	std::vector<Pcodeop> filtered_ops;
+	std::vector<std::string> args = string_split(assem.args, ',');
+	std::transform(args.begin(), args.end(), args.begin(), string_trim);
+
+	std::copy_if(pcode_slg.pcodes.begin(), pcode_slg.pcodes.end(), back_inserter(filtered_ops), 
+		[&args](const Pcodeop &p){ 
+			if(!p.input0 && p.input0->type == PcodeOperand::REGISTER)
+				for(auto iter = args.cbegin(); iter != args.cend(); ++iter)
+					if(*iter == p.input0->name)
+						return true;
+			if(!p.input1 && p.input1->type == PcodeOperand::REGISTER)
+				for(auto iter = args.cbegin(); iter != args.cend(); ++iter)
+					if(*iter == p.input0->name)
+						return true;
+			return false;
+		}
+	);
+
+	for(auto iter = filtered_ops.cbegin(); iter != filtered_ops.cend(); iter++)
 	{
 		const Pcodeop &pcode_op = *iter;
 		switch(pcode_op.type)
@@ -48,12 +94,96 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	anal_op->id = -1;
 
 	PcodeSlg pcode_slg;
-	AssemblySlg assem;
-	anal_op->size = sanal.genOpcode(pcode_slg, addr);
-	if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, Address(sanal.trans.getDefaultCodeSpace(), addr)) < 1))
+	InnerAssemblyEmit assem;
+	Address caddr(sanal.trans.getDefaultCodeSpace(), addr);
+	anal_op->size = sanal.genOpcode(pcode_slg, caddr);
+	if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, caddr) < 1))
 		return anal_op->size;
 
-	//anal_type(anal_op, pcode_slg, assem); // Label each instruction based on a series of P-codes.
+	if(pcode_slg.pcodes.empty()) { // NOP case
+		anal_op->type = R_ANAL_OP_TYPE_NOP;
+		return anal_op->size;
+	}
+
+	SleighInstruction &ins = *sanal.trans.getInstruction(caddr);
+	FlowType ftype = ins.getFlowType();
+	std::vector<Address> tmp;
+
+	if(ftype != FlowType::FALL_THROUGH) {
+		//TODO: Some indirect call/jump call be improved by telling radare which reg is refered here.
+		switch(ftype) {
+			case FlowType::TERMINATOR:
+				//Stack info could be added
+				anal_op->type = R_ANAL_OP_TYPE_RET; 
+				anal_op->eob = true; 
+				break;
+
+			case FlowType::CONDITIONAL_TERMINATOR:
+				anal_op->type = R_ANAL_OP_TYPE_CRET; 
+				anal_op->fail = ins.getFallThrough().getOffset();
+				anal_op->eob = true; 
+				break;
+
+			case FlowType::JUMP_TERMINATOR:
+				anal_op->eob = true;
+			case FlowType::UNCONDITIONAL_JUMP:
+				anal_op->type = R_ANAL_OP_TYPE_JMP; 
+				anal_op->jump = ins.getFlows().begin()->getOffset();
+				break;
+
+			case FlowType::COMPUTED_JUMP:
+				anal_op->type = R_ANAL_OP_TYPE_IJMP;
+				tmp = ins.getFlows();
+				anal_op->jump = tmp.empty() ? anal_op->jump : tmp.begin()->getOffset();
+				break;
+
+			case FlowType::CONDITIONAL_JUMP:
+			case FlowType::CONDITIONAL_COMPUTED_JUMP:
+				anal_op->type = R_ANAL_OP_TYPE_CJMP;
+				tmp = ins.getFlows();
+				anal_op->jump = tmp.empty() ? anal_op->jump : tmp.begin()->getOffset();
+				anal_op->fail = ins.getFallThrough().getOffset();
+				break;
+
+			case FlowType::CALL_TERMINATOR:
+				anal_op->eob = true;
+			case FlowType::UNCONDITIONAL_CALL:
+				anal_op->type = R_ANAL_OP_TYPE_CALL;
+				anal_op->jump = ins.getFlows().begin()->getOffset();
+				anal_op->fail = ins.getFallThrough().getOffset();
+				break;
+
+			case FlowType::COMPUTED_CALL_TERMINATOR:
+				anal_op->type = R_ANAL_OP_TYPE_ICALL; 
+				tmp = ins.getFlows();
+				anal_op->jump = tmp.empty() ? anal_op->jump : tmp.begin()->getOffset();
+				anal_op->fail = ins.getFallThrough().getOffset();
+				anal_op->eob = true;
+				break;
+
+			case FlowType::CONDITIONAL_CALL:
+			case FlowType::CONDITIONAL_COMPUTED_CALL:
+				anal_op->type = R_ANAL_OP_TYPE_CCALL;
+				tmp = ins.getFlows();
+				anal_op->jump = tmp.empty() ? anal_op->jump : tmp.begin()->getOffset();
+				anal_op->fail = ins.getFallThrough().getOffset();
+				break;
+
+			case FlowType::COMPUTED_CALL:
+				anal_op->type = R_ANAL_OP_TYPE_ICALL;
+				tmp = ins.getFlows();
+				anal_op->jump = tmp.empty() ? anal_op->jump : tmp.begin()->getOffset();
+				anal_op->fail = ins.getFallThrough().getOffset();
+				break;
+
+			default:
+				throw LowlevelError("Unexpected FlowType occured in sleigh_op.");
+		}
+
+		return anal_op->size;
+	}
+
+	anal_type(anal_op, pcode_slg, assem); // Label each instruction based on a series of P-codes.
 
 	return anal_op->size;
 }

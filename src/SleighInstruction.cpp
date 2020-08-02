@@ -1,15 +1,31 @@
 #include "SleighInstruction.h"
 
-R2DisassemblyCache *R2Sleigh::initPCCache() {
-	if (pccache == nullptr)
-		pccache = new R2DisassemblyCache(ExportHelper::getCache(this), getConstantSpace(), 8, 256);
-	return pccache;
+SleighInstruction *R2Sleigh::getInstruction(Address &addr) {
+	SleighInstruction *ins = new SleighInstruction(this, addr);
+	// ins->cacheTreeInfo();
+	ins_cache.insert({addr.getOffset(), ins});
+	return ins;
 }
 
-void SleighParserContext::setPrototype(SleighInstruction *p) {
+R2Sleigh::~R2Sleigh() {
+	for(auto iter = ins_cache.begin(); iter != ins_cache.end(); ++iter)
+		delete iter->second;
+}
+
+void SleighParserContext::setPrototype(SleighInstruction *p, int4 maxparam) {
 	prototype = p;
-	prototype->rootState.resolve.resize(20);
+	prototype->rootState.resolve.resize(maxparam);
 	*ExportHelper::getBasestate(this) = &prototype->rootState;
+}
+
+SleighParserContext *R2Sleigh::getParserContext(SleighInstruction *proto) {
+	SleighParserContext *pos = new SleighParserContext(ExportHelper::getCache(this));
+	pos->initialize(75,20,getConstantSpace());
+	pos->setAddr(proto->baseaddr);
+	pos->setPrototype(proto, 20);
+	resolve(*pos); // Resolve ALL the constructors involved in the instruction at this address
+	resolveHandles(*pos); // Resolve handles (assuming Constructors already resolved)
+	return pos;
 }
 
 const char *SleighInstruction::printFlowType(FlowType t) {
@@ -264,7 +280,7 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 
 	for (FlowRecord *rec : curlist) {
 		if ((rec->flowFlags & FLOW_CROSSBUILD) != 0) {
-			SleighParserContext *pos = getParserContext(baseaddr, this);
+			SleighParserContext *pos = protoContext;
 			pos->applyCommits(); pos->clearCommits();
 			SubParserWalker walker(pos);
 			walker.subTreeState(rec->addressnode);
@@ -272,11 +288,10 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 			VarnodeTpl *vn = rec->op->getIn(0);
 			AddrSpace *spc = vn->getSpace().fixSpace(walker);
 			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
+
 			Address newaddr(spc,addr);
-			SleighParserContext *crosscontext = getParserContext(newaddr);
-			crosscontext->applyCommits(); crosscontext->clearCommits();
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
-			SleighInstruction *crossproto = crosscontext->getPrototype();
+			SleighInstruction *crossproto = sleigh->getInstruction(newaddr);
 			curflags = crossproto->gatherFlags(curflags, newsecnum);
 		}
 		else {
@@ -307,11 +322,9 @@ void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *pa
 			AddrSpace *spc = vn->getSpace().fixSpace(walker);
 			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
 			Address newaddr(spc,addr);
-			SleighParserContext *crosscontext = getParserContext(newaddr);
-			crosscontext->applyCommits(); crosscontext->clearCommits();
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
-			SleighInstruction *crossproto = crosscontext->getPrototype();
-			crossproto->gatherFlows(res, crosscontext, newsecnum);
+			SleighInstruction *crossproto = sleigh->getInstruction(newaddr);
+			crossproto->gatherFlows(res, crossproto->protoContext, newsecnum);
 		}
 		else if ((rec->flowFlags & (FLOW_JUMPOUT | FLOW_CALL)) != 0) {
 			FixedHandle &hand = rec->addressnode->hand;
@@ -358,25 +371,11 @@ std::vector<Address> SleighInstruction::getFlows()
 	if (flowStateList.empty())
 		return addresses;
 
-	SleighParserContext *pos = getParserContext(baseaddr, this);
+	SleighParserContext *pos = protoContext;
 	pos->applyCommits(); pos->clearCommits();
 	gatherFlows(addresses, pos, -1);
 
 	return addresses;
-}
-
-SleighParserContext *SleighInstruction::getParserContext(const Address &addr, SleighInstruction *proto) {
-	SleighParserContext *pos = (SleighParserContext *)sleigh->pccache->getParserContext(addr);
-
-	if(proto != nullptr)
-		pos->setPrototype(proto);
-
-	if (pos->getParserState() == ParserContext::uninitialized) {
-		sleigh->resolve(*pos); // Resolve ALL the constructors involved in the instruction at this address
-		sleigh->resolveHandles(*pos); // Resolve handles (assuming Constructors already resolved)
-	}
-
-	return pos;
 }
 
 Address SleighInstruction::getFallThrough() {

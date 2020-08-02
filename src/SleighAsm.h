@@ -48,7 +48,7 @@ struct PcodeOperand
 		PcodeOperand(uintb offset, uint4 size): type(RAM), offset(offset), size(size) {}
 		PcodeOperand(uintb number): type(CONST), number(number) {}
 		PcodeOperand(const std::string &name): type(REGISTER), name(name) {}
-		~PcodeOperand() { if(type == REGISTER) name.~string(); }
+		~PcodeOperand();
 
 		union
 		{
@@ -209,7 +209,7 @@ class SleighAsm
 		void init(RAsm *a);
 		void init(RAnal *a);
 		int disassemble(RAsmOp *op, unsigned long long offset);
-		int genOpcode(PcodeSlg &pcode_slg, unsigned long long offset);
+		int genOpcode(PcodeSlg &pcode_slg, Address &addr);
 		std::vector<R2Reg> getRegs(void);
 };
 
