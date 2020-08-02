@@ -382,6 +382,12 @@ EXPECT=<<EOF
     {
       "start": 34,
       "end": 40,
+      "type": "function_parameter",
+      "name": "arg_8h"
+    },
+    {
+      "start": 34,
+      "end": 40,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
@@ -427,6 +433,12 @@ EXPECT=<<EOF
       "end": 97,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
+    },
+    {
+      "start": 98,
+      "end": 104,
+      "type": "function_parameter",
+      "name": "arg_8h"
     },
     {
       "start": 98,
@@ -726,6 +738,12 @@ EXPECT=<<EOF
       "end": 441,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
+    },
+    {
+      "start": 443,
+      "end": 449,
+      "type": "function_parameter",
+      "name": "arg_8h"
     },
     {
       "start": 443,
