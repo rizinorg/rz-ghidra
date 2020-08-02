@@ -174,20 +174,15 @@ void AnnotateConstantVariable(Varnode *varnode, std::vector<RCodeAnnotation> *ou
 }
 
 // Annotates local variables and function parameters
-void AnnotateLocalVariable(pugi::xml_node node, std::vector<RCodeAnnotation> *out)
+void AnnotateLocalVariable(Symbol *symbol, std::vector<RCodeAnnotation> *out)
 {
-	pugi::xml_attribute attr = node.attribute("color");
-	if (attr.empty())
+	if(symbol == (Symbol *)0)
 		return;
-	std::string color = attr.as_string();
-	if (color == "")
-		return;
-	
 	RCodeAnnotation annotation = {};
-	annotation.variable.name = strdup(node.child_value());
-	if (color == "param")
+	annotation.variable.name = strdup(symbol->getName().c_str());
+	if(symbol->getCategory() == 0)
 		annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_PARAMETER;
-	else if (color == "var")
+	else
 		annotation.type = R_CODE_ANNOTATION_TYPE_LOCAL_VARIABLE;
 	out->push_back(annotation);
 }
@@ -196,7 +191,17 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 {
 	pugi::xml_attribute attr = node.attribute("varref");
 	if(attr.empty())
-		AnnotateLocalVariable(node, out);
+	{
+		auto node_parent = node.parent();
+		if(strcmp(node_parent.name(), "vardecl") == 0)
+		{
+			pugi::xml_attribute attributeSymbolId = node_parent.attribute("symref");
+			unsigned long long symref = attributeSymbolId.as_ullong(ULLONG_MAX);
+			Symbol *symbol = ctx->symbols[symref];
+			AnnotateLocalVariable(symbol, out);
+		}
+		return;
+	}
 	unsigned long long varref = attr.as_ullong(ULLONG_MAX);
 	if(varref == ULLONG_MAX)
 		return;
@@ -208,8 +213,8 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 		AnnotateGlobalVariable(varnode, out);
 	else if (varnode->getHigh()->isConstant() && varnode->getHigh()->getType()->getMetatype() == TYPE_PTR) 
 		AnnotateConstantVariable(varnode, out);
-	else if (!varnode->getHigh()->isPersist() && (varnode->getHigh()->getSymbol() != (Symbol *)0))
-		AnnotateLocalVariable(node, out);
+	else if (!varnode->getHigh()->isPersist())
+		AnnotateLocalVariable(varnode->getHigh()->getSymbol(), out);
 }
 
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
