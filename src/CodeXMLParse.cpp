@@ -17,13 +17,24 @@ struct ParseCodeXMLContext
 	Funcdata *func;
 	std::map<uintm, PcodeOp *> ops;
 	std::map<unsigned long long, Varnode *> varnodes;
-
+	std::map<unsigned long long, Symbol *> symbols;
+	
 	explicit ParseCodeXMLContext(Funcdata *func) : func(func)
 	{
 		for(auto it=func->beginOpAll(); it!=func->endOpAll(); it++)
 			ops[it->first.getTime()] = it->second;
 		for(auto it = func->beginLoc(); it != func->endLoc(); it++)
 			varnodes[(*it)->getCreateIndex()] = *it;
+
+		ScopeLocal *mapLocal = func->getScopeLocal();
+		MapIterator iter = mapLocal->begin();
+		MapIterator enditer = mapLocal->end();
+		for (; iter!=enditer; ++iter)
+		{
+			const SymbolEntry *entry = *iter;
+			Symbol *sym = entry->getSymbol();
+			symbols[sym->getId()] = sym;
+		}
 	}
 };
 
@@ -162,11 +173,35 @@ void AnnotateConstantVariable(Varnode *varnode, std::vector<RCodeAnnotation> *ou
 	out->push_back(annotation);
 }
 
+// Annotates local variables and function parameters
+void AnnotateLocalVariable(Symbol *symbol, std::vector<RCodeAnnotation> *out)
+{
+	if(symbol == (Symbol *)0)
+		return;
+	RCodeAnnotation annotation = {};
+	annotation.variable.name = strdup(symbol->getName().c_str());
+	if(symbol->getCategory() == 0)
+		annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_PARAMETER;
+	else
+		annotation.type = R_CODE_ANNOTATION_TYPE_LOCAL_VARIABLE;
+	out->push_back(annotation);
+}
+
 void AnnotateVariable(ANNOTATOR_PARAMS)
 {
 	pugi::xml_attribute attr = node.attribute("varref");
 	if(attr.empty())
+	{
+		auto node_parent = node.parent();
+		if(strcmp(node_parent.name(), "vardecl") == 0)
+		{
+			pugi::xml_attribute attributeSymbolId = node_parent.attribute("symref");
+			unsigned long long symref = attributeSymbolId.as_ullong(ULLONG_MAX);
+			Symbol *symbol = ctx->symbols[symref];
+			AnnotateLocalVariable(symbol, out);
+		}
 		return;
+	}
 	unsigned long long varref = attr.as_ullong(ULLONG_MAX);
 	if(varref == ULLONG_MAX)
 		return;
@@ -178,6 +213,8 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 		AnnotateGlobalVariable(varnode, out);
 	else if (varnode->getHigh()->isConstant() && varnode->getHigh()->getType()->getMetatype() == TYPE_PTR) 
 		AnnotateConstantVariable(varnode, out);
+	else if (!varnode->getHigh()->isPersist())
+		AnnotateLocalVariable(varnode->getHigh()->getSymbol(), out);
 }
 
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
