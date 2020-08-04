@@ -53,6 +53,8 @@ if(BUILD_SLEIGH_PLUGIN)
 set(ASM_SOURCE
 		src/SleighAsm.h
 		src/SleighAsm.cpp
+		src/SleighInstruction.h
+		src/SleighInstruction.cpp
 		src/asm_ghidra.cpp)
 
 set(ANAL_SOURCE

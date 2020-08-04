@@ -286,8 +286,9 @@ class R2Sleigh : public Sleigh
 	friend SleighInstruction;
 
 	private:
-		mutable R2DisassemblyCache *pccache = nullptr;
 		mutable std::unordered_map<uintm, SleighInstruction *> ins_cache;
+
+		void generateLocation(const VarnodeTpl *vntpl,VarnodeData &vn, ParserWalker &walker);
 
 	public:
 		R2Sleigh(LoadImage *ld,ContextDatabase *c_db) : Sleigh(ld, c_db) {}
@@ -296,8 +297,9 @@ class R2Sleigh : public Sleigh
 		SleighParserContext *getParserContext(SleighInstruction *proto);
 
 		SleighInstruction *getInstruction(Address &addr);
-};
 
+		VarnodeData dumpInvar(OpTpl *op, Address &addr);
+};
 
 class SleighInstruction
 {
@@ -358,7 +360,6 @@ class SleighInstruction
 		ConstructState rootState;
 		uint4 hashCode = 0;
 
-		SleighParserContext *getParserContext(const Address &addr, SleighInstruction *proto = nullptr);
 		FlowType getFlowType();
 		std::vector<Address> getFlows();
 		static const char *printFlowType(FlowType t);
@@ -366,6 +367,14 @@ class SleighInstruction
 		Address getFallThrough();
 		int getFallThroughOffset();
 		bool isFallthrough() { return flowTypeHasFallthrough(getFlowType()); }
+		VarnodeData getIndirectInvar() {
+			std::vector<FlowRecord *> curlist = flowStateList;
+			for(FlowRecord *rec : curlist) {
+				if((rec->flowFlags & (FLOW_BRANCH_INDIRECT | FLOW_CALL_INDIRECT)) != 0) {
+					return sleigh->dumpInvar(rec->op, baseaddr);
+				}
+			}
+		}
 
 		SleighInstruction(R2Sleigh *s, Address &addr) : sleigh(s), baseaddr(addr) {
 			if(sleigh == nullptr)

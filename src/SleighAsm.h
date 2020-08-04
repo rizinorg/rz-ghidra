@@ -48,7 +48,7 @@ struct PcodeOperand
 		PcodeOperand(uintb offset, uint4 size): type(RAM), offset(offset), size(size) {}
 		PcodeOperand(uintb number): type(CONST), number(number) {}
 		PcodeOperand(const std::string &name): type(REGISTER), name(name) {}
-		~PcodeOperand();
+		~PcodeOperand() { if(type == REGISTER) name.~string(); }
 
 		union
 		{

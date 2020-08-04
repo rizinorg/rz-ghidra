@@ -28,6 +28,30 @@ SleighParserContext *R2Sleigh::getParserContext(SleighInstruction *proto) {
 	return pos;
 }
 
+void R2Sleigh::generateLocation(const VarnodeTpl *vntpl,VarnodeData &vn, ParserWalker &walker) {
+	vn.space = vntpl->getSpace().fixSpace(walker);
+	vn.size = vntpl->getSize().fix(walker);
+	if (vn.space == getConstantSpace())
+		vn.offset = vntpl->getOffset().fix(walker) & calc_mask(vn.size);
+	else if (vn.space == getUniqueSpace()) {
+		vn.offset = vntpl->getOffset().fix(walker);
+		vn.offset |= (walker.getAddr().getOffset() & unique_allocatemask) << 4;
+	} else
+		vn.offset = vn.space->wrapOffset(vntpl->getOffset().fix(walker));
+}
+
+VarnodeData R2Sleigh::dumpInvar(OpTpl *op, Address &addr) {
+	ParserContext *pos = obtainContext(addr,ParserContext::pcode);
+	pos->applyCommits();
+	ParserWalker walker(pos);
+	walker.baseState();
+
+	VarnodeData res;
+	VarnodeTpl *vn = op->getIn(0);
+	generateLocation(vn, res, walker);
+	return res;
+}
+
 const char *SleighInstruction::printFlowType(FlowType t) {
 	switch (t)
 	{
@@ -144,8 +168,7 @@ FlowType SleighInstruction::convertFlowFlags(FlowFlags flags)
 		return;
 	if ((flags & FLOW_CROSSBUILD) != 0) {
 		res->addressnode = state;
-	}
-	else if (dest->getOffset().getType() == ConstTpl::handle) {
+	} else if (dest->getOffset().getType() == ConstTpl::handle) {
 		int oper = dest->getOffset().getHandleIndex();
 		Constructor *ct = state->ct;
 		OperandSymbol *sym = ct->getOperand(oper);
@@ -224,6 +247,7 @@ SleighInstruction::FlowSummary SleighInstruction::walkTemplates(OpTplWalker &wal
 				destType = res.lastop->getIn(0)->getOffset().getType();
 				if (destType > res.delay)
 					res.delay = destType;
+				break;
 			default:
 				break;
 		}

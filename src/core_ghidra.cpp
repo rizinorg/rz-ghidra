@@ -367,11 +367,24 @@ class PcodeRawOut : public PcodeEmit
 			ss << get_opname(opc);
 			// Possibly check for a code reference or a space reference
 			ss << ' ';
-			print_vardata(ss, vars[0]);
-			for(int4 i=1; i<isize; ++i)
-			{
-				ss << ", ";
-				print_vardata(ss, vars[i]);
+			// For indirect case in SleighBuilder::dump(OpTpl *op)'s "vn->isDynamic(*walker)" branch.
+			if (isize > 1 && vars[0].size == sizeof(AddrSpace *) && vars[0].space->getName() == "const"
+				&& (vars[0].offset >> 24) == ((uintb)vars[1].space >> 24) && *(int**)(vars[0].offset) == *(int**)(vars[1].space)) {
+				ss << '[';
+				print_vardata(ss, vars[1]);
+				ss << ']';
+				for(int4 i=2; i<isize; ++i)
+				{
+					ss << ", ";
+					print_vardata(ss, vars[i]);
+				}
+			} else {
+				print_vardata(ss, vars[0]);
+				for(int4 i=1; i<isize; ++i)
+				{
+					ss << ", ";
+					print_vardata(ss, vars[i]);
+				}
 			}
 			r_cons_printf("    %s\n", ss.str().c_str());
 		}
@@ -392,9 +405,16 @@ static void Disassemble(RCore *core, ut64 ops)
 	Address addr(trans->getDefaultCodeSpace(), core->offset);
 	for(ut64 i=0; i<ops; i++)
 	{
-		trans->printAssembly(assememit, addr);
-		auto length = trans->oneInstruction(emit, addr);
-		addr = addr + length;
+		try {
+			trans->printAssembly(assememit, addr);
+			auto length = trans->oneInstruction(emit, addr);
+			addr = addr + length;
+		} catch(const BadDataError &error) {
+			std::stringstream ss;
+			addr.printRaw(ss);
+			r_cons_printf("%s: invalid\n", ss.str().c_str());
+			addr = addr + trans->getAlignment();
+		}
 	}
 }
 
