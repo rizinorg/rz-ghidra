@@ -85,10 +85,13 @@ static void anal_type(RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &
 	*/
 }
 
-static char *getIndirectReg(SleighInstruction &ins) {
+static char *getIndirectReg(SleighInstruction &ins, bool &isRefed) {
 	VarnodeData data = ins.getIndirectInvar();
+	isRefed = data.size & 0x80000000;
+	if (isRefed)
+		data.size &= ~0x80000000;
+
 	AddrSpace *space = data.space;
-	std::cerr << ins.baseaddr << "'s space is " << space->getName() << std::endl;
 	if(space->getName() == "register")
 		return strdup(space->getTrans()->getRegisterName(data.space, data.offset, data.size).c_str());
 	else
@@ -119,7 +122,7 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 
 	SleighInstruction &ins = *sanal.trans.getInstruction(caddr);
 	FlowType ftype = ins.getFlowType();
-	std::vector<Address> tmp;
+	bool isRefed = false;
 
 	if(ftype != FlowType::FALL_THROUGH) {
 		switch(ftype) {
@@ -143,21 +146,35 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 				break;
 
 			case FlowType::COMPUTED_JUMP: {
-				char *reg = getIndirectReg(ins);
+				char *reg = getIndirectReg(ins, isRefed);
 				if(reg) {
-					anal_op->type = R_ANAL_OP_TYPE_IRJMP;
-					anal_op->reg = reg;
+					if (isRefed) {
+						anal_op->type = R_ANAL_OP_TYPE_MJMP;
+						anal_op->ireg = reg;
+					} else {
+						anal_op->type = R_ANAL_OP_TYPE_IRJMP;
+						anal_op->reg = reg;
+					}
 				} else 
 					anal_op->type = R_ANAL_OP_TYPE_IJMP;
 				break;
 			}
 
-			case FlowType::CONDITIONAL_COMPUTED_JUMP:
-				anal_op->type = R_ANAL_OP_TYPE_CJMP;
-				tmp = ins.getFlows();
-				anal_op->jump = tmp.empty() ? anal_op->jump : tmp.begin()->getOffset();
+			case FlowType::CONDITIONAL_COMPUTED_JUMP: {
+				char *reg = getIndirectReg(ins, isRefed);
+				if(reg) {
+					if (isRefed) {
+						anal_op->type = R_ANAL_OP_TYPE_MCJMP;
+						anal_op->ireg = reg;
+					} else {
+						anal_op->type = R_ANAL_OP_TYPE_RCJMP;
+						anal_op->reg = reg;
+					}
+				} else 
+					anal_op->type = R_ANAL_OP_TYPE_UCJMP;
 				anal_op->fail = ins.getFallThrough().getOffset();
 				break;
+			}
 
 			case FlowType::CONDITIONAL_JUMP:
 				anal_op->type = R_ANAL_OP_TYPE_CJMP;
@@ -173,47 +190,49 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 				anal_op->fail = ins.getFallThrough().getOffset();
 				break;
 
-			//XXX
-			case FlowType::COMPUTED_CALL_TERMINATOR:
-				anal_op->type = R_ANAL_OP_TYPE_ICALL; 
-				tmp = ins.getFlows();
-				anal_op->jump = tmp.empty() ? anal_op->jump : tmp.begin()->getOffset();
+			case FlowType::CONDITIONAL_COMPUTED_CALL: {
+				char *reg = getIndirectReg(ins, isRefed);
+				if(reg)
+					if (isRefed)
+						anal_op->ireg = reg;
+					else
+						anal_op->reg = reg;
+
+				anal_op->type = R_ANAL_OP_TYPE_UCCALL;
 				anal_op->fail = ins.getFallThrough().getOffset();
-				anal_op->eob = true;
 				break;
+			}
 
-			//XXX
-			case FlowType::CONDITIONAL_COMPUTED_CALL:
-				anal_op->type = R_ANAL_OP_TYPE_ICALL;
-				{
-
-				}
 			case FlowType::CONDITIONAL_CALL:
 				anal_op->type |= R_ANAL_OP_TYPE_CCALL;
-				tmp = ins.getFlows();
-				anal_op->jump = tmp.empty() ? anal_op->jump : tmp.begin()->getOffset();
+				anal_op->jump = ins.getFlows().begin()->getOffset();
 				anal_op->fail = ins.getFallThrough().getOffset();
 				break;
 
-			//XXX
-			case FlowType::COMPUTED_CALL:
-				anal_op->type = R_ANAL_OP_TYPE_ICALL;
-				tmp = ins.getFlows();
-				anal_op->jump = tmp.empty() ? anal_op->jump : tmp.begin()->getOffset();
+			case FlowType::COMPUTED_CALL_TERMINATOR: 
+				anal_op->eob = true;
+			case FlowType::COMPUTED_CALL: {
+				char *reg = getIndirectReg(ins, isRefed);
+				if(reg) {
+					if (isRefed) {
+						anal_op->type = R_ANAL_OP_TYPE_IRCALL;
+						anal_op->ireg = reg;
+					} else {
+						anal_op->type = R_ANAL_OP_TYPE_IRCALL;
+						anal_op->reg = reg;
+					}
+				} else 
+					anal_op->type = R_ANAL_OP_TYPE_ICALL;
 				anal_op->fail = ins.getFallThrough().getOffset();
-				{
-					VarnodeData data = ins.getIndirectInvar();
-					AddrSpace *space = data.space;
-					//std::cerr << space->getTrans()->getRegisterName(data.space, data.offset, data.size) << std::endl;
-				}
 				break;
+			}
 
 			default:
 				throw LowlevelError("Unexpected FlowType occured in sleigh_op.");
 		}
 	} else {
 
-		anal_type(anal_op, pcode_slg, assem); // Label each instruction based on a series of P-codes.
+		//anal_type(anal_op, pcode_slg, assem); // Label each instruction based on a series of P-codes.
 
 	}
 

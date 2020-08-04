@@ -289,6 +289,7 @@ class R2Sleigh : public Sleigh
 		mutable std::unordered_map<uintm, SleighInstruction *> ins_cache;
 
 		void generateLocation(const VarnodeTpl *vntpl,VarnodeData &vn, ParserWalker &walker);
+		void generatePointer(const VarnodeTpl *vntpl,VarnodeData &vn, ParserWalker &walker);
 
 	public:
 		R2Sleigh(LoadImage *ld,ContextDatabase *c_db) : Sleigh(ld, c_db) {}

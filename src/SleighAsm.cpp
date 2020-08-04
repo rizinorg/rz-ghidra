@@ -405,10 +405,7 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 	try
 	{
 		length = trans.printAssembly(assem, addr);
-		SleighInstruction *ins = trans.getInstruction(addr);
-		stringstream ss;
-		ss << ins->printFlowType(ins->getFlowType()) << assem.str;
-		r_strbuf_set(&op->buf_asm, ss.str().c_str());
+		r_strbuf_set(&op->buf_asm, assem.str);
 	}
 	catch(BadDataError &err)
 	{

@@ -40,6 +40,18 @@ void R2Sleigh::generateLocation(const VarnodeTpl *vntpl,VarnodeData &vn, ParserW
 		vn.offset = vn.space->wrapOffset(vntpl->getOffset().fix(walker));
 }
 
+void R2Sleigh::generatePointer(const VarnodeTpl *vntpl,VarnodeData &vn, ParserWalker &walker) {
+	const FixedHandle &hand(walker.getFixedHandle(vntpl->getOffset().getHandleIndex()));
+	vn.space = hand.offset_space;
+	vn.size = hand.offset_size;
+	if (vn.space == getConstantSpace())
+		vn.offset = hand.offset_offset & calc_mask(vn.size);
+	else if (vn.space == getUniqueSpace())
+		vn.offset = hand.offset_offset | (walker.getAddr().getOffset() & unique_allocatemask) << 4;
+	else
+		vn.offset = vn.space->wrapOffset(hand.offset_offset);
+}
+
 VarnodeData R2Sleigh::dumpInvar(OpTpl *op, Address &addr) {
 	ParserContext *pos = obtainContext(addr,ParserContext::pcode);
 	pos->applyCommits();
@@ -48,7 +60,12 @@ VarnodeData R2Sleigh::dumpInvar(OpTpl *op, Address &addr) {
 
 	VarnodeData res;
 	VarnodeTpl *vn = op->getIn(0);
-	generateLocation(vn, res, walker);
+
+	if (vn->isDynamic(walker)) {
+		generatePointer(vn, res, walker);
+		res.size |= 0x80000000;
+	} else
+		generateLocation(vn, res, walker);
 	return res;
 }
 
