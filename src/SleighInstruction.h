@@ -375,6 +375,7 @@ class SleighInstruction
 					return sleigh->dumpInvar(rec->op, baseaddr);
 				}
 			}
+			return VarnodeData();
 		}
 
 		SleighInstruction(R2Sleigh *s, Address &addr) : sleigh(s), baseaddr(addr) {

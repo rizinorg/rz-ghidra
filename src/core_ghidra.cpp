@@ -324,6 +324,8 @@ class AssemblyRaw : public AssemblyEmit
 class PcodeRawOut : public PcodeEmit
 {
 	private:
+		const Translate *trans = nullptr;
+
 		void print_vardata(ostream &s, VarnodeData &data)
 		{
 			AddrSpace *space = data.space;
@@ -332,14 +334,15 @@ class PcodeRawOut : public PcodeEmit
 			else if(space->getName() == "ram")
 			{
 				if(data.size == 1)
-					s << "byte ptr ";
+					s << "byte_ptr(";
 				if(data.size == 2)
-					s << "word ptr ";
+					s << "word_ptr(";
 				if(data.size == 4)
-					s << "dword ptr ";
+					s << "dword_ptr(";
 				if(data.size == 8)
-					s << "qword ptr ";
-				s << '[' << data.offset << ']';
+					s << "qword_ptr(";
+				space->printRaw(s, data.offset);
+				s << ')';
 			}
 			else if(space->getName() == "const")
 				static_cast<ConstantSpace*>(space)->printRaw(s, data.offset);
@@ -356,9 +359,16 @@ class PcodeRawOut : public PcodeEmit
 		}
 
 	public:
+		PcodeRawOut(const Translate *t): trans(t) {}
+
 		void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars, int4 isize) override
 		{
 			std::stringstream ss;
+			if(opc == CPUI_STORE && isize == 3) {
+				print_vardata(ss,vars[2]);
+				ss << " = ";
+				isize = 2;
+			}
 			if(outvar)
 			{
 				print_vardata(ss,*outvar);
@@ -369,7 +379,7 @@ class PcodeRawOut : public PcodeEmit
 			ss << ' ';
 			// For indirect case in SleighBuilder::dump(OpTpl *op)'s "vn->isDynamic(*walker)" branch.
 			if (isize > 1 && vars[0].size == sizeof(AddrSpace *) && vars[0].space->getName() == "const"
-				&& (vars[0].offset >> 24) == ((uintb)vars[1].space >> 24) && *(int**)(vars[0].offset) == *(int**)(vars[1].space)) {
+				&& (vars[0].offset >> 24) == ((uintb)vars[1].space >> 24) && trans == ((AddrSpace*)vars[0].offset)->getTrans()) {
 				ss << '[';
 				print_vardata(ss, vars[1]);
 				ss << ']';
@@ -400,7 +410,7 @@ static void Disassemble(RCore *core, ut64 ops)
 	arch.init(store);
 
 	const Translate *trans = arch.translate;
-	PcodeRawOut emit;
+	PcodeRawOut emit(arch.translate);
 	AssemblyRaw assememit;
 	Address addr(trans->getDefaultCodeSpace(), core->offset);
 	for(ut64 i=0; i<ops; i++)

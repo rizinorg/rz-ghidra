@@ -405,7 +405,13 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 	try
 	{
 		length = trans.printAssembly(assem, addr);
-		r_strbuf_set(&op->buf_asm, assem.str);
+		// r_strbuf_set(&op->buf_asm, assem.str);
+		auto *ins = trans.getInstruction(addr);
+		stringstream ss;
+		ss << assem.str << " " << ins->printFlowType(ins->getFlowType());
+		for (auto p : ins->getFlows())
+			ss << " " << p;
+		r_strbuf_set(&op->buf_asm, ss.str().c_str());
 	}
 	catch(BadDataError &err)
 	{
@@ -454,4 +460,31 @@ std::vector<R2Reg> SleighAsm::getRegs(void)
 	}
 
 	return r2_reglist;
+}
+
+ostream &operator<<(ostream &s,const PcodeOperand &arg) {
+	switch (arg.type) {
+		case PcodeOperand::REGISTER: s << arg.name; 
+			break;
+		case PcodeOperand::UNIQUE: s << "unique(" << arg.offset << ", " << arg.size << ")";
+			break;
+		case PcodeOperand::RAM: s << "ram(" << arg.offset << ", " << arg.size << ")";
+			break;
+		case PcodeOperand::CONST: s << arg.number;
+			break;
+		default: 
+			throw LowlevelError("Unexpected type of PcodeOperand found in operator<<.");
+	}
+	return s;
+}
+
+ostream &operator<<(ostream &s,const Pcodeop &op) {
+	if (op.output)
+		s << *op.output << " = ";
+	s << get_opname(op.type);
+	if (op.input0)
+		s << " " << *op.input0;
+	if (op.input1)
+		s << " " << *op.input1;
+	return s;
 }

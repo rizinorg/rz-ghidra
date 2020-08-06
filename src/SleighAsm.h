@@ -44,40 +44,65 @@ class AssemblySlg : public AssemblyEmit
 
 struct PcodeOperand
 {
-	public:
-		PcodeOperand(uintb offset, uint4 size): type(RAM), offset(offset), size(size) {}
-		PcodeOperand(uintb number): type(CONST), number(number) {}
-		PcodeOperand(const std::string &name): type(REGISTER), name(name) {}
-		~PcodeOperand() { if(type == REGISTER) name.~string(); }
+	PcodeOperand(): PcodeOperand(0x7fffffff , 0x7fffffff) {}
+	PcodeOperand(uintb offset, uint4 size): type(RAM), offset(offset), size(size) {}
+	PcodeOperand(uintb number): type(CONST), number(number) {}
+	PcodeOperand(const std::string &name): type(REGISTER), name(name) {}
+	~PcodeOperand() { if(type == REGISTER) name.~string(); }
 
-		union
+	union
+	{
+		std::string name;
+		struct
 		{
-			std::string name;
-			struct
-			{
-				uintb offset;
-				uint4 size;
-			};
-			uintb number;
+			uintb offset;
+			uint4 size;
 		};
+		uintb number;
+	};
 
-		enum {REGISTER, RAM, CONST, UNIQUE} type;
+	enum {REGISTER, RAM, CONST, UNIQUE} type;
 
-		bool operator==(const PcodeOperand &rhs) const
+	PcodeOperand(const PcodeOperand &rhs) {
+		type = rhs.type;
+
+		switch (type)
 		{
-			if(type != rhs.type)
-				return false;
-
-			switch(type)
-			{
-				case REGISTER: return name == rhs.name;
-				case UNIQUE: /* Same as RAM */
-				case RAM: return offset == rhs.offset && size == rhs.size;
-				case CONST: return number == rhs.number;
-				default: throw LowlevelError("Unexpected type of PcodeOperand found in operator==.");
-			}
+			case REGISTER: name = rhs.name; break;
+			case UNIQUE: /* Same as RAM */
+			case RAM: offset = rhs.offset; size = rhs.size; break;
+			case CONST: number = rhs.number; break;
+			default: throw LowlevelError("Unexpected type of PcodeOperand found in operator==.");
 		}
+	}
+
+	bool operator==(const PcodeOperand &rhs) const
+	{
+		if(type != rhs.type)
+			return false;
+
+		switch(type)
+		{
+			case REGISTER: return name == rhs.name;
+			case UNIQUE: /* Same as RAM */
+			case RAM: return offset == rhs.offset && size == rhs.size;
+			case CONST: return number == rhs.number;
+			default: throw LowlevelError("Unexpected type of PcodeOperand found in operator==.");
+		}
+	}
+
+	size_t operator()(const PcodeOperand &self) const {
+		if (type == RAM && offset == 0x7fffffff && size == 0x7fffffff)
+			return 0x7fffffff;
+
+		if (type != UNIQUE)
+			throw LowlevelError("Only unique vars will be added into unordered set.");
+
+		return self.offset;
+	}
 };
+
+ostream &operator<<(ostream &s,const PcodeOperand &arg);
 
 typedef OpCode PcodeOpType;
 
@@ -100,6 +125,8 @@ struct Pcodeop
 		if(input1) delete input1;
 	}
 };
+
+ostream &operator<<(ostream &s,const Pcodeop &op);
 
 class PcodeSlg : public PcodeEmit
 {
@@ -141,6 +168,9 @@ class PcodeSlg : public PcodeEmit
 
 		void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars, int4 isize) override
 		{
+			if (opc == CPUI_CALLOTHER)
+				return; // Just ignore it.
+
 			PcodeOperand *out = nullptr, *in0 = nullptr, *in1 = nullptr;
 			if(outvar)
 				out = parse_vardata(*outvar);

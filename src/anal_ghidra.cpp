@@ -46,43 +46,68 @@ class InnerAssemblyEmit : public AssemblyEmit
 
 		void dump(const Address &addr, const string &mnem, const string &body) override
 		{
-			args = body;
+			for (auto iter = body.cbegin(); iter != body.cend(); ++iter)
+				if (*iter != '[' && *iter != ']')
+					args.push_back(*iter);
 		}
 };
 
+static bool isOperandInteresting(const PcodeOperand *arg, std::vector<std::string> &regs, std::unordered_set<PcodeOperand, PcodeOperand> &mid_vars) {
+	if (arg) {
+		if (arg->type == PcodeOperand::REGISTER) {
+			for (auto iter = regs.cbegin(); iter != regs.cend(); ++iter)
+				if (*iter == arg->name)
+					return true;
+		}
+
+		if (arg->type == PcodeOperand::UNIQUE)
+			return mid_vars.find(*arg) != mid_vars.end();
+	}
+	return false;
+}
+
+static void anal_type_SAR(RAnalOp *anal_op, const std::vector<const Pcodeop *> filtered_ops) {
+	for (auto iter = filtered_ops.cbegin(); iter != filtered_ops.cend(); ++iter)
+		if ((*iter)->type == CPUI_INT_SRIGHT) {
+			anal_op->type = R_ANAL_OP_TYPE_SAR;
+			/*
+			op->dst = parsed_operands[0].value;
+			op->src[0] = parsed_operands[1].value;
+			op->src[1] = parsed_operands[2].value;
+			*/
+		}
+}
+
 static void anal_type(RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
 {
-	std::vector<Pcodeop> filtered_ops;
 	std::vector<std::string> args = string_split(assem.args, ',');
 	std::transform(args.begin(), args.end(), args.begin(), string_trim);
+	std::unordered_set<PcodeOperand, PcodeOperand> mid_vars;
+	std::vector<const Pcodeop *> filtered_ops;
 
-	std::copy_if(pcode_slg.pcodes.begin(), pcode_slg.pcodes.end(), back_inserter(filtered_ops), 
-		[&args](const Pcodeop &p){ 
-			if(p.input0 && p.input0->type == PcodeOperand::REGISTER)
-				for(auto iter = args.cbegin(); iter != args.cend(); ++iter)
-					if(*iter == p.input0->name)
-						return true;
-			if(p.input1 && p.input1->type == PcodeOperand::REGISTER)
-				for(auto iter = args.cbegin(); iter != args.cend(); ++iter)
-					if(*iter == p.input0->name)
-						return true;
-			return false;
-		}
-	);
-
-	/*
-	for(auto iter = filtered_ops.cbegin(); iter != filtered_ops.cend(); iter++)
-	{
-		const Pcodeop &pcode_op = *iter;
-		switch(pcode_op.type)
-		{
-			case CPUI_COPY:
-				break;
-			default: throw LowlevelError("Unexpected Pcode operator type. This should never happen!");
+	for (auto pco = pcode_slg.pcodes.cbegin(); pco != pcode_slg.pcodes.cend(); ++pco) {
+		if (pco->type == CPUI_STORE) {
+			if (isOperandInteresting(pco->input1, args, mid_vars) || isOperandInteresting(pco->output, args, mid_vars)) {
+				if (pco->input1 && pco->input1->type == PcodeOperand::UNIQUE)
+					mid_vars.insert(*pco->input1);
+			} else
+				continue;
+		} else {
+			if (isOperandInteresting(pco->input0, args, mid_vars) || isOperandInteresting(pco->input1, args, mid_vars)) {
+				if (pco->output && pco->output->type == PcodeOperand::UNIQUE)
+					mid_vars.insert(*pco->output);
+			} else
+				continue;
 		}
 
+		filtered_ops.push_back(&(*pco));
+		std::cerr << "0x" << hex << anal_op->addr << ": " << *pco << std::endl;
 	}
-	*/
+
+	// Filter work is done. Process now.
+	anal_op->type = R_ANAL_OP_TYPE_UNK;
+
+	anal_type_SAR(anal_op, filtered_ops);
 }
 
 static char *getIndirectReg(SleighInstruction &ins, bool &isRefed) {
@@ -113,7 +138,7 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	Address caddr(sanal.trans.getDefaultCodeSpace(), addr);
 	anal_op->size = sanal.genOpcode(pcode_slg, caddr);
 	if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, caddr) < 1))
-		return anal_op->size;
+		return anal_op->size; // When current place has no available code, return ILL.
 
 	if(pcode_slg.pcodes.empty()) { // NOP case
 		anal_op->type = R_ANAL_OP_TYPE_NOP;
@@ -232,7 +257,9 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 		}
 	} else {
 
-		//anal_type(anal_op, pcode_slg, assem); // Label each instruction based on a series of P-codes.
+		anal_type(anal_op, pcode_slg, assem); // Label each instruction based on a series of P-codes.
+
+		// anal_op info extraction here!!!
 
 	}
 
