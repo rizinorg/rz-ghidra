@@ -382,11 +382,10 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				auto make_mask = [&ss](int4 bytes) { ss << "," << bytes * 8 << ",1,<<,1,SWAP,-"; };
 				auto make_input = [&ss, &print_if_unique](PcodeOperand *input, int offset) { ss << ","; if (!print_if_unique(input)) ss << *input; };
 				auto make_2comp = [&ss, &make_input](PcodeOperand *input, int offset = 0) {
-					ss << ",0,0";
 					make_input(input, offset);
-					ss << "," << input->size * 8 - 1 << ",>>,?{,0xff,+,SWAP,1,+,SWAP,}";
-					make_input(input, offset);
-					ss << ",^,+";
+					ss << ",DUP," << input->size * 8 - 1 << ",SWAP,>>,1,&,?{"
+					make_mask(input->size);
+					ss << ",^,1,+,}";
 				};
 
 				if (iter->input0 && iter->input1 && iter->output) {
@@ -399,13 +398,13 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 					} // Now, one unsigned result is on stack
 
 					make_input(iter->input1, 1);
-					ss << "," << iter->input1->size * 8 - 1 << ",>>";
+					ss << "," << iter->input1->size * 8 - 1 << ",SWAP,>>,1,&";
 					make_input(iter->input0, 2);
-					ss << "," << iter->input0->size * 8 - 1 << ",>>";
+					ss << "," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&";
 
 					ss << ",^,?{";
 					make_mask(iter->output->size);
-					ss << ",^,1,+";
+					ss << ",^,1,+,}";
 
 					if (iter->output->is_unique()) 
 						push_stack(iter->output);
