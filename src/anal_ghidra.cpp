@@ -155,8 +155,25 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 
 	for (auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter) {
 		switch (iter->type) {
-			case CPUI_INT_SEXT:
 			case CPUI_INT_ZEXT: /* do nothing */ break;
+
+			case CPUI_INT_SEXT: {
+				if (iter->input0 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input0)) 
+						ss << *iter->input0;
+
+					ss << "," << (iter->output->size - iter->input0->size) * 8 << ",1,<<,1,SWAP,-";
+					ss << "," << iter->input0->size * 8 << ",SWAP,<<,|";
+						
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
 
 			case CPUI_COPY: {
 				if (iter->input0 && iter->output) {
@@ -312,6 +329,15 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				break;
 			}
 
+			case CPUI_INT_MULT:
+			case CPUI_INT_DIV:
+			case CPUI_INT_REM:
+			case CPUI_INT_XOR:
+			case CPUI_INT_AND:
+			case CPUI_INT_OR:
+			case CPUI_INT_LEFT:
+			case CPUI_INT_RIGHT:
+			case CPUI_INT_SRIGHT:
 			case CPUI_INT_SUB:
 			case CPUI_INT_ADD: {
 				if (iter->input0 && iter->input1 && iter->output) {
@@ -323,10 +349,63 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 						ss << *iter->input0;
 					ss << ",";
 					switch (iter->type) {
+						case CPUI_INT_MULT: ss << "*"; break;
+						case CPUI_INT_DIV: ss << "/"; break;
+						case CPUI_INT_REM: ss << "%"; break;
 						case CPUI_INT_SUB: ss << "-"; break;
 						case CPUI_INT_ADD: ss << "+"; break;
+						case CPUI_INT_XOR: ss << "^"; break;
+						case CPUI_INT_AND: ss << "&"; break;
+						case CPUI_INT_OR: ss << "|"; break;
+						case CPUI_INT_LEFT: ss << "<<"; break;
+						case CPUI_INT_RIGHT: ss << ">>"; break;
+						case CPUI_INT_SRIGHT: ss << ">>";
+							ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,";
+							if (!print_if_unique(iter->input1)) 
+								ss << *iter->input1;
+							ss << ",1,<<,1,SWAP,-,^,|";
+							break;
 					}
 					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
+
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_INT_SREM:
+			case CPUI_INT_SDIV: {
+				auto make_mask = [&ss](int4 bytes) { ss << "," << bytes * 8 << ",1,<<,1,SWAP,-"; };
+				auto make_input = [&ss, &print_if_unique](PcodeOperand *input, int offset) { ss << ","; if (!print_if_unique(input)) ss << *input; };
+				auto make_2comp = [&ss, &make_input](PcodeOperand *input, int offset = 0) {
+					ss << ",0,0";
+					make_input(input, offset);
+					ss << "," << input->size * 8 - 1 << ",>>,?{,0xff,+,SWAP,1,+,SWAP,}";
+					make_input(input, offset);
+					ss << ",^,+";
+				};
+
+				if (iter->input0 && iter->input1 && iter->output) {
+					make_2comp(iter->input1);
+					make_2comp(iter->input0, 1);
+					ss << ",";
+					switch(iter->type) {
+						case CPUI_INT_SREM: ss << "%"; break;
+						case CPUI_INT_SDIV: ss << "/"; break;
+					} // Now, one unsigned result is on stack
+
+					make_input(iter->input1, 1);
+					ss << "," << iter->input1->size * 8 - 1 << ",>>";
+					make_input(iter->input0, 2);
+					ss << "," << iter->input0->size * 8 - 1 << ",>>";
+
+					ss << ",^,?{";
+					make_mask(iter->output->size);
+					ss << ",^,1,+";
 
 					if (iter->output->is_unique()) 
 						push_stack(iter->output);
@@ -416,7 +495,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 						ss << *iter->input0;
 					ss << "," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&";
 
-					ss << ",^,"
+					ss << ",^";
 
 					ss << ",";
 					if (!print_if_unique(iter->input1, 3))
@@ -424,6 +503,25 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 					ss << ",+," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&"; // (a^b^1), a, c
 
 					ss << ",^,&";
+
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_INT_NEGATE:
+			case CPUI_INT_2COMP: {
+				if (iter->input0 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input0))
+						ss << *iter->input0;
+
+					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,^";
+					ss << (iter->type == CPUI_INT_2COMP) ? ",1,+" : "";
 
 					if (iter->output->is_unique()) 
 						push_stack(iter->output);
