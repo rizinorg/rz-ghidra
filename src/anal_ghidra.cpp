@@ -66,8 +66,8 @@ static bool isOperandInteresting(const PcodeOperand *arg, std::vector<std::strin
 	return false;
 }
 
-static void anal_type_SAR(RAnalOp *anal_op, const std::vector<const Pcodeop *> filtered_ops) {
-	for (auto iter = filtered_ops.cbegin(); iter != filtered_ops.cend(); ++iter)
+static bool anal_type_SAR(RAnalOp *anal_op, const std::vector<const Pcodeop *> filtered_ops) {
+	for (auto iter = filtered_ops.cbegin(); iter != filtered_ops.cend(); ++iter) {
 		if ((*iter)->type == CPUI_INT_SRIGHT) {
 			anal_op->type = R_ANAL_OP_TYPE_SAR;
 			/*
@@ -75,7 +75,12 @@ static void anal_type_SAR(RAnalOp *anal_op, const std::vector<const Pcodeop *> f
 			op->src[0] = parsed_operands[1].value;
 			op->src[1] = parsed_operands[2].value;
 			*/
+
+			return true;
 		}
+	}
+
+	return false;
 }
 
 static void anal_type(RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
@@ -123,6 +128,222 @@ static char *getIndirectReg(SleighInstruction &ins, bool &isRefed) {
 		return nullptr;
 }
 
+static int index_of_unique(const std::vector<PcodeOperand *> &esil_stack, const PcodeOperand *arg) {
+	int index = 1;
+	for (auto iter = esil_stack.crbegin(); iter != esil_stack.crend(); ++iter, ++index)
+		if (**iter == *arg)
+			return index;
+	
+	return -1;
+}
+
+static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len, std::vector<Pcodeop> &Pcodes) {
+	std::vector<PcodeOperand *> esil_stack;
+	stringstream ss;
+	auto print_if_unique = [&esil_stack, &ss](const PcodeOperand *arg) -> bool {
+		if (arg->is_unique()) {
+			int index = index_of_unique(esil_stack, arg);
+			if (-1 == index)
+				throw LowlevelError("print_unique: Can't find required unique varnodes in stack.");
+
+			ss << index << ",PICK";
+			return true;
+		} else 
+			return false;
+	};
+	auto push_stack = [&esil_stack](PcodeOperand *arg) { esil_stack.push_back(arg); };
+
+	for (auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter) {
+		switch (iter->type) {
+			case CPUI_INT_SEXT:
+			case CPUI_INT_ZEXT: /* do nothing */ break;
+
+			case CPUI_COPY: {
+				if (iter->input0 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input0)) 
+						ss << *iter->input0;
+						
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_LOAD: {
+				if (iter->input0 && iter->input1 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input1)) 
+						ss << *iter->input1;
+					if (iter->input0->is_const() && ((AddrSpace *)iter->input0->offset)->getWordSize() != 1)
+						ss << "," << ((AddrSpace *)iter->input0->offset)->getWordSize() << ",*";
+					ss << ",[" << iter->output->size << "]";
+						
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_STORE: {
+				if (iter->input0 && iter->input1 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->output)) 
+						ss << *iter->output;
+
+					ss << ",";
+					if (!print_if_unique(iter->input1)) 
+						ss << *iter->input1;
+					if (iter->input0->is_const() && ((AddrSpace *)iter->input0->offset)->getWordSize() != 1)
+						ss << "," << ((AddrSpace *)iter->input0->offset)->getWordSize() << ",*";
+					ss << ",=[" << iter->output->size << "]";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			// TODO: CPUI_BRANCH can jump in the other P-codes of instruction
+			// Three P-codes below are all indirect style
+			case CPUI_RETURN:
+			case CPUI_CALLIND:
+			case CPUI_BRANCHIND: // Actually, I have some suspect about this.
+			// End here.
+			case CPUI_CALL:
+			case CPUI_BRANCH: {
+				if (iter->input0) {
+					if (iter->input0->is_const())
+						throw LowlevelError("Sleigh_esil: const input case of BRANCH appear.");
+					ss << "," << *iter->input0 << "," << sanal.pc_name << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_CBRANCH: {
+				if (iter->input0 && iter->input1) {
+					if (!print_if_unique(iter->input1))
+						ss << *iter->input1;
+					ss << ",?{";
+
+					if (iter->input0->is_const())
+						throw LowlevelError("Sleigh_esil: const input case of BRANCH appear.");
+					ss << "," << *iter->input0 << "," << sanal.pc_name << ",=,}";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_PIECE: {
+				if (iter->input0 && iter->input1 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input0)) 
+						ss << *iter->input0;
+					ss << "," << (iter->output->size - iter->input0->size) * 8 << ",SWAP,<<";
+
+					ss << ",";
+					if (!print_if_unique(iter->input1)) 
+						ss << *iter->input1;
+					ss << ",|";
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_SUBPIECE: {
+				if (iter->input0 && iter->input1 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input0)) 
+						ss << *iter->input0;
+					if (!iter->input1->is_const())
+						throw LowlevelError("sleigh_esil: input1 is not consts in SUBPIECE.");
+					ss << "," << iter->input1->number * 8 << ",SWAP,>>";
+
+					if (iter->output->size < iter->input0->size + iter->input1->number)
+						ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,SWAP,&";
+
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_INT_LESS:
+			case CPUI_INT_SLESS:
+			case CPUI_INT_LESSEQUAL:
+			case CPUI_INT_SLESSEQUAL:
+			case CPUI_INT_NOTEQUAL:
+			case CPUI_INT_EQUAL: {
+				if (iter->input0 && iter->input1 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input1)) 
+						ss << *iter->input1;
+					ss << ",";
+					if (!print_if_unique(iter->input0)) 
+						ss << *iter->input0;
+					ss << ",";
+					switch (iter->type) {
+						case CPUI_INT_LESS: 
+						case CPUI_INT_SLESS: ss << "<"; break;
+						case CPUI_INT_LESSEQUAL:
+						case CPUI_INT_SLESSEQUAL: ss << "<="; break;
+						case CPUI_INT_NOTEQUAL: ss << "!="; break;
+						case CPUI_INT_EQUAL: ss << "=="; break;
+					}
+
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_INT_SUB:
+			case CPUI_INT_ADD: {
+				if (iter->input0 && iter->input1 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input1)) 
+						ss << *iter->input1;
+					ss << ",";
+					if (!print_if_unique(iter->input0)) 
+						ss << *iter->input0;
+					ss << ",";
+					switch (iter->type) {
+						case CPUI_INT_SUB: ss << "-"; break;
+						case CPUI_INT_ADD: ss << "+"; break;
+					}
+					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,SWAP,&";
+
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+		}
+	}
+
+	if (!esil_stack.empty())
+		ss << ",CLEAR";
+	esilprintf(anal_op, ss.str()[0] == ',' ?  ss.str().c_str()+1 : ss.str().c_str());
+}
+
 static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len, RAnalOpMask mask)
 {
 	anal_op->jump = UT64_MAX;
@@ -142,6 +363,15 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 
 	if(pcode_slg.pcodes.empty()) { // NOP case
 		anal_op->type = R_ANAL_OP_TYPE_NOP;
+		esilprintf(anal_op, "");
+		return anal_op->size;
+	}
+
+	if (mask & R_ANAL_OP_MASK_ESIL)
+		sleigh_esil (a, anal_op, addr, data, len, pcode_slg.pcodes); 
+
+	if(pcode_slg.pcodes.begin()->type == CPUI_CALLOTHER) { // CALLOTHER case, will appear when syscall
+		anal_op->type = R_ANAL_OP_TYPE_UNK;
 		return anal_op->size;
 	}
 
@@ -308,7 +538,7 @@ static char *get_reg_profile(RAnal *anal)
 	if(!sanal.pc_name.empty())
 		buf << "=PC\t" << sanal.pc_name << '\n';
 	if(!sanal.sp_name.empty())
-		buf << "=SP\t" << sanal.pc_name << '\n';
+		buf << "=SP\t" << sanal.sp_name << '\n';
 
 	for(auto p = reg_list.begin(); p != reg_list.end(); p++)
 	{
@@ -341,6 +571,57 @@ static char *get_reg_profile(RAnal *anal)
 	return strdup(res.c_str());
 }
 
+static bool sleigh_consts_pick (RAnalEsil *esil) {
+	if (!esil || !esil->stack)
+		return false;
+
+	char *idx = r_anal_esil_pop (esil);
+	ut64 i;
+	int ret = false;
+
+	if (R_ANAL_ESIL_PARM_REG == r_anal_esil_get_parm_type (esil, idx)) {
+		// ERR ("sleigh_consts_pick: argument is consts only");
+		goto end;
+	}
+	if (!idx || !r_anal_esil_get_parm (esil, idx, &i)) {
+		// ERR ("esil_pick: invalid index number");
+		goto end;
+	}
+	if (esil->stackptr < i) {
+		// ERR ("esil_pick: index out of stack bounds");
+		goto end;
+	}
+	if (!esil->stack[esil->stackptr-i]) {
+		// ERR ("esil_pick: undefined element");
+		goto end;
+	}
+	if (!r_anal_esil_push (esil, esil->stack[esil->stackptr-i])) {
+		// ERR ("ESIL stack is full");
+		esil->trap = 1;
+		esil->trap_code = 1;
+		goto end;
+	}
+	ret = true;
+end:
+	free (idx);
+	return ret;
+}
+
+static int esil_sleigh_init (RAnalEsil *esil) {
+	if (!esil) {
+		return false;
+	}
+
+	// Only consts-only version PICK will meet my demand
+	r_anal_esil_set_op (esil, "PICK", sleigh_consts_pick, 1, 0, R_ANAL_ESIL_OP_TYPE_CUSTOM);		//better meta info plz
+
+	return true;
+}
+
+static int esil_sleigh_fini (RAnalEsil *esil) {
+	return true;
+}
+
 RAnalPlugin r_anal_plugin_ghidra = {
 	/* .name = */ "r2ghidra",
 	/* .desc = */ "SLEIGH Disassembler from Ghidra",
@@ -349,7 +630,7 @@ RAnalPlugin r_anal_plugin_ghidra = {
 	/* .author = */ "FXTi",
 	/* .version = */ nullptr,
 	/* .bits = */ 0,
-	/* .esil = */ false, // can do esil or not
+	/* .esil = */ true,
 	/* .fileformat_type = */ 0,
 	/* .init = */ nullptr,
 	/* .fini = */ nullptr,
@@ -365,10 +646,10 @@ RAnalPlugin r_anal_plugin_ghidra = {
 	/* .diff_bb = */ nullptr,
 	/* .diff_fcn = */ nullptr,
 	/* .diff_eval = */ nullptr,
-	/* .esil_init = */ nullptr,
+	/* .esil_init = */ esil_sleigh_init,
 	/* .esil_post_loop = */ nullptr,
 	/* .esil_trap = */ nullptr,
-	/* .esil_fini = */ nullptr,
+	/* .esil_fini = */ esil_sleigh_fini,
 };
 
 #ifndef CORELIB

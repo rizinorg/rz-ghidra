@@ -468,7 +468,8 @@ ostream &operator<<(ostream &s,const PcodeOperand &arg) {
 			break;
 		case PcodeOperand::UNIQUE: s << "unique(" << arg.offset << ", " << arg.size << ")";
 			break;
-		case PcodeOperand::RAM: s << "ram(" << arg.offset << ", " << arg.size << ")";
+		// case PcodeOperand::RAM: s << "ram(" << arg.offset << ", " << arg.size << ")";
+		case PcodeOperand::RAM: s << arg.offset;
 			break;
 		case PcodeOperand::CONST: s << arg.number;
 			break;

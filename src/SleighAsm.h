@@ -46,31 +46,29 @@ struct PcodeOperand
 {
 	PcodeOperand(): PcodeOperand(0x7fffffff , 0x7fffffff) {}
 	PcodeOperand(uintb offset, uint4 size): type(RAM), offset(offset), size(size) {}
-	PcodeOperand(uintb number): type(CONST), number(number) {}
-	PcodeOperand(const std::string &name): type(REGISTER), name(name) {}
+	PcodeOperand(uintb number): type(CONST), number(number), size(0) {}
+	PcodeOperand(const std::string &name, uint4 size): type(REGISTER), name(name), size(size) {}
 	~PcodeOperand() { if(type == REGISTER) name.~string(); }
 
 	union
 	{
 		std::string name;
-		struct
-		{
-			uintb offset;
-			uint4 size;
-		};
+		uintb offset;
 		uintb number;
 	};
+	uint4 size;
 
 	enum {REGISTER, RAM, CONST, UNIQUE} type;
 
 	PcodeOperand(const PcodeOperand &rhs) {
 		type = rhs.type;
+		size = rhs.size;
 
 		switch (type)
 		{
 			case REGISTER: name = rhs.name; break;
 			case UNIQUE: /* Same as RAM */
-			case RAM: offset = rhs.offset; size = rhs.size; break;
+			case RAM: offset = rhs.offset; break;
 			case CONST: number = rhs.number; break;
 			default: throw LowlevelError("Unexpected type of PcodeOperand found in operator==.");
 		}
@@ -99,6 +97,22 @@ struct PcodeOperand
 			throw LowlevelError("Only unique vars will be added into unordered set.");
 
 		return self.offset;
+	}
+
+	bool is_unique() const {
+		return type == UNIQUE;
+	}
+
+	bool is_const() const {
+		return type == CONST;
+	}
+
+	bool is_ram() const {
+		return type == RAM;
+	}
+
+	bool is_reg() const {
+		return type == REGISTER;
 	}
 };
 
@@ -137,7 +151,7 @@ class PcodeSlg : public PcodeEmit
 			PcodeOperand *operand = nullptr;
 			if(space->getName() == "register")
 			{
-				operand = new PcodeOperand(space->getTrans()->getRegisterName(data.space, data.offset, data.size));
+				operand = new PcodeOperand(space->getTrans()->getRegisterName(data.space, data.offset, data.size), data.size);
 				operand->type = PcodeOperand::REGISTER;
 			}
 			else if(space->getName() == "ram")
@@ -150,6 +164,7 @@ class PcodeSlg : public PcodeEmit
 				// space.cc's ConstantSpace::printRaw()
 				operand = new PcodeOperand(data.offset);
 				operand->type = PcodeOperand::CONST;
+				operand->size = data.size; // To aviod ctor's signature collide with RAM's
 			}
 			else if(space->getName() == "unique")
 			{
@@ -168,8 +183,10 @@ class PcodeSlg : public PcodeEmit
 
 		void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars, int4 isize) override
 		{
-			if (opc == CPUI_CALLOTHER)
-				return; // Just ignore it.
+			if (opc == CPUI_CALLOTHER) {
+				pcodes.push_back(Pcodeop(opc, nullptr, nullptr, nullptr));
+				return;
+			}
 
 			PcodeOperand *out = nullptr, *in0 = nullptr, *in1 = nullptr;
 			if(outvar)
