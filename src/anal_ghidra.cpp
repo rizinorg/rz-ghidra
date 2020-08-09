@@ -3,11 +3,14 @@
 #include <r_lib.h>
 #include <r_anal.h>
 #include <algorithm>
+#include <cfloat>
+#include <cmath>
+#include <cfenv>
 #include "SleighAsm.h"
 
 static SleighAsm sanal;
 
-static int archinfo(RAnal *anal, int query)
+static int archinfo (RAnal *anal, int query)
 {
 	if(!strcmp(anal->cpu, "x86"))
 		return -1;
@@ -19,7 +22,7 @@ static int archinfo(RAnal *anal, int query)
 		return -1;
 }
 
-static std::vector<std::string> string_split(const std::string& s, const char& delim = ' ') {
+static std::vector<std::string> string_split (const std::string& s, const char& delim = ' ') {
 	std::vector<std::string> tokens;
     size_t lastPos = s.find_first_not_of(delim, 0);
     size_t pos = s.find(delim, lastPos);
@@ -31,7 +34,7 @@ static std::vector<std::string> string_split(const std::string& s, const char& d
 	return tokens;
 }
 
-static std::string string_trim(std::string s) {
+static std::string string_trim (std::string s) {
     if (!s.empty()) {
     	s.erase(0,s.find_first_not_of(" "));
     	s.erase(s.find_last_not_of(" ") + 1);
@@ -44,7 +47,7 @@ class InnerAssemblyEmit : public AssemblyEmit
 	public:
 		std::string args;
 
-		void dump(const Address &addr, const string &mnem, const string &body) override
+		void dump (const Address &addr, const string &mnem, const string &body) override
 		{
 			for (auto iter = body.cbegin(); iter != body.cend(); ++iter)
 				if (*iter != '[' && *iter != ']')
@@ -52,7 +55,7 @@ class InnerAssemblyEmit : public AssemblyEmit
 		}
 };
 
-static bool isOperandInteresting(const PcodeOperand *arg, std::vector<std::string> &regs, std::unordered_set<PcodeOperand, PcodeOperand> &mid_vars) {
+static bool isOperandInteresting (const PcodeOperand *arg, std::vector<std::string> &regs, std::unordered_set<PcodeOperand, PcodeOperand> &mid_vars) {
 	if (arg) {
 		if (arg->type == PcodeOperand::REGISTER) {
 			for (auto iter = regs.cbegin(); iter != regs.cend(); ++iter)
@@ -66,7 +69,7 @@ static bool isOperandInteresting(const PcodeOperand *arg, std::vector<std::strin
 	return false;
 }
 
-static bool anal_type_SAR(RAnalOp *anal_op, const std::vector<const Pcodeop *> filtered_ops) {
+static bool anal_type_SAR (RAnalOp *anal_op, const std::vector<const Pcodeop *> filtered_ops) {
 	for (auto iter = filtered_ops.cbegin(); iter != filtered_ops.cend(); ++iter) {
 		if ((*iter)->type == CPUI_INT_SRIGHT) {
 			anal_op->type = R_ANAL_OP_TYPE_SAR;
@@ -83,7 +86,7 @@ static bool anal_type_SAR(RAnalOp *anal_op, const std::vector<const Pcodeop *> f
 	return false;
 }
 
-static void anal_type(RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
+static void anal_type (RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
 {
 	std::vector<std::string> args = string_split(assem.args, ',');
 	std::transform(args.begin(), args.end(), args.begin(), string_trim);
@@ -115,7 +118,7 @@ static void anal_type(RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &
 	anal_type_SAR(anal_op, filtered_ops);
 }
 
-static char *getIndirectReg(SleighInstruction &ins, bool &isRefed) {
+static char *getIndirectReg (SleighInstruction &ins, bool &isRefed) {
 	VarnodeData data = ins.getIndirectInvar();
 	isRefed = data.size & 0x80000000;
 	if (isRefed)
@@ -128,7 +131,7 @@ static char *getIndirectReg(SleighInstruction &ins, bool &isRefed) {
 		return nullptr;
 }
 
-static int index_of_unique(const std::vector<PcodeOperand *> &esil_stack, const PcodeOperand *arg) {
+static int index_of_unique (const std::vector<PcodeOperand *> &esil_stack, const PcodeOperand *arg) {
 	int index = 1;
 	for (auto iter = esil_stack.crbegin(); iter != esil_stack.crend(); ++iter, ++index)
 		if (*iter && **iter == *arg)
@@ -137,7 +140,7 @@ static int index_of_unique(const std::vector<PcodeOperand *> &esil_stack, const 
 	return -1;
 }
 
-static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len, std::vector<Pcodeop> &Pcodes) {
+static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len, std::vector<Pcodeop> &Pcodes) {
 	std::vector<PcodeOperand *> esil_stack;
 	stringstream ss;
 	auto print_if_unique = [&esil_stack, &ss](const PcodeOperand *arg, int offset = 0) -> bool {
@@ -329,11 +332,15 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				break;
 			}
 
+			case CPUI_BOOL_NEGATE:
 			case CPUI_INT_MULT:
 			case CPUI_INT_DIV:
 			case CPUI_INT_REM:
+			case CPUI_BOOL_XOR:
 			case CPUI_INT_XOR:
+			case CPUI_BOOL_AND:
 			case CPUI_INT_AND:
+			case CPUI_BOOL_OR:
 			case CPUI_INT_OR:
 			case CPUI_INT_LEFT:
 			case CPUI_INT_RIGHT:
@@ -349,13 +356,19 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 						ss << *iter->input0;
 					ss << ",";
 					switch (iter->type) {
+						case CPUI_BOOL_NEGATE: ss << "!"; break;
 						case CPUI_INT_MULT: ss << "*"; break;
+						// TODO: Correct DIV & REM
 						case CPUI_INT_DIV: ss << "/"; break;
 						case CPUI_INT_REM: ss << "%"; break;
+						//
 						case CPUI_INT_SUB: ss << "-"; break;
 						case CPUI_INT_ADD: ss << "+"; break;
+						case CPUI_BOOL_XOR:
 						case CPUI_INT_XOR: ss << "^"; break;
+						case CPUI_BOOL_AND:
 						case CPUI_INT_AND: ss << "&"; break;
+						case CPUI_BOOL_OR:
 						case CPUI_INT_OR: ss << "|"; break;
 						case CPUI_INT_LEFT: ss << "<<"; break;
 						case CPUI_INT_RIGHT: ss << ">>"; break;
@@ -381,9 +394,9 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 			case CPUI_INT_SDIV: {
 				auto make_mask = [&ss](int4 bytes) { ss << "," << bytes * 8 << ",1,<<,1,SWAP,-"; };
 				auto make_input = [&ss, &print_if_unique](PcodeOperand *input, int offset) { ss << ","; if (!print_if_unique(input)) ss << *input; };
-				auto make_2comp = [&ss, &make_input](PcodeOperand *input, int offset = 0) {
+				auto make_2comp = [&ss, &make_input, &make_mask](PcodeOperand *input, int offset = 0) {
 					make_input(input, offset);
-					ss << ",DUP," << input->size * 8 - 1 << ",SWAP,>>,1,&,?{"
+					ss << ",DUP," << input->size * 8 - 1 << ",SWAP,>>,1,&,?{";
 					make_mask(input->size);
 					ss << ",^,1,+,}";
 				};
@@ -538,7 +551,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 	esilprintf(anal_op, ss.str()[0] == ',' ?  ss.str().c_str()+1 : ss.str().c_str());
 }
 
-static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len, RAnalOpMask mask)
+static int sleigh_op (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len, RAnalOpMask mask)
 {
 	anal_op->jump = UT64_MAX;
 	anal_op->fail = UT64_MAX;
@@ -690,7 +703,7 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	return anal_op->size;
 }
 
-static char *get_reg_profile(RAnal *anal)
+static char *get_reg_profile (RAnal *anal)
 {
 	// TODO: parse call and return reg usage from compiler spec.
 	// TODO: apply attribute get from processor spec(hidden, ...).
@@ -801,13 +814,370 @@ end:
 	return ret;
 }
 
+constexpr int ESIL_PARM_FLOAT = 127; // Avoid conflict
+
+static bool esil_pushnum_float(RAnalEsil *esil, long double num) {
+	char str[64];
+	snprintf (str, sizeof (str) - 1, "%.*LeF\n", DECIMAL_DIG, num);
+	return r_anal_esil_push (esil, str);
+}
+
+static int esil_get_parm_type_float(RAnalEsil *esil, const char *str) {
+	int len, i;
+
+	if (!str || !(len = strlen (str))) {
+		return R_ANAL_ESIL_PARM_INVALID;
+	}
+	if ((str[len-1] == 'F') && (str[1] == '.' || (str[2] == '.' && str[0] == '-')))
+		return ESIL_PARM_FLOAT;
+	if (!strcmp(str, "nan") || !strcmp(str, "inf"))
+		return ESIL_PARM_FLOAT;
+	if (!((IS_DIGIT (str[0])) || str[0] == '-')) {
+		goto not_a_number;
+	}
+	return ESIL_PARM_FLOAT;
+not_a_number:
+	if (r_reg_get (esil->anal->reg, str, -1)) {
+		return R_ANAL_ESIL_PARM_REG;
+	}
+	return R_ANAL_ESIL_PARM_INVALID;
+}
+
+static int esil_get_parm_float(RAnalEsil *esil, const char *str, long double *num) {
+	if (!str || !*str) {
+		return false;
+	}
+	int parm_type = esil_get_parm_type_float (esil, str);
+	if (!num || !esil) {
+		return false;
+	}
+	switch (parm_type) {
+	case ESIL_PARM_FLOAT:
+		// *num = r_num_get (NULL, str);
+		scanf("%LfF", num);
+		return true;
+	case R_ANAL_ESIL_PARM_REG:
+		if (!r_anal_esil_reg_read (esil, str, (ut64*)num, nullptr)) {
+			break;
+		}
+		return true;
+	default:
+		if (esil->verbose) {
+			eprintf ("Invalid arg (%s)\n", str);
+		}
+		esil->parse_stop = 1;
+		break;
+	}
+	return false;
+}
+
+static bool sleigh_consts_is_nan (RAnalEsil *esil) {
+	bool ret = false;
+	long double s;
+	char *src = r_anal_esil_pop (esil);
+	if (src && esil_get_parm_float(esil, src, &s)) {
+		ret = r_anal_esil_pushnum (esil, isnan(s));
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	return ret;
+}
+
+static bool sleigh_consts_int_to_float (RAnalEsil *esil) {
+	bool ret = false;
+	st64 s;
+	char *src = r_anal_esil_pop (esil);
+	if (src && r_anal_esil_get_parm(esil, src, (ut64 *)&s)) {
+		ret = esil_pushnum_float (esil, (long double)s * 1.0);
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	return ret;
+}
+
+static bool sleigh_consts_float_to_int (RAnalEsil *esil) {
+	bool ret = false;
+	long double s;
+	char *src = r_anal_esil_pop (esil);
+	if (src && esil_get_parm_float(esil, src, &s)) {
+		if (isnan(s) || isinf(s))
+			throw LowlevelError("sleigh_consts_float_to_int: nan or inf detected.");
+		ret = r_anal_esil_pushnum (esil, (ut64)(s));
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	return ret;
+}
+
+static bool sleigh_consts_float_cmp (RAnalEsil *esil) {
+	bool ret = false;
+	long double s, d;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if ((src && esil_get_parm_float (esil, src, &s)) && (dst && esil_get_parm_float (esil, dst, &d))) {
+		if (isnan(s) || isnan(d))
+			ret = r_anal_esil_pushnum (esil, 0);
+		else
+			ret = r_anal_esil_pushnum (esil, s == d);
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	free (dst);
+	return ret;
+}
+
+static bool sleigh_consts_float_negcmp (RAnalEsil *esil) {
+	bool ret = false;
+	long double s, d;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if ((src && esil_get_parm_float (esil, src, &s)) && (dst && esil_get_parm_float (esil, dst, &d))) {
+		if (isnan(s) || isnan(d))
+			ret = r_anal_esil_pushnum (esil, 0);
+		else
+			ret = r_anal_esil_pushnum (esil, s != d);
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	free (dst);
+	return ret;
+}
+
+static bool sleigh_consts_float_less (RAnalEsil *esil) {
+	bool ret = false;
+	long double s, d;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if ((src && esil_get_parm_float (esil, src, &s)) && (dst && esil_get_parm_float (esil, dst, &d))) {
+		if (isnan(s) || isnan(d))
+			ret = r_anal_esil_pushnum (esil, 0);
+		else
+			ret = r_anal_esil_pushnum (esil, s < d);
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	free (dst);
+	return ret;
+}
+
+static bool sleigh_consts_float_lesseq (RAnalEsil *esil) {
+	bool ret = false;
+	long double s, d;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if ((src && esil_get_parm_float (esil, src, &s)) && (dst && esil_get_parm_float (esil, dst, &d))) {
+		if (isnan(s) || isnan(d))
+			ret = r_anal_esil_pushnum (esil, 0);
+		else
+			ret = r_anal_esil_pushnum (esil, s <= d);
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	free (dst);
+	return ret;
+}
+
+static bool sleigh_consts_float_add (RAnalEsil *esil) {
+	bool ret = false;
+	long double s, d;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if ((src && esil_get_parm_float (esil, src, &s)) && (dst && esil_get_parm_float (esil, dst, &d))) {
+		if (isnan(s))
+			ret = esil_pushnum_float (esil, s);
+		else if (isnan(d))
+			ret = esil_pushnum_float (esil, d);
+		else {
+			feclearexcept (FE_OVERFLOW);
+			long double tmp = s + d;
+       		auto raised = fetestexcept (FE_OVERFLOW);
+       		if (raised & FE_OVERFLOW)
+				ret = esil_pushnum_float (esil, 0.0 / 0.0);
+			else
+				ret = esil_pushnum_float (esil, s + d);
+		}
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	free (dst);
+	return ret;
+}
+
+static bool sleigh_consts_float_sub (RAnalEsil *esil) {
+	bool ret = false;
+	long double s, d;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if ((src && esil_get_parm_float (esil, src, &s)) && (dst && esil_get_parm_float (esil, dst, &d))) {
+		if (isnan(s))
+			ret = esil_pushnum_float (esil, s);
+		else if (isnan(d))
+			ret = esil_pushnum_float (esil, d);
+		else {
+			feclearexcept (FE_OVERFLOW);
+			long double tmp = s - d;
+       		auto raised = fetestexcept (FE_OVERFLOW);
+       		if (raised & FE_OVERFLOW)
+				ret = esil_pushnum_float (esil, 0.0 / 0.0);
+			else
+				ret = esil_pushnum_float (esil, s + d);
+		}
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	free (dst);
+	return ret;
+}
+
+static bool sleigh_consts_float_mul (RAnalEsil *esil) {
+	bool ret = false;
+	long double s, d;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if ((src && esil_get_parm_float (esil, src, &s)) && (dst && esil_get_parm_float (esil, dst, &d))) {
+		if (isnan(s))
+			ret = esil_pushnum_float (esil, s);
+		else if (isnan(d))
+			ret = esil_pushnum_float (esil, d);
+		else {
+			feclearexcept (FE_OVERFLOW);
+			long double tmp = s - d;
+       		auto raised = fetestexcept (FE_OVERFLOW);
+       		if (raised & FE_OVERFLOW)
+				ret = esil_pushnum_float (esil, 0.0 / 0.0);
+			else
+				ret = esil_pushnum_float (esil, s * d);
+		}
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	free (dst);
+	return ret;
+}
+
+static bool sleigh_consts_float_div (RAnalEsil *esil) {
+	bool ret = false;
+	long double s, d;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if ((src && esil_get_parm_float (esil, src, &s)) && (dst && esil_get_parm_float (esil, dst, &d))) {
+		if (isnan(s))
+			ret = esil_pushnum_float (esil, s);
+		else if (isnan(d))
+			ret = esil_pushnum_float (esil, d);
+		else {
+			feclearexcept (FE_OVERFLOW);
+			long double tmp = s - d;
+       		auto raised = fetestexcept (FE_OVERFLOW);
+       		if (raised & FE_OVERFLOW)
+				ret = esil_pushnum_float (esil, 0.0 / 0.0);
+			else
+				ret = esil_pushnum_float (esil, s / d);
+		}
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	free (dst);
+	return ret;
+}
+
+static bool sleigh_consts_float_neg (RAnalEsil *esil) {
+	bool ret = false;
+	long double s;
+	char *src = r_anal_esil_pop (esil);
+	if (src && esil_get_parm_float(esil, src, &s)) {
+		if (isnan(s))
+			ret = esil_pushnum_float (esil, 0.0 / 0.0);
+		else
+			ret = esil_pushnum_float (esil, -s);
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	return ret;
+}
+
+static bool sleigh_consts_float_ceil (RAnalEsil *esil) {
+	bool ret = false;
+	long double s;
+	char *src = r_anal_esil_pop (esil);
+	if (src && esil_get_parm_float(esil, src, &s)) {
+		if (isnan(s))
+			ret = esil_pushnum_float (esil, 0.0 / 0.0);
+		else
+			ret = esil_pushnum_float (esil, std::ceil(s));
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	return ret;
+}
+
+static bool sleigh_consts_float_floor (RAnalEsil *esil) {
+	bool ret = false;
+	long double s;
+	char *src = r_anal_esil_pop (esil);
+	if (src && esil_get_parm_float(esil, src, &s)) {
+		if (isnan(s))
+			ret = esil_pushnum_float (esil, 0.0 / 0.0);
+		else
+			ret = esil_pushnum_float (esil, std::floor(s));
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	return ret;
+}
+
+static bool sleigh_consts_float_round (RAnalEsil *esil) {
+	bool ret = false;
+	long double s;
+	char *src = r_anal_esil_pop (esil);
+	if (src && esil_get_parm_float(esil, src, &s)) {
+		if (isnan(s))
+			ret = esil_pushnum_float (esil, 0.0 / 0.0);
+		else
+			ret = esil_pushnum_float (esil, std::round(s));
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	return ret;
+}
+
 static int esil_sleigh_init (RAnalEsil *esil) {
 	if (!esil) {
 		return false;
 	}
 
 	// Only consts-only version PICK will meet my demand
-	r_anal_esil_set_op (esil, "PICK", sleigh_consts_pick, 1, 0, R_ANAL_ESIL_OP_TYPE_CUSTOM);		//better meta info plz
+	r_anal_esil_set_op (esil, "PICK", sleigh_consts_pick, 1, 0, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "NAN", sleigh_consts_is_nan, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "I2F", sleigh_consts_int_to_float, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F2I", sleigh_consts_float_to_int, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F==", sleigh_consts_float_cmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F!=", sleigh_consts_float_negcmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F<", sleigh_consts_float_less, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F<=", sleigh_consts_float_lesseq, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F+", sleigh_consts_float_add, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F-", sleigh_consts_float_sub, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F*", sleigh_consts_float_mul, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F/", sleigh_consts_float_div, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "-F", sleigh_consts_float_neg, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "CEIL", sleigh_consts_float_ceil, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "FLOOR", sleigh_consts_float_floor, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "ROUND", sleigh_consts_float_round, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 
 	return true;
 }
