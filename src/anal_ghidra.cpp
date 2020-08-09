@@ -300,6 +300,14 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 				break;
 			}
 
+			case CPUI_FLOAT_EQUAL:
+			case CPUI_FLOAT_NOTEQUAL:
+			case CPUI_FLOAT_LESS:
+			case CPUI_FLOAT_LESSEQUAL:
+			case CPUI_FLOAT_ADD:
+			case CPUI_FLOAT_SUB:
+			case CPUI_FLOAT_MULT:
+			case CPUI_FLOAT_DIV:
 			case CPUI_INT_LESS:
 			case CPUI_INT_SLESS:
 			case CPUI_INT_LESSEQUAL:
@@ -315,11 +323,19 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 						ss << *iter->input0;
 					ss << ",";
 					switch (iter->type) {
+						case CPUI_FLOAT_EQUAL: ss << "F=="; break;
+						case CPUI_FLOAT_NOTEQUAL: ss << "F!="; break;
+						case CPUI_FLOAT_LESS: ss << "F<"; break;
+						case CPUI_FLOAT_LESSEQUAL: ss << "F<="; break;
+						case CPUI_FLOAT_ADD: ss << "F+"; break;
+						case CPUI_FLOAT_SUB: ss << "F-"; break;
+						case CPUI_FLOAT_MULT: ss << "F*"; break;
+						case CPUI_FLOAT_DIV: ss << "F/"; break;
 						case CPUI_INT_LESS: 
 						case CPUI_INT_SLESS: ss << "<"; break;
 						case CPUI_INT_LESSEQUAL:
 						case CPUI_INT_SLESSEQUAL: ss << "<="; break;
-						case CPUI_INT_NOTEQUAL: ss << "!="; break;
+						case CPUI_INT_NOTEQUAL: ss << "==,!"; break;
 						case CPUI_INT_EQUAL: ss << "=="; break;
 					}
 
@@ -534,6 +550,75 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 
 					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,^";
 					ss << (iter->type == CPUI_INT_2COMP) ? ",1,+" : "";
+
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_FLOAT_NAN:
+			case CPUI_FLOAT_INT2FLOAT:
+			case CPUI_FLOAT_FLOAT2FLOAT:
+			case CPUI_FLOAT_TRUNC:
+			case CPUI_FLOAT_CEIL:
+			case CPUI_FLOAT_FLOOR:
+			case CPUI_FLOAT_ROUND:
+			case CPUI_FLOAT_SQRT:
+			case CPUI_FLOAT_ABS:
+			case CPUI_FLOAT_NEG: {
+				if (iter->input0 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input0))
+						ss << *iter->input0;
+
+					switch (iter->type) {
+						case CPUI_FLOAT_NAN: ss << ",NAN"; break;
+						case CPUI_FLOAT_INT2FLOAT: ss << ",I2F"; break;
+						case CPUI_FLOAT_FLOAT2FLOAT: /* nothing */ break;
+						case CPUI_FLOAT_TRUNC: ss << ",F2I"; break;
+						case CPUI_FLOAT_CEIL: ss << ",CEIL"; break;
+						case CPUI_FLOAT_FLOOR: ss << ",FLOOR"; break;
+						case CPUI_FLOAT_ROUND: ss << ",ROUND"; break;
+						case CPUI_FLOAT_SQRT: ss << ",SQRT"; break;
+						case CPUI_FLOAT_ABS: ss << ",0,I2F,F<=,!,?{,-F,}"; break;
+						case CPUI_FLOAT_NEG: ss << ",-F"; break;
+					}
+
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
+
+			case CPUI_CALLOTHER:
+			case CPUI_MULTIEQUAL:
+			case CPUI_INDIRECT:
+			case CPUI_CAST:
+			case CPUI_PTRADD:
+			case CPUI_PTRSUB:
+			case CPUI_SEGMENTOP:
+			case CPUI_CPOOLREF:
+			case CPUI_NEW:
+			case CPUI_INSERT:
+			case CPUI_EXTRACT:
+
+			case CPUI_POPCOUNT: {
+				if (iter->input0 && iter->output) {
+					ss << ",";
+					if (!print_if_unique(iter->input0))
+						ss << *iter->input0;
+
+					std::string stmp = ss.str();
+					ss << ",0,SWAP,DUP,?{,SWAP,1,+,SWAP,DUP,1,SWAP,-,&,DUP,?{,";
+					ss << 2 + std::count(stmp.begin(), stmp.end(), ',');
+					ss << ",GOTO,},},+";
 
 					if (iter->output->is_unique()) 
 						push_stack(iter->output);
@@ -1156,6 +1241,22 @@ static bool sleigh_consts_float_round (RAnalEsil *esil) {
 	return ret;
 }
 
+static bool sleigh_consts_float_sqrt (RAnalEsil *esil) {
+	bool ret = false;
+	long double s;
+	char *src = r_anal_esil_pop (esil);
+	if (src && esil_get_parm_float(esil, src, &s)) {
+		if (isnan(s))
+			ret = esil_pushnum_float (esil, 0.0 / 0.0);
+		else
+			ret = esil_pushnum_float (esil, std::sqrt(s));
+	} else {
+		// ERR ("esil_add: invalid parameters");
+	}
+	free (src);
+	return ret;
+}
+
 static int esil_sleigh_init (RAnalEsil *esil) {
 	if (!esil) {
 		return false;
@@ -1178,6 +1279,7 @@ static int esil_sleigh_init (RAnalEsil *esil) {
 	r_anal_esil_set_op (esil, "CEIL", sleigh_consts_float_ceil, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op (esil, "FLOOR", sleigh_consts_float_floor, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op (esil, "ROUND", sleigh_consts_float_round, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "SQRT", sleigh_consts_float_sqrt, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 
 	return true;
 }
