@@ -166,8 +166,8 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 					if (!print_if_unique(iter->input0)) 
 						ss << *iter->input0;
 
-					ss << "," << (iter->output->size - iter->input0->size) * 8 << ",1,<<,1,SWAP,-";
-					ss << "," << iter->input0->size * 8 << ",SWAP,<<,|";
+					ss << "," << iter->input0->size * 8 << ",SWAP,~";
+					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
 						
 					if (iter->output->is_unique()) 
 						push_stack(iter->output);
@@ -264,7 +264,7 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 					ss << ",";
 					if (!print_if_unique(iter->input0)) 
 						ss << *iter->input0;
-					ss << "," << (iter->output->size - iter->input0->size) * 8 << ",SWAP,<<";
+					ss << "," << iter->input1->size * 8 << ",SWAP,<<";
 
 					ss << ",";
 					if (!print_if_unique(iter->input1, 1)) 
@@ -327,14 +327,14 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 						case CPUI_FLOAT_NOTEQUAL: ss << "F!="; break;
 						case CPUI_FLOAT_LESS: ss << "F<"; break;
 						case CPUI_FLOAT_LESSEQUAL: ss << "F<="; break;
-						case CPUI_FLOAT_ADD: ss << "F+"; break;
-						case CPUI_FLOAT_SUB: ss << "F-"; break;
-						case CPUI_FLOAT_MULT: ss << "F*"; break;
-						case CPUI_FLOAT_DIV: ss << "F/"; break;
-						case CPUI_INT_LESS: 
-						case CPUI_INT_SLESS: ss << "<"; break;
-						case CPUI_INT_LESSEQUAL:
-						case CPUI_INT_SLESSEQUAL: ss << "<="; break;
+						case CPUI_FLOAT_ADD: ss << "F+," << iter->output->size << ",SWAP,F2F"; break;
+						case CPUI_FLOAT_SUB: ss << "F-" << iter->output->size << ",SWAP,F2F"; break;
+						case CPUI_FLOAT_MULT: ss << "F*" << iter->output->size << ",SWAP,F2F"; break;
+						case CPUI_FLOAT_DIV: ss << "F/" << iter->output->size << ",SWAP,F2F"; break;
+						case CPUI_INT_SLESS: ss << iter->input0->size * 8 << ",SWAP,~,SWAP," << iter->input1->size * 8 << ",SWAP,~,SWAP,";
+						case CPUI_INT_LESS: ss << "<"; break;
+						case CPUI_INT_SLESSEQUAL: ss << iter->input0->size * 8 << ",SWAP,~,SWAP," << iter->input1->size * 8 << ",SWAP,~,SWAP,";
+						case CPUI_INT_LESSEQUAL: ss << "<="; break;
 						case CPUI_INT_NOTEQUAL: ss << "==,!"; break;
 						case CPUI_INT_EQUAL: ss << "=="; break;
 					}
@@ -374,10 +374,8 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 					switch (iter->type) {
 						case CPUI_BOOL_NEGATE: ss << "!"; break;
 						case CPUI_INT_MULT: ss << "*"; break;
-						// TODO: Correct DIV & REM
 						case CPUI_INT_DIV: ss << "/"; break;
 						case CPUI_INT_REM: ss << "%"; break;
-						//
 						case CPUI_INT_SUB: ss << "-"; break;
 						case CPUI_INT_ADD: ss << "+"; break;
 						case CPUI_BOOL_XOR:
@@ -388,12 +386,7 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 						case CPUI_INT_OR: ss << "|"; break;
 						case CPUI_INT_LEFT: ss << "<<"; break;
 						case CPUI_INT_RIGHT: ss << ">>"; break;
-						case CPUI_INT_SRIGHT: ss << ">>";
-							ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,";
-							if (!print_if_unique(iter->input1)) 
-								ss << *iter->input1;
-							ss << ",1,<<,1,SWAP,-,^,|";
-							break;
+						case CPUI_INT_SRIGHT: ss << iter->input0->size * 8 << ",SWAP,~,>>"; break;
 					}
 					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
 
@@ -577,15 +570,25 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 
 					switch (iter->type) {
 						case CPUI_FLOAT_NAN: ss << ",NAN"; break;
+						case CPUI_FLOAT_TRUNC: ss << ",F2I," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&"; break;
 						case CPUI_FLOAT_INT2FLOAT: ss << ",I2F"; break;
-						case CPUI_FLOAT_FLOAT2FLOAT: /* nothing */ break;
-						case CPUI_FLOAT_TRUNC: ss << ",F2I"; break;
 						case CPUI_FLOAT_CEIL: ss << ",CEIL"; break;
 						case CPUI_FLOAT_FLOOR: ss << ",FLOOR"; break;
 						case CPUI_FLOAT_ROUND: ss << ",ROUND"; break;
 						case CPUI_FLOAT_SQRT: ss << ",SQRT"; break;
 						case CPUI_FLOAT_ABS: ss << ",0,I2F,F<=,!,?{,-F,}"; break;
 						case CPUI_FLOAT_NEG: ss << ",-F"; break;
+						case CPUI_FLOAT_FLOAT2FLOAT: /* same as below */ break;
+					}
+					switch (iter->type) {
+						case CPUI_FLOAT_INT2FLOAT:
+						case CPUI_FLOAT_CEIL:
+						case CPUI_FLOAT_FLOOR:
+						case CPUI_FLOAT_ROUND:
+						case CPUI_FLOAT_SQRT:
+						case CPUI_FLOAT_ABS:
+						case CPUI_FLOAT_NEG:
+						case CPUI_FLOAT_FLOAT2FLOAT: ss << "," << iter->output->size * 8 << ",SWAP,F2F"; break;
 					}
 
 					if (iter->output->is_unique()) 
@@ -872,23 +875,23 @@ static bool sleigh_consts_pick (RAnalEsil *esil) {
 	int ret = false;
 
 	if (R_ANAL_ESIL_PARM_REG == r_anal_esil_get_parm_type (esil, idx)) {
-		// ERR ("sleigh_consts_pick: argument is consts only");
+		throw LowlevelError("sleigh_consts_pick: argument is consts only");
 		goto end;
 	}
 	if (!idx || !r_anal_esil_get_parm (esil, idx, &i)) {
-		// ERR ("esil_pick: invalid index number");
+		throw LowlevelError("esil_pick: invalid index number");
 		goto end;
 	}
 	if (esil->stackptr < i) {
-		// ERR ("esil_pick: index out of stack bounds");
+		throw LowlevelError("esil_pick: index out of stack bounds");
 		goto end;
 	}
 	if (!esil->stack[esil->stackptr-i]) {
-		// ERR ("esil_pick: undefined element");
+		throw LowlevelError("esil_pick: undefined element");
 		goto end;
 	}
 	if (!r_anal_esil_push (esil, esil->stack[esil->stackptr-i])) {
-		// ERR ("ESIL stack is full");
+		throw LowlevelError("ESIL stack is full");
 		esil->trap = 1;
 		esil->trap_code = 1;
 		goto end;
@@ -963,7 +966,7 @@ static bool sleigh_consts_is_nan (RAnalEsil *esil) {
 	if (src && esil_get_parm_float(esil, src, &s)) {
 		ret = r_anal_esil_pushnum (esil, isnan(s));
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_is_nan: invalid parameters");
 	}
 	free (src);
 	return ret;
@@ -976,7 +979,7 @@ static bool sleigh_consts_int_to_float (RAnalEsil *esil) {
 	if (src && r_anal_esil_get_parm(esil, src, (ut64 *)&s)) {
 		ret = esil_pushnum_float (esil, (long double)s * 1.0);
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_int_to_float: invalid parameters");
 	}
 	free (src);
 	return ret;
@@ -989,11 +992,34 @@ static bool sleigh_consts_float_to_int (RAnalEsil *esil) {
 	if (src && esil_get_parm_float(esil, src, &s)) {
 		if (isnan(s) || isinf(s))
 			throw LowlevelError("sleigh_consts_float_to_int: nan or inf detected.");
-		ret = r_anal_esil_pushnum (esil, (ut64)(s));
+		ret = r_anal_esil_pushnum (esil, (st64)(s));
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_to_int: invalid parameters");
 	}
 	free (src);
+	return ret;
+}
+
+static bool sleigh_consts_float_to_float (RAnalEsil *esil) {
+	bool ret = false;
+	long double d;
+	ut64 s = 0;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if ((src && r_anal_esil_get_parm (esil, src, &s)) && (dst && esil_get_parm_float (esil, dst, &d))) {
+		if (isnan(d) || isinf(d))
+			ret = r_anal_esil_pushnum (esil, d);
+		else if (s == 4)
+			ret = r_anal_esil_pushnum (esil, (float)d);
+		else if (s == 8)
+			ret = r_anal_esil_pushnum (esil, (double)d);
+		else 
+			throw LowlevelError("sleigh_consts_float_to_float: byte-width of float number overflows.");
+	} else {
+		throw LowlevelError("sleigh_consts_float_to_float: invalid parameters");
+	}
+	free (src);
+	free (dst);
 	return ret;
 }
 
@@ -1008,7 +1034,7 @@ static bool sleigh_consts_float_cmp (RAnalEsil *esil) {
 		else
 			ret = r_anal_esil_pushnum (esil, s == d);
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_cmp: invalid parameters");
 	}
 	free (src);
 	free (dst);
@@ -1026,7 +1052,7 @@ static bool sleigh_consts_float_negcmp (RAnalEsil *esil) {
 		else
 			ret = r_anal_esil_pushnum (esil, s != d);
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_negcmp: invalid parameters");
 	}
 	free (src);
 	free (dst);
@@ -1044,7 +1070,7 @@ static bool sleigh_consts_float_less (RAnalEsil *esil) {
 		else
 			ret = r_anal_esil_pushnum (esil, s < d);
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_less: invalid parameters");
 	}
 	free (src);
 	free (dst);
@@ -1062,7 +1088,7 @@ static bool sleigh_consts_float_lesseq (RAnalEsil *esil) {
 		else
 			ret = r_anal_esil_pushnum (esil, s <= d);
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_lesseq: invalid parameters");
 	}
 	free (src);
 	free (dst);
@@ -1089,7 +1115,7 @@ static bool sleigh_consts_float_add (RAnalEsil *esil) {
 				ret = esil_pushnum_float (esil, s + d);
 		}
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_add: invalid parameters");
 	}
 	free (src);
 	free (dst);
@@ -1116,7 +1142,7 @@ static bool sleigh_consts_float_sub (RAnalEsil *esil) {
 				ret = esil_pushnum_float (esil, s + d);
 		}
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_sub: invalid parameters");
 	}
 	free (src);
 	free (dst);
@@ -1143,7 +1169,7 @@ static bool sleigh_consts_float_mul (RAnalEsil *esil) {
 				ret = esil_pushnum_float (esil, s * d);
 		}
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_mul: invalid parameters");
 	}
 	free (src);
 	free (dst);
@@ -1170,7 +1196,7 @@ static bool sleigh_consts_float_div (RAnalEsil *esil) {
 				ret = esil_pushnum_float (esil, s / d);
 		}
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_div: invalid parameters");
 	}
 	free (src);
 	free (dst);
@@ -1187,7 +1213,7 @@ static bool sleigh_consts_float_neg (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, -s);
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_neg: invalid parameters");
 	}
 	free (src);
 	return ret;
@@ -1203,7 +1229,7 @@ static bool sleigh_consts_float_ceil (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, std::ceil(s));
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_ceil: invalid parameters");
 	}
 	free (src);
 	return ret;
@@ -1219,7 +1245,7 @@ static bool sleigh_consts_float_floor (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, std::floor(s));
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_floor: invalid parameters");
 	}
 	free (src);
 	return ret;
@@ -1235,7 +1261,7 @@ static bool sleigh_consts_float_round (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, std::round(s));
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_round: invalid parameters");
 	}
 	free (src);
 	return ret;
@@ -1251,7 +1277,7 @@ static bool sleigh_consts_float_sqrt (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, std::sqrt(s));
 	} else {
-		// ERR ("esil_add: invalid parameters");
+		throw LowlevelError("sleigh_consts_float_sqrt: invalid parameters");
 	}
 	free (src);
 	return ret;
@@ -1267,6 +1293,7 @@ static int esil_sleigh_init (RAnalEsil *esil) {
 	r_anal_esil_set_op (esil, "NAN", sleigh_consts_is_nan, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op (esil, "I2F", sleigh_consts_int_to_float, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op (esil, "F2I", sleigh_consts_float_to_int, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F2F", sleigh_consts_float_to_float, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op (esil, "F==", sleigh_consts_float_cmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op (esil, "F!=", sleigh_consts_float_negcmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op (esil, "F<", sleigh_consts_float_less, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
