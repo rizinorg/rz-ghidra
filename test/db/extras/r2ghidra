@@ -69,7 +69,7 @@ x86:LE:16:Real Mode:
 // WARNING: Unknown calling convention yet parameter storage is locked
 // WARNING: [r2ghidra] Matching calling convention fastcall of function fcn.00001c98 failed, args may be inaccurate.
 
-undefined4 fcn.00001c98(int16_t arg3, int16_t arg_8h, int16_t arg_6h, int16_t arg_eh)
+undefined4 fcn.00001c98(int16_t arg_8h, int16_t arg_6h, int16_t arg_eh)
 {
     int16_t *piVar1;
     undefined2 unaff_CS;
