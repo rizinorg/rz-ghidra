@@ -183,14 +183,7 @@ class PcodeSlg : public PcodeEmit
 
 		void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars, int4 isize) override
 		{
-			if (opc == CPUI_CALLOTHER) {
-				pcodes.push_back(Pcodeop(opc, nullptr, nullptr, nullptr));
-				return;
-			}
-
 			PcodeOperand *out = nullptr, *in0 = nullptr, *in1 = nullptr;
-			if(outvar)
-				out = parse_vardata(*outvar);
 
 			switch(isize)
 			{
@@ -200,6 +193,9 @@ class PcodeSlg : public PcodeEmit
 				case 0: break;
 				default: throw LowlevelError("Unexpexted isize in PcodeSlg::dump()");
 			}
+
+			if(outvar)
+				out = parse_vardata(*outvar);
 
 			pcodes.push_back(Pcodeop(opc, in0, in1, out));
 		}

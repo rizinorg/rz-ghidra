@@ -158,6 +158,16 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 
 	for (auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter) {
 		switch (iter->type) {
+			case CPUI_CPOOLREF:
+			case CPUI_NEW:
+			case CPUI_SEGMENTOP:
+			case CPUI_INSERT:
+			case CPUI_EXTRACT: /* Above don't have explicit definition */
+			case CPUI_MULTIEQUAL:
+			case CPUI_INDIRECT:
+			case CPUI_CAST:
+			case CPUI_PTRADD:
+			case CPUI_PTRSUB: /* Above are not raw P-code */
 			case CPUI_INT_ZEXT: /* do nothing */ break;
 
 			case CPUI_INT_SEXT: {
@@ -600,17 +610,24 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 				break;
 			}
 
-			case CPUI_CALLOTHER:
-			case CPUI_MULTIEQUAL:
-			case CPUI_INDIRECT:
-			case CPUI_CAST:
-			case CPUI_PTRADD:
-			case CPUI_PTRSUB:
-			case CPUI_SEGMENTOP:
-			case CPUI_CPOOLREF:
-			case CPUI_NEW:
-			case CPUI_INSERT:
-			case CPUI_EXTRACT:
+			case CPUI_CALLOTHER: {
+				if (iter->input0 && iter->output) {
+					if (iter->input1) {
+						ss << ",";
+						if (!print_if_unique(iter->input1))
+							ss << *iter->input1;
+					}
+
+					ss << ",$";
+
+					if (iter->output->is_unique()) 
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+				} else
+					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
+				break;
+			}
 
 			case CPUI_POPCOUNT: {
 				if (iter->input0 && iter->output) {
@@ -664,11 +681,6 @@ static int sleigh_op (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, in
 
 	if (mask & R_ANAL_OP_MASK_ESIL)
 		sleigh_esil (a, anal_op, addr, data, len, pcode_slg.pcodes); 
-
-	if(pcode_slg.pcodes.begin()->type == CPUI_CALLOTHER) { // CALLOTHER case, will appear when syscall
-		anal_op->type = R_ANAL_OP_TYPE_UNK;
-		return anal_op->size;
-	}
 
 	SleighInstruction &ins = *sanal.trans.getInstruction(caddr);
 	FlowType ftype = ins.getFlowType();
