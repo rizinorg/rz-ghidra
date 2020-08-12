@@ -158,6 +158,9 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 
 	for (auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter) {
 		switch (iter->type) {
+			// FIXME: Maybe some of P-codes below can be processed
+			// In dalvik: 0x00000234: array_length 0x1008,0x1008
+    		//                v2 = CPOOLREF v2, 0x0, 0x6
 			case CPUI_CPOOLREF:
 			case CPUI_NEW:
 			case CPUI_SEGMENTOP:
@@ -168,16 +171,18 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 			case CPUI_CAST:
 			case CPUI_PTRADD:
 			case CPUI_PTRSUB: /* Above are not raw P-code */
-			case CPUI_INT_ZEXT: /* do nothing */ break;
 
+			case CPUI_INT_ZEXT:
 			case CPUI_INT_SEXT: {
 				if (iter->input0 && iter->output) {
 					ss << ",";
 					if (!print_if_unique(iter->input0)) 
 						ss << *iter->input0;
 
-					ss << "," << iter->input0->size * 8 << ",SWAP,~";
-					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
+					if (iter->type == CPUI_INT_SEXT) {
+						ss << "," << iter->input0->size * 8 << ",SWAP,~";
+						ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
+					}
 						
 					if (iter->output->is_unique()) 
 						push_stack(iter->output);
@@ -358,7 +363,6 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 				break;
 			}
 
-			case CPUI_BOOL_NEGATE:
 			case CPUI_INT_MULT:
 			case CPUI_INT_DIV:
 			case CPUI_INT_REM:
@@ -382,7 +386,6 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 						ss << *iter->input0;
 					ss << ",";
 					switch (iter->type) {
-						case CPUI_BOOL_NEGATE: ss << "!"; break;
 						case CPUI_INT_MULT: ss << "*"; break;
 						case CPUI_INT_DIV: ss << "/"; break;
 						case CPUI_INT_REM: ss << "%"; break;
@@ -544,6 +547,7 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 				break;
 			}
 
+			case CPUI_BOOL_NEGATE:
 			case CPUI_INT_NEGATE:
 			case CPUI_INT_2COMP: {
 				if (iter->input0 && iter->output) {
@@ -551,8 +555,12 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 					if (!print_if_unique(iter->input0))
 						ss << *iter->input0;
 
-					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,^";
-					ss << (iter->type == CPUI_INT_2COMP) ? ",1,+" : "";
+					if (iter->type == CPUI_BOOL_NEGATE)
+						ss << ",!";
+					else {
+						ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,^";
+						ss << (iter->type == CPUI_INT_2COMP) ? ",1,+" : "";
+					}
 
 					if (iter->output->is_unique()) 
 						push_stack(iter->output);
