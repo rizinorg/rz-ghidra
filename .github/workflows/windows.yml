@@ -16,8 +16,6 @@ jobs:
         python-version: [3.7.x]   
         # Prevent one job from pausing the rest
         fail-fast: [false]
-    env: 
-      INSTALL_PREFIX: $GITHUB_WORKSPACE/radare2-prefix
     steps:
     - uses: actions/checkout@v2
       with:
@@ -38,14 +36,19 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/radareorg/radare2
         git clone --depth 1 https://github.com/radareorg/cutter
+    - name: set env
+      run: echo '::set-env name=INSTALL_PREFIX::${{ github.workspace }}/radare2-prefix'
     - name: Radare2 build
-        cd radare2 && mkdir build && cd build
+      shell: cmd
+      run: |
+        cd radare2 
+        mkdir build
+        cd build
         meson --prefix="$INSTALL_PREFIX" ..
         ninja
         ninja install
         cd ../..
     - name: cmake msys
-      if: contains(matrix.os, 'windows-latest')
       shell: msys2
       run: |
         mkdir -p build && cd build
