@@ -39,27 +39,20 @@ jobs:
         git clone --depth 1 https://github.com/radareorg/radare2
         git clone --depth 1 https://github.com/radareorg/cutter
     - name: set env
-      run: echo '::set-env name=INSTALL_PREFIX::${{ github.workspace }}/radare2-prefix'
+      run: |
+        echo '::set-env name=INSTALL_PREFIX::${{ github.workspace }}/radare2-prefix'
+        echo '::set-env name=CUTTER_PATH::${{ github.workspace }}/cutter'
     - name: Radare2 build
       shell: cmd
       run: |
         cd radare2 
         mkdir build
         cd build
-        meson --prefix="$INSTALL_PREFIX" ..
+        meson --prefix="%INSTALL_PREFIX%" ..
         ninja
         ninja install
         cd ../..
     - name: cmake msys
-      shell: msys2 {0}
+      shell: cmd
       run: |
-        mkdir -p build && cd build
-        cmake ../ -G Ninja \
-          -DCMAKE_C_COMPILER=cl \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_PREFIX_PATH="$INSTALL_PREFIX;$INSTALL_PREFIX/include/libr;$INSTALL_PREFIX/include/libr/sdb;$QT64PATH" \
-          -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
-          -DBUILD_CUTTER_PLUGIN=ON \
-          -DCUTTER_SOURCE_DIR="${{ github.workspace }}/cutter" \
-          -DBUILD_SLEIGH_PLUGIN=ON
-        ninja
+        C:\msys64\usr\bin\bash -lc "export PATH=\"/c/msys64/usr/bin:$PATH:`CYGPATH -u -p \"%PATH%\"`\" && cd \"${{ github.workspace }}\" && export INSTALL_PREFIX=\"%INSTALL_PREFIX%\" && export CUTTER_PATH=\"%CUTTER_PATH%\" && ./scripts/msys_build.sh"
