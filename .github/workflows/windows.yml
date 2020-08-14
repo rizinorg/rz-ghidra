@@ -1,0 +1,62 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        os: [windows-latest]
+        python-version: [3.7.x]   
+        # Prevent one job from pausing the rest
+        fail-fast: [false]
+    env: 
+      INSTALL_PREFIX: $GITHUB_WORKSPACE/radare2-prefix
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        persist-credentials: false
+    - uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: bison flex
+    - name: py dependencies
+      run: |
+        pip install meson ninja
+    - name: repo dependencies
+      shell: bash
+      run: |
+        git clone --depth 1 https://github.com/radareorg/radare2
+        git clone --depth 1 https://github.com/radareorg/cutter
+    - name: Radare2 build
+        cd radare2 && mkdir build && cd build
+        meson --prefix="$INSTALL_PREFIX" ..
+        ninja
+        ninja install
+        cd ../..
+    - name: cmake msys
+      if: contains(matrix.os, 'windows-latest')
+      shell: msys2
+      run: |
+        mkdir -p build && cd build
+        cmake ../ -G Ninja \
+          -DCMAKE_C_COMPILER=cl \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_PREFIX_PATH="$INSTALL_PREFIX;$INSTALL_PREFIX/include/libr;$INSTALL_PREFIX/include/libr/sdb;$QT64PATH" \
+          -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
+          -DRADARE2_INSTALL_PLUGDIR="$INSTALL_PREFIX/lib/plugins" \
+          -DBUILD_CUTTER_PLUGIN=ON \
+          -DCUTTER_SOURCE_DIR="$GITHUB_WORKSPACE/cutter" \
+          -DBUILD_SLEIGH_PLUGIN=ON
+         - make -j4
+        ninja
