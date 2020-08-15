@@ -9,10 +9,11 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.config.os }}
     strategy:
       matrix:
-        os: [windows-latest]
+        config:
+        - { name: "Windows MSVC", os: windows-latest, cc: "cl", cxx: "cl", environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat" }
         python-version: [3.7.x]   
         # Prevent one job from pausing the rest
         fail-fast: [false]
@@ -24,12 +25,6 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.1
-    - uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        install: bison flex
     - name: py dependencies
       run: |
         pip install meson ninja
