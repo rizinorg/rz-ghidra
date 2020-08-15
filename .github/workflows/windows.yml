@@ -52,6 +52,10 @@ jobs:
         ninja
         ninja install
         cd ../..
+    - name: msys dependencies
+      shell: cmd
+      run: |
+        C:\msys64\usr\bin\bash -lc "pacman -Sy --noconfirm bison flex"
     - name: cmake msys
       shell: cmd
       run: |
