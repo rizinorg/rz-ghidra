@@ -25,29 +25,28 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 		r = 1;
 	}
 #endif
-    op->size = r;
-    return r;
+	op->size = r;
+	return r;
 }
 
 RAsmPlugin r_asm_plugin_ghidra = {
-    /* .name = */ "r2ghidra",
-    /* .arch = */ "sleigh",
-    /* .author = */ "FXTi",
-    /* .version = */ nullptr,
-    /* .cpus = */ nullptr,
-    /* .desc = */ "SLEIGH Disassembler from Ghidra",
-    /* .license = */ "GPL3",
-    /* .user = */ nullptr,
-    /* .bits = */ 0,
-    /* .endian = */ 0,
-    /* .init = */ nullptr,
-    /* .fini = */ nullptr,
-    /* .disassemble = */ &disassemble,
-    /* .assemble = */ nullptr,
-    /* .modify */ nullptr,
-    /* .mnemonics = */ nullptr,
-    /* .features = */ nullptr
-};
+	/* .name = */ "r2ghidra",
+	/* .arch = */ "sleigh",
+	/* .author = */ "FXTi",
+	/* .version = */ nullptr,
+	/* .cpus = */ nullptr,
+	/* .desc = */ "SLEIGH Disassembler from Ghidra",
+	/* .license = */ "GPL3",
+	/* .user = */ nullptr,
+	/* .bits = */ 0,
+	/* .endian = */ 0,
+	/* .init = */ nullptr,
+	/* .fini = */ nullptr,
+	/* .disassemble = */ &disassemble,
+	/* .assemble = */ nullptr,
+	/* .modify */ nullptr,
+	/* .mnemonics = */ nullptr,
+	/* .features = */ nullptr};
 
 #ifndef CORELIB
 #ifdef __cplusplus
@@ -59,7 +58,8 @@ R_API RLibStruct radare_plugin = {
 	/* .version = */ R2_VERSION,
 	/* .free = */ nullptr
 #if R2_VERSION_MAJOR >= 4 && R2_VERSION_MINOR >= 2
-	, "r2ghidra-dec"
+	,
+	"r2ghidra-dec"
 #endif
 };
 #endif

@@ -2,27 +2,31 @@
 
 #include "SleighInstruction.h"
 
-SleighInstruction *R2Sleigh::getInstruction(Address &addr) {
+SleighInstruction *R2Sleigh::getInstruction(Address &addr)
+{
 	SleighInstruction *ins = new SleighInstruction(this, addr);
 	// ins->cacheTreeInfo();
 	ins_cache.insert({addr.getOffset(), ins});
 	return ins;
 }
 
-R2Sleigh::~R2Sleigh() {
+R2Sleigh::~R2Sleigh()
+{
 	for(auto iter = ins_cache.begin(); iter != ins_cache.end(); ++iter)
 		delete iter->second;
 }
 
-void SleighParserContext::setPrototype(SleighInstruction *p, int4 maxparam) {
+void SleighParserContext::setPrototype(SleighInstruction *p, int4 maxparam)
+{
 	prototype = p;
 	prototype->rootState.resolve.resize(maxparam);
 	*ExportHelper::getBasestate(this) = &prototype->rootState;
 }
 
-SleighParserContext *R2Sleigh::getParserContext(SleighInstruction *proto) {
+SleighParserContext *R2Sleigh::getParserContext(SleighInstruction *proto)
+{
 	SleighParserContext *pos = new SleighParserContext(ExportHelper::getCache(this));
-	pos->initialize(75,20,getConstantSpace());
+	pos->initialize(75, 20, getConstantSpace());
 	pos->setAddr(proto->baseaddr);
 	pos->setPrototype(proto, 20);
 	resolve(*pos); // Resolve ALL the constructors involved in the instruction at this address
@@ -30,32 +34,37 @@ SleighParserContext *R2Sleigh::getParserContext(SleighInstruction *proto) {
 	return pos;
 }
 
-void R2Sleigh::generateLocation(const VarnodeTpl *vntpl,VarnodeData &vn, ParserWalker &walker) {
+void R2Sleigh::generateLocation(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker)
+{
 	vn.space = vntpl->getSpace().fixSpace(walker);
 	vn.size = vntpl->getSize().fix(walker);
-	if (vn.space == getConstantSpace())
+	if(vn.space == getConstantSpace())
 		vn.offset = vntpl->getOffset().fix(walker) & calc_mask(vn.size);
-	else if (vn.space == getUniqueSpace()) {
+	else if(vn.space == getUniqueSpace())
+	{
 		vn.offset = vntpl->getOffset().fix(walker);
 		vn.offset |= (walker.getAddr().getOffset() & unique_allocatemask) << 4;
-	} else
+	}
+	else
 		vn.offset = vn.space->wrapOffset(vntpl->getOffset().fix(walker));
 }
 
-void R2Sleigh::generatePointer(const VarnodeTpl *vntpl,VarnodeData &vn, ParserWalker &walker) {
+void R2Sleigh::generatePointer(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker)
+{
 	const FixedHandle &hand(walker.getFixedHandle(vntpl->getOffset().getHandleIndex()));
 	vn.space = hand.offset_space;
 	vn.size = hand.offset_size;
-	if (vn.space == getConstantSpace())
+	if(vn.space == getConstantSpace())
 		vn.offset = hand.offset_offset & calc_mask(vn.size);
-	else if (vn.space == getUniqueSpace())
+	else if(vn.space == getUniqueSpace())
 		vn.offset = hand.offset_offset | (walker.getAddr().getOffset() & unique_allocatemask) << 4;
 	else
 		vn.offset = vn.space->wrapOffset(hand.offset_offset);
 }
 
-VarnodeData R2Sleigh::dumpInvar(OpTpl *op, Address &addr) {
-	ParserContext *pos = obtainContext(addr,ParserContext::pcode);
+VarnodeData R2Sleigh::dumpInvar(OpTpl *op, Address &addr)
+{
+	ParserContext *pos = obtainContext(addr, ParserContext::pcode);
 	pos->applyCommits();
 	ParserWalker walker(pos);
 	walker.baseState();
@@ -63,135 +72,115 @@ VarnodeData R2Sleigh::dumpInvar(OpTpl *op, Address &addr) {
 	VarnodeData res;
 	VarnodeTpl *vn = op->getIn(0);
 
-	if (vn->isDynamic(walker)) {
+	if(vn->isDynamic(walker))
+	{
 		generatePointer(vn, res, walker);
 		res.size |= 0x80000000;
-	} else
+	}
+	else
 		generateLocation(vn, res, walker);
 	return res;
 }
 
-const char *SleighInstruction::printFlowType(FlowType t) {
-	switch (t)
+const char *SleighInstruction::printFlowType(FlowType t)
+{
+	switch(t)
 	{
-		case FlowType::INVALID:
-			return "INVALID";
-		case FlowType::CONDITIONAL_COMPUTED_CALL:
-			return "CONDITIONAL_COMPUTED_CALL";
-		case FlowType::COMPUTED_CALL:
-			return "COMPUTED_CALL";
-		case FlowType::CONDITIONAL_CALL:
-			return "CONDITIONAL_CALL";
-		case FlowType::JUMP_TERMINATOR:
-			return "JUMP_TERMINATOR";
-		case FlowType::CONDITIONAL_JUMP:
-			return "CONDITIONAL_JUMP";
-		case FlowType::COMPUTED_CALL_TERMINATOR:
-			return "COMPUTED_CALL_TERMINATOR";
-		case FlowType::CALL_TERMINATOR:
-			return "CALL_TERMINATOR";
-		case FlowType::TERMINATOR:
-			return "TERMINATOR";
-		case FlowType::CONDITIONAL_COMPUTED_JUMP:
-			return "CONDITIONAL_COMPUTED_JUMP";
-		case FlowType::UNCONDITIONAL_JUMP:
-			return "UNCONDITIONAL_JUMP";
-		case FlowType::COMPUTED_JUMP:
-			return "COMPUTED_JUMP";
-		case FlowType::FALL_THROUGH:
-			return "FALL_THROUGH";
-		case FlowType::UNCONDITIONAL_CALL:
-			return "UNCONDITIONAL_CALL";
-		case FlowType::CONDITIONAL_TERMINATOR:
-			return "CONDITIONAL_TERMINATOR";
+		case FlowType::INVALID: return "INVALID";
+		case FlowType::CONDITIONAL_COMPUTED_CALL: return "CONDITIONAL_COMPUTED_CALL";
+		case FlowType::COMPUTED_CALL: return "COMPUTED_CALL";
+		case FlowType::CONDITIONAL_CALL: return "CONDITIONAL_CALL";
+		case FlowType::JUMP_TERMINATOR: return "JUMP_TERMINATOR";
+		case FlowType::CONDITIONAL_JUMP: return "CONDITIONAL_JUMP";
+		case FlowType::COMPUTED_CALL_TERMINATOR: return "COMPUTED_CALL_TERMINATOR";
+		case FlowType::CALL_TERMINATOR: return "CALL_TERMINATOR";
+		case FlowType::TERMINATOR: return "TERMINATOR";
+		case FlowType::CONDITIONAL_COMPUTED_JUMP: return "CONDITIONAL_COMPUTED_JUMP";
+		case FlowType::UNCONDITIONAL_JUMP: return "UNCONDITIONAL_JUMP";
+		case FlowType::COMPUTED_JUMP: return "COMPUTED_JUMP";
+		case FlowType::FALL_THROUGH: return "FALL_THROUGH";
+		case FlowType::UNCONDITIONAL_CALL: return "UNCONDITIONAL_CALL";
+		case FlowType::CONDITIONAL_TERMINATOR: return "CONDITIONAL_TERMINATOR";
 
-	default:
-		throw LowlevelError("printFlowType() out of bound.");
+		default: throw LowlevelError("printFlowType() out of bound.");
 	}
 }
 
 FlowType SleighInstruction::convertFlowFlags(FlowFlags flags)
 {
-		if ((flags & FLOW_LABEL) != 0)
-			flags = FlowFlags(flags | FLOW_BRANCH_TO_END);
-		flags = FlowFlags(flags & (~(FLOW_CROSSBUILD | FLOW_LABEL)));
-		// NOTE: If prototype has cross-build, flow must be determined dynamically
-		switch (flags)
-		{ // Convert flags to a standard flowtype
-			case 0:
-			case FLOW_BRANCH_TO_END:
-				return FlowType::FALL_THROUGH;
-			case FLOW_CALL:
-				return FlowType::UNCONDITIONAL_CALL;
-			case FLOW_CALL | FLOW_NO_FALLTHRU | FLOW_RETURN:
-				return FlowType::CALL_TERMINATOR;
-			case FLOW_CALL_INDIRECT | FLOW_NO_FALLTHRU | FLOW_RETURN:
-				return FlowType::COMPUTED_CALL_TERMINATOR;
-			case FLOW_CALL | FLOW_BRANCH_TO_END:
-				return FlowType::CONDITIONAL_CALL; // This could be wrong but doesn't matter much
-			case FLOW_CALL | FLOW_NO_FALLTHRU | FLOW_JUMPOUT:
-				return FlowType::COMPUTED_JUMP;
-			case FLOW_CALL | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END | FLOW_RETURN:
-				return FlowType::UNCONDITIONAL_CALL;
-			case FLOW_CALL_INDIRECT:
-				return FlowType::COMPUTED_CALL;
-			case FLOW_BRANCH_INDIRECT | FLOW_NO_FALLTHRU:
-				return FlowType::COMPUTED_JUMP;
-			case FLOW_BRANCH_INDIRECT | FLOW_BRANCH_TO_END:
-			case FLOW_BRANCH_INDIRECT | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
-			case FLOW_BRANCH_INDIRECT | FLOW_JUMPOUT | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
-				return FlowType::CONDITIONAL_COMPUTED_JUMP;
-			case FLOW_CALL_INDIRECT | FLOW_BRANCH_TO_END:
-			case FLOW_CALL_INDIRECT | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
-				return FlowType::CONDITIONAL_COMPUTED_CALL;
-			case FLOW_RETURN | FLOW_NO_FALLTHRU:
-				return FlowType::TERMINATOR;
-			case FLOW_RETURN | FLOW_BRANCH_TO_END:
-			case FLOW_RETURN | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
-				return FlowType::CONDITIONAL_TERMINATOR;
-			case FLOW_JUMPOUT:
-				return FlowType::CONDITIONAL_JUMP;
-			case FLOW_JUMPOUT | FLOW_NO_FALLTHRU:
-				return FlowType::UNCONDITIONAL_JUMP;
-			case FLOW_JUMPOUT | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
-				return FlowType::CONDITIONAL_JUMP;
-			case FLOW_JUMPOUT | FLOW_NO_FALLTHRU | FLOW_RETURN:
-				return FlowType::JUMP_TERMINATOR;
-			case FLOW_JUMPOUT | FLOW_NO_FALLTHRU | FLOW_BRANCH_INDIRECT:
-				return FlowType::COMPUTED_JUMP; //added for tableswitch in jvm
-			case FLOW_BRANCH_INDIRECT | FLOW_NO_FALLTHRU | FLOW_RETURN:
-				return FlowType::JUMP_TERMINATOR;
-			case FLOW_NO_FALLTHRU:
-				return FlowType::TERMINATOR;
-			case FLOW_BRANCH_TO_END | FLOW_JUMPOUT:
-				return FlowType::CONDITIONAL_JUMP;
-			case FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
-				return FlowType::FALL_THROUGH;
-			default:
-				break;
-		}
-		return FlowType::INVALID;
+	if((flags & FLOW_LABEL) != 0)
+		flags = FlowFlags(flags | FLOW_BRANCH_TO_END);
+	flags = FlowFlags(flags & (~(FLOW_CROSSBUILD | FLOW_LABEL)));
+	// NOTE: If prototype has cross-build, flow must be determined dynamically
+	switch(flags)
+	{ // Convert flags to a standard flowtype
+		case 0:
+		case FLOW_BRANCH_TO_END: return FlowType::FALL_THROUGH;
+		case FLOW_CALL: return FlowType::UNCONDITIONAL_CALL;
+		case FLOW_CALL | FLOW_NO_FALLTHRU | FLOW_RETURN: return FlowType::CALL_TERMINATOR;
+		case FLOW_CALL_INDIRECT | FLOW_NO_FALLTHRU | FLOW_RETURN:
+			return FlowType::COMPUTED_CALL_TERMINATOR;
+		case FLOW_CALL | FLOW_BRANCH_TO_END:
+			return FlowType::CONDITIONAL_CALL; // This could be wrong but doesn't matter much
+		case FLOW_CALL | FLOW_NO_FALLTHRU | FLOW_JUMPOUT: return FlowType::COMPUTED_JUMP;
+		case FLOW_CALL | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END | FLOW_RETURN:
+			return FlowType::UNCONDITIONAL_CALL;
+		case FLOW_CALL_INDIRECT: return FlowType::COMPUTED_CALL;
+		case FLOW_BRANCH_INDIRECT | FLOW_NO_FALLTHRU: return FlowType::COMPUTED_JUMP;
+		case FLOW_BRANCH_INDIRECT | FLOW_BRANCH_TO_END:
+		case FLOW_BRANCH_INDIRECT | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
+		case FLOW_BRANCH_INDIRECT | FLOW_JUMPOUT | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
+			return FlowType::CONDITIONAL_COMPUTED_JUMP;
+		case FLOW_CALL_INDIRECT | FLOW_BRANCH_TO_END:
+		case FLOW_CALL_INDIRECT | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
+			return FlowType::CONDITIONAL_COMPUTED_CALL;
+		case FLOW_RETURN | FLOW_NO_FALLTHRU: return FlowType::TERMINATOR;
+		case FLOW_RETURN | FLOW_BRANCH_TO_END:
+		case FLOW_RETURN | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
+			return FlowType::CONDITIONAL_TERMINATOR;
+		case FLOW_JUMPOUT: return FlowType::CONDITIONAL_JUMP;
+		case FLOW_JUMPOUT | FLOW_NO_FALLTHRU: return FlowType::UNCONDITIONAL_JUMP;
+		case FLOW_JUMPOUT | FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END:
+			return FlowType::CONDITIONAL_JUMP;
+		case FLOW_JUMPOUT | FLOW_NO_FALLTHRU | FLOW_RETURN: return FlowType::JUMP_TERMINATOR;
+		case FLOW_JUMPOUT | FLOW_NO_FALLTHRU | FLOW_BRANCH_INDIRECT:
+			return FlowType::COMPUTED_JUMP; // added for tableswitch in jvm
+		case FLOW_BRANCH_INDIRECT | FLOW_NO_FALLTHRU | FLOW_RETURN:
+			return FlowType::JUMP_TERMINATOR;
+		case FLOW_NO_FALLTHRU: return FlowType::TERMINATOR;
+		case FLOW_BRANCH_TO_END | FLOW_JUMPOUT: return FlowType::CONDITIONAL_JUMP;
+		case FLOW_NO_FALLTHRU | FLOW_BRANCH_TO_END: return FlowType::FALL_THROUGH;
+		default: break;
+	}
+	return FlowType::INVALID;
 }
 
- void SleighInstruction::addExplicitFlow(ConstructState *state, OpTpl *op, FlowFlags flags, FlowSummary &summary) {
+void SleighInstruction::addExplicitFlow(ConstructState *state, OpTpl *op, FlowFlags flags,
+                                        FlowSummary &summary)
+{
 	FlowRecord *res = new FlowRecord();
 	summary.flowState.push_back(res);
 	res->flowFlags = flags;
 	res->op = op;
 	res->addressnode = nullptr;
-	VarnodeTpl *dest = op->getIn(0);		// First varnode input contains the destination address
-	if ((flags & (FLOW_JUMPOUT | FLOW_CALL | FLOW_CROSSBUILD)) == 0)
+	VarnodeTpl *dest = op->getIn(0); // First varnode input contains the destination address
+	if((flags & (FLOW_JUMPOUT | FLOW_CALL | FLOW_CROSSBUILD)) == 0)
 		return;
-	// If the flow is out of the instruction, store the ConstructState so we can easily calculate address
-	if (state == nullptr)
+	// If the flow is out of the instruction, store the ConstructState so we can easily calculate
+	// address
+	if(state == nullptr)
 		return;
-	if ((flags & FLOW_CROSSBUILD) != 0) {
+	if((flags & FLOW_CROSSBUILD) != 0)
+	{
 		res->addressnode = state;
-	} else if (dest->getOffset().getType() == ConstTpl::handle) {
+	}
+	else if(dest->getOffset().getType() == ConstTpl::handle)
+	{
 		int oper = dest->getOffset().getHandleIndex();
 		Constructor *ct = state->ct;
 		OperandSymbol *sym = ct->getOperand(oper);
-		if (sym->isCodeAddress()) {
+		if(sym->isCodeAddress())
+		{
 			res->addressnode = state->resolve[oper];
 		}
 	}
@@ -208,33 +197,39 @@ SleighInstruction::FlowSummary SleighInstruction::walkTemplates(OpTplWalker &wal
 	ConstTpl::const_type destType;
 	FlowFlags flags;
 
-	while (walker.isState()) {
+	while(walker.isState())
+	{
 		OpTpl *lastop = nullptr;
 		int state = walker.nextOpTpl(lastop);
-		if (state == -1) {
+		if(state == -1)
+		{
 			walker.popBuild();
 			continue;
 		}
-		else if (state > 0) {
+		else if(state > 0)
+		{
 			walker.pushBuild(state - 1);
 			continue;
 		}
 		res.lastop = lastop;
-		switch (res.lastop->getOpcode()) {
-			case OpCode::CPUI_PTRSUB:			// encoded crossbuild directive
+		switch(res.lastop->getOpcode())
+		{
+			case OpCode::CPUI_PTRSUB: // encoded crossbuild directive
 				res.hasCrossBuilds = true;
 				addExplicitFlow(walker.getState(), res.lastop, FLOW_CROSSBUILD, res);
 				break;
 			case OpCode::CPUI_BRANCHIND:
-				addExplicitFlow(nullptr, res.lastop, FlowFlags(FlowFlags::FLOW_BRANCH_INDIRECT | FlowFlags::FLOW_NO_FALLTHRU), res);
+				addExplicitFlow(
+				    nullptr, res.lastop,
+				    FlowFlags(FlowFlags::FLOW_BRANCH_INDIRECT | FlowFlags::FLOW_NO_FALLTHRU), res);
 				break;
 			case OpCode::CPUI_BRANCH:
 				destType = res.lastop->getIn(0)->getOffset().getType();
-				if (destType == ConstTpl::j_next)
+				if(destType == ConstTpl::j_next)
 					flags = FlowFlags::FLOW_BRANCH_TO_END;
-				else if (destType == ConstTpl::j_start)
+				else if(destType == ConstTpl::j_start)
 					flags = FlowFlags::FLOW_NO_FALLTHRU;
-				else if (destType == ConstTpl::j_relative)
+				else if(destType == ConstTpl::j_relative)
 					flags = FlowFlags::FLOW_NO_FALLTHRU;
 				else
 					flags = FlowFlags(FlowFlags::FLOW_JUMPOUT | FlowFlags::FLOW_NO_FALLTHRU);
@@ -242,9 +237,9 @@ SleighInstruction::FlowSummary SleighInstruction::walkTemplates(OpTplWalker &wal
 				break;
 			case OpCode::CPUI_CBRANCH:
 				destType = res.lastop->getIn(0)->getOffset().getType();
-				if (destType == ConstTpl::j_next)
+				if(destType == ConstTpl::j_next)
 					flags = FlowFlags::FLOW_BRANCH_TO_END;
-				else if ((destType != ConstTpl::j_start) && (destType != ConstTpl::j_relative))
+				else if((destType != ConstTpl::j_start) && (destType != ConstTpl::j_relative))
 					flags = FlowFlags::FLOW_JUMPOUT;
 				else
 					flags = FlowFlags(0);
@@ -257,28 +252,31 @@ SleighInstruction::FlowSummary SleighInstruction::walkTemplates(OpTplWalker &wal
 				addExplicitFlow(nullptr, res.lastop, FlowFlags::FLOW_CALL_INDIRECT, res);
 				break;
 			case OpCode::CPUI_RETURN:
-				addExplicitFlow(nullptr, res.lastop, FlowFlags(FlowFlags::FLOW_RETURN | FlowFlags::FLOW_NO_FALLTHRU), res);
+				addExplicitFlow(nullptr, res.lastop,
+				                FlowFlags(FlowFlags::FLOW_RETURN | FlowFlags::FLOW_NO_FALLTHRU),
+				                res);
 				break;
-			case OpCode::CPUI_PTRADD:			// Encoded label build directive
+			case OpCode::CPUI_PTRADD: // Encoded label build directive
 				addExplicitFlow(nullptr, res.lastop, FlowFlags::FLOW_LABEL, res);
 				break;
-			case OpCode::CPUI_INDIRECT:			// Encode delayslot
+			case OpCode::CPUI_INDIRECT: // Encode delayslot
 				destType = res.lastop->getIn(0)->getOffset().getType();
-				if (destType > res.delay)
+				if(destType > res.delay)
 					res.delay = destType;
 				break;
-			default:
-				break;
+			default: break;
 		}
 	}
 	return res;
 }
 
-FlowType SleighInstruction::flowListToFlowType(std::vector<FlowRecord *> &flowstate) {
-	if (flowstate.empty())
+FlowType SleighInstruction::flowListToFlowType(std::vector<FlowRecord *> &flowstate)
+{
+	if(flowstate.empty())
 		return FlowType::FALL_THROUGH;
 	FlowFlags flags = FlowFlags(0);
-	for (FlowRecord *rec : flowstate) {
+	for(FlowRecord *rec: flowstate)
+	{
 		flags = FlowFlags(flags & (~(FLOW_NO_FALLTHRU | FLOW_CROSSBUILD | FLOW_LABEL)));
 		flags = FlowFlags(flags | rec->flowFlags);
 	}
@@ -296,14 +294,18 @@ void SleighInstruction::cacheTreeInfo()
 
 	delaySlotByteCnt = summary.delay;
 	hasCrossBuilds = summary.hasCrossBuilds;
-	if (!summary.flowState.empty()) {
+	if(!summary.flowState.empty())
+	{
 		flowStateList = summary.flowState;
 		flowType = flowListToFlowType(summary.flowState);
-	} else {
+	}
+	else
+	{
 		flowType = FlowType::FALL_THROUGH;
 	}
 
-	for (uint4 i = 0; i < sleigh->numSections; i++) {
+	for(uint4 i = 0; i < sleigh->numSections; i++)
+	{
 		walker = OpTplWalker(&rootState, i);
 		summary = walkTemplates(walker);
 		flowStateListNamed.push_back(summary.flowState);
@@ -313,31 +315,35 @@ void SleighInstruction::cacheTreeInfo()
 SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, int secnum)
 {
 	std::vector<FlowRecord *> curlist;
-	if (secnum < 0)
+	if(secnum < 0)
 		curlist = flowStateList;
-	else if ((!flowStateListNamed.empty()) && (secnum < flowStateListNamed.size()))
+	else if((!flowStateListNamed.empty()) && (secnum < flowStateListNamed.size()))
 		curlist = flowStateListNamed[secnum];
 
-	if (curlist.empty())
+	if(curlist.empty())
 		return curflags;
 
-	for (FlowRecord *rec : curlist) {
-		if ((rec->flowFlags & FLOW_CROSSBUILD) != 0) {
+	for(FlowRecord *rec: curlist)
+	{
+		if((rec->flowFlags & FLOW_CROSSBUILD) != 0)
+		{
 			SleighParserContext *pos = protoContext;
-			pos->applyCommits(); pos->clearCommits();
+			pos->applyCommits();
+			pos->clearCommits();
 			SubParserWalker walker(pos);
 			walker.subTreeState(rec->addressnode);
 
 			VarnodeTpl *vn = rec->op->getIn(0);
 			AddrSpace *spc = vn->getSpace().fixSpace(walker);
-			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
+			uintb addr = spc->wrapOffset(vn->getOffset().fix(walker));
 
-			Address newaddr(spc,addr);
+			Address newaddr(spc, addr);
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
 			SleighInstruction *crossproto = sleigh->getInstruction(newaddr);
 			curflags = crossproto->gatherFlags(curflags, newsecnum);
 		}
-		else {
+		else
+		{
 			curflags = FlowFlags(curflags & (~(FLOW_CROSSBUILD | FLOW_LABEL | FLOW_NO_FALLTHRU)));
 			curflags = FlowFlags(curflags | rec->flowFlags);
 		}
@@ -345,33 +351,38 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 	return curflags;
 }
 
-void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *parsecontext, int secnum)
+void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *parsecontext,
+                                    int secnum)
 {
 	std::vector<FlowRecord *> curlist;
-	if (secnum < 0)
+	if(secnum < 0)
 		curlist = flowStateList;
-	else if ((!flowStateListNamed.empty()) && (secnum < flowStateListNamed.size()))
+	else if((!flowStateListNamed.empty()) && (secnum < flowStateListNamed.size()))
 		curlist = flowStateListNamed[secnum];
 
-	if (curlist.empty())
+	if(curlist.empty())
 		return;
 
-	for (FlowRecord *rec : curlist) {
-		if ((rec->flowFlags & FLOW_CROSSBUILD) != 0) {
+	for(FlowRecord *rec: curlist)
+	{
+		if((rec->flowFlags & FLOW_CROSSBUILD) != 0)
+		{
 			SubParserWalker walker(parsecontext);
 			walker.subTreeState(rec->addressnode);
 
 			VarnodeTpl *vn = rec->op->getIn(0);
 			AddrSpace *spc = vn->getSpace().fixSpace(walker);
-			uintb addr = spc->wrapOffset( vn->getOffset().fix(walker) );
-			Address newaddr(spc,addr);
+			uintb addr = spc->wrapOffset(vn->getOffset().fix(walker));
+			Address newaddr(spc, addr);
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
 			SleighInstruction *crossproto = sleigh->getInstruction(newaddr);
 			crossproto->gatherFlows(res, crossproto->protoContext, newsecnum);
 		}
-		else if ((rec->flowFlags & (FLOW_JUMPOUT | FLOW_CALL)) != 0) {
+		else if((rec->flowFlags & (FLOW_JUMPOUT | FLOW_CALL)) != 0)
+		{
 			FixedHandle &hand = rec->addressnode->hand;
-			if (!handleIsInvalid(hand) && hand.offset_space == nullptr) {
+			if(!handleIsInvalid(hand) && hand.offset_space == nullptr)
+			{
 				Address addr = getHandleAddr(hand, parsecontext->getAddr().getSpace());
 				res.push_back(addr);
 			}
@@ -381,7 +392,8 @@ void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *pa
 
 Address SleighInstruction::getHandleAddr(FixedHandle &hand, AddrSpace *curSpace)
 {
-	if (handleIsInvalid(hand) || hand.space->getType() == spacetype::IPTR_INTERNAL || hand.offset_space != nullptr)
+	if(handleIsInvalid(hand) || hand.space->getType() == spacetype::IPTR_INTERNAL ||
+	   hand.offset_space != nullptr)
 		return Address();
 
 	Address newaddr(hand.space, hand.space->wrapOffset(hand.offset_offset));
@@ -390,7 +402,7 @@ Address SleighInstruction::getHandleAddr(FixedHandle &hand, AddrSpace *curSpace)
 
 	// if we are in an address space, translate it
 	// if (curSpace.isOverlaySpace()) {
-		// newaddr = curSpace.getOverlayAddress(newaddr);
+	// newaddr = curSpace.getOverlayAddress(newaddr);
 	// }
 	return newaddr;
 }
@@ -402,7 +414,7 @@ bool SleighInstruction::handleIsInvalid(FixedHandle &hand)
 
 FlowType SleighInstruction::getFlowType()
 {
-	if (!hasCrossBuilds)
+	if(!hasCrossBuilds)
 		return flowType;
 
 	return convertFlowFlags(gatherFlags(FlowFlags(0), -1));
@@ -411,37 +423,39 @@ FlowType SleighInstruction::getFlowType()
 std::vector<Address> SleighInstruction::getFlows()
 {
 	std::vector<Address> addresses;
-	if (flowStateList.empty())
+	if(flowStateList.empty())
 		return addresses;
 
 	SleighParserContext *pos = protoContext;
-	pos->applyCommits(); pos->clearCommits();
+	pos->applyCommits();
+	pos->clearCommits();
 	gatherFlows(addresses, pos, -1);
 
 	return addresses;
 }
 
-Address SleighInstruction::getFallThrough() {
-	if (flowTypeHasFallthrough(flowType)) {
+Address SleighInstruction::getFallThrough()
+{
+	if(flowTypeHasFallthrough(flowType))
 		return baseaddr + getFallThroughOffset();
-	}
+
 	return Address();
 }
 
-int SleighInstruction::getFallThroughOffset() {
-	if (delaySlotByteCnt <= 0) {
+int SleighInstruction::getFallThroughOffset()
+{
+	if(delaySlotByteCnt <= 0)
 		return getLength();
-	}
 
 	int offset = getLength();
 	int bytecount = 0;
-	do {
+	do
+	{
 		Address off_addr = baseaddr + offset;
 		SleighInstruction ins(sleigh, off_addr);
 		int len = ins.getLength();
 		offset += len;
 		bytecount += len;
-	}
-	while (bytecount < delaySlotByteCnt);
+	} while(bytecount < delaySlotByteCnt);
 	return offset;
 }

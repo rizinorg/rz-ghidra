@@ -351,8 +351,8 @@ class PcodeRawOut : public PcodeEmit
 				s << '(' << data.space->getName() << ',';
 				data.space->printOffset(s,data.offset);
 				s << ',' << dec << data.size << ')';
-			} 
-			else if(space->getName() == "DATA") 
+			}
+			else if(space->getName() == "DATA")
 			{
 				s << '(' << data.space->getName() << ',';
 				data.space->printOffset(s,data.offset);

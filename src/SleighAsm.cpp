@@ -58,7 +58,8 @@ void SleighAsm::initInner(RIO *io, char *cpu)
 	sleigh_id = cpu;
 }
 
-static void parseProto(const Element *el, std::vector<std::string> &arg_names, std::vector<std::string> &ret_names)
+static void parseProto(const Element *el, std::vector<std::string> &arg_names,
+                       std::vector<std::string> &ret_names)
 {
 	if(el->getName() != "prototype")
 		throw LowlevelError("Expecting <prototype> tag");
@@ -80,7 +81,8 @@ static void parseProto(const Element *el, std::vector<std::string> &arg_names, s
 					int4 num = subel->getNumAttributes(), i = 0;
 					for(; i < num; ++i)
 					{
-						if(subel->getAttributeName(i) == "metatype" && subel->getAttributeValue(i) == "float")
+						if(subel->getAttributeName(i) == "metatype" &&
+						   subel->getAttributeValue(i) == "float")
 							break;
 					}
 					if(i != num)
@@ -102,12 +104,13 @@ static void parseProto(const Element *el, std::vector<std::string> &arg_names, s
 	}
 }
 
-static void parseDefaultProto(const Element *el, std::vector<std::string> &arg_names, std::vector<std::string> &ret_names)
+static void parseDefaultProto(const Element *el, std::vector<std::string> &arg_names,
+                              std::vector<std::string> &ret_names)
 {
 	const List &list(el->getChildren());
 	List::const_iterator iter;
 
-	for(iter=list.begin();iter!=list.end();++iter)
+	for(iter = list.begin(); iter != list.end(); ++iter)
 	{
 		// Decompiler will parse the same entry, and exit if multiple exists.
 		arg_names.clear();
@@ -209,7 +212,7 @@ void SleighAsm::parseProcConfig(DocumentStorage &store)
 void SleighAsm::buildSpecfile(DocumentStorage &store)
 {
 	const LanguageDescription &language(description[languageindex]);
-	std::string compiler = sleigh_id.substr(sleigh_id.rfind(':')+1);
+	std::string compiler = sleigh_id.substr(sleigh_id.rfind(':') + 1);
 	const CompilerTag &compilertag(language.getCompiler(compiler));
 
 	std::string processorfile;
@@ -217,7 +220,7 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 	std::string slafile;
 
 	specpaths.findFile(processorfile, language.getProcessorSpec());
-	specpaths.findFile(compilerfile,compilertag.getSpec());
+	specpaths.findFile(compilerfile, compilertag.getSpec());
 	specpaths.findFile(slafile, language.getSlaFile());
 
 	try
@@ -240,15 +243,20 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 		throw SleighError(serr.str());
 	}
 
-	try {
+	try
+	{
 		Document *doc = store.openDocument(compilerfile);
 		store.registerTag(doc->getRoot());
-	} catch(XmlError &err) {
+	}
+	catch(XmlError &err)
+	{
 		ostringstream serr;
 		serr << "XML error parsing compiler specification: " << compilerfile;
 		serr << "\n " << err.explain;
 		throw SleighError(serr.str());
-	} catch(LowlevelError &err) {
+	}
+	catch(LowlevelError &err)
+	{
 		ostringstream serr;
 		serr << "Error reading compiler specification: " << compilerfile;
 		serr << "\n " << err.explain;
@@ -316,7 +324,8 @@ void SleighAsm::scanSleigh(const string &rootpath)
 	FileManage::scanDirectoryRecursive(ghidradir, "Ghidra", rootpath, 2);
 	for(size_t i = 0; i < ghidradir.size(); ++i)
 	{
-		FileManage::scanDirectoryRecursive(procdir, "Processors", ghidradir[i], 1); // Look for Processors structure
+		FileManage::scanDirectoryRecursive(procdir, "Processors", ghidradir[i],
+		                                   1); // Look for Processors structure
 		FileManage::scanDirectoryRecursive(procdir, "contrib", ghidradir[i], 1);
 	}
 	if(procdir.size() != 0)
@@ -339,8 +348,8 @@ void SleighAsm::scanSleigh(const string &rootpath)
 		for(size_t i = 0; i < languagedirs.size(); ++i)
 			FileManage::directoryList(languagesubdirs, languagedirs[i]);
 	}
-	// If we haven't matched this directory structure, just use the rootpath as the directory containing
-	// the ldef
+	// If we haven't matched this directory structure, just use the rootpath as the directory
+	// containing the ldef
 	if(languagesubdirs.size() == 0)
 		languagesubdirs.push_back(rootpath);
 
@@ -469,7 +478,7 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 		auto *ins = trans.getInstruction(addr);
 		stringstream ss;
 		ss << assem.str << " " << ins->printFlowType(ins->getFlowType());
-		for(auto p : ins->getFlows())
+		for(auto p: ins->getFlows())
 			ss << " " << p;
 		r_strbuf_set(&op->buf_asm, ss.str().c_str());
 	}
@@ -516,39 +525,35 @@ std::vector<R2Reg> SleighAsm::getRegs(void)
 			sleigh_offset = p->first.offset;
 			sleigh_last = sleigh_offset + p->first.size;
 		}
-		r2_reglist.push_back(R2Reg{p->second, p->first.size, p->first.offset - sleigh_offset + offset});
+		r2_reglist.push_back(
+		    R2Reg{p->second, p->first.size, p->first.offset - sleigh_offset + offset});
 	}
 
 	return r2_reglist;
 }
 
-ostream &operator<<(ostream &s,const PcodeOperand &arg)
+ostream &operator<<(ostream &s, const PcodeOperand &arg)
 {
 	switch(arg.type)
 	{
-		case PcodeOperand::REGISTER: s << arg.name; 
-			break;
-		case PcodeOperand::UNIQUE: s << "unique(" << arg.offset << ", " << arg.size << ")";
-			break;
+		case PcodeOperand::REGISTER: s << arg.name; break;
+		case PcodeOperand::UNIQUE: s << "unique(" << arg.offset << ", " << arg.size << ")"; break;
 		// case PcodeOperand::RAM: s << "ram(" << arg.offset << ", " << arg.size << ")";
-		case PcodeOperand::RAM: s << arg.offset;
-			break;
-		case PcodeOperand::CONST: s << arg.number;
-			break;
-		default: 
-			throw LowlevelError("Unexpected type of PcodeOperand found in operator<<.");
+		case PcodeOperand::RAM: s << arg.offset; break;
+		case PcodeOperand::CONST: s << arg.number; break;
+		default: throw LowlevelError("Unexpected type of PcodeOperand found in operator<<.");
 	}
 	return s;
 }
 
-ostream &operator<<(ostream &s,const Pcodeop &op)
+ostream &operator<<(ostream &s, const Pcodeop &op)
 {
-	if (op.output)
+	if(op.output)
 		s << *op.output << " = ";
 	s << get_opname(op.type);
-	if (op.input0)
+	if(op.input0)
 		s << " " << *op.input0;
-	if (op.input1)
+	if(op.input1)
 		s << " " << *op.input1;
 	return s;
 }
