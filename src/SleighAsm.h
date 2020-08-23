@@ -250,6 +250,8 @@ class SleighAsm
 		int alignment = 1;
 		std::string pc_name;
 		std::string sp_name;
+		std::vector<std::string> arg_names; // default ABI's function args
+		std::vector<std::string> ret_names; // default ABI's function retvals
 		std::unordered_map<std::string, std::string> reg_group;
 		SleighAsm() : loader(nullptr), trans(nullptr, nullptr) {}
 		void init(RAsm *a);

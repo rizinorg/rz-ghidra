@@ -468,7 +468,7 @@ static ut32 anal_type_POP (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 
 static ut32 anal_type_XCMP (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, Pcodeop *> &midvar_op) {
 	// R_ANAL_OP_TYPE_CMP
-	// R_ANAL_OP_TYPE_ACMP)
+	// R_ANAL_OP_TYPE_ACMP
 	const PcodeOpType key_pcode_sub = CPUI_INT_SUB;
 	const PcodeOpType key_pcode_and = CPUI_INT_AND;
 	const PcodeOpType key_pcode_equal = CPUI_INT_EQUAL;
@@ -728,10 +728,8 @@ static void anal_type (RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, Inner
 	std::vector<std::string> args = string_split(assem.args, ',');
 	std::transform(args.begin(), args.end(), args.begin(), string_trim);
 	std::unordered_set<std::string> arg_set;
-	// Begin
 	std::map<VarnodeData, std::string> reglist;
 	sanal.trans.getAllRegisters(reglist);
-	// End. This can be cached.
 	for (auto iter = args.cbegin(); iter != args.cend(); ++iter) {
 		for (auto p = reglist.cbegin(); p != reglist.cend(); ++p)
 			if (p->second == *iter) {
@@ -747,50 +745,35 @@ static void anal_type (RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, Inner
 				midvar_op[pco->output->offset] = &(*pco);
 		}
 	}
-	/*
-	std::unordered_set<PcodeOperand, PcodeOperand> mid_vars;
-	std::vector<const Pcodeop *> filtered_ins;
-	std::vector<const Pcodeop *> filtered_outs;
-
-	for (auto pco = pcode_slg.pcodes.cbegin(); pco != pcode_slg.pcodes.cend(); ++pco) {
-		if (pco->type == CPUI_STORE) {
-			if (isOperandInteresting(pco->input1, arg_set, mid_vars)) {
-				// input1		Varnode containing pointer offset of destination.
-				filtered_outs.push_back(&(*pco));
-			}
-			if (isOperandInteresting(pco->output, arg_set, mid_vars)) {
-				// input2		Varnode containing data to be stored.
-				filtered_ins.push_back(&(*pco));
-			}
-		} else {
-			if (isOperandInteresting(pco->input0, arg_set, mid_vars) || isOperandInteresting(pco->input1, arg_set, mid_vars)) {
-				if (pco->output && pco->output->type == PcodeOperand::UNIQUE)
-					mid_vars.insert(*pco->output);
-					
-				filtered_ins.push_back(&(*pco));
-			}
-		}
-	}
-
-	mid_vars.clear();
-
-	for (auto pco = pcode_slg.pcodes.crbegin(); pco != pcode_slg.pcodes.crend(); ++pco) {
-		if (pco->type != CPUI_STORE) {
-			if (isOperandInteresting(pco->output, arg_set, mid_vars)) {
-				if (pco->input0 && pco->input0->type == PcodeOperand::UNIQUE)
-					mid_vars.insert(*pco->input0);
-				if (pco->input1 && pco->input1->type == PcodeOperand::UNIQUE)
-					mid_vars.insert(*pco->input1);
-
-				filtered_outs.push_back(&(*pco));
-			}
-		}
-	}
-	*/
 
 	anal_op->type = R_ANAL_OP_TYPE_UNK;
 
-	anal_type_SAR(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op);
+	if (anal_type_XCHG(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_SINGLE(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_XSWI(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_XCMP(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_NOR(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_INT_XXX(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_NOT(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_XPUSH(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_POP(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_STORE(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_LOAD(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+	if (anal_type_MOV(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+		return;
+
+	return;
 }
 
 static char *getIndirectReg (SleighInstruction &ins, bool &isRefed) {
@@ -1490,8 +1473,6 @@ static int sleigh_op (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, in
 
 static char *get_reg_profile (RAnal *anal)
 {
-	// TODO: parse call and return reg usage from compiler spec.
-	// TODO: apply attribute get from processor spec(hidden, ...).
 	if(!strcmp(anal->cpu, "x86"))
 		return nullptr;
 
@@ -1531,6 +1512,12 @@ static char *get_reg_profile (RAnal *anal)
 		buf << "=PC\t" << sanal.pc_name << '\n';
 	if(!sanal.sp_name.empty())
 		buf << "=SP\t" << sanal.sp_name << '\n';
+
+	for (unsigned i = 0; i != sanal.arg_names.size() && i <= 9; ++i)
+		buf << "=A" << i << '\t' << sanal.arg_names[i] << '\n';
+
+	for (unsigned i = 0; i != sanal.ret_names.size() && i <= 3; ++i)
+		buf << "=R" << i << '\t' << sanal.arg_names[i] << '\n';
 
 	for(auto p = reg_list.begin(); p != reg_list.end(); p++)
 	{

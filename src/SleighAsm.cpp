@@ -56,6 +56,54 @@ void SleighAsm::initInner(RIO *io, char *cpu)
 	sleigh_id = cpu;
 }
 
+static void parseProto(const Element *el) {
+	if (el->getName() != "prototype")
+		throw LowlevelError("Expecting <prototype> tag");
+
+	const List &list(el->getChildren());
+	for(auto iter = list.begin(); iter != list.end(); ++iter) {
+		const Element *subnode = *iter;
+
+		if (subnode->getName() == "input" || subnode->getName() == "output") {
+			// input->restoreXml(subnode,glb,effectlist,stackgrowsnegative);
+			const List &flist(el->getChildren());
+			for(auto fiter = flist.begin(); fiter != flist.end(); ++fiter) {
+				const Element *subel = *fiter;
+				const Element *reg = *subel->getChildren().begin();
+				if (subel->getName() == "pentry" && reg->getName() == "register") {
+					int4 num = subel->getNumAttributes(), i = 0;
+					for(; i < num; ++i) {
+						if (subel->getAttributeName(i) == "metatype" && subel->getAttributeValue(i) == "float")
+							break;
+					}
+					if (i != num)
+						continue;
+
+					for (int p = 0; p < reg->getNumAttributes(); ++p) {
+						if (reg->getAttributeName(p) == "name") {
+							if (subnode->getName() == "input")
+								arg_names.push_back(reg->getAttributeValue(p));
+							else
+								ret_names.push_back(reg->getAttributeValue(p));
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+static void parseDefaultProto(const Element *el) {
+	const List &list(el->getChildren());
+	List::const_iterator iter;
+
+	for(iter=list.begin();iter!=list.end();++iter) {
+		if (defaultfp)
+			throw LowlevelError("More than one default prototype model");
+		defaultfp = parseProto(*iter);
+	}
+}
+
 void SleighAsm::parseCompConfig(DocumentStorage &store)
 {
 	const Element *el = store.getTag("compiler_spec");
@@ -70,6 +118,8 @@ void SleighAsm::parseCompConfig(DocumentStorage &store)
 		const string &elname((*iter)->getName());
 		if(elname == "stackpointer")
 			sp_name = (*iter)->getAttributeValue("register");
+		if(elname == "default_proto")
+			parseDefaultProto(*iter);
 	}
 }
 
