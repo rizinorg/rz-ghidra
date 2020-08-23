@@ -46,7 +46,8 @@ RAsmPlugin r_asm_plugin_ghidra = {
 	/* .assemble = */ nullptr,
 	/* .modify */ nullptr,
 	/* .mnemonics = */ nullptr,
-	/* .features = */ nullptr};
+	/* .features = */ nullptr
+};
 
 #ifndef CORELIB
 #ifdef __cplusplus
@@ -58,8 +59,7 @@ R_API RLibStruct radare_plugin = {
 	/* .version = */ R2_VERSION,
 	/* .free = */ nullptr
 #if R2_VERSION_MAJOR >= 4 && R2_VERSION_MINOR >= 2
-	,
-	"r2ghidra-dec"
+	, "r2ghidra-dec"
 #endif
 };
 #endif
