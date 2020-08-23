@@ -351,8 +351,13 @@ class PcodeRawOut : public PcodeEmit
 				s << '(' << data.space->getName() << ',';
 				data.space->printOffset(s,data.offset);
 				s << ',' << dec << data.size << ')';
-			}
-			else
+			} 
+			else if(space->getName() == "DATA") 
+			{
+				s << '(' << data.space->getName() << ',';
+				data.space->printOffset(s,data.offset);
+				s << ',' << dec << data.size << ')';
+			} else
 			{
 				throw LowlevelError("Unsupported AddrSpace type appear.");
 			}

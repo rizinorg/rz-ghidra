@@ -170,8 +170,11 @@ class PcodeSlg : public PcodeEmit
 			{
 				operand = new PcodeOperand(data.offset, data.size);
 				operand->type = PcodeOperand::UNIQUE;
-			}
-			else
+			} else if(space->getName() == "DATA")
+			{
+				operand = new PcodeOperand(data.offset, data.size);
+				operand->type = PcodeOperand::RAM;
+			} else
 			{
 				throw LowlevelError("Unsupported AddrSpace type appear.");
 			}
