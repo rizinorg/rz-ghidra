@@ -56,7 +56,7 @@ void SleighAsm::initInner(RIO *io, char *cpu)
 	sleigh_id = cpu;
 }
 
-static void parseProto(const Element *el) {
+static void parseProto(const Element *el, std::vector<std::string> &arg_names, std::vector<std::string> &ret_names) {
 	if (el->getName() != "prototype")
 		throw LowlevelError("Expecting <prototype> tag");
 
@@ -93,14 +93,15 @@ static void parseProto(const Element *el) {
 	}
 }
 
-static void parseDefaultProto(const Element *el) {
+static void parseDefaultProto(const Element *el, std::vector<std::string> &arg_names, std::vector<std::string> &ret_names) {
 	const List &list(el->getChildren());
 	List::const_iterator iter;
 
 	for(iter=list.begin();iter!=list.end();++iter) {
-		if (defaultfp)
-			throw LowlevelError("More than one default prototype model");
-		defaultfp = parseProto(*iter);
+		// Decompiler will parse the same entry, and exit if multiple exists.
+		arg_names.clear();
+		ret_names.clear();
+		parseProto(*iter, arg_names, ret_names);
 	}
 }
 
@@ -118,8 +119,9 @@ void SleighAsm::parseCompConfig(DocumentStorage &store)
 		const string &elname((*iter)->getName());
 		if(elname == "stackpointer")
 			sp_name = (*iter)->getAttributeValue("register");
-		if(elname == "default_proto")
-			parseDefaultProto(*iter);
+		if(elname == "default_proto") {
+			parseDefaultProto(*iter, arg_names, ret_names);
+		}
 	}
 }
 
