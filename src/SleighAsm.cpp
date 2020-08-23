@@ -1,3 +1,5 @@
+/* radare - LGPL - Copyright 2020 - FXTi */
+
 #include "SleighAsm.h"
 
 void SleighAsm::init(RAsm *a)
@@ -56,32 +58,39 @@ void SleighAsm::initInner(RIO *io, char *cpu)
 	sleigh_id = cpu;
 }
 
-static void parseProto(const Element *el, std::vector<std::string> &arg_names, std::vector<std::string> &ret_names) {
-	if (el->getName() != "prototype")
+static void parseProto(const Element *el, std::vector<std::string> &arg_names, std::vector<std::string> &ret_names)
+{
+	if(el->getName() != "prototype")
 		throw LowlevelError("Expecting <prototype> tag");
 
 	const List &list(el->getChildren());
-	for(auto iter = list.begin(); iter != list.end(); ++iter) {
+	for(auto iter = list.begin(); iter != list.end(); ++iter)
+	{
 		const Element *subnode = *iter;
 
-		if (subnode->getName() == "input" || subnode->getName() == "output") {
-			// input->restoreXml(subnode,glb,effectlist,stackgrowsnegative);
+		if(subnode->getName() == "input" || subnode->getName() == "output")
+		{
 			const List &flist(el->getChildren());
-			for(auto fiter = flist.begin(); fiter != flist.end(); ++fiter) {
+			for(auto fiter = flist.begin(); fiter != flist.end(); ++fiter)
+			{
 				const Element *subel = *fiter;
 				const Element *reg = *subel->getChildren().begin();
-				if (subel->getName() == "pentry" && reg->getName() == "register") {
+				if(subel->getName() == "pentry" && reg->getName() == "register")
+				{
 					int4 num = subel->getNumAttributes(), i = 0;
-					for(; i < num; ++i) {
-						if (subel->getAttributeName(i) == "metatype" && subel->getAttributeValue(i) == "float")
+					for(; i < num; ++i)
+					{
+						if(subel->getAttributeName(i) == "metatype" && subel->getAttributeValue(i) == "float")
 							break;
 					}
-					if (i != num)
+					if(i != num)
 						continue;
 
-					for (int p = 0; p < reg->getNumAttributes(); ++p) {
-						if (reg->getAttributeName(p) == "name") {
-							if (subnode->getName() == "input")
+					for(int p = 0; p < reg->getNumAttributes(); ++p)
+					{
+						if(reg->getAttributeName(p) == "name")
+						{
+							if(subnode->getName() == "input")
 								arg_names.push_back(reg->getAttributeValue(p));
 							else
 								ret_names.push_back(reg->getAttributeValue(p));
@@ -93,11 +102,13 @@ static void parseProto(const Element *el, std::vector<std::string> &arg_names, s
 	}
 }
 
-static void parseDefaultProto(const Element *el, std::vector<std::string> &arg_names, std::vector<std::string> &ret_names) {
+static void parseDefaultProto(const Element *el, std::vector<std::string> &arg_names, std::vector<std::string> &ret_names)
+{
 	const List &list(el->getChildren());
 	List::const_iterator iter;
 
-	for(iter=list.begin();iter!=list.end();++iter) {
+	for(iter=list.begin();iter!=list.end();++iter)
+	{
 		// Decompiler will parse the same entry, and exit if multiple exists.
 		arg_names.clear();
 		ret_names.clear();
@@ -119,9 +130,8 @@ void SleighAsm::parseCompConfig(DocumentStorage &store)
 		const string &elname((*iter)->getName());
 		if(elname == "stackpointer")
 			sp_name = (*iter)->getAttributeValue("register");
-		if(elname == "default_proto") {
+		if(elname == "default_proto")
 			parseDefaultProto(*iter, arg_names, ret_names);
-		}
 	}
 }
 
@@ -188,9 +198,7 @@ void SleighAsm::parseProcConfig(DocumentStorage &store)
 			pc_name = (*iter)->getAttributeValue("register");
 
 		if(elname == "register_data")
-		{
 			reg_group = parseRegisterData(*iter);
-		}
 	}
 }
 
@@ -202,7 +210,7 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 {
 	const LanguageDescription &language(description[languageindex]);
 	std::string compiler = sleigh_id.substr(sleigh_id.rfind(':')+1);
-	const CompilerTag &compilertag( language.getCompiler(compiler));
+	const CompilerTag &compilertag(language.getCompiler(compiler));
 
 	std::string processorfile;
 	std::string compilerfile;
@@ -461,7 +469,7 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 		auto *ins = trans.getInstruction(addr);
 		stringstream ss;
 		ss << assem.str << " " << ins->printFlowType(ins->getFlowType());
-		for (auto p : ins->getFlows())
+		for(auto p : ins->getFlows())
 			ss << " " << p;
 		r_strbuf_set(&op->buf_asm, ss.str().c_str());
 	}
@@ -514,8 +522,10 @@ std::vector<R2Reg> SleighAsm::getRegs(void)
 	return r2_reglist;
 }
 
-ostream &operator<<(ostream &s,const PcodeOperand &arg) {
-	switch (arg.type) {
+ostream &operator<<(ostream &s,const PcodeOperand &arg)
+{
+	switch(arg.type)
+	{
 		case PcodeOperand::REGISTER: s << arg.name; 
 			break;
 		case PcodeOperand::UNIQUE: s << "unique(" << arg.offset << ", " << arg.size << ")";
@@ -531,7 +541,8 @@ ostream &operator<<(ostream &s,const PcodeOperand &arg) {
 	return s;
 }
 
-ostream &operator<<(ostream &s,const Pcodeop &op) {
+ostream &operator<<(ostream &s,const Pcodeop &op)
+{
 	if (op.output)
 		s << *op.output << " = ";
 	s << get_opname(op.type);

@@ -10,7 +10,7 @@
 
 static SleighAsm sanal;
 
-static int archinfo (RAnal *anal, int query)
+static int archinfo(RAnal *anal, int query)
 {
 	if(!strcmp(anal->cpu, "x86"))
 		return -1;
@@ -22,11 +22,13 @@ static int archinfo (RAnal *anal, int query)
 		return -1;
 }
 
-static std::vector<std::string> string_split (const std::string& s, const char& delim = ' ') {
+static std::vector<std::string> string_split(const std::string& s, const char& delim = ' ')
+{
 	std::vector<std::string> tokens;
     size_t lastPos = s.find_first_not_of(delim, 0);
     size_t pos = s.find(delim, lastPos);
-    while (lastPos != string::npos) {
+    while(lastPos != string::npos)
+	{
         tokens.emplace_back(s.substr(lastPos, pos - lastPos));
         lastPos = s.find_first_not_of(delim, pos);
         pos = s.find(delim, lastPos);
@@ -34,8 +36,10 @@ static std::vector<std::string> string_split (const std::string& s, const char& 
 	return tokens;
 }
 
-static std::string string_trim (std::string s) {
-    if (!s.empty()) {
+static std::string string_trim(std::string s)
+{
+    if(!s.empty())
+	{
     	s.erase(0,s.find_first_not_of(" "));
     	s.erase(s.find_last_not_of(" ") + 1);
 	}
@@ -47,52 +51,64 @@ class InnerAssemblyEmit : public AssemblyEmit
 	public:
 		std::string args;
 
-		void dump (const Address &addr, const string &mnem, const string &body) override
+		void dump(const Address &addr, const string &mnem, const string &body) override
 		{
-			for (auto iter = body.cbegin(); iter != body.cend(); ++iter)
-				if (*iter != '[' && *iter != ']')
+			for(auto iter = body.cbegin(); iter != body.cend(); ++iter)
+				if(*iter != '[' && *iter != ']')
 					args.push_back(*iter);
 		}
 };
 
-static bool isOperandInteresting (const PcodeOperand *arg, std::unordered_set<std::string> &regs, std::unordered_set<PcodeOperand, PcodeOperand> &mid_vars) {
-	if (arg) {
-		if (arg->type == PcodeOperand::REGISTER)
+static bool isOperandInteresting(const PcodeOperand *arg, std::unordered_set<std::string> &regs, std::unordered_set<PcodeOperand, PcodeOperand> &mid_vars)
+{
+	if(arg)
+	{
+		if(arg->type == PcodeOperand::REGISTER)
 			return regs.find(arg->name) != regs.end();
 
-		if (arg->type == PcodeOperand::UNIQUE)
+		if(arg->type == PcodeOperand::UNIQUE)
 			return mid_vars.find(*arg) != mid_vars.end();
 	}
 	return false;
 }
 
 template <typename T>
-static inline T inner_max(T foo, T bar) {
+static inline T inner_max(T foo, T bar)
+{
 	return foo > bar ? foo : bar;
 }
 
-static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	RAnalValue res;
 	memset(&res, 0, sizeof(RAnalValue));
 
-	if (arg->type == PcodeOperand::CONST) {
+	if(arg->type == PcodeOperand::CONST)
+	{
 		res.imm = arg->number;
-	} else if (arg->type == PcodeOperand::REGISTER) {
+	}
+	else if(arg->type == PcodeOperand::REGISTER)
+	{
 		res.reg = r_reg_get(anal->reg, arg->name.c_str(), -1);
-	} else if (arg->type == PcodeOperand::RAM) {
+	}
+	else if(arg->type == PcodeOperand::RAM)
+	{
 		res.base = arg->offset;
-	} else { // PcodeOperand::UNIQUE
+	}
+	else
+	{ // PcodeOperand::UNIQUE
 		const Pcodeop *curr_op = midvar_op.at(arg->offset);
 		RAnalValue in0, in1;
 		memset(&in0, 0, sizeof(RAnalValue));
 		memset(&in1, 0, sizeof(RAnalValue));
 
-		if (curr_op->input0)
+		if(curr_op->input0)
 			in0 = resolve_arg(anal, curr_op->input0, midvar_op);
-		if (curr_op->input1)
+		if(curr_op->input1)
 			in1 = resolve_arg(anal, curr_op->input1, midvar_op);
 
-		switch (curr_op->type) {
+		switch(curr_op->type)
+		{
 			case CPUI_INT_ZEXT:
 			case CPUI_INT_SEXT:
 			case CPUI_SUBPIECE:
@@ -102,93 +118,114 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg, const std::u
 			case CPUI_LOAD: res = in0; res.memref = curr_op->input0->size;
 				break;
 
-			case CPUI_INT_ADD: {
+			case CPUI_INT_ADD:
+			{
 				res.memref = inner_max(in0.memref, in1.memref);
-				if (in0.imm && in1.imm)
+				if(in0.imm && in1.imm)
 					res.imm = in0.imm + in1.imm;
 				else 
 					res.base = in0.imm + in1.imm + in0.base + in1.base;
 				res.mul = inner_max(in0.mul, in1.mul); // Only one of inputs should set mul
 
 				res.delta = inner_max(in0.delta, in1.delta);
-				if (in0.reg && in1.reg) {
+				if(in0.reg && in1.reg) {
 					res.reg = in0.reg;
 					res.regdelta = in1.reg;
-				} else {
+				}
+				else
+				{
 					res.reg = in0.reg ? in0.reg : in1.reg;
 					res.regdelta = in0.regdelta ? in0.regdelta : in1.regdelta;
 				}
 				break;
 			}
 
-			case CPUI_INT_SUB: {
+			case CPUI_INT_SUB:
+			{
 				res.memref = inner_max(in0.memref, in1.memref);
-				if (in0.imm && in1.imm)
+				if(in0.imm && in1.imm)
 					res.imm = in0.imm - in1.imm;
 				else 
 					res.base = (in0.imm + in0.base) - (in1.imm + in1.base);
 				res.mul = inner_max(in0.mul, in1.mul); // Only one of inputs should set mul
 				res.delta = inner_max(in0.delta, in1.delta);
-				if (in0.reg && in1.reg) {
+				if(in0.reg && in1.reg)
+				{
 					res.reg = in0.reg;
 					res.regdelta = in1.reg;
-				} else {
+				}
+				else
+				{
 					res.reg = in0.reg ? in0.reg : in1.reg;
 					res.regdelta = in0.regdelta ? in0.regdelta : in1.regdelta;
 				}
 				break;
 			}
 
-			case CPUI_INT_MULT: {
+			case CPUI_INT_MULT:
+			{
 				// 3 cases:
 				// imm (CONST) * imm (CONST)
 				// imm (CONST) * base (RAM)
 				// imm (CONST) * reg (REGISTER)
 				res.memref = inner_max(in0.memref, in1.memref);
-				if (in0.imm && in1.imm) {
+				if (in0.imm && in1.imm)
+				{
 					res.imm = in0.imm * in1.imm;
-				} else if (in0.imm && in1.base){
+				}
+				else if(in0.imm && in1.base)
+				{
 					res.mul = in0.imm;
 					res.delta = in1.base;
-				} else if (in0.base && in1.imm) {
+				}
+				else if(in0.base && in1.imm)
+				{
 					res.mul = in1.imm;
 					res.delta = in0.base;
-				} else if (in0.imm && in1.reg) {
+				}
+				else if(in0.imm && in1.reg)
+				{
 					res.mul = in0.imm;
 					res.regdelta = in1.reg;
-				} else if (in0.reg && in1.imm) {
+				}
+				else if(in0.reg && in1.imm)
+				{
 					res.mul = in1.imm;
 					res.regdelta = in0.reg;
-				} else {
-					throw LowlevelError("resolve_arg: Unexpected situation in INT_MULTI");
 				}
+				else
+					throw LowlevelError("resolve_arg: Unexpected situation in INT_MULTI");
+
 				break;
 			}
 
-			case CPUI_INT_AND: {
+			case CPUI_INT_AND:
+			{
 				// Should only happen when const need some modification.
 				res.memref = inner_max(in0.memref, in1.memref);
-				if (in0.imm && in1.imm)
+				if(in0.imm && in1.imm)
 					res.imm = in0.imm & in1.imm;
 				else 
 					throw LowlevelError("resolve_arg: Unexpected situation in INT_AND");
 				break;
 			}
 
-			case CPUI_INT_OR: {
+			case CPUI_INT_OR:
+			{
 				// Should only happen when const need some modification.
 				res.memref = inner_max(in0.memref, in1.memref);
-				if (in0.imm && in1.imm)
+				if(in0.imm && in1.imm)
 					res.imm = in0.imm | in1.imm;
 				else 
 					throw LowlevelError("resolve_arg: Unexpected situation in INT_OR");
 				break;
 			}
 
-			case CPUI_INT_XOR: {
+			case CPUI_INT_XOR:
+			{
 				// Should only happen when const need some modification.
 				res.memref = inner_max(in0.memref, in1.memref);
-				if (in0.imm && in1.imm)
+				if(in0.imm && in1.imm)
 					res.imm = in0.imm ^ in1.imm;
 				else 
 					throw LowlevelError("resolve_arg: Unexpected situation in INT_XOR");
@@ -203,38 +240,53 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg, const std::u
 	return res;
 }
 
-static std::vector<RAnalValue> resolve_out(RAnal *anal, std::vector<Pcodeop>::const_iterator curr_op, std::vector<Pcodeop>::const_iterator end_op, const PcodeOperand *arg, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static std::vector<RAnalValue> resolve_out(RAnal *anal, std::vector<Pcodeop>::const_iterator curr_op, std::vector<Pcodeop>::const_iterator end_op, const PcodeOperand *arg, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	std::vector<RAnalValue> res;
 	RAnalValue tmp;
 
-	if (arg->type == PcodeOperand::CONST) {
+	if(arg->type == PcodeOperand::CONST)
+	{
 		memset(&tmp, 0, sizeof(tmp));
 		tmp.imm = arg->number;
 		res.push_back(tmp);
-	} else if (arg->type == PcodeOperand::REGISTER) {
+	}
+	else if(arg->type == PcodeOperand::REGISTER)
+	{
 		memset(&tmp, 0, sizeof(tmp));
 		tmp.reg = r_reg_get(anal->reg, arg->name.c_str(), -1);
 		res.push_back(tmp);
-	} else if (arg->type == PcodeOperand::RAM) {
+	}
+	else if(arg->type == PcodeOperand::RAM)
+	{
 		memset(&tmp, 0, sizeof(tmp));
 		tmp.base = arg->offset;
 		res.push_back(tmp);
-	} else {
+	}
+	else
+	{
 		// auto iter = raw_ops.cebgin()
 		// for (; iter != raw_ops.cend() && &(*iter) != curr_op; ++iter) {}
 		auto iter = curr_op;
 
-		while (++iter != end_op) {
-			if (iter->type == CPUI_STORE){
-				if (iter->output && *iter->output == *arg && iter->input1)
+		while(++iter != end_op)
+		{
+			if(iter->type == CPUI_STORE)
+			{
+				if(iter->output && *iter->output == *arg && iter->input1)
 					res.push_back(resolve_arg(anal, iter->input1, midvar_op));
-			} else {
-				if ((iter->input0 && *iter->input0 == *arg) || (iter->input1 && *iter->input1 == *arg))
-					if (iter->output && iter->output->type == PcodeOperand::REGISTER) {
+			}
+			else
+			{
+				if((iter->input0 && *iter->input0 == *arg) || (iter->input1 && *iter->input1 == *arg))
+				{
+					if(iter->output && iter->output->type == PcodeOperand::REGISTER)
+					{
 						memset(&res, 0, sizeof(RAnalValue));
 						tmp.reg = r_reg_get(anal->reg, iter->output->name.c_str(), -1);
 						res.push_back(tmp);
 					}
+				}
 			}
 		}
 	}
@@ -242,17 +294,19 @@ static std::vector<RAnalValue> resolve_out(RAnal *anal, std::vector<Pcodeop>::co
 	return res;
 }
 
-static inline bool arg_set_has(const std::unordered_set<std::string> &arg_set, const RAnalValue &value) {
-	if (value.reg && arg_set.find(value.reg->name) != arg_set.end())
+static inline bool arg_set_has(const std::unordered_set<std::string> &arg_set, const RAnalValue &value)
+{
+	if(value.reg && arg_set.find(value.reg->name) != arg_set.end())
 		return true;
-	if (value.regdelta && arg_set.find(value.regdelta->name) != arg_set.end())
+	if(value.regdelta && arg_set.find(value.regdelta->name) != arg_set.end())
 		return true;
 	return false;
 }
 
-static RAnalValue *anal_value_dup(const RAnalValue &from) {
+static RAnalValue *anal_value_dup(const RAnalValue &from)
+{
 	RAnalValue *to = r_anal_value_new ();
-	if (!to)
+	if(!to)
 		return to;
 	*to = from;
 	return to;
@@ -270,27 +324,32 @@ static RAnalValue *anal_value_dup(const RAnalValue &from) {
  *     MEM   -> MEM (Key: LOAD & STORE) // Never happen as far as I know
  */
 
-static ut32 anal_type_MOV (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	const ut32 this_type = R_ANAL_OP_TYPE_MOV;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	const PcodeOpType key_pcode_store = CPUI_STORE;
 	RAnalValue in0, out;
 	std::vector<RAnalValue> outs;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		if (iter->type == key_pcode_copy) {
-			if (iter->output)
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		if(iter->type == key_pcode_copy)
+		{
+			if(iter->output)
 				outs = resolve_out(anal, iter, raw_ops.cend(),iter->output, midvar_op);
 
 			auto p = outs.cbegin();
-			for (; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
-			if (p != outs.cend()) {
+			for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
+			if(p != outs.cend())
+			{
 				out = *p;
 
-				if (iter->input0)
+				if(iter->input0)
 					in0 = resolve_arg(anal, iter->output, midvar_op);
 
-				if (in0.imm || arg_set_has(arg_set, in0)) {
+				if(in0.imm || arg_set_has(arg_set, in0))
+				{
 					anal_op->type = this_type;
 					anal_op->src[0] = anal_value_dup(in0);
 					anal_op->dst = anal_value_dup(out);
@@ -300,11 +359,13 @@ static ut32 anal_type_MOV (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 			}
 		}
 
-		if (iter->type == key_pcode_store) {
-			if (iter->output)
+		if(iter->type == key_pcode_store)
+		{
+			if(iter->output)
 				in0 = resolve_arg(anal, iter->output, midvar_op);
 			
-			if (in0.imm && iter->input1) {
+			if(in0.imm && iter->input1)
+			{
 				anal_op->type = this_type;
 				anal_op->src[0] = anal_value_dup(in0);
 				anal_op->dst = anal_value_dup(resolve_arg(anal, iter->input1, midvar_op));
@@ -317,7 +378,8 @@ static ut32 anal_type_MOV (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	return 0;
 }
 
-static ut32 anal_type_LOAD (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	/*
  	 * R_ANAL_OP_TYPE_LOAD:
  	 *     MEM -> REG (Key: LOAD)
@@ -327,20 +389,24 @@ static ut32 anal_type_LOAD (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	RAnalValue in0, out;
 	std::vector<RAnalValue> outs;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		if (iter->type == key_pcode) {
-			if (iter->output)
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		if(iter->type == key_pcode)
+		{
+			if(iter->output)
 				outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
 
 			auto p = outs.cbegin();
-			for (; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
-			if (p != outs.cend()) {
+			for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
+			if(p != outs.cend())
+			{
 				out = *p;
 
-				if (iter->input0)
+				if(iter->input0)
 					in0 = resolve_arg(anal, iter->output, midvar_op);
 
-				if (arg_set_has(arg_set, in0)) {
+				if(arg_set_has(arg_set, in0))
+				{
 					anal_op->type = this_type;
 					anal_op->src[0] = anal_value_dup(in0);
 					anal_op->dst = anal_value_dup(out);
@@ -354,7 +420,8 @@ static ut32 anal_type_LOAD (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	return 0;
 }
 
-static ut32 anal_type_STORE (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	/*
  	 * R_ANAL_OP_TYPE_STORE:
  	 *     REG -> MEM (Key: STORE)
@@ -363,12 +430,15 @@ static ut32 anal_type_STORE (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop>
 	const PcodeOpType key_pcode = CPUI_STORE;
 	RAnalValue in0, out;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		if (iter->type == key_pcode) {
-			if (iter->output)
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		if(iter->type == key_pcode)
+		{
+			if(iter->output)
 				in0 = resolve_arg(anal, iter->output, midvar_op);
 			
-			if (arg_set_has(arg_set, in0)) {
+			if(arg_set_has(arg_set, in0))
+			{
 				anal_op->type = this_type;
 				anal_op->src[0] = anal_value_dup(in0);
 				anal_op->dst = anal_value_dup(resolve_arg(anal, iter->input1, midvar_op));
@@ -381,19 +451,22 @@ static ut32 anal_type_STORE (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop>
 	return 0;
 }
 
-static ut32 anal_type_XSWI (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_XSWI(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	// R_ANAL_OP_TYPE_CSWI
 	// R_ANAL_OP_TYPE_SWI
 	const PcodeOpType key_pcode_callother = CPUI_CALLOTHER;
 	const PcodeOpType key_pcode_cbranch = CPUI_CBRANCH;
 	bool has_cbranch = false;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		if (iter->type == key_pcode_cbranch)
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		if(iter->type == key_pcode_cbranch)
 			has_cbranch = true;
 
-		if (iter->type == key_pcode_callother) {
-			if (iter->input1)
+		if(iter->type == key_pcode_callother)
+		{
+			if(iter->input1)
 				anal_op->val = iter->input1->number;
 
 			anal_op->type = has_cbranch ? R_ANAL_OP_TYPE_CSWI : R_ANAL_OP_TYPE_SWI;
@@ -405,26 +478,30 @@ static ut32 anal_type_XSWI (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	return 0;
 }
 
-static ut32 anal_type_XPUSH (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	// R_ANAL_OP_TYPE_UPUSH
 	// R_ANAL_OP_TYPE_RPUSH
 	// R_ANAL_OP_TYPE_PUSH
 	const PcodeOpType key_pcode = CPUI_STORE;
 	RAnalValue out, in;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		if (iter->type == key_pcode) {
-			if (iter->input1)
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		if(iter->type == key_pcode)
+		{
+			if(iter->input1)
 				out = resolve_arg(anal, iter->input1, midvar_op);
 			
-			if ((out.reg && sanal.sp_name == out.reg->name) || (out.regdelta && sanal.sp_name == out.regdelta->name)) {
+			if((out.reg && sanal.sp_name == out.reg->name) || (out.regdelta && sanal.sp_name == out.regdelta->name))
+			{
 				anal_op->type = R_ANAL_OP_TYPE_UPUSH;
 				anal_op->stackop = R_ANAL_STACK_INC;
 
-				if (iter->output)
+				if(iter->output)
 					in = resolve_arg(anal, iter->output, midvar_op);
 
-				if (arg_set_has(arg_set, in))
+				if(arg_set_has(arg_set, in))
 					anal_op->type = R_ANAL_OP_TYPE_RPUSH;
 				
 				return anal_op->type;
@@ -435,24 +512,28 @@ static ut32 anal_type_XPUSH (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop>
 	return 0;
 }
 
-static ut32 anal_type_POP (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	const ut32 this_type = R_ANAL_OP_TYPE_POP;
 	const PcodeOpType key_pcode = CPUI_LOAD;
 	RAnalValue in0, out;
 	std::vector<RAnalValue> outs;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		if (iter->type == key_pcode) {
-			if (iter->input0)
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		if(iter->type == key_pcode)
+		{
+			if(iter->input0)
 				in0 = resolve_arg(anal, iter->input0, midvar_op);
 
-			if ((in0.reg && sanal.sp_name == in0.reg->name) || (in0.regdelta && sanal.sp_name == in0.regdelta->name)) {
-				if (iter->output)
+			if((in0.reg && sanal.sp_name == in0.reg->name) || (in0.regdelta && sanal.sp_name == in0.regdelta->name))
+			{
+				if(iter->output)
 					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
 
 				auto p = outs.cbegin();
-				for (; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
-				if (p == outs.cend())
+				for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
+				if(p == outs.cend())
 					continue;
 
 				anal_op->type = this_type;
@@ -466,7 +547,8 @@ static ut32 anal_type_POP (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	return 0;
 }
 
-static ut32 anal_type_XCMP (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	// R_ANAL_OP_TYPE_CMP
 	// R_ANAL_OP_TYPE_ACMP
 	const PcodeOpType key_pcode_sub = CPUI_INT_SUB;
@@ -476,37 +558,44 @@ static ut32 anal_type_XCMP (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	uintb unique_off = 0;
 	PcodeOpType key_pcode = CPUI_MAX;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		if (iter->type == key_pcode_sub || iter->type == key_pcode_and) {
-			if (iter->input0)
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		if(iter->type == key_pcode_sub || iter->type == key_pcode_and)
+		{
+			if(iter->input0)
 				in0 = resolve_arg(anal, iter->input0, midvar_op);
-			if (!arg_set_has(arg_set, in0))
+			if(!arg_set_has(arg_set, in0))
 				continue;
 
-			if (iter->input1)
+			if(iter->input1)
 				in1 = resolve_arg(anal, iter->input1, midvar_op);
-			if (!arg_set_has(arg_set, in1))
+			if(!arg_set_has(arg_set, in1))
 				continue;
 
-			if (iter->output && iter->output->type == PcodeOperand::UNIQUE) {
+			if(iter->output && iter->output->type == PcodeOperand::UNIQUE)
+			{
 				unique_off = iter->output->offset;
 				key_pcode = iter->type;
 			}
 		}
 
-		if (unique_off && iter->type == key_pcode_equal) {
-			if (!iter->input0 || !iter->input1)
+		if(unique_off && iter->type == key_pcode_equal)
+		{
+			if(!iter->input0 || !iter->input1)
 				continue;
 			
-			if (iter->input0->type == PcodeOperand::CONST && iter->input1->type == PcodeOperand::UNIQUE) {
-				if (iter->input0->number != 0 || iter->input1->offset != unique_off)
+			if(iter->input0->type == PcodeOperand::CONST && iter->input1->type == PcodeOperand::UNIQUE)
+			{
+				if(iter->input0->number != 0 || iter->input1->offset != unique_off)
 					continue;
-			} else if (iter->input0->type == PcodeOperand::UNIQUE && iter->input1->type == PcodeOperand::CONST) {
-				if (iter->input1->number != 0 || iter->input0->offset != unique_off)
-					continue;
-			} else {
-				continue;
 			}
+			else if(iter->input0->type == PcodeOperand::UNIQUE && iter->input1->type == PcodeOperand::CONST)
+			{
+				if(iter->input1->number != 0 || iter->input0->offset != unique_off)
+					continue;
+			}
+			else
+				continue;
 
 			anal_op->type = key_pcode == key_pcode_sub ? R_ANAL_OP_TYPE_CMP : R_ANAL_OP_TYPE_ACMP;
 			// anal_op->cond = R_ANAL_COND_EQ; Should I enable this? I think sub can judge equal and less or more.
@@ -520,7 +609,8 @@ static ut32 anal_type_XCMP (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	return 0;
 }
 
-static ut32 anal_type_INT_XXX (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_INT_XXX(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	// R_ANAL_OP_TYPE_ADD
 	// R_ANAL_OP_TYPE_SUB
 	// R_ANAL_OP_TYPE_MUL
@@ -535,8 +625,10 @@ static ut32 anal_type_INT_XXX (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeo
 	RAnalValue in0, in1, out;
 	std::vector<RAnalValue> outs;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		switch (iter->type) {
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		switch(iter->type)
+		{
 		case CPUI_INT_ADD:
 		case CPUI_INT_SUB:
 		case CPUI_INT_MULT:
@@ -548,21 +640,26 @@ static ut32 anal_type_INT_XXX (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeo
 		case CPUI_INT_XOR:
 		case CPUI_INT_RIGHT:
 		case CPUI_INT_LEFT:
-		case CPUI_INT_SRIGHT: {
-			if (iter->input0 && iter->input1) {
+		case CPUI_INT_SRIGHT:
+		{
+			if(iter->input0 && iter->input1)
+			{
 				in0 = resolve_arg(anal, iter->input0, midvar_op);
 				in1 = resolve_arg(anal, iter->input1, midvar_op);
 			}
-			if (arg_set_has(arg_set, in0) || arg_set_has(arg_set, in1)) {
-				if (iter->output)
+			if(arg_set_has(arg_set, in0) || arg_set_has(arg_set, in1))
+			{
+				if(iter->output)
 					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
 
 				auto p = outs.cbegin();
-				for (; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
-				if (p != outs.cend()) {
+				for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
+				if(p != outs.cend())
+				{
 					out = *p;
 
-					switch (iter->type) {
+					switch(iter->type)
+					{
 						case CPUI_INT_ADD:
 							anal_op->type = R_ANAL_OP_TYPE_ADD; break;
 						case CPUI_INT_SUB:
@@ -596,6 +693,7 @@ static ut32 anal_type_INT_XXX (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeo
 				}
 			}
 		} break;
+
 		default: break;
 		}
 	}
@@ -603,7 +701,8 @@ static ut32 anal_type_INT_XXX (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeo
 	return 0;
 }
 
-static ut32 anal_type_NOR (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	const ut32 this_type = R_ANAL_OP_TYPE_NOR;
 	const PcodeOpType key_pcode_or = CPUI_INT_OR;
 	const PcodeOpType key_pcode_negate = CPUI_INT_NEGATE;
@@ -611,27 +710,35 @@ static ut32 anal_type_NOR (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	std::vector<RAnalValue> outs;
 	uintb unique_off = 0;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		if (iter->type == key_pcode_or) {
-			if (iter->input0 && iter->input1) {
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		if(iter->type == key_pcode_or)
+		{
+			if(iter->input0 && iter->input1)
+			{
 				in0 = resolve_arg(anal, iter->input0, midvar_op);
 				in1 = resolve_arg(anal, iter->input1, midvar_op);
 			}
-			if (arg_set_has(arg_set, in0) || arg_set_has(arg_set, in1)) {
-				if (iter->output && iter->output->type == PcodeOperand::UNIQUE) {
+			if(arg_set_has(arg_set, in0) || arg_set_has(arg_set, in1))
+			{
+				if(iter->output && iter->output->type == PcodeOperand::UNIQUE)
+				{
 					unique_off = iter->output->offset;
 					continue;
 				}
 			}
 		}
-		if (unique_off && iter->type == key_pcode_negate) {
-			if (iter->input0 && iter->input0->is_unique() && iter->input0->offset == unique_off) {
-				if (iter->output)
+		if(unique_off && iter->type == key_pcode_negate)
+		{
+			if(iter->input0 && iter->input0->is_unique() && iter->input0->offset == unique_off)
+			{
+				if(iter->output)
 					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
 
 				auto p = outs.cbegin();
-				for (; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
-				if (p != outs.cend()) {
+				for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
+				if(p != outs.cend())
+				{
 					out = *p;
 
 					anal_op->type = this_type;
@@ -648,25 +755,30 @@ static ut32 anal_type_NOR (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	return 0;
 }
 
-static ut32 anal_type_NOT (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_NOT(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	const ut32 this_type = R_ANAL_OP_TYPE_NOT;
 	const PcodeOpType key_pcode = CPUI_INT_NEGATE;
 	RAnalValue in0, out;
 	std::vector<RAnalValue> outs;
 	uintb unique_off = 0;
 
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		if (iter->type == key_pcode) {
-			if (iter->input0)
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		if(iter->type == key_pcode)
+		{
+			if(iter->input0)
 				in0 = resolve_arg(anal, iter->input0, midvar_op);
 
-			if (arg_set_has(arg_set, in0)) {
-				if (iter->output)
+			if(arg_set_has(arg_set, in0))
+			{
+				if(iter->output)
 					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
 
 				auto p = outs.cbegin();
-				for (; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
-				if (p != outs.cend()) {
+				for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
+				if(p != outs.cend())
+				{
 					out = *p;
 
 					anal_op->type = this_type;
@@ -682,19 +794,22 @@ static ut32 anal_type_NOT (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	return 0;
 }
 
-static ut32 anal_type_XCHG (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_XCHG(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	const ut32 this_type = R_ANAL_OP_TYPE_XCHG;
 	const PcodeOpType key_pcode = CPUI_COPY;
 
-	if (raw_ops.size() == 3 && raw_ops[0].type == raw_ops[1].type && raw_ops[1].type == raw_ops[2].type && raw_ops[2].type == key_pcode) {
-		if (!raw_ops[0].input0 || !raw_ops[0].output)
+	if(raw_ops.size() == 3 && raw_ops[0].type == raw_ops[1].type && raw_ops[1].type == raw_ops[2].type && raw_ops[2].type == key_pcode)
+	{
+		if(!raw_ops[0].input0 || !raw_ops[0].output)
 			return 0;
-		if (!raw_ops[1].input0 || !raw_ops[1].output)
+		if(!raw_ops[1].input0 || !raw_ops[1].output)
 			return 0;
-		if (!raw_ops[2].input0 || !raw_ops[2].output)
+		if(!raw_ops[2].input0 || !raw_ops[2].output)
 			return 0;
 
-		if (*raw_ops[0].input0 == *raw_ops[1].output && *raw_ops[0].output == *raw_ops[2].input0 && *raw_ops[1].input0 == *raw_ops[2].output) {
+		if(*raw_ops[0].input0 == *raw_ops[1].output && *raw_ops[0].output == *raw_ops[2].input0 && *raw_ops[1].input0 == *raw_ops[2].output)
+		{
 			anal_op->type = this_type;
 			anal_op->src[0] = anal_value_dup(resolve_arg(anal, raw_ops[0].input0, midvar_op));
 			anal_op->src[1] = anal_value_dup(resolve_arg(anal, raw_ops[1].input0, midvar_op));
@@ -707,12 +822,15 @@ static ut32 anal_type_XCHG (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	return 0;
 }
 
-static ut32 anal_type_SINGLE (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op) {
+static ut32 anal_type_SINGLE(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops, const std::unordered_set<std::string> &arg_set, const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+{
 	// R_ANAL_OP_TYPE_CAST
 	// R_ANAL_OP_TYPE_NEW
 	// R_ANAL_OP_TYPE_ABS
-	for (auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter) {
-		switch (iter->type) {
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
+	{
+		switch(iter->type)
+		{
 			case CPUI_CAST: anal_op->type = R_ANAL_OP_TYPE_CAST; return anal_op->type;
 			case CPUI_NEW: anal_op->type = R_ANAL_OP_TYPE_NEW; return anal_op->type;
 			case CPUI_FLOAT_ABS: anal_op->type = R_ANAL_OP_TYPE_ABS; return anal_op->type;
@@ -723,63 +841,70 @@ static ut32 anal_type_SINGLE (RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop
 	return 0;
 }
 
-static void anal_type (RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
+static void anal_type(RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
 {
 	std::vector<std::string> args = string_split(assem.args, ',');
 	std::transform(args.begin(), args.end(), args.begin(), string_trim);
 	std::unordered_set<std::string> arg_set;
 	std::map<VarnodeData, std::string> reglist;
 	sanal.trans.getAllRegisters(reglist);
-	for (auto iter = args.cbegin(); iter != args.cend(); ++iter) {
-		for (auto p = reglist.cbegin(); p != reglist.cend(); ++p)
-			if (p->second == *iter) {
+	for(auto iter = args.cbegin(); iter != args.cend(); ++iter)
+	{
+		for(auto p = reglist.cbegin(); p != reglist.cend(); ++p)
+		{
+			if(p->second == *iter)
+			{
 				arg_set.insert(*iter);
 				break;
 			}
+		}
 	}
 
 	std::unordered_map<uintb, const Pcodeop *> midvar_op;
-	for (auto pco = pcode_slg.pcodes.cbegin(); pco != pcode_slg.pcodes.cend(); ++pco) {
-		if (pco->type != CPUI_STORE) {
-			if (pco->output && pco->output->type == PcodeOperand::UNIQUE)
+	for(auto pco = pcode_slg.pcodes.cbegin(); pco != pcode_slg.pcodes.cend(); ++pco)
+	{
+		if(pco->type != CPUI_STORE)
+		{
+			if(pco->output && pco->output->type == PcodeOperand::UNIQUE)
 				midvar_op[pco->output->offset] = &(*pco);
 		}
 	}
 
 	anal_op->type = R_ANAL_OP_TYPE_UNK;
 
-	if (anal_type_XCHG(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_XCHG(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_SINGLE(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_SINGLE(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_XSWI(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_XSWI(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_XCMP(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_XCMP(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_NOR(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_NOR(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_INT_XXX(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_INT_XXX(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_NOT(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_NOT(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_XPUSH(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_XPUSH(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_POP(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_POP(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_STORE(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_STORE(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_LOAD(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_LOAD(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
-	if (anal_type_MOV(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_MOV(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
 		return;
 
 	return;
 }
 
-static char *getIndirectReg (SleighInstruction &ins, bool &isRefed) {
+static char *getIndirectReg(SleighInstruction &ins, bool &isRefed)
+{
 	VarnodeData data = ins.getIndirectInvar();
 	isRefed = data.size & 0x80000000;
-	if (isRefed)
+	if(isRefed)
 		data.size &= ~0x80000000;
 
 	AddrSpace *space = data.space;
@@ -789,33 +914,43 @@ static char *getIndirectReg (SleighInstruction &ins, bool &isRefed) {
 		return nullptr;
 }
 
-static int index_of_unique (const std::vector<PcodeOperand *> &esil_stack, const PcodeOperand *arg) {
+static int index_of_unique(const std::vector<PcodeOperand *> &esil_stack, const PcodeOperand *arg)
+{
 	int index = 1;
-	for (auto iter = esil_stack.crbegin(); iter != esil_stack.crend(); ++iter, ++index)
-		if (*iter && **iter == *arg)
+	for(auto iter = esil_stack.crbegin(); iter != esil_stack.crend(); ++iter, ++index)
+		if(*iter && **iter == *arg)
 			return index;
 	
 	return -1;
 }
 
-static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len, std::vector<Pcodeop> &Pcodes) {
+static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len, std::vector<Pcodeop> &Pcodes)
+{
 	std::vector<PcodeOperand *> esil_stack;
 	stringstream ss;
-	auto print_if_unique = [&esil_stack, &ss](const PcodeOperand *arg, int offset = 0) -> bool {
-		if (arg->is_unique()) {
+	auto print_if_unique = [&esil_stack, &ss](const PcodeOperand *arg, int offset = 0) -> bool
+	{
+		if(arg->is_unique())
+		{
 			int index = index_of_unique(esil_stack, arg);
-			if (-1 == index)
+			if(-1 == index)
 				throw LowlevelError("print_unique: Can't find required unique varnodes in stack.");
 
 			ss << index + offset << ",PICK";
 			return true;
-		} else 
+		}
+		else 
 			return false;
 	};
-	auto push_stack = [&esil_stack](PcodeOperand *arg = nullptr) { esil_stack.push_back(arg); };
+	auto push_stack = [&esil_stack](PcodeOperand *arg = nullptr)
+	{
+		esil_stack.push_back(arg);
+	};
 
-	for (auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter) {
-		switch (iter->type) {
+	for(auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter)
+	{
+		switch(iter->type)
+		{
 			// FIXME: Maybe some of P-codes below can be processed
 			// In dalvik: 0x00000234: array_length 0x1008,0x1008
     		//                v2 = CPOOLREF v2, 0x0, 0x6
@@ -833,72 +968,85 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 				break;
 
 			case CPUI_INT_ZEXT:
-			case CPUI_INT_SEXT: {
-				if (iter->input0 && iter->output) {
+			case CPUI_INT_SEXT:
+			{
+				if(iter->input0 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->input0)) 
+					if(!print_if_unique(iter->input0)) 
 						ss << *iter->input0;
 
-					if (iter->type == CPUI_INT_SEXT) {
-						ss << "," << iter->input0->size * 8 << ",SWAP,~";
+					if(iter->type == CPUI_INT_SEXT)
+					{
+						ss << "," << iter->input0->size * 8 << ",SWAP,SIGN";
 						ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
 					}
 						
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
 
-			case CPUI_COPY: {
-				if (iter->input0 && iter->output) {
+			case CPUI_COPY:
+			{
+				if(iter->input0 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->input0)) 
+					if(!print_if_unique(iter->input0)) 
 						ss << *iter->input0;
 						
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
 
-			case CPUI_LOAD: {
-				if (iter->input0 && iter->input1 && iter->output) {
+			case CPUI_LOAD:
+			{
+				if(iter->input0 && iter->input1 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->input1)) 
+					if(!print_if_unique(iter->input1)) 
 						ss << *iter->input1;
-					if (iter->input0->is_const() && ((AddrSpace *)iter->input0->offset)->getWordSize() != 1)
+					if(iter->input0->is_const() && ((AddrSpace *)iter->input0->offset)->getWordSize() != 1)
 						ss << "," << ((AddrSpace *)iter->input0->offset)->getWordSize() << ",*";
 					ss << ",[" << iter->output->size << "]";
 						
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
 
-			case CPUI_STORE: {
-				if (iter->input0 && iter->input1 && iter->output) {
+			case CPUI_STORE:
+			{
+				if(iter->input0 && iter->input1 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->output)) 
+					if(!print_if_unique(iter->output)) 
 						ss << *iter->output;
 
 					ss << ",";
-					if (!print_if_unique(iter->input1, 1)) 
+					if(!print_if_unique(iter->input1, 1)) 
 						ss << *iter->input1;
-					if (iter->input0->is_const() && ((AddrSpace *)iter->input0->offset)->getWordSize() != 1)
+					if(iter->input0->is_const() && ((AddrSpace *)iter->input0->offset)->getWordSize() != 1)
 						ss << "," << ((AddrSpace *)iter->input0->offset)->getWordSize() << ",*";
 					ss << ",=[" << iter->output->size << "]";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
@@ -910,67 +1058,79 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 			case CPUI_BRANCHIND: // Actually, I have some suspect about this.
 			// End here.
 			case CPUI_CALL:
-			case CPUI_BRANCH: {
-				if (iter->input0) {
-					if (iter->input0->is_const())
+			case CPUI_BRANCH:
+			{
+				if(iter->input0)
+				{
+					if(iter->input0->is_const())
 						throw LowlevelError("Sleigh_esil: const input case of BRANCH appear.");
 					ss << "," << *iter->input0 << "," << sanal.pc_name << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
 
-			case CPUI_CBRANCH: {
-				if (iter->input0 && iter->input1) {
-					if (!print_if_unique(iter->input1))
+			case CPUI_CBRANCH:
+			{
+				if(iter->input0 && iter->input1)
+				{
+					if(!print_if_unique(iter->input1))
 						ss << *iter->input1;
 					ss << ",?{";
 
-					if (iter->input0->is_const())
+					if(iter->input0->is_const())
 						throw LowlevelError("Sleigh_esil: const input case of BRANCH appear.");
 					ss << "," << *iter->input0 << "," << sanal.pc_name << ",=,}";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
 
-			case CPUI_PIECE: {
-				if (iter->input0 && iter->input1 && iter->output) {
+			case CPUI_PIECE:
+			{
+				if(iter->input0 && iter->input1 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->input0)) 
+					if(!print_if_unique(iter->input0)) 
 						ss << *iter->input0;
 					ss << "," << iter->input1->size * 8 << ",SWAP,<<";
 
 					ss << ",";
-					if (!print_if_unique(iter->input1, 1)) 
+					if(!print_if_unique(iter->input1, 1)) 
 						ss << *iter->input1;
 					ss << ",|";
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
 
-			case CPUI_SUBPIECE: {
-				if (iter->input0 && iter->input1 && iter->output) {
+			case CPUI_SUBPIECE:
+			{
+				if(iter->input0 && iter->input1 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->input0)) 
+					if(!print_if_unique(iter->input0)) 
 						ss << *iter->input0;
-					if (!iter->input1->is_const())
+					if(!iter->input1->is_const())
 						throw LowlevelError("sleigh_esil: input1 is not consts in SUBPIECE.");
 					ss << "," << iter->input1->number * 8 << ",SWAP,>>";
 
-					if (iter->output->size < iter->input0->size + iter->input1->number)
+					if(iter->output->size < iter->input0->size + iter->input1->number)
 						ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
 
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
@@ -988,16 +1148,19 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 			case CPUI_INT_LESSEQUAL:
 			case CPUI_INT_SLESSEQUAL:
 			case CPUI_INT_NOTEQUAL:
-			case CPUI_INT_EQUAL: {
-				if (iter->input0 && iter->input1 && iter->output) {
+			case CPUI_INT_EQUAL:
+			{
+				if(iter->input0 && iter->input1 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->input1)) 
+					if(!print_if_unique(iter->input1)) 
 						ss << *iter->input1;
 					ss << ",";
-					if (!print_if_unique(iter->input0, 1)) 
+					if(!print_if_unique(iter->input0, 1)) 
 						ss << *iter->input0;
 					ss << ",";
-					switch (iter->type) {
+					switch (iter->type)
+					{
 						case CPUI_FLOAT_EQUAL: ss << "F=="; break;
 						case CPUI_FLOAT_NOTEQUAL: ss << "F!="; break;
 						case CPUI_FLOAT_LESS: ss << "F<"; break;
@@ -1006,19 +1169,20 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 						case CPUI_FLOAT_SUB: ss << "F-" << iter->output->size << ",SWAP,F2F"; break;
 						case CPUI_FLOAT_MULT: ss << "F*" << iter->output->size << ",SWAP,F2F"; break;
 						case CPUI_FLOAT_DIV: ss << "F/" << iter->output->size << ",SWAP,F2F"; break;
-						case CPUI_INT_SLESS: ss << iter->input0->size * 8 << ",SWAP,~,SWAP," << iter->input1->size * 8 << ",SWAP,~,SWAP,";
+						case CPUI_INT_SLESS: ss << iter->input0->size * 8 << ",SWAP,SIGN,SWAP," << iter->input1->size * 8 << ",SWAP,SIGN,SWAP,";
 						case CPUI_INT_LESS: ss << "<"; break;
-						case CPUI_INT_SLESSEQUAL: ss << iter->input0->size * 8 << ",SWAP,~,SWAP," << iter->input1->size * 8 << ",SWAP,~,SWAP,";
+						case CPUI_INT_SLESSEQUAL: ss << iter->input0->size * 8 << ",SWAP,SIGN,SWAP," << iter->input1->size * 8 << ",SWAP,SIGN,SWAP,";
 						case CPUI_INT_LESSEQUAL: ss << "<="; break;
 						case CPUI_INT_NOTEQUAL: ss << "==,!"; break;
 						case CPUI_INT_EQUAL: ss << "=="; break;
 					}
 
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
@@ -1036,16 +1200,19 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 			case CPUI_INT_RIGHT:
 			case CPUI_INT_SRIGHT:
 			case CPUI_INT_SUB:
-			case CPUI_INT_ADD: {
-				if (iter->input0 && iter->input1 && iter->output) {
+			case CPUI_INT_ADD:
+			{
+				if(iter->input0 && iter->input1 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->input1)) 
+					if(!print_if_unique(iter->input1)) 
 						ss << *iter->input1;
 					ss << ",";
-					if (!print_if_unique(iter->input0, 1)) 
+					if(!print_if_unique(iter->input0, 1)) 
 						ss << *iter->input0;
 					ss << ",";
-					switch (iter->type) {
+					switch(iter->type)
+					{
 						case CPUI_INT_MULT: ss << "*"; break;
 						case CPUI_INT_DIV: ss << "/"; break;
 						case CPUI_INT_REM: ss << "%"; break;
@@ -1059,21 +1226,23 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 						case CPUI_INT_OR: ss << "|"; break;
 						case CPUI_INT_LEFT: ss << "<<"; break;
 						case CPUI_INT_RIGHT: ss << ">>"; break;
-						case CPUI_INT_SRIGHT: ss << iter->input0->size * 8 << ",SWAP,~,>>"; break;
+						case CPUI_INT_SRIGHT: ss << iter->input0->size * 8 << ",SWAP,SIGN,>>"; break;
 					}
 					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
 
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
 
 			case CPUI_INT_SREM:
-			case CPUI_INT_SDIV: {
+			case CPUI_INT_SDIV:
+			{
 				auto make_mask = [&ss](int4 bytes) { ss << "," << bytes * 8 << ",1,<<,1,SWAP,-"; };
 				auto make_input = [&ss, &print_if_unique](PcodeOperand *input, int offset) { ss << ","; if (!print_if_unique(input)) ss << *input; };
 				auto make_2comp = [&ss, &make_input, &make_mask](PcodeOperand *input, int offset = 0) {
@@ -1083,11 +1252,13 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 					ss << ",^,1,+,}";
 				};
 
-				if (iter->input0 && iter->input1 && iter->output) {
+				if(iter->input0 && iter->input1 && iter->output)
+				{
 					make_2comp(iter->input1);
 					make_2comp(iter->input0, 1);
 					ss << ",";
-					switch(iter->type) {
+					switch(iter->type)
+					{
 						case CPUI_INT_SREM: ss << "%"; break;
 						case CPUI_INT_SDIV: ss << "/"; break;
 					} // Now, one unsigned result is on stack
@@ -1101,68 +1272,74 @@ static void sleigh_esil (RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data,
 					make_mask(iter->output->size);
 					ss << ",^,1,+,}";
 
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
 
-			case CPUI_INT_CARRY: {
-				if (iter->input0 && iter->input1 && iter->output) {
+			case CPUI_INT_CARRY:{
+				if(iter->input0 && iter->input1 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->input0))
+					if(!print_if_unique(iter->input0))
 						ss << *iter->input0;
 					ss << ",";
-					if (!print_if_unique(iter->input1, 1))
+					if(!print_if_unique(iter->input1, 1))
 						ss << *iter->input1;
 					ss << ",+," << iter->input0->size * 8 << ",1,<<,1,SWAP,-,&";
 
 					ss << ",";
-					if (!print_if_unique(iter->input0, 1))
+					if(!print_if_unique(iter->input0, 1))
 						ss << *iter->input0;
 					ss << ",>";
 
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
 
-			case CPUI_INT_SCARRY: {
-				if (iter->input0 && iter->input1 && iter->output) {
+			case CPUI_INT_SCARRY:
+			{
+				if(iter->input0 && iter->input1 && iter->output)
+				{
 					ss << ",";
-					if (!print_if_unique(iter->input0))
+					if(!print_if_unique(iter->input0))
 						ss << *iter->input0;
 					ss << "," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&";
 
 					ss << ",DUP,";
-					if (!print_if_unique(iter->input1, 2))
+					if(!print_if_unique(iter->input1, 2))
 						ss << *iter->input1;
 					ss << "," << iter->input1->size * 8 - 1 << ",SWAP,>>,1,&";
 
 					ss << ",^,1,^,SWAP";
 
 					ss << ",";
-					if (!print_if_unique(iter->input0, 2))
+					if(!print_if_unique(iter->input0, 2))
 						ss << *iter->input0;
 					ss << ",";
-					if (!print_if_unique(iter->input1, 3))
+					if(!print_if_unique(iter->input1, 3))
 						ss << *iter->input1;
 					ss << ",+," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&"; // (a^b^1), a, c
 
 					ss << ",^,&";
 
-					if (iter->output->is_unique()) 
+					if(iter->output->is_unique()) 
 						push_stack(iter->output);
 					else
 						ss << "," << *iter->output << ",=";
-				} else
+				}
+				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
@@ -1550,7 +1727,7 @@ static char *get_reg_profile (RAnal *anal)
 	return strdup(res.c_str());
 }
 
-static bool sleigh_consts_pick (RAnalEsil *esil) {
+static bool sleigh_esil_consts_pick (RAnalEsil *esil) {
 	if (!esil || !esil->stack)
 		return false;
 
@@ -1559,7 +1736,7 @@ static bool sleigh_consts_pick (RAnalEsil *esil) {
 	int ret = false;
 
 	if (R_ANAL_ESIL_PARM_REG == r_anal_esil_get_parm_type (esil, idx)) {
-		throw LowlevelError("sleigh_consts_pick: argument is consts only");
+		throw LowlevelError("sleigh_esil_consts_pick: argument is consts only");
 		goto end;
 	}
 	if (!idx || !r_anal_esil_get_parm (esil, idx, &i)) {
@@ -1643,48 +1820,48 @@ static int esil_get_parm_float(RAnalEsil *esil, const char *str, long double *nu
 	return false;
 }
 
-static bool sleigh_consts_is_nan (RAnalEsil *esil) {
+static bool sleigh_esil_is_nan (RAnalEsil *esil) {
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop (esil);
 	if (src && esil_get_parm_float(esil, src, &s)) {
 		ret = r_anal_esil_pushnum (esil, isnan(s));
 	} else {
-		throw LowlevelError("sleigh_consts_is_nan: invalid parameters");
+		throw LowlevelError("sleigh_esil_is_nan: invalid parameters");
 	}
 	free (src);
 	return ret;
 }
 
-static bool sleigh_consts_int_to_float (RAnalEsil *esil) {
+static bool sleigh_esil_int_to_float (RAnalEsil *esil) {
 	bool ret = false;
 	st64 s;
 	char *src = r_anal_esil_pop (esil);
 	if (src && r_anal_esil_get_parm(esil, src, (ut64 *)&s)) {
 		ret = esil_pushnum_float (esil, (long double)s * 1.0);
 	} else {
-		throw LowlevelError("sleigh_consts_int_to_float: invalid parameters");
+		throw LowlevelError("sleigh_esil_int_to_float: invalid parameters");
 	}
 	free (src);
 	return ret;
 }
 
-static bool sleigh_consts_float_to_int (RAnalEsil *esil) {
+static bool sleigh_esil_float_to_int (RAnalEsil *esil) {
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop (esil);
 	if (src && esil_get_parm_float(esil, src, &s)) {
 		if (isnan(s) || isinf(s))
-			throw LowlevelError("sleigh_consts_float_to_int: nan or inf detected.");
+			throw LowlevelError("sleigh_esil_float_to_int: nan or inf detected.");
 		ret = r_anal_esil_pushnum (esil, (st64)(s));
 	} else {
-		throw LowlevelError("sleigh_consts_float_to_int: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_to_int: invalid parameters");
 	}
 	free (src);
 	return ret;
 }
 
-static bool sleigh_consts_float_to_float (RAnalEsil *esil) {
+static bool sleigh_esil_float_to_float (RAnalEsil *esil) {
 	bool ret = false;
 	long double d;
 	ut64 s = 0;
@@ -1698,16 +1875,16 @@ static bool sleigh_consts_float_to_float (RAnalEsil *esil) {
 		else if (s == 8)
 			ret = r_anal_esil_pushnum (esil, (double)d);
 		else 
-			throw LowlevelError("sleigh_consts_float_to_float: byte-width of float number overflows.");
+			throw LowlevelError("sleigh_esil_float_to_float: byte-width of float number overflows.");
 	} else {
-		throw LowlevelError("sleigh_consts_float_to_float: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_to_float: invalid parameters");
 	}
 	free (src);
 	free (dst);
 	return ret;
 }
 
-static bool sleigh_consts_float_cmp (RAnalEsil *esil) {
+static bool sleigh_esil_float_cmp (RAnalEsil *esil) {
 	bool ret = false;
 	long double s, d;
 	char *dst = r_anal_esil_pop (esil);
@@ -1718,14 +1895,14 @@ static bool sleigh_consts_float_cmp (RAnalEsil *esil) {
 		else
 			ret = r_anal_esil_pushnum (esil, s == d);
 	} else {
-		throw LowlevelError("sleigh_consts_float_cmp: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_cmp: invalid parameters");
 	}
 	free (src);
 	free (dst);
 	return ret;
 }
 
-static bool sleigh_consts_float_negcmp (RAnalEsil *esil) {
+static bool sleigh_esil_float_negcmp (RAnalEsil *esil) {
 	bool ret = false;
 	long double s, d;
 	char *dst = r_anal_esil_pop (esil);
@@ -1736,14 +1913,14 @@ static bool sleigh_consts_float_negcmp (RAnalEsil *esil) {
 		else
 			ret = r_anal_esil_pushnum (esil, s != d);
 	} else {
-		throw LowlevelError("sleigh_consts_float_negcmp: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_negcmp: invalid parameters");
 	}
 	free (src);
 	free (dst);
 	return ret;
 }
 
-static bool sleigh_consts_float_less (RAnalEsil *esil) {
+static bool sleigh_esil_float_less (RAnalEsil *esil) {
 	bool ret = false;
 	long double s, d;
 	char *dst = r_anal_esil_pop (esil);
@@ -1754,14 +1931,14 @@ static bool sleigh_consts_float_less (RAnalEsil *esil) {
 		else
 			ret = r_anal_esil_pushnum (esil, s < d);
 	} else {
-		throw LowlevelError("sleigh_consts_float_less: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_less: invalid parameters");
 	}
 	free (src);
 	free (dst);
 	return ret;
 }
 
-static bool sleigh_consts_float_lesseq (RAnalEsil *esil) {
+static bool sleigh_esil_float_lesseq (RAnalEsil *esil) {
 	bool ret = false;
 	long double s, d;
 	char *dst = r_anal_esil_pop (esil);
@@ -1772,14 +1949,14 @@ static bool sleigh_consts_float_lesseq (RAnalEsil *esil) {
 		else
 			ret = r_anal_esil_pushnum (esil, s <= d);
 	} else {
-		throw LowlevelError("sleigh_consts_float_lesseq: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_lesseq: invalid parameters");
 	}
 	free (src);
 	free (dst);
 	return ret;
 }
 
-static bool sleigh_consts_float_add (RAnalEsil *esil) {
+static bool sleigh_esil_float_add (RAnalEsil *esil) {
 	bool ret = false;
 	long double s, d;
 	char *dst = r_anal_esil_pop (esil);
@@ -1799,14 +1976,14 @@ static bool sleigh_consts_float_add (RAnalEsil *esil) {
 				ret = esil_pushnum_float (esil, s + d);
 		}
 	} else {
-		throw LowlevelError("sleigh_consts_float_add: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_add: invalid parameters");
 	}
 	free (src);
 	free (dst);
 	return ret;
 }
 
-static bool sleigh_consts_float_sub (RAnalEsil *esil) {
+static bool sleigh_esil_float_sub (RAnalEsil *esil) {
 	bool ret = false;
 	long double s, d;
 	char *dst = r_anal_esil_pop (esil);
@@ -1826,14 +2003,14 @@ static bool sleigh_consts_float_sub (RAnalEsil *esil) {
 				ret = esil_pushnum_float (esil, s + d);
 		}
 	} else {
-		throw LowlevelError("sleigh_consts_float_sub: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_sub: invalid parameters");
 	}
 	free (src);
 	free (dst);
 	return ret;
 }
 
-static bool sleigh_consts_float_mul (RAnalEsil *esil) {
+static bool sleigh_esil_float_mul (RAnalEsil *esil) {
 	bool ret = false;
 	long double s, d;
 	char *dst = r_anal_esil_pop (esil);
@@ -1853,14 +2030,14 @@ static bool sleigh_consts_float_mul (RAnalEsil *esil) {
 				ret = esil_pushnum_float (esil, s * d);
 		}
 	} else {
-		throw LowlevelError("sleigh_consts_float_mul: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_mul: invalid parameters");
 	}
 	free (src);
 	free (dst);
 	return ret;
 }
 
-static bool sleigh_consts_float_div (RAnalEsil *esil) {
+static bool sleigh_esil_float_div (RAnalEsil *esil) {
 	bool ret = false;
 	long double s, d;
 	char *dst = r_anal_esil_pop (esil);
@@ -1880,14 +2057,14 @@ static bool sleigh_consts_float_div (RAnalEsil *esil) {
 				ret = esil_pushnum_float (esil, s / d);
 		}
 	} else {
-		throw LowlevelError("sleigh_consts_float_div: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_div: invalid parameters");
 	}
 	free (src);
 	free (dst);
 	return ret;
 }
 
-static bool sleigh_consts_float_neg (RAnalEsil *esil) {
+static bool sleigh_esil_float_neg (RAnalEsil *esil) {
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop (esil);
@@ -1897,13 +2074,13 @@ static bool sleigh_consts_float_neg (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, -s);
 	} else {
-		throw LowlevelError("sleigh_consts_float_neg: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_neg: invalid parameters");
 	}
 	free (src);
 	return ret;
 }
 
-static bool sleigh_consts_float_ceil (RAnalEsil *esil) {
+static bool sleigh_esil_float_ceil (RAnalEsil *esil) {
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop (esil);
@@ -1913,13 +2090,13 @@ static bool sleigh_consts_float_ceil (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, std::ceil(s));
 	} else {
-		throw LowlevelError("sleigh_consts_float_ceil: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_ceil: invalid parameters");
 	}
 	free (src);
 	return ret;
 }
 
-static bool sleigh_consts_float_floor (RAnalEsil *esil) {
+static bool sleigh_esil_float_floor (RAnalEsil *esil) {
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop (esil);
@@ -1929,13 +2106,13 @@ static bool sleigh_consts_float_floor (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, std::floor(s));
 	} else {
-		throw LowlevelError("sleigh_consts_float_floor: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_floor: invalid parameters");
 	}
 	free (src);
 	return ret;
 }
 
-static bool sleigh_consts_float_round (RAnalEsil *esil) {
+static bool sleigh_esil_float_round (RAnalEsil *esil) {
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop (esil);
@@ -1945,13 +2122,13 @@ static bool sleigh_consts_float_round (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, std::round(s));
 	} else {
-		throw LowlevelError("sleigh_consts_float_round: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_round: invalid parameters");
 	}
 	free (src);
 	return ret;
 }
 
-static bool sleigh_consts_float_sqrt (RAnalEsil *esil) {
+static bool sleigh_esil_float_sqrt (RAnalEsil *esil) {
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop (esil);
@@ -1961,10 +2138,49 @@ static bool sleigh_consts_float_sqrt (RAnalEsil *esil) {
 		else
 			ret = esil_pushnum_float (esil, std::sqrt(s));
 	} else {
-		throw LowlevelError("sleigh_consts_float_sqrt: invalid parameters");
+		throw LowlevelError("sleigh_esil_float_sqrt: invalid parameters");
 	}
 	free (src);
 	return ret;
+}
+
+static bool sleigh_esil_signext(RAnalEsil *esil) {
+	// From https://github.com/radareorg/radare2/pull/17436/
+	ut64 src, dst;
+
+	char *p_src = r_anal_esil_pop (esil);
+	if (!p_src) {
+		return false;
+	}
+
+	if (!r_anal_esil_get_parm (esil, p_src, &src)) {
+		throw LowlevelError("sleigh_esil_signext: invalid parameters");
+		free (p_src);
+		return false;
+	} else {
+		free (p_src);
+	}
+
+	char *p_dst = r_anal_esil_pop (esil);
+	if (!p_dst) {
+		return false;
+	}
+
+	if (!r_anal_esil_get_parm (esil, p_dst, &dst)) {
+		throw LowlevelError("sleigh_esil_signext: invalid parameters");
+		free (p_dst);
+		return false;
+	} else {
+		free (p_dst);
+	}
+
+	ut64 m = 0;
+	if (dst < 64) {
+		m = 1ULL << (dst - 1);
+	}
+
+	// dst = (dst & ((1U << src_bit) - 1)); // clear upper bits
+	return r_anal_esil_pushnum (esil, ((src ^ m) - m));
 }
 
 static int esil_sleigh_init (RAnalEsil *esil) {
@@ -1973,24 +2189,25 @@ static int esil_sleigh_init (RAnalEsil *esil) {
 	}
 
 	// Only consts-only version PICK will meet my demand
-	r_anal_esil_set_op (esil, "PICK", sleigh_consts_pick, 1, 0, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "NAN", sleigh_consts_is_nan, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "I2F", sleigh_consts_int_to_float, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F2I", sleigh_consts_float_to_int, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F2F", sleigh_consts_float_to_float, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F==", sleigh_consts_float_cmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F!=", sleigh_consts_float_negcmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F<", sleigh_consts_float_less, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F<=", sleigh_consts_float_lesseq, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F+", sleigh_consts_float_add, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F-", sleigh_consts_float_sub, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F*", sleigh_consts_float_mul, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "F/", sleigh_consts_float_div, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "-F", sleigh_consts_float_neg, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "CEIL", sleigh_consts_float_ceil, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "FLOOR", sleigh_consts_float_floor, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "ROUND", sleigh_consts_float_round, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
-	r_anal_esil_set_op (esil, "SQRT", sleigh_consts_float_sqrt, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "PICK", sleigh_esil_consts_pick, 1, 0, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "NAN", sleigh_esil_is_nan, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "I2F", sleigh_esil_int_to_float, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F2I", sleigh_esil_float_to_int, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F2F", sleigh_esil_float_to_float, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F==", sleigh_esil_float_cmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F!=", sleigh_esil_float_negcmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F<", sleigh_esil_float_less, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F<=", sleigh_esil_float_lesseq, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F+", sleigh_esil_float_add, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F-", sleigh_esil_float_sub, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F*", sleigh_esil_float_mul, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "F/", sleigh_esil_float_div, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "-F", sleigh_esil_float_neg, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "CEIL", sleigh_esil_float_ceil, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "FLOOR", sleigh_esil_float_floor, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "ROUND", sleigh_esil_float_round, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "SQRT", sleigh_esil_float_sqrt, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op (esil, "SIGN", sleigh_esil_signext, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 
 	return true;
 }

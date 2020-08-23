@@ -1,3 +1,5 @@
+/* radare - LGPL - Copyright 2020 - FXTi */
+
 #include "SleighInstruction.h"
 
 SleighInstruction *R2Sleigh::getInstruction(Address &addr) {

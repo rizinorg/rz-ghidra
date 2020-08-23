@@ -357,10 +357,9 @@ class PcodeRawOut : public PcodeEmit
 				s << '(' << data.space->getName() << ',';
 				data.space->printOffset(s,data.offset);
 				s << ',' << dec << data.size << ')';
-			} else
-			{
-				throw LowlevelError("Unsupported AddrSpace type appear.");
 			}
+			else
+				throw LowlevelError("Unsupported AddrSpace type appear.");
 		}
 
 	public:
@@ -369,7 +368,8 @@ class PcodeRawOut : public PcodeEmit
 		void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars, int4 isize) override
 		{
 			std::stringstream ss;
-			if(opc == CPUI_STORE && isize == 3) {
+			if(opc == CPUI_STORE && isize == 3)
+			{
 				print_vardata(ss,vars[2]);
 				ss << " = ";
 				isize = 2;
@@ -384,7 +384,8 @@ class PcodeRawOut : public PcodeEmit
 			ss << ' ';
 			// For indirect case in SleighBuilder::dump(OpTpl *op)'s "vn->isDynamic(*walker)" branch.
 			if (isize > 1 && vars[0].size == sizeof(AddrSpace *) && vars[0].space->getName() == "const"
-				&& (vars[0].offset >> 24) == ((uintb)vars[1].space >> 24) && trans == ((AddrSpace*)vars[0].offset)->getTrans()) {
+				&& (vars[0].offset >> 24) == ((uintb)vars[1].space >> 24) && trans == ((AddrSpace*)vars[0].offset)->getTrans())
+			{
 				ss << '[';
 				print_vardata(ss, vars[1]);
 				ss << ']';
@@ -393,7 +394,9 @@ class PcodeRawOut : public PcodeEmit
 					ss << ", ";
 					print_vardata(ss, vars[i]);
 				}
-			} else {
+			}
+			else
+			{
 				print_vardata(ss, vars[0]);
 				for(int4 i=1; i<isize; ++i)
 				{
@@ -420,11 +423,14 @@ static void Disassemble(RCore *core, ut64 ops)
 	Address addr(trans->getDefaultCodeSpace(), core->offset);
 	for(ut64 i=0; i<ops; i++)
 	{
-		try {
+		try
+		{
 			trans->printAssembly(assememit, addr);
 			auto length = trans->oneInstruction(emit, addr);
 			addr = addr + length;
-		} catch(const BadDataError &error) {
+		}
+		catch(const BadDataError &error)
+		{
 			std::stringstream ss;
 			addr.printRaw(ss);
 			r_cons_printf("%s: invalid\n", ss.str().c_str());

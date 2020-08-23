@@ -60,11 +60,12 @@ struct PcodeOperand
 
 	enum {REGISTER, RAM, CONST, UNIQUE} type;
 
-	PcodeOperand(const PcodeOperand &rhs) {
+	PcodeOperand(const PcodeOperand &rhs)
+	{
 		type = rhs.type;
 		size = rhs.size;
 
-		switch (type)
+		switch(type)
 		{
 			case REGISTER: name = rhs.name; break;
 			case UNIQUE: /* Same as RAM */
@@ -89,29 +90,34 @@ struct PcodeOperand
 		}
 	}
 
-	size_t operator()(const PcodeOperand &self) const {
-		if (type == RAM && offset == 0x7fffffff && size == 0x7fffffff)
+	size_t operator()(const PcodeOperand &self) const
+	{
+		if(type == RAM && offset == 0x7fffffff && size == 0x7fffffff)
 			return 0x7fffffff;
 
-		if (type != UNIQUE)
+		if(type != UNIQUE)
 			throw LowlevelError("Only unique vars will be added into unordered set.");
 
 		return self.offset;
 	}
 
-	bool is_unique() const {
+	bool is_unique() const
+	{
 		return type == UNIQUE;
 	}
 
-	bool is_const() const {
+	bool is_const() const
+	{
 		return type == CONST;
 	}
 
-	bool is_ram() const {
+	bool is_ram() const
+	{
 		return type == RAM;
 	}
 
-	bool is_reg() const {
+	bool is_reg() const
+	{
 		return type == REGISTER;
 	}
 };
@@ -170,14 +176,14 @@ class PcodeSlg : public PcodeEmit
 			{
 				operand = new PcodeOperand(data.offset, data.size);
 				operand->type = PcodeOperand::UNIQUE;
-			} else if(space->getName() == "DATA")
+			}
+			else if(space->getName() == "DATA")
 			{
 				operand = new PcodeOperand(data.offset, data.size);
 				operand->type = PcodeOperand::RAM;
-			} else
-			{
-				throw LowlevelError("Unsupported AddrSpace type appear.");
 			}
+			else
+				throw LowlevelError("Unsupported AddrSpace type appear.");
 			return operand;
 		}
 
@@ -253,7 +259,7 @@ class SleighAsm
 		std::vector<std::string> arg_names; // default ABI's function args
 		std::vector<std::string> ret_names; // default ABI's function retvals
 		std::unordered_map<std::string, std::string> reg_group;
-		SleighAsm() : loader(nullptr), trans(nullptr, nullptr) {}
+		SleighAsm(): loader(nullptr), trans(nullptr, nullptr) {}
 		void init(RAsm *a);
 		void init(RAnal *a);
 		int disassemble(RAsmOp *op, unsigned long long offset);
