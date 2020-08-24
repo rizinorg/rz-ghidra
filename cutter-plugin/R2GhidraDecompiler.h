@@ -15,7 +15,7 @@ class R2GhidraDecompiler: public Decompiler
 	public:
 		R2GhidraDecompiler(QObject *parent = nullptr);
 		void decompileAt(RVA addr) override;
-		bool isRunning() override				{ return task != DecompilerFinished; }
+		bool isRunning() override				{ return task == DecompilerRunning; }
 };
 
 #endif //R2GHIDRA_R2GHIDRADECOMPILER_H
