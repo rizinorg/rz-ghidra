@@ -9,6 +9,7 @@
 #include "sleigh_arch.hh"
 #include "crc32.hh"
 #include <unordered_map>
+#include <list>
 
 /**
  * There is still room for optimization, Now SleighInstruction
@@ -23,6 +24,59 @@
  * But to implement that in C++ codebase, you will have to create something
  * like InstructionContext and move necessary status and API to that.
  */
+
+template<typename K, typename V>
+class LRUCache
+{
+private:
+	std::list<std::pair<K, V>> item_list;
+	std::unordered_map<K, decltype(item_list.begin())> item_map;
+	const size_t cache_size = 4096;
+
+	void clean()
+	{
+		while(item_map.size() > cache_size)
+		{
+			auto last_it = item_list.back();
+			delete last_it.second;
+			item_map.erase(last_it.first);
+			item_list.pop_back();
+		}
+	};
+
+public:
+	LRUCache() = default;
+
+	~LRUCache() { clear(); }
+
+	void clear()
+	{
+		for(auto iter = item_list.begin(); iter != item_list.end(); ++iter)
+			delete iter->second;
+		item_list.clear();
+		item_map.clear();
+	}
+
+	void put(const K &key, const V &val)
+	{
+		auto it = item_map.find(key);
+		if(it != item_map.end()){
+			item_list.erase(it->second);
+			item_map.erase(it);
+		}
+		item_list.push_front(make_pair(key, val));
+		item_map.insert(make_pair(key, item_list.begin()));
+		clean();
+	};
+
+	bool has(const K &key) { return item_map.find(key) != item_map.end(); };
+
+	V get(const K &key){
+		auto it = item_map.find(key);
+		item_list.splice(item_list.begin(), item_list, it->second);
+		return it->second->second;
+	};
+};
 
 class R2Sleigh;
 class R2DisassemblyCache;
@@ -310,20 +364,22 @@ class R2Sleigh : public Sleigh
 	friend SleighInstruction;
 
 private:
-	mutable std::unordered_map<uintm, SleighInstruction *> ins_cache;
+	mutable LRUCache<uintm, SleighInstruction *> ins_cache;
 
 	void generateLocation(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker);
 	void generatePointer(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker);
 
 public:
 	R2Sleigh(LoadImage *ld, ContextDatabase *c_db): Sleigh(ld, c_db) {}
-	~R2Sleigh();
+	~R2Sleigh() { clearCache(); }
 
 	SleighParserContext *getParserContext(SleighInstruction *proto);
 
 	SleighInstruction *getInstruction(Address &addr);
 
 	VarnodeData dumpInvar(OpTpl *op, Address &addr);
+
+	void clearCache() { ins_cache.clear(); }
 };
 
 class SleighInstruction

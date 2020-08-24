@@ -54,6 +54,7 @@ void SleighAsm::initInner(RIO *io, char *cpu)
 	parseProcConfig(docstorage);
 	parseCompConfig(docstorage);
 	alignment = trans.getAlignment();
+	trans.clearCache();
 
 	sleigh_id = cpu;
 }
@@ -474,17 +475,25 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 	try
 	{
 		length = trans.printAssembly(assem, addr);
-		// r_strbuf_set(&op->buf_asm, assem.str);
+		r_strbuf_set(&op->buf_asm, assem.str);
+		/*
 		auto *ins = trans.getInstruction(addr);
 		stringstream ss;
 		ss << assem.str << " " << ins->printFlowType(ins->getFlowType());
 		for(auto p: ins->getFlows())
 			ss << " " << p;
 		r_strbuf_set(&op->buf_asm, ss.str().c_str());
+		*/
 	}
 	catch(BadDataError &err)
 	{
-		/* Meet Unknown data -> invalid opcode */
+		/* Meet unknown data -> invalid opcode */
+		r_strbuf_set(&op->buf_asm, "invalid");
+		length = alignment;
+	}
+	catch(UnimplError &err)
+	{
+		/* Meet unimplemented data -> invalid opcode */
 		r_strbuf_set(&op->buf_asm, "invalid");
 		length = alignment;
 	}
@@ -500,7 +509,12 @@ int SleighAsm::genOpcode(PcodeSlg &pcode_slg, Address &addr)
 	}
 	catch(BadDataError &err)
 	{
-		/* Meet Unknown data -> invalid opcode */
+		/* Meet unknown data -> invalid opcode */
+		length = -1;
+	}
+	catch(UnimplError &err)
+	{
+		/* Meet unimplemented data -> invalid opcode */
 		length = -1;
 	}
 	return length;

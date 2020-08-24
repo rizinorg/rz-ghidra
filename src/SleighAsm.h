@@ -162,13 +162,13 @@ private:
 	{
 		AddrSpace *space = data.space;
 		PcodeOperand *operand = nullptr;
-		if(space->getName() == "register")
+		if(space->getName() == "register" || space->getName() == "mem")
 		{
 			operand = new PcodeOperand(
 			    space->getTrans()->getRegisterName(data.space, data.offset, data.size), data.size);
 			operand->type = PcodeOperand::REGISTER;
 		}
-		else if(space->getName() == "ram")
+		else if(space->getName() == "ram" || space->getName() == "DATA" || space->getName() == "code")
 		{
 			operand = new PcodeOperand(data.offset, data.size);
 			operand->type = PcodeOperand::RAM;
@@ -185,11 +185,6 @@ private:
 			operand = new PcodeOperand(data.offset, data.size);
 			operand->type = PcodeOperand::UNIQUE;
 		}
-		else if(space->getName() == "DATA")
-		{
-			operand = new PcodeOperand(data.offset, data.size);
-			operand->type = PcodeOperand::RAM;
-		}
 		else
 			throw LowlevelError("Unsupported AddrSpace type appear.");
 		return operand;
@@ -202,6 +197,9 @@ public:
 	          int4 isize) override
 	{
 		PcodeOperand *out = nullptr, *in0 = nullptr, *in1 = nullptr;
+
+		if(opc == CPUI_CALLOTHER)
+			isize = isize > 2 ? 2 : isize;
 
 		switch(isize)
 		{

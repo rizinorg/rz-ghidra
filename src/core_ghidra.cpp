@@ -329,7 +329,7 @@ class PcodeRawOut : public PcodeEmit
 		void print_vardata(ostream &s, VarnodeData &data)
 		{
 			AddrSpace *space = data.space;
-			if(space->getName() == "register")
+			if(space->getName() == "register" || space->getName() == "mem")
 				s << space->getTrans()->getRegisterName(data.space, data.offset, data.size);
 			else if(space->getName() == "ram")
 			{
@@ -359,7 +359,11 @@ class PcodeRawOut : public PcodeEmit
 				s << ',' << dec << data.size << ')';
 			}
 			else
-				throw LowlevelError("Unsupported AddrSpace type appear.");
+			{
+				s << '(' << data.space->getName() << ',';
+				data.space->printOffset(s,data.offset);
+				s << ',' << dec << data.size << ')';
+			}
 		}
 
 	public:

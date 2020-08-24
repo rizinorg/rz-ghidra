@@ -4,16 +4,17 @@
 
 SleighInstruction *R2Sleigh::getInstruction(Address &addr)
 {
-	SleighInstruction *ins = new SleighInstruction(this, addr);
-	// ins->cacheTreeInfo();
-	ins_cache.insert({addr.getOffset(), ins});
-	return ins;
-}
+	SleighInstruction *ins = nullptr;
+	if(!ins_cache.has(addr.getOffset()))
+	{
+		ins = new SleighInstruction(this, addr);
+		// ins->cacheTreeInfo();
+		ins_cache.put(addr.getOffset(), ins);
+	}
+	else
+		ins = ins_cache.get(addr.getOffset());
 
-R2Sleigh::~R2Sleigh()
-{
-	for(auto iter = ins_cache.begin(); iter != ins_cache.end(); ++iter)
-		delete iter->second;
+	return ins;
 }
 
 void SleighParserContext::setPrototype(SleighInstruction *p, int4 maxparam)

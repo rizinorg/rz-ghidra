@@ -64,10 +64,10 @@ static bool isOperandInteresting(const PcodeOperand *arg, std::unordered_set<std
 {
 	if(arg)
 	{
-		if(arg->type == PcodeOperand::REGISTER)
+		if(arg->is_reg())
 			return regs.find(arg->name) != regs.end();
 
-		if(arg->type == PcodeOperand::UNIQUE)
+		if(arg->is_unique())
 			return mid_vars.find(*arg) != mid_vars.end();
 	}
 	return false;
@@ -85,17 +85,21 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
 	RAnalValue res;
 	memset(&res, 0, sizeof(RAnalValue));
 
-	if(arg->type == PcodeOperand::CONST)
+	if(arg->is_const())
 	{
+		res.type = R_ANAL_VAL_IMM;
 		res.imm = arg->number;
 	}
-	else if(arg->type == PcodeOperand::REGISTER)
+	else if(arg->is_reg())
 	{
+		res.type = R_ANAL_VAL_REG;
 		res.reg = r_reg_get(anal->reg, arg->name.c_str(), -1);
 	}
-	else if(arg->type == PcodeOperand::RAM)
+	else if(arg->is_ram())
 	{
+		res.type = R_ANAL_VAL_MEM;
 		res.base = arg->offset;
+		res.memref = arg->size;
 	}
 	else
 	{ // PcodeOperand::UNIQUE
@@ -118,11 +122,19 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
 
 			case CPUI_LOAD:
 				res = in0;
+				res.type = R_ANAL_VAL_MEM;
 				res.memref = curr_op->input0->size;
 				break;
 
 			case CPUI_INT_ADD:
 			{
+				if(in0.type == R_ANAL_VAL_MEM || in1.type == R_ANAL_VAL_MEM)
+					res.type = R_ANAL_VAL_MEM;
+				else if(in0.type == R_ANAL_VAL_REG || in1.type == R_ANAL_VAL_REG)
+					res.type = R_ANAL_VAL_REG;
+				else
+					res.type = R_ANAL_VAL_IMM;
+
 				res.memref = inner_max(in0.memref, in1.memref);
 				if(in0.imm && in1.imm)
 					res.imm = in0.imm + in1.imm;
@@ -146,6 +158,13 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
 
 			case CPUI_INT_SUB:
 			{
+				if(in0.type == R_ANAL_VAL_MEM || in1.type == R_ANAL_VAL_MEM)
+					res.type = R_ANAL_VAL_MEM;
+				else if(in0.type == R_ANAL_VAL_REG || in1.type == R_ANAL_VAL_REG)
+					res.type = R_ANAL_VAL_REG;
+				else
+					res.type = R_ANAL_VAL_IMM;
+
 				res.memref = inner_max(in0.memref, in1.memref);
 				if(in0.imm && in1.imm)
 					res.imm = in0.imm - in1.imm;
@@ -172,6 +191,13 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
 				// imm (CONST) * imm (CONST)
 				// imm (CONST) * base (RAM)
 				// imm (CONST) * reg (REGISTER)
+				if(in0.type == R_ANAL_VAL_MEM || in1.type == R_ANAL_VAL_MEM)
+					res.type = R_ANAL_VAL_MEM;
+				else if(in0.type == R_ANAL_VAL_REG || in1.type == R_ANAL_VAL_REG)
+					res.type = R_ANAL_VAL_REG;
+				else
+					res.type = R_ANAL_VAL_IMM;
+
 				res.memref = inner_max(in0.memref, in1.memref);
 				if(in0.imm && in1.imm)
 				{
@@ -198,7 +224,7 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
 					res.regdelta = in0.reg;
 				}
 				else
-					throw LowlevelError("resolve_arg: Unexpected situation in INT_MULTI");
+					res.absolute = -1; // Means invalid
 
 				break;
 			}
@@ -206,37 +232,41 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
 			case CPUI_INT_AND:
 			{
 				// Should only happen when const need some modification.
+				res.type = in0.type;
 				res.memref = inner_max(in0.memref, in1.memref);
 				if(in0.imm && in1.imm)
 					res.imm = in0.imm & in1.imm;
 				else
-					throw LowlevelError("resolve_arg: Unexpected situation in INT_AND");
+					res.absolute = -1; // Means invalid
 				break;
 			}
 
 			case CPUI_INT_OR:
 			{
 				// Should only happen when const need some modification.
+				res.type = in0.type;
 				res.memref = inner_max(in0.memref, in1.memref);
 				if(in0.imm && in1.imm)
 					res.imm = in0.imm | in1.imm;
 				else
-					throw LowlevelError("resolve_arg: Unexpected situation in INT_OR");
+					res.absolute = -1; // Means invalid
 				break;
 			}
 
 			case CPUI_INT_XOR:
 			{
 				// Should only happen when const need some modification.
+				res.type = in0.type;
 				res.memref = inner_max(in0.memref, in1.memref);
 				if(in0.imm && in1.imm)
 					res.imm = in0.imm ^ in1.imm;
 				else
-					throw LowlevelError("resolve_arg: Unexpected situation in INT_XOR");
+					res.absolute = -1; // Means invalid
 				break;
 			}
 
-			default: throw LowlevelError("resolve_arg: Unexpected P-code appears.");
+			default:
+				res.absolute = -1; // Means invalid
 		}
 	}
 
@@ -250,23 +280,25 @@ static std::vector<RAnalValue>
 {
 	std::vector<RAnalValue> res;
 	RAnalValue tmp;
+	memset(&tmp, 0, sizeof(tmp));
 
-	if(arg->type == PcodeOperand::CONST)
+	if(arg->is_const())
 	{
-		memset(&tmp, 0, sizeof(tmp));
+		tmp.type = R_ANAL_VAL_IMM;
 		tmp.imm = arg->number;
 		res.push_back(tmp);
 	}
-	else if(arg->type == PcodeOperand::REGISTER)
+	else if(arg->is_reg())
 	{
-		memset(&tmp, 0, sizeof(tmp));
+		tmp.type = R_ANAL_VAL_REG;
 		tmp.reg = r_reg_get(anal->reg, arg->name.c_str(), -1);
 		res.push_back(tmp);
 	}
-	else if(arg->type == PcodeOperand::RAM)
+	else if(arg->is_ram())
 	{
-		memset(&tmp, 0, sizeof(tmp));
+		tmp.type = R_ANAL_VAL_MEM;
 		tmp.base = arg->offset;
+		tmp.memref = arg->size;
 		res.push_back(tmp);
 	}
 	else
@@ -280,16 +312,21 @@ static std::vector<RAnalValue>
 			if(iter->type == CPUI_STORE)
 			{
 				if(iter->output && *iter->output == *arg && iter->input1)
-					res.push_back(resolve_arg(anal, iter->input1, midvar_op));
+				{
+					tmp = resolve_arg(anal, iter->input1, midvar_op);
+					if(tmp.absolute != -1)
+						res.push_back(tmp);
+				}
 			}
 			else
 			{
 				if((iter->input0 && *iter->input0 == *arg) ||
 				   (iter->input1 && *iter->input1 == *arg))
 				{
-					if(iter->output && iter->output->type == PcodeOperand::REGISTER)
+					if(iter->output && iter->output->is_reg())
 					{
-						memset(&res, 0, sizeof(RAnalValue));
+						memset(&tmp, 0, sizeof(tmp));
+						tmp.type = R_ANAL_VAL_REG;
 						tmp.reg = r_reg_get(anal->reg, iter->output->name.c_str(), -1);
 						res.push_back(tmp);
 					}
@@ -332,7 +369,7 @@ static RAnalValue *anal_value_dup(const RAnalValue &from)
  *     MEM   -> MEM (Key: LOAD & STORE) // Never happen as far as I know
  */
 
-static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &arg_set,
                           const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -340,6 +377,8 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &r
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	const PcodeOpType key_pcode_store = CPUI_STORE;
 	RAnalValue in0, out;
+	memset(&in0, 0, sizeof(in0));
+	memset(&out, 0, sizeof(out));
 	std::vector<RAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -374,11 +413,14 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &r
 			if(iter->output)
 				in0 = resolve_arg(anal, iter->output, midvar_op);
 
-			if(in0.imm && iter->input1)
+			if(iter->input1)
+				out = resolve_arg(anal, iter->input1, midvar_op);
+
+			if(in0.imm && iter->input1 && out.absolute != -1)
 			{
 				anal_op->type = this_type;
 				anal_op->src[0] = anal_value_dup(in0);
-				anal_op->dst = anal_value_dup(resolve_arg(anal, iter->input1, midvar_op));
+				anal_op->dst = anal_value_dup(out);
 
 				return this_type;
 			}
@@ -388,7 +430,7 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &r
 	return 0;
 }
 
-static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &arg_set,
                            const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -399,6 +441,8 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	const ut32 this_type = R_ANAL_OP_TYPE_LOAD;
 	const PcodeOpType key_pcode = CPUI_LOAD;
 	RAnalValue in0, out;
+	memset(&in0, 0, sizeof(in0));
+	memset(&out, 0, sizeof(out));
 	std::vector<RAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -432,7 +476,7 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	return 0;
 }
 
-static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                             const std::unordered_set<std::string> &arg_set,
                             const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -443,6 +487,8 @@ static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	const ut32 this_type = R_ANAL_OP_TYPE_STORE;
 	const PcodeOpType key_pcode = CPUI_STORE;
 	RAnalValue in0, out;
+	memset(&in0, 0, sizeof(in0));
+	memset(&out, 0, sizeof(out));
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
@@ -451,11 +497,14 @@ static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 			if(iter->output)
 				in0 = resolve_arg(anal, iter->output, midvar_op);
 
+			if(iter->input1)
+				out = resolve_arg(anal, iter->input1, midvar_op);
+
 			if(arg_set_has(arg_set, in0))
 			{
 				anal_op->type = this_type;
 				anal_op->src[0] = anal_value_dup(in0);
-				anal_op->dst = anal_value_dup(resolve_arg(anal, iter->input1, midvar_op));
+				anal_op->dst = anal_value_dup(out);
 
 				return this_type;
 			}
@@ -465,7 +514,7 @@ static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	return 0;
 }
 
-static ut32 anal_type_XSWI(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_XSWI(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &arg_set,
                            const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -494,7 +543,7 @@ static ut32 anal_type_XSWI(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	return 0;
 }
 
-static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                             const std::unordered_set<std::string> &arg_set,
                             const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -503,6 +552,8 @@ static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	// R_ANAL_OP_TYPE_PUSH
 	const PcodeOpType key_pcode = CPUI_STORE;
 	RAnalValue out, in;
+	memset(&in, 0, sizeof(in));
+	memset(&out, 0, sizeof(out));
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
@@ -531,13 +582,15 @@ static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> 
 	return 0;
 }
 
-static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &arg_set,
                           const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
 	const ut32 this_type = R_ANAL_OP_TYPE_POP;
 	const PcodeOpType key_pcode = CPUI_LOAD;
 	RAnalValue in0, out;
+	memset(&in0, 0, sizeof(in0));
+	memset(&out, 0, sizeof(out));
 	std::vector<RAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -569,7 +622,7 @@ static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &r
 	return 0;
 }
 
-static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &arg_set,
                            const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -579,6 +632,8 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	const PcodeOpType key_pcode_and = CPUI_INT_AND;
 	const PcodeOpType key_pcode_equal = CPUI_INT_EQUAL;
 	RAnalValue in0, in1;
+	memset(&in0, 0, sizeof(in0));
+	memset(&in1, 0, sizeof(in1));
 	uintb unique_off = 0;
 	PcodeOpType key_pcode = CPUI_MAX;
 
@@ -596,7 +651,7 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 			if(!arg_set_has(arg_set, in1))
 				continue;
 
-			if(iter->output && iter->output->type == PcodeOperand::UNIQUE)
+			if(iter->output && iter->output->is_unique())
 			{
 				unique_off = iter->output->offset;
 				key_pcode = iter->type;
@@ -608,14 +663,12 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 			if(!iter->input0 || !iter->input1)
 				continue;
 
-			if(iter->input0->type == PcodeOperand::CONST &&
-			   iter->input1->type == PcodeOperand::UNIQUE)
+			if(iter->input0->is_const() && iter->input1->is_unique())
 			{
 				if(iter->input0->number != 0 || iter->input1->offset != unique_off)
 					continue;
 			}
-			else if(iter->input0->type == PcodeOperand::UNIQUE &&
-			        iter->input1->type == PcodeOperand::CONST)
+			else if(iter->input0->is_unique() && iter->input1->is_const())
 			{
 				if(iter->input1->number != 0 || iter->input0->offset != unique_off)
 					continue;
@@ -636,7 +689,7 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	return 0;
 }
 
-static ut32 anal_type_INT_XXX(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_INT_XXX(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                               const std::unordered_set<std::string> &arg_set,
                               const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -652,6 +705,9 @@ static ut32 anal_type_INT_XXX(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop
 	// R_ANAL_OP_TYPE_SHL
 	// R_ANAL_OP_TYPE_SAR
 	RAnalValue in0, in1, out;
+	memset(&in0, 0, sizeof(in0));
+	memset(&in1, 0, sizeof(in1));
+	memset(&out, 0, sizeof(out));
 	std::vector<RAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -720,7 +776,7 @@ static ut32 anal_type_INT_XXX(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop
 	return 0;
 }
 
-static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &arg_set,
                           const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -728,6 +784,9 @@ static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &r
 	const PcodeOpType key_pcode_or = CPUI_INT_OR;
 	const PcodeOpType key_pcode_negate = CPUI_INT_NEGATE;
 	RAnalValue in0, in1, out;
+	memset(&in0, 0, sizeof(in0));
+	memset(&in1, 0, sizeof(in1));
+	memset(&out, 0, sizeof(out));
 	std::vector<RAnalValue> outs;
 	uintb unique_off = 0;
 
@@ -742,7 +801,7 @@ static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &r
 			}
 			if(arg_set_has(arg_set, in0) || arg_set_has(arg_set, in1))
 			{
-				if(iter->output && iter->output->type == PcodeOperand::UNIQUE)
+				if(iter->output && iter->output->is_unique())
 				{
 					unique_off = iter->output->offset;
 					continue;
@@ -776,13 +835,15 @@ static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &r
 	return 0;
 }
 
-static ut32 anal_type_NOT(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_NOT(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &arg_set,
                           const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
 	const ut32 this_type = R_ANAL_OP_TYPE_NOT;
 	const PcodeOpType key_pcode = CPUI_INT_NEGATE;
 	RAnalValue in0, out;
+	memset(&in0, 0, sizeof(in0));
+	memset(&out, 0, sizeof(out));
 	std::vector<RAnalValue> outs;
 	uintb unique_off = 0;
 
@@ -817,7 +878,7 @@ static ut32 anal_type_NOT(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &r
 	return 0;
 }
 
-static ut32 anal_type_XCHG(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_XCHG(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &arg_set,
                            const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -849,7 +910,7 @@ static ut32 anal_type_XCHG(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &
 	return 0;
 }
 
-static ut32 anal_type_SINGLE(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_SINGLE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                              const std::unordered_set<std::string> &arg_set,
                              const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
 {
@@ -870,7 +931,7 @@ static ut32 anal_type_SINGLE(RAnal *anal, RAnalOp *anal_op, std::vector<Pcodeop>
 	return 0;
 }
 
-static void anal_type(RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
+static void anal_type(RAnal *anal, RAnalOp *anal_op, const PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
 {
 	std::vector<std::string> args = string_split(assem.args, ',');
 	std::transform(args.begin(), args.end(), args.begin(), string_trim);
@@ -894,7 +955,7 @@ static void anal_type(RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerA
 	{
 		if(pco->type != CPUI_STORE)
 		{
-			if(pco->output && pco->output->type == PcodeOperand::UNIQUE)
+			if(pco->output && pco->output->is_unique())
 				midvar_op[pco->output->offset] = &(*pco);
 		}
 	}
@@ -955,7 +1016,7 @@ static int index_of_unique(const std::vector<PcodeOperand *> &esil_stack, const 
 }
 
 static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len,
-                        std::vector<Pcodeop> &Pcodes)
+                        const std::vector<Pcodeop> &Pcodes)
 {
 	std::vector<PcodeOperand *> esil_stack;
 	stringstream ss;
@@ -982,6 +1043,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 			// In dalvik: 0x00000234: array_length 0x1008,0x1008
 			//                v2 = CPOOLREF v2, 0x0, 0x6
 			case CPUI_CPOOLREF:
+			case CPUI_CALLOTHER:
 			case CPUI_NEW:
 			case CPUI_SEGMENTOP:
 			case CPUI_INSERT:
@@ -990,7 +1052,12 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 			case CPUI_INDIRECT:
 			case CPUI_CAST:
 			case CPUI_PTRADD:
-			case CPUI_PTRSUB: /* Above are not raw P-code */ ss << ",TODO"; break;
+			case CPUI_PTRSUB: /* Above are not raw P-code */
+			branch_in_pcodes:
+				ss << ",CLEAR,TODO";
+				esil_stack.clear();
+				iter = --Pcodes.cend(); // Jump out
+				break;
 
 			case CPUI_INT_ZEXT:
 			case CPUI_INT_SEXT:
@@ -1090,7 +1157,9 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				if(iter->input0)
 				{
 					if(iter->input0->is_const())
-						throw LowlevelError("Sleigh_esil: const input case of BRANCH appear.");
+						// throw LowlevelError("Sleigh_esil: const input case of BRANCH appear.");
+						// This means conditional jump in P-codes
+						goto branch_in_pcodes;
 					ss << "," << *iter->input0 << "," << sanal.pc_name << ",=";
 				}
 				else
@@ -1107,7 +1176,9 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 					ss << ",?{";
 
 					if(iter->input0->is_const())
-						throw LowlevelError("Sleigh_esil: const input case of BRANCH appear.");
+						// throw LowlevelError("Sleigh_esil: const input case of BRANCH appear.");
+						// This means conditional jump in P-codes
+						goto branch_in_pcodes;
 					ss << "," << *iter->input0 << "," << sanal.pc_name << ",=,}";
 				}
 				else
@@ -1514,29 +1585,6 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				break;
 			}
 
-			case CPUI_CALLOTHER:
-			{
-				if(iter->input0 && iter->output)
-				{
-					if(iter->input1)
-					{
-						ss << ",";
-						if(!print_if_unique(iter->input1))
-							ss << *iter->input1;
-					}
-
-					ss << ",$";
-
-					if(iter->output->is_unique())
-						push_stack(iter->output);
-					else
-						ss << "," << *iter->output << ",=";
-				}
-				else
-					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
-				break;
-			}
-
 			case CPUI_POPCOUNT:
 			{
 				if(iter->input0 && iter->output)
@@ -1599,6 +1647,7 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	FlowType ftype = ins.getFlowType();
 	bool isRefed = false;
 
+	//std::cerr << caddr << " " << ins.printFlowType(ftype) << std::endl;
 	if(ftype != FlowType::FALL_THROUGH)
 	{
 		switch(ftype)
