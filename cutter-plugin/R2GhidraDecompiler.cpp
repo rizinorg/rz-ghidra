@@ -12,11 +12,13 @@
 R2GhidraDecompiler::R2GhidraDecompiler(QObject *parent)
 	: Decompiler("r2ghidra", "Ghidra", parent)
 {
-	task = nullptr;
+	task = DecompilerFinished;
 }
 
 void R2GhidraDecompiler::decompileAt(ut64 addr)
 {
+	task = DecompilerRunning;
 	RAnnotatedCode *code = r2ghidra_decompile_annotated_code(Core()->core(), addr);
 	emit finished(code); //Here, we emit RAnnotatedCode *code or by value
+	task = DecompilerFinished;
 }
