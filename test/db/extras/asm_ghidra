@@ -28,8 +28,8 @@ EXPECT=<<EOF
             0x0804859b      c3             RET
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=x86:LE:32:default:gcc
+e asm.arch=r2ghidra
 s main
 pd 24
 EOF
@@ -85,8 +85,8 @@ EXPECT=<<EOF
             0x00000846      c3             RET
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=x86:LE:64:default:gcc
+e asm.arch=r2ghidra
 s main
 pd 44
 EOF
@@ -116,8 +116,8 @@ EXPECT=<<EOF
             0x000156c3      cb             RET
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=x86:LE:16:Real Mode:
+e asm.arch=r2ghidra
 pd 18
 EOF
 RUN
@@ -178,8 +178,8 @@ EXPECT=<<EOF
             0x0000db8c      0331a0e1       mov r3,r3, lsl #0x2
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=ARM:LE:32:v7:gcc
+e asm.arch=r2ghidra
 s main
 pd 50
 EOF
@@ -243,8 +243,8 @@ EXPECT=<<EOF
             0x800010c4      40023000       mfc0 v0, Wired
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=MIPS:BE:64:default:
+e asm.arch=r2ghidra
 pd 50
 EOF
 RUN
@@ -271,8 +271,8 @@ EXPECT=<<EOF
             0x0040011c      00000000       nop
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=MIPS:BE:32:default:gcc
+e asm.arch=r2ghidra
 pd 12
 EOF
 RUN
@@ -334,8 +334,8 @@ EXPECT=<<EOF
             0x800031ac      39c00000       li r14,0x0
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=PowerPC:BE:32:default:
+e asm.arch=r2ghidra
 pd 50
 EOF
 RUN
@@ -398,8 +398,8 @@ EXPECT=<<EOF
             0x00001724      7f0208eb       cmp x19, x8
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=AARCH64:LE:64:v8A:gcc
+e asm.arch=r2ghidra
 pd 50
 EOF
 RUN
@@ -468,8 +468,8 @@ EXPECT=<<EOF
             0x00000514      21280000       clear a1
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=MIPS:LE:32:default:gcc
+e asm.arch=r2ghidra
 pd 50
 EOF
 RUN
@@ -530,8 +530,8 @@ EXPECT=<<EOF
             0x1000190c      00004260       ori r2,r2,0x0
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=PowerPC:LE:64:default:gcc
+e asm.arch=r2ghidra
 pd 50
 EOF
 RUN
@@ -593,8 +593,8 @@ EXPECT=<<EOF
             0x000118a4      81cfe008       return
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=sparc:BE:32:default:gcc
+e asm.arch=r2ghidra
 pd 50
 EOF
 RUN
@@ -655,8 +655,8 @@ EXPECT=<<EOF
             0x0000036c      f0e0           ldi Zhi,0x0
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=avr8:LE:16:default:gcc
+e asm.arch=r2ghidra
 s main
 pd 50
 EOF
@@ -718,8 +718,8 @@ EXPECT=<<EOF
             0x80000e46      4a88           tst.l A0
 EOF
 CMDS=<<EOF
-e asm.arch=r2ghidra
 e asm.cpu=68000:BE:32:default:gcc
+e asm.arch=r2ghidra
 pd 50
 EOF
 RUN

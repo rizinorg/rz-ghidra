@@ -31,7 +31,7 @@ class LRUCache
 private:
 	std::list<std::pair<K, V>> item_list;
 	std::unordered_map<K, decltype(item_list.begin())> item_map;
-	const size_t cache_size = 4096;
+	const size_t cache_size = 4096; // This takes about 80M memory.
 
 	void clean()
 	{

@@ -52,7 +52,7 @@ struct PcodeOperand
 	PcodeOperand(uintb offset, uint4 size): type(RAM), offset(offset), size(size) {}
 	PcodeOperand(uintb number): type(CONST), number(number), size(0) {}
 	PcodeOperand(const std::string &name, uint4 size): type(REGISTER), name(name), size(size) {}
-	~PcodeOperand()
+	virtual ~PcodeOperand()
 	{
 		if(type == REGISTER)
 			name.~string();
@@ -154,6 +154,13 @@ struct Pcodeop
 };
 
 ostream &operator<<(ostream &s, const Pcodeop &op);
+
+struct UniquePcodeOperand: public PcodeOperand
+{
+	const Pcodeop *def = nullptr;
+	UniquePcodeOperand(const PcodeOperand *from): PcodeOperand(*from) {}
+	~UniquePcodeOperand() = default;
+};
 
 class PcodeSlg : public PcodeEmit
 {

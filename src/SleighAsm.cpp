@@ -72,7 +72,7 @@ static void parseProto(const Element *el, std::vector<std::string> &arg_names,
 
 		if(subnode->getName() == "input" || subnode->getName() == "output")
 		{
-			const List &flist(el->getChildren());
+			const List &flist(subnode->getChildren());
 			for(auto fiter = flist.begin(); fiter != flist.end(); ++fiter)
 			{
 				const Element *subel = *fiter;

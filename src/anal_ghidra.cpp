@@ -79,8 +79,9 @@ static inline T inner_max(T foo, T bar)
 	return foo > bar ? foo : bar;
 }
 
-static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
-                              const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+static int get_reg_type(const std::string &name);
+
+static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg)
 {
 	RAnalValue res;
 	memset(&res, 0, sizeof(RAnalValue));
@@ -93,7 +94,7 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
 	else if(arg->is_reg())
 	{
 		res.type = R_ANAL_VAL_REG;
-		res.reg = r_reg_get(anal->reg, arg->name.c_str(), -1);
+		res.reg = r_reg_get(anal->reg, arg->name.c_str(), get_reg_type(arg->name));
 	}
 	else if(arg->is_ram())
 	{
@@ -103,15 +104,21 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
 	}
 	else
 	{ // PcodeOperand::UNIQUE
-		const Pcodeop *curr_op = midvar_op.at(arg->offset);
+		const Pcodeop *curr_op = ((UniquePcodeOperand *)arg)->def;
 		RAnalValue in0, in1;
 		memset(&in0, 0, sizeof(RAnalValue));
 		memset(&in1, 0, sizeof(RAnalValue));
 
 		if(curr_op->input0)
-			in0 = resolve_arg(anal, curr_op->input0, midvar_op);
+		{
+			in0 = resolve_arg(anal, curr_op->input0);
+			if(in0.absolute == -1) return in0;
+		}
 		if(curr_op->input1)
-			in1 = resolve_arg(anal, curr_op->input1, midvar_op);
+		{
+			in1 = resolve_arg(anal, curr_op->input1);
+			if(in1.absolute == -1) return in1;
+		}
 
 		switch(curr_op->type)
 		{
@@ -275,8 +282,7 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg,
 
 static std::vector<RAnalValue>
     resolve_out(RAnal *anal, std::vector<Pcodeop>::const_iterator curr_op,
-                std::vector<Pcodeop>::const_iterator end_op, const PcodeOperand *arg,
-                const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                std::vector<Pcodeop>::const_iterator end_op, const PcodeOperand *arg)
 {
 	std::vector<RAnalValue> res;
 	RAnalValue tmp;
@@ -291,7 +297,7 @@ static std::vector<RAnalValue>
 	else if(arg->is_reg())
 	{
 		tmp.type = R_ANAL_VAL_REG;
-		tmp.reg = r_reg_get(anal->reg, arg->name.c_str(), -1);
+		tmp.reg = r_reg_get(anal->reg, arg->name.c_str(), get_reg_type(arg->name));
 		res.push_back(tmp);
 	}
 	else if(arg->is_ram())
@@ -313,7 +319,7 @@ static std::vector<RAnalValue>
 			{
 				if(iter->output && *iter->output == *arg && iter->input1)
 				{
-					tmp = resolve_arg(anal, iter->input1, midvar_op);
+					tmp = resolve_arg(anal, iter->input1);
 					if(tmp.absolute != -1)
 						res.push_back(tmp);
 				}
@@ -327,7 +333,7 @@ static std::vector<RAnalValue>
 					{
 						memset(&tmp, 0, sizeof(tmp));
 						tmp.type = R_ANAL_VAL_REG;
-						tmp.reg = r_reg_get(anal->reg, iter->output->name.c_str(), -1);
+						tmp.reg = r_reg_get(anal->reg, iter->output->name.c_str(), get_reg_type(iter->output->name));
 						res.push_back(tmp);
 					}
 				}
@@ -370,8 +376,7 @@ static RAnalValue *anal_value_dup(const RAnalValue &from)
  */
 
 static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                          const std::unordered_set<std::string> &arg_set,
-                          const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                          const std::unordered_set<std::string> &arg_set)
 {
 	const ut32 this_type = R_ANAL_OP_TYPE_MOV;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
@@ -386,7 +391,7 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 		if(iter->type == key_pcode_copy)
 		{
 			if(iter->output)
-				outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
+				outs = resolve_out(anal, iter, raw_ops.cend(), iter->output);
 
 			auto p = outs.cbegin();
 			for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
@@ -394,8 +399,8 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 			{
 				out = *p;
 
-				if(iter->input0)
-					in0 = resolve_arg(anal, iter->output, midvar_op);
+				if(iter->input1)
+					in0 = resolve_arg(anal, iter->input1);
 
 				if(in0.imm || arg_set_has(arg_set, in0))
 				{
@@ -411,10 +416,10 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 		if(iter->type == key_pcode_store)
 		{
 			if(iter->output)
-				in0 = resolve_arg(anal, iter->output, midvar_op);
+				in0 = resolve_arg(anal, iter->output);
 
 			if(iter->input1)
-				out = resolve_arg(anal, iter->input1, midvar_op);
+				out = resolve_arg(anal, iter->input1);
 
 			if(in0.imm && iter->input1 && out.absolute != -1)
 			{
@@ -431,8 +436,7 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 }
 
 static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                           const std::unordered_set<std::string> &arg_set,
-                           const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                           const std::unordered_set<std::string> &arg_set)
 {
 	/*
 	 * R_ANAL_OP_TYPE_LOAD:
@@ -450,7 +454,7 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 		if(iter->type == key_pcode)
 		{
 			if(iter->output)
-				outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
+				outs = resolve_out(anal, iter, raw_ops.cend(), iter->output);
 
 			auto p = outs.cbegin();
 			for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
@@ -458,8 +462,8 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 			{
 				out = *p;
 
-				if(iter->input0)
-					in0 = resolve_arg(anal, iter->output, midvar_op);
+				if(iter->input1)
+					in0 = resolve_arg(anal, iter->input1);
 
 				if(arg_set_has(arg_set, in0))
 				{
@@ -477,8 +481,7 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 }
 
 static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                            const std::unordered_set<std::string> &arg_set,
-                            const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                            const std::unordered_set<std::string> &arg_set)
 {
 	/*
 	 * R_ANAL_OP_TYPE_STORE:
@@ -495,10 +498,10 @@ static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 		if(iter->type == key_pcode)
 		{
 			if(iter->output)
-				in0 = resolve_arg(anal, iter->output, midvar_op);
+				in0 = resolve_arg(anal, iter->output);
 
 			if(iter->input1)
-				out = resolve_arg(anal, iter->input1, midvar_op);
+				out = resolve_arg(anal, iter->input1);
 
 			if(arg_set_has(arg_set, in0))
 			{
@@ -515,8 +518,7 @@ static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 }
 
 static ut32 anal_type_XSWI(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                           const std::unordered_set<std::string> &arg_set,
-                           const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                           const std::unordered_set<std::string> &arg_set)
 {
 	// R_ANAL_OP_TYPE_CSWI
 	// R_ANAL_OP_TYPE_SWI
@@ -544,8 +546,7 @@ static ut32 anal_type_XSWI(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 }
 
 static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                            const std::unordered_set<std::string> &arg_set,
-                            const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                            const std::unordered_set<std::string> &arg_set)
 {
 	// R_ANAL_OP_TYPE_UPUSH
 	// R_ANAL_OP_TYPE_RPUSH
@@ -560,7 +561,7 @@ static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 		if(iter->type == key_pcode)
 		{
 			if(iter->input1)
-				out = resolve_arg(anal, iter->input1, midvar_op);
+				out = resolve_arg(anal, iter->input1);
 
 			if((out.reg && sanal.sp_name == out.reg->name) ||
 			   (out.regdelta && sanal.sp_name == out.regdelta->name))
@@ -569,7 +570,7 @@ static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 				anal_op->stackop = R_ANAL_STACK_INC;
 
 				if(iter->output)
-					in = resolve_arg(anal, iter->output, midvar_op);
+					in = resolve_arg(anal, iter->output);
 
 				if(arg_set_has(arg_set, in))
 					anal_op->type = R_ANAL_OP_TYPE_RPUSH;
@@ -583,8 +584,7 @@ static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 }
 
 static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                          const std::unordered_set<std::string> &arg_set,
-                          const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                          const std::unordered_set<std::string> &arg_set)
 {
 	const ut32 this_type = R_ANAL_OP_TYPE_POP;
 	const PcodeOpType key_pcode = CPUI_LOAD;
@@ -598,13 +598,13 @@ static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 		if(iter->type == key_pcode)
 		{
 			if(iter->input0)
-				in0 = resolve_arg(anal, iter->input0, midvar_op);
+				in0 = resolve_arg(anal, iter->input0);
 
 			if((in0.reg && sanal.sp_name == in0.reg->name) ||
 			   (in0.regdelta && sanal.sp_name == in0.regdelta->name))
 			{
 				if(iter->output)
-					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
+					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output);
 
 				auto p = outs.cbegin();
 				for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
@@ -623,8 +623,7 @@ static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 }
 
 static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                           const std::unordered_set<std::string> &arg_set,
-                           const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                           const std::unordered_set<std::string> &arg_set)
 {
 	// R_ANAL_OP_TYPE_CMP
 	// R_ANAL_OP_TYPE_ACMP
@@ -642,12 +641,12 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 		if(iter->type == key_pcode_sub || iter->type == key_pcode_and)
 		{
 			if(iter->input0)
-				in0 = resolve_arg(anal, iter->input0, midvar_op);
+				in0 = resolve_arg(anal, iter->input0);
 			if(!arg_set_has(arg_set, in0))
 				continue;
 
 			if(iter->input1)
-				in1 = resolve_arg(anal, iter->input1, midvar_op);
+				in1 = resolve_arg(anal, iter->input1);
 			if(!arg_set_has(arg_set, in1))
 				continue;
 
@@ -690,8 +689,7 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 }
 
 static ut32 anal_type_INT_XXX(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                              const std::unordered_set<std::string> &arg_set,
-                              const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                              const std::unordered_set<std::string> &arg_set)
 {
 	// R_ANAL_OP_TYPE_ADD
 	// R_ANAL_OP_TYPE_SUB
@@ -729,13 +727,13 @@ static ut32 anal_type_INT_XXX(RAnal *anal, RAnalOp *anal_op, const std::vector<P
 			{
 				if(iter->input0 && iter->input1)
 				{
-					in0 = resolve_arg(anal, iter->input0, midvar_op);
-					in1 = resolve_arg(anal, iter->input1, midvar_op);
+					in0 = resolve_arg(anal, iter->input0);
+					in1 = resolve_arg(anal, iter->input1);
 				}
 				if(arg_set_has(arg_set, in0) || arg_set_has(arg_set, in1))
 				{
 					if(iter->output)
-						outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
+						outs = resolve_out(anal, iter, raw_ops.cend(), iter->output);
 
 					auto p = outs.cbegin();
 					for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
@@ -777,8 +775,7 @@ static ut32 anal_type_INT_XXX(RAnal *anal, RAnalOp *anal_op, const std::vector<P
 }
 
 static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                          const std::unordered_set<std::string> &arg_set,
-                          const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                          const std::unordered_set<std::string> &arg_set)
 {
 	const ut32 this_type = R_ANAL_OP_TYPE_NOR;
 	const PcodeOpType key_pcode_or = CPUI_INT_OR;
@@ -796,8 +793,8 @@ static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 		{
 			if(iter->input0 && iter->input1)
 			{
-				in0 = resolve_arg(anal, iter->input0, midvar_op);
-				in1 = resolve_arg(anal, iter->input1, midvar_op);
+				in0 = resolve_arg(anal, iter->input0);
+				in1 = resolve_arg(anal, iter->input1);
 			}
 			if(arg_set_has(arg_set, in0) || arg_set_has(arg_set, in1))
 			{
@@ -813,7 +810,7 @@ static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 			if(iter->input0 && iter->input0->is_unique() && iter->input0->offset == unique_off)
 			{
 				if(iter->output)
-					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
+					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output);
 
 				auto p = outs.cbegin();
 				for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
@@ -836,8 +833,7 @@ static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 }
 
 static ut32 anal_type_NOT(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                          const std::unordered_set<std::string> &arg_set,
-                          const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                          const std::unordered_set<std::string> &arg_set)
 {
 	const ut32 this_type = R_ANAL_OP_TYPE_NOT;
 	const PcodeOpType key_pcode = CPUI_INT_NEGATE;
@@ -852,12 +848,12 @@ static ut32 anal_type_NOT(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 		if(iter->type == key_pcode)
 		{
 			if(iter->input0)
-				in0 = resolve_arg(anal, iter->input0, midvar_op);
+				in0 = resolve_arg(anal, iter->input0);
 
 			if(arg_set_has(arg_set, in0))
 			{
 				if(iter->output)
-					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output, midvar_op);
+					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output);
 
 				auto p = outs.cbegin();
 				for(; p != outs.cend() && !arg_set_has(arg_set, *p); ++p) {}
@@ -879,8 +875,7 @@ static ut32 anal_type_NOT(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 }
 
 static ut32 anal_type_XCHG(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                           const std::unordered_set<std::string> &arg_set,
-                           const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                           const std::unordered_set<std::string> &arg_set)
 {
 	const ut32 this_type = R_ANAL_OP_TYPE_XCHG;
 	const PcodeOpType key_pcode = CPUI_COPY;
@@ -899,9 +894,9 @@ static ut32 anal_type_XCHG(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 		   *raw_ops[1].input0 == *raw_ops[2].output)
 		{
 			anal_op->type = this_type;
-			anal_op->src[0] = anal_value_dup(resolve_arg(anal, raw_ops[0].input0, midvar_op));
-			anal_op->src[1] = anal_value_dup(resolve_arg(anal, raw_ops[1].input0, midvar_op));
-			anal_op->dst = anal_value_dup(resolve_arg(anal, raw_ops[1].output, midvar_op));
+			anal_op->src[0] = anal_value_dup(resolve_arg(anal, raw_ops[0].input0));
+			anal_op->src[1] = anal_value_dup(resolve_arg(anal, raw_ops[1].input0));
+			anal_op->dst = anal_value_dup(resolve_arg(anal, raw_ops[1].output));
 
 			return this_type;
 		}
@@ -911,8 +906,7 @@ static ut32 anal_type_XCHG(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 }
 
 static ut32 anal_type_SINGLE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
-                             const std::unordered_set<std::string> &arg_set,
-                             const std::unordered_map<uintb, const Pcodeop *> &midvar_op)
+                             const std::unordered_set<std::string> &arg_set)
 {
 	// R_ANAL_OP_TYPE_CAST
 	// R_ANAL_OP_TYPE_NEW
@@ -931,7 +925,7 @@ static ut32 anal_type_SINGLE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pc
 	return 0;
 }
 
-static void anal_type(RAnal *anal, RAnalOp *anal_op, const PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
+static void anal_type(RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerAssemblyEmit &assem)
 {
 	std::vector<std::string> args = string_split(assem.args, ',');
 	std::transform(args.begin(), args.end(), args.begin(), string_trim);
@@ -951,40 +945,66 @@ static void anal_type(RAnal *anal, RAnalOp *anal_op, const PcodeSlg &pcode_slg, 
 	}
 
 	std::unordered_map<uintb, const Pcodeop *> midvar_op;
-	for(auto pco = pcode_slg.pcodes.cbegin(); pco != pcode_slg.pcodes.cend(); ++pco)
+	for(auto pco = pcode_slg.pcodes.begin(); pco != pcode_slg.pcodes.end(); ++pco)
 	{
+
+		if(pco->input0 && pco->input0->is_unique())
+		{
+			UniquePcodeOperand* tmp = new UniquePcodeOperand(pco->input0);
+			delete pco->input0;
+			pco->input0 = (PcodeOperand *)tmp;
+			tmp->def = midvar_op[tmp->offset];
+		}
+		if(pco->input1 && pco->input1->is_unique())
+		{
+			UniquePcodeOperand* tmp = new UniquePcodeOperand(pco->input1);
+			delete pco->input1;
+			pco->input1 = (PcodeOperand *)tmp;
+			tmp->def = midvar_op[tmp->offset];
+		}
+
 		if(pco->type != CPUI_STORE)
 		{
 			if(pco->output && pco->output->is_unique())
 				midvar_op[pco->output->offset] = &(*pco);
 		}
+		else
+		{
+			if(pco->output && pco->output->is_unique())
+			{
+				UniquePcodeOperand* tmp = new UniquePcodeOperand(pco->output);
+				delete pco->output;
+				pco->output = (PcodeOperand *)tmp;
+				tmp->def = midvar_op[tmp->offset];
+			}
+		}
 	}
 
 	anal_op->type = R_ANAL_OP_TYPE_UNK;
 
-	if(anal_type_XCHG(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_XCHG(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_SINGLE(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_SINGLE(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_XSWI(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_XSWI(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_XCMP(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_XCMP(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_NOR(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_NOR(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_INT_XXX(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_INT_XXX(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_NOT(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_NOT(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_XPUSH(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_XPUSH(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_POP(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_POP(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_STORE(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_STORE(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_LOAD(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_LOAD(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_MOV(anal, anal_op, pcode_slg.pcodes, arg_set, midvar_op))
+	if(anal_type_MOV(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
 
 	return;
@@ -1778,29 +1798,58 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	return anal_op->size;
 }
 
+/*
+ * By 2020-05-24, there are 17 kinds of group of registers in SLEIGH.
+ * I map them to r_reg.h's RRegisterType:
+ * R_REG_TYPE_XMM:
+ * R_REG_TYPE_SEG:
+ * R_REG_TYPE_DRX: DEBUG
+ * R_REG_TYPE_FPU: ST FPU
+ * R_REG_TYPE_MMX: MMX
+ * R_REG_TYPE_YMM: AVX VSX
+ * R_REG_TYPE_FLG: FLAGS Flags
+ * R_REG_TYPE_GPR: PC Cx DCR STATUS SVE CONTROL SPR SPR_UNNAMED Alt NEON
+ */
+static const char *r_reg_type_arr[] = {"PC",  "Cx",          "DCR", "STATUS", "SVE",   "CONTROL",
+                                "SPR", "SPR_UNNAMED", "Alt", "NEON",   "FLAGS", "Flags",
+                                "AVX", "MMX",         "ST",  "FPU",    "DEBUG", "VSX", nullptr};
+static const char *r_reg_string_arr[] = {"gpr", "gpr", "gpr", "gpr", "gpr", "gpr",
+                                  "gpr", "gpr", "gpr", "gpr", "flg", "flg",
+                                  "ymm", "mmx", "fpu", "fpu", "drx", "ymm", nullptr};
+
+static int get_reg_type(const std::string &name)
+{
+	const std::string &group = sanal.reg_group[name];
+
+	if(group.empty())
+		return R_REG_TYPE_GPR;
+
+	for(size_t i = 0; r_reg_type_arr[i]; i++)
+	{
+		if(group == r_reg_type_arr[i])
+		{
+			const char *curr = r_reg_string_arr[i];
+			switch(curr[0] | curr[1] << 8)
+			{
+				case 'g' | 'p' << 8: return R_REG_TYPE_GPR;
+				case 'd' | 'r' << 8: return R_REG_TYPE_DRX;
+				case 'f' | 'p' << 8: return R_REG_TYPE_FPU;
+				case 'm' | 'm' << 8: return R_REG_TYPE_MMX;
+				case 'x' | 'm' << 8: return R_REG_TYPE_XMM;
+				case 'y' | 'm' << 8: return R_REG_TYPE_YMM;
+				case 'f' | 'l' << 8: return R_REG_TYPE_FLG;
+				case 's' | 'e' << 8: return R_REG_TYPE_SEG;
+			}
+		}
+	}
+
+	return -1;
+}
+
 static char *get_reg_profile(RAnal *anal)
 {
 	if(!strcmp(anal->cpu, "x86"))
 		return nullptr;
-
-	/*
-	 * By 2020-05-24, there are 17 kinds of group of registers in SLEIGH.
-	 * I map them to r_reg.h's RRegisterType:
-	 * R_REG_TYPE_XMM:
-	 * R_REG_TYPE_SEG:
-	 * R_REG_TYPE_DRX: DEBUG
-	 * R_REG_TYPE_FPU: ST FPU
-	 * R_REG_TYPE_MMX: MMX
-	 * R_REG_TYPE_YMM: AVX
-	 * R_REG_TYPE_FLG: FLAGS Flags
-	 * R_REG_TYPE_GPR: PC Cx DCR STATUS SVE CONTROL SPR SPR_UNNAMED Alt NEON
-	 */
-	const char *r_reg_type_arr[] = {"PC",  "Cx",          "DCR", "STATUS", "SVE",   "CONTROL",
-	                                "SPR", "SPR_UNNAMED", "Alt", "NEON",   "FLAGS", "Flags",
-	                                "AVX", "MMX",         "ST",  "FPU",    "DEBUG", nullptr};
-	const char *r_reg_string_arr[] = {"gpr", "gpr", "gpr", "gpr", "gpr", "gpr",
-	                                  "gpr", "gpr", "gpr", "gpr", "flg", "flg",
-	                                  "ymm", "mmx", "fpu", "fpu", "drx", nullptr};
 
 	sanal.init(anal);
 
@@ -1816,7 +1865,7 @@ static char *get_reg_profile(RAnal *anal)
 		buf << "=A" << i << '\t' << sanal.arg_names[i] << '\n';
 
 	for(unsigned i = 0; i != sanal.ret_names.size() && i <= 3; ++i)
-		buf << "=R" << i << '\t' << sanal.arg_names[i] << '\n';
+		buf << "=R" << i << '\t' << sanal.ret_names[i] << '\n';
 
 	for(auto p = reg_list.begin(); p != reg_list.end(); p++)
 	{
@@ -1921,7 +1970,7 @@ static int esil_get_parm_type_float(RAnalEsil *esil, const char *str)
 
 	return ESIL_PARM_FLOAT;
 not_a_number:
-	if(r_reg_get(esil->anal->reg, str, -1))
+	if(r_reg_get(esil->anal->reg, str, get_reg_type(str)))
 		return R_ANAL_ESIL_PARM_REG;
 
 	return R_ANAL_ESIL_PARM_INVALID;
