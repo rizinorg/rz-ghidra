@@ -128,9 +128,9 @@ static RAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg)
 			case CPUI_COPY: res = in0; break;
 
 			case CPUI_LOAD:
-				res = in0;
+				res = in1;
 				res.type = R_ANAL_VAL_MEM;
-				res.memref = curr_op->input0->size;
+				res.memref = curr_op->input1->size;
 				break;
 
 			case CPUI_INT_ADD:
@@ -366,8 +366,10 @@ static RAnalValue *anal_value_dup(const RAnalValue &from)
 /* After some consideration, I decide to classify mov operation:
  * R_ANAL_OP_TYPE_STORE:
  *     REG -> MEM (Key: STORE)
+ *     REG -> MEM (Key: COPY)
  * R_ANAL_OP_TYPE_LOAD:
  *     MEM -> REG (Key: LOAD)
+ *     MEM -> REG (Key: COPY)
  * R_ANAL_OP_TYPE_MOV:
  *     REG   -> REG (Key: COPY)
  *     CONST -> REG (Key: COPY)
@@ -399,8 +401,8 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 			{
 				out = *p;
 
-				if(iter->input1)
-					in0 = resolve_arg(anal, iter->input1);
+				if(iter->input0)
+					in0 = resolve_arg(anal, iter->input0);
 
 				if(in0.imm || arg_set_has(arg_set, in0))
 				{
@@ -440,10 +442,12 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 {
 	/*
 	 * R_ANAL_OP_TYPE_LOAD:
-	 *     MEM -> REG (Key: LOAD)
+ 	 *     MEM -> REG (Key: LOAD)
+ 	 *     MEM -> REG (Key: COPY)
 	 */
 	const ut32 this_type = R_ANAL_OP_TYPE_LOAD;
-	const PcodeOpType key_pcode = CPUI_LOAD;
+	const PcodeOpType key_pcode_load = CPUI_LOAD;
+	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	RAnalValue in0, out;
 	memset(&in0, 0, sizeof(in0));
 	memset(&out, 0, sizeof(out));
@@ -451,7 +455,7 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
-		if(iter->type == key_pcode)
+		if(iter->type == key_pcode_load || iter->type == key_pcode_copy)
 		{
 			if(iter->output)
 				outs = resolve_out(anal, iter, raw_ops.cend(), iter->output);
@@ -462,10 +466,10 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 			{
 				out = *p;
 
-				if(iter->input1)
-					in0 = resolve_arg(anal, iter->input1);
+				if(iter->type == key_pcode_load ? iter->input1 : iter->input0)
+					in0 = resolve_arg(anal, iter->type == key_pcode_load ? iter->input1 : iter->input0);
 
-				if(arg_set_has(arg_set, in0))
+				if(in0.absolute != -1 && in0.memref)
 				{
 					anal_op->type = this_type;
 					anal_op->src[0] = anal_value_dup(in0);
@@ -486,30 +490,61 @@ static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 	/*
 	 * R_ANAL_OP_TYPE_STORE:
 	 *     REG -> MEM (Key: STORE)
+ 	 *     REG -> MEM (Key: COPY)
 	 */
 	const ut32 this_type = R_ANAL_OP_TYPE_STORE;
-	const PcodeOpType key_pcode = CPUI_STORE;
+	const PcodeOpType key_pcode_store = CPUI_STORE;
+	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	RAnalValue in0, out;
 	memset(&in0, 0, sizeof(in0));
 	memset(&out, 0, sizeof(out));
+	std::vector<RAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
-		if(iter->type == key_pcode)
+		if(iter->type == key_pcode_store)
 		{
-			if(iter->output)
+			if(iter->output && iter->input1)
 				in0 = resolve_arg(anal, iter->output);
 
-			if(iter->input1)
-				out = resolve_arg(anal, iter->input1);
+			if(in0.absolute == -1 || !arg_set_has(arg_set, in0))
+				continue;
 
-			if(arg_set_has(arg_set, in0))
+			out = resolve_arg(anal, iter->input1);
+
+			if(out.absolute != -1 && out.memref)
 			{
 				anal_op->type = this_type;
 				anal_op->src[0] = anal_value_dup(in0);
 				anal_op->dst = anal_value_dup(out);
 
 				return this_type;
+			}
+		}
+
+		if(iter->type == key_pcode_copy)
+		{
+			if(iter->input0 && iter->output)
+				in0 = resolve_arg(anal, iter->input0);
+
+			if(in0.absolute == -1 || !arg_set_has(arg_set, in0))
+				continue;
+
+			outs = resolve_out(anal, iter, raw_ops.cend(), iter->output);
+
+			auto p = outs.cbegin();
+			for(; p != outs.cend(); ++p)
+			{
+				out = *p;
+
+				if(out.absolute != -1 && out.memref)
+				{
+					anal_op->type = this_type;
+					anal_op->src[0] = anal_value_dup(in0);
+					anal_op->dst = anal_value_dup(out);
+
+					return this_type;
+				}
 			}
 		}
 	}
@@ -597,8 +632,8 @@ static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 	{
 		if(iter->type == key_pcode)
 		{
-			if(iter->input0)
-				in0 = resolve_arg(anal, iter->input0);
+			if(iter->input1)
+				in0 = resolve_arg(anal, iter->input1);
 
 			if((in0.reg && sanal.sp_name == in0.reg->name) ||
 			   (in0.regdelta && sanal.sp_name == in0.regdelta->name))
@@ -1856,17 +1891,6 @@ static char *get_reg_profile(RAnal *anal)
 	auto reg_list = sanal.getRegs();
 	std::stringstream buf;
 
-	if(!sanal.pc_name.empty())
-		buf << "=PC\t" << sanal.pc_name << '\n';
-	if(!sanal.sp_name.empty())
-		buf << "=SP\t" << sanal.sp_name << '\n';
-
-	for(unsigned i = 0; i != sanal.arg_names.size() && i <= 9; ++i)
-		buf << "=A" << i << '\t' << sanal.arg_names[i] << '\n';
-
-	for(unsigned i = 0; i != sanal.ret_names.size() && i <= 3; ++i)
-		buf << "=R" << i << '\t' << sanal.ret_names[i] << '\n';
-
 	for(auto p = reg_list.begin(); p != reg_list.end(); p++)
 	{
 		const std::string &group = sanal.reg_group[p->name];
@@ -1898,6 +1922,18 @@ static char *get_reg_profile(RAnal *anal)
 		buf << p->name << "\t." << p->size * 8 << "\t" << p->offset << "\t"
 		    << "0\n";
 	}
+
+	if(!sanal.pc_name.empty())
+		buf << "=PC\t" << sanal.pc_name << '\n';
+	if(!sanal.sp_name.empty())
+		buf << "=SP\t" << sanal.sp_name << '\n';
+
+	for(unsigned i = 0; i != sanal.arg_names.size() && i <= 9; ++i)
+		buf << "=A" << i << '\t' << sanal.arg_names[i] << '\n';
+
+	for(unsigned i = 0; i != sanal.ret_names.size() && i <= 3; ++i)
+		buf << "=R" << i << '\t' << sanal.ret_names[i] << '\n';
+
 	const std::string &res = buf.str();
 	// fprintf(stderr, res.c_str());
 	return strdup(res.c_str());
