@@ -1372,5 +1372,20 @@ afvt ptr LL
 pdg
 EOF
 EXPECT=<<EOF
+
+void sym.KillList(LL arg1)
+{
+    LinkedList *pLVar1;
+    LL ptr;
+    int64_t var_8h;
+    
+    ptr = arg1;
+    while (ptr != (LL)0x0) {
+        pLVar1 = ptr->next;
+        sym.imp.free(ptr);
+        ptr = (LL)pLVar1;
+    }
+    return;
+}
 EOF
 RUN
