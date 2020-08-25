@@ -33,7 +33,7 @@ std::vector<std::string> splitSdbArray(const std::string& str)
 	return r;
 }
 
-Datatype *R2TypeFactory::queryR2Struct(const string &n)
+Datatype *R2TypeFactory::queryR2Struct(const string &n, std::set<std::string> &stackTypes)
 {
 	RCoreLock core(arch->getCore());
 
@@ -48,6 +48,7 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n)
 	std::vector<TypeField> fields;
 	try
 	{
+		TypeStruct *r = getTypeStruct(n);
 		std::stringstream membersStream(members);
 		std::string memberName;
 		while(std::getline(membersStream, memberName, SDB_RS))
@@ -63,7 +64,7 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n)
 				memberTypeName += "," + memberTokens[i];
 			int4 offset = std::stoi(memberTokens[memberTokens.size() - 2]);
 			int4 elements = std::stoi(memberTokens[memberTokens.size() - 1]);
-			Datatype *memberType = fromCString(memberTypeName);
+			Datatype *memberType = fromCString(memberTypeName, nullptr, &stackTypes);
 			if(!memberType)
 			{
 				arch->addWarning("Failed to match type " + memberTypeName + " of member " + memberName + " in struct " + n);
@@ -80,7 +81,6 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n)
 			});
 		}
 
-		TypeStruct *r = getTypeStruct(n);
 		setFields(fields, r, 0, 0);
 		return r;
 	}
@@ -151,7 +151,7 @@ Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTy
 	switch(kind)
 	{
 		case R_TYPE_STRUCT:
-			return queryR2Struct(n);
+			return queryR2Struct(n, stackTypes);
 		case R_TYPE_ENUM:
 			return queryR2Enum(n);
 		case R_TYPE_TYPEDEF:
@@ -225,7 +225,7 @@ Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error, 
 		}
 		case R_PARSE_CTYPE_TYPE_KIND_POINTER:
 		{
-			Datatype *sub = fromCType(ctype->pointer.type, error);
+			Datatype *sub = fromCType(ctype->pointer.type, error, stackTypes);
 			if(!sub)
 				return nullptr;
 			auto space = arch->getDefaultCodeSpace();
@@ -233,7 +233,7 @@ Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error, 
 		}
 		case R_PARSE_CTYPE_TYPE_KIND_ARRAY:
 		{
-			Datatype *sub = fromCType(ctype->array.type, error);
+			Datatype *sub = fromCType(ctype->array.type, error, stackTypes);
 			if(!sub)
 				return nullptr;
 			return this->getTypeArray(ctype->array.count, sub);
