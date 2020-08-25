@@ -1360,3 +1360,17 @@ af
 pdgo
 EOF
 RUN
+
+NAME=recursive type
+FILE=bins/rec
+CMDS=<<EOF
+to bins/types_rec.h
+aaa
+s sym.KillList
+afvt arg1 LL
+afvt ptr LL
+pdg
+EOF
+EXPECT=<<EOF
+EOF
+RUN

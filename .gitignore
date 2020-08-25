@@ -5,3 +5,5 @@ build
 compile_commands.json
 ghidra/flex/
 .vscode
+.ccls-cache
+.gdb_history
