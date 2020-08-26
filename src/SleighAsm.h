@@ -260,12 +260,12 @@ public:
 	std::vector<std::string> ret_names; // default ABI's function retvals
 	std::unordered_map<std::string, std::string> reg_group;
 	SleighAsm(): loader(nullptr), trans(nullptr, nullptr) {}
-	void init(const std::string &sleigh_id, RIO *io, RConfig *cfg);
+	void init(const char *sleigh_id, RIO *io, RConfig *cfg);
 	int disassemble(RAsmOp *op, unsigned long long offset);
 	int genOpcode(PcodeSlg &pcode_slg, Address &addr);
 	std::vector<R2Reg> getRegs(void);
-	static RCore *getCore(RAsm *a);
-	static RCore *getCore(RAnal *a);
+	static RConfig *getConfig(RAsm *a);
+	static RConfig *getConfig(RAnal *a);
 };
 
 #endif // R2GHIDRA_SLEIGHASM_H

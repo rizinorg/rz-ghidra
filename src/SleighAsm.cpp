@@ -2,7 +2,7 @@
 
 #include "SleighAsm.h"
 
-void SleighAsm::init(const std::string &id, RIO *io, RConfig *cfg)
+void SleighAsm::init(const char *id, RIO *io, RConfig *cfg)
 {
 	if(!io)
 		throw LowlevelError("Can't get RIO from RBin");
@@ -17,7 +17,7 @@ void SleighAsm::init(const std::string &id, RIO *io, RConfig *cfg)
 	if(!sleigh_id.empty() && sleigh_id == id)
 		return;
 
-	initInner(io, id.c_str());
+	initInner(io, id);
 }
 
 void SleighAsm::initInner(RIO *io, const char *cpu)
@@ -387,20 +387,20 @@ void SleighAsm::collectSpecfiles(void)
 		loadLanguageDescription(*iter);
 }
 
-RCore *SleighAsm::getCore(RAsm *a)
+RConfig *SleighAsm::getConfig(RAsm *a)
 {
 	RCore *core = a->num ? (RCore *)(a->num->userptr) : NULL;
 	if(!core)
 		throw LowlevelError("Can't get RCore from RAsm's RNum");
-	return core;
+	return core->config;
 }
 
-RCore *SleighAsm::getCore(RAnal *a)
+RConfig *SleighAsm::getConfig(RAnal *a)
 {
 	RCore *core = a ? (RCore *)a->coreb.core : nullptr;
 	if(!core)
 		throw LowlevelError("Can't get RCore from RAnal's RCoreBind");
-	return core;
+	return core->config;
 }
 
 std::string SleighAsm::getSleighHome(RConfig *cfg)

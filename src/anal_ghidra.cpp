@@ -7,27 +7,16 @@
 #include <cmath>
 #include <cfenv>
 #include "SleighAsm.h"
-#include "ArchMap.h"
 
 static SleighAsm sanal;
 
 static int archinfo(RAnal *anal, int query)
 {
-	RCore *core = SleighAsm::getCore(anal);
-	std::string id;
-	try
-	{
-		id = SleighIdFromCore(core);
-	}
-	catch(const LowlevelError &e)
-	{
-		if(e.explain != "Could not match asm.arch r2ghidra to sleigh arch.")
-			throw;
-		else
-			return -1;
-	}
+	if(!strcmp(anal->cpu, "x86"))
+		return -1;
 
-	sanal.init(id, anal? anal->iob.io : nullptr, core->cfg);
+	sanal.init(anal->cpu, anal? anal->iob.io : nullptr, SleighAsm::getConfig(anal));
+
 	if(query == R_ANAL_ARCHINFO_ALIGN)
 		return sanal.alignment;
 	else
@@ -1907,18 +1896,10 @@ static int get_reg_type(const std::string &name)
 
 static char *get_reg_profile(RAnal *anal)
 {
-	RCore *cfg = SleighAsm::getCore(anal);
-	std::string id;
-	try
-	{
-		id = SleighIdFromCore(core);
-	}
-	catch(const LowlevelError &e)
-	{
-		if(e.explain != "Could not match asm.arch r2ghidra to sleigh arch.")
-			throw;
-	}
-	sanal.init(id, anal? anal->iob.io : nullptr, core->cfg);
+	if(!strcmp(anal->cpu, "x86"))
+		return nullptr;
+
+	sanal.init(anal->cpu, anal? anal->iob.io : nullptr, SleighAsm::getConfig(anal));
 
 	auto reg_list = sanal.getRegs();
 	std::stringstream buf;

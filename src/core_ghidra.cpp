@@ -477,6 +477,14 @@ static void PrintAutoSleighLang(RCore *core)
 	}
 }
 
+static void EnablePlugin(RCore *core)
+{
+	auto id = SleighIdFromCore(core);
+	r_config_set(core->config, "r2ghidra.lang", id.c_str());
+	r_config_set(core->config, "asm.cpu", id.c_str());
+	r_config_set(core->config, "asm.arch", "r2ghidra");
+}
+
 static void _cmd(RCore *core, const char *input)
 {
 	switch (*input)
@@ -512,6 +520,9 @@ static void _cmd(RCore *core, const char *input)
 					ListSleighLangs();
 					break;
 			}
+			break;
+		case 'a': // "pdga"
+			EnablePlugin(core);
 			break;
 		default:
 			PrintUsage(core);
