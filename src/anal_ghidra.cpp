@@ -59,20 +59,6 @@ public:
 	}
 };
 
-static bool isOperandInteresting(const PcodeOperand *arg, std::unordered_set<std::string> &regs,
-                                 std::unordered_set<PcodeOperand, PcodeOperand> &mid_vars)
-{
-	if(arg)
-	{
-		if(arg->is_reg())
-			return regs.find(arg->name) != regs.end();
-
-		if(arg->is_unique())
-			return mid_vars.find(*arg) != mid_vars.end();
-	}
-	return false;
-}
-
 template<typename T>
 static inline T inner_max(T foo, T bar)
 {
@@ -371,6 +357,7 @@ static RAnalValue *anal_value_dup(const RAnalValue &from)
  *     MEM -> REG (Key: LOAD)
  *     MEM -> REG (Key: COPY)
  * R_ANAL_OP_TYPE_MOV:
+ *     IMM   -> REG (Key: COPY)
  *     REG   -> REG (Key: COPY)
  *     CONST -> REG (Key: COPY)
  *     CONST -> MEM (Key: STORE)
@@ -1670,6 +1657,25 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 	esilprintf(anal_op, ss.str()[0] == ',' ? ss.str().c_str() + 1 : ss.str().c_str());
 }
 
+static bool anal_type_NOP(const std::vector<Pcodeop> &Pcodes)
+{ // All p-codes have no side affects.
+	for(auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter)
+	{
+		if(iter->type == CPUI_STORE)
+		{
+			if(iter->input1 && !iter->input1->is_unique())
+				return false;
+		}
+		else
+		{
+			if(iter->output && !iter->output->is_unique())
+				return false;
+		}
+	}
+
+	return true;
+}
+
 static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len,
                      RAnalOpMask mask)
 {
@@ -1690,13 +1696,11 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 
 	if(pcode_slg.pcodes.empty())
 	{ // NOP case
+nopcase:
 		anal_op->type = R_ANAL_OP_TYPE_NOP;
 		esilprintf(anal_op, "");
 		return anal_op->size;
 	}
-
-	if(mask & R_ANAL_OP_MASK_ESIL)
-		sleigh_esil(a, anal_op, addr, data, len, pcode_slg.pcodes);
 
 	SleighInstruction &ins = *sanal.trans.getInstruction(caddr);
 	FlowType ftype = ins.getFlowType();
@@ -1827,8 +1831,16 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 			default: throw LowlevelError("Unexpected FlowType occured in sleigh_op.");
 		}
 	}
-	else // Label each instruction based on a series of P-codes.
+	else
+	{
+		if(anal_type_NOP(pcode_slg.pcodes))
+			goto nopcase;
+
 		anal_type(a, anal_op, pcode_slg, assem);
+	}
+
+	if(mask & R_ANAL_OP_MASK_ESIL)
+		sleigh_esil(a, anal_op, addr, data, len, pcode_slg.pcodes);
 
 	return anal_op->size;
 }
@@ -1977,7 +1989,7 @@ static bool sleigh_esil_consts_pick(RAnalEsil *esil)
 	}
 	ret = true;
 end:
-	free(idx);
+	r_mem_free(idx);
 	return ret;
 }
 
@@ -2054,7 +2066,7 @@ static bool sleigh_esil_is_nan(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_is_nan: invalid parameters");
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2068,7 +2080,7 @@ static bool sleigh_esil_int_to_float(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_int_to_float: invalid parameters");
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2086,7 +2098,7 @@ static bool sleigh_esil_float_to_int(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_to_int: invalid parameters");
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2112,8 +2124,8 @@ static bool sleigh_esil_float_to_float(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_to_float: invalid parameters");
 
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -2133,8 +2145,8 @@ static bool sleigh_esil_float_cmp(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_cmp: invalid parameters");
 
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -2154,8 +2166,8 @@ static bool sleigh_esil_float_negcmp(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_negcmp: invalid parameters");
 
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -2175,8 +2187,8 @@ static bool sleigh_esil_float_less(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_less: invalid parameters");
 
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -2196,8 +2208,8 @@ static bool sleigh_esil_float_lesseq(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_lesseq: invalid parameters");
 
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -2227,8 +2239,8 @@ static bool sleigh_esil_float_add(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_add: invalid parameters");
 
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -2258,8 +2270,8 @@ static bool sleigh_esil_float_sub(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_sub: invalid parameters");
 
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -2289,8 +2301,8 @@ static bool sleigh_esil_float_mul(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_mul: invalid parameters");
 
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -2320,8 +2332,8 @@ static bool sleigh_esil_float_div(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_div: invalid parameters");
 
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -2340,7 +2352,7 @@ static bool sleigh_esil_float_neg(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_neg: invalid parameters");
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2359,7 +2371,7 @@ static bool sleigh_esil_float_ceil(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_ceil: invalid parameters");
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2378,7 +2390,7 @@ static bool sleigh_esil_float_floor(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_floor: invalid parameters");
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2397,7 +2409,7 @@ static bool sleigh_esil_float_round(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_round: invalid parameters");
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2416,7 +2428,7 @@ static bool sleigh_esil_float_sqrt(RAnalEsil *esil)
 	else
 		throw LowlevelError("sleigh_esil_float_sqrt: invalid parameters");
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2432,11 +2444,11 @@ static bool sleigh_esil_signext(RAnalEsil *esil)
 	if(!r_anal_esil_get_parm(esil, p_src, &src))
 	{
 		throw LowlevelError("sleigh_esil_signext: invalid parameters");
-		free(p_src);
+		r_mem_free(p_src);
 		return false;
 	}
 	else
-		free(p_src);
+		r_mem_free(p_src);
 
 	char *p_dst = r_anal_esil_pop(esil);
 	if(!p_dst)
@@ -2445,11 +2457,11 @@ static bool sleigh_esil_signext(RAnalEsil *esil)
 	if(!r_anal_esil_get_parm(esil, p_dst, &dst))
 	{
 		throw LowlevelError("sleigh_esil_signext: invalid parameters");
-		free(p_dst);
+		r_mem_free(p_dst);
 		return false;
 	}
 	else
-		free(p_dst);
+		r_mem_free(p_dst);
 
 	ut64 m = 0;
 	if(dst < 64)

@@ -42,13 +42,12 @@ public:
 	~AssemblySlg()
 	{
 		if(str)
-			free(str);
+			r_mem_free(str);
 	}
 };
 
 struct PcodeOperand
 {
-	PcodeOperand(): PcodeOperand(0x7fffffff, 0x7fffffff) {}
 	PcodeOperand(uintb offset, uint4 size): type(RAM), offset(offset), size(size) {}
 	PcodeOperand(uintb number): type(CONST), number(number), size(0) {}
 	PcodeOperand(const std::string &name, uint4 size): type(REGISTER), name(name), size(size) {}
@@ -102,17 +101,6 @@ struct PcodeOperand
 			case CONST: return number == rhs.number;
 			default: throw LowlevelError("Unexpected type of PcodeOperand found in operator==.");
 		}
-	}
-
-	size_t operator()(const PcodeOperand &self) const
-	{
-		if(type == RAM && offset == 0x7fffffff && size == 0x7fffffff)
-			return 0x7fffffff;
-
-		if(type != UNIQUE)
-			throw LowlevelError("Only unique vars will be added into unordered set.");
-
-		return self.offset;
 	}
 
 	bool is_unique() const { return type == UNIQUE; }
@@ -236,8 +224,8 @@ public:
 struct R2Reg
 {
 	std::string name;
-	size_t size;
-	size_t offset;
+	ut64 size;
+	ut64 offset;
 };
 
 class R2Sleigh;

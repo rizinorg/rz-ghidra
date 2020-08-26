@@ -134,7 +134,7 @@ void SleighAsm::parseCompConfig(DocumentStorage &store)
 		const string &elname((*iter)->getName());
 		if(elname == "stackpointer")
 			sp_name = (*iter)->getAttributeValue("register");
-		if(elname == "default_proto")
+		else if(elname == "default_proto")
 			parseDefaultProto(*iter, arg_names, ret_names);
 	}
 }
@@ -460,7 +460,7 @@ std::string SleighAsm::getSleighHome(RConfig *cfg)
 	{
 		r_config_set(cfg, varname, path);
 		std::string res(path);
-		free((void *)path);
+		r_mem_free((void *)path);
 		return res;
 	}
 	else

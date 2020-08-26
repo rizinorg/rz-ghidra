@@ -149,7 +149,7 @@ public:
 	}
 };
 
-typedef enum
+enum FlowType
 {
 	INVALID,
 	FLOW,
@@ -173,7 +173,7 @@ typedef enum
 	JUMP_OVERRIDE_UNCONDITIONAL,
 	CALLOTHER_OVERRIDE_CALL,
 	CALLOTHER_OVERRIDE_JUMP,
-} FlowType;
+};
 
 static bool flowTypeHasFallthrough(FlowType t)
 {
