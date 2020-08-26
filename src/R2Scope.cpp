@@ -12,15 +12,20 @@
 #include "R2Utils.h"
 
 R2Scope::R2Scope(R2Architecture *arch)
-		: Scope("", arch),
+		: Scope("", arch, this),
 		  arch(arch),
-		  cache(new ScopeInternal("radare2-internal", arch))
+		  cache(new ScopeInternal("radare2-internal", arch, this))
 {
 }
 
 R2Scope::~R2Scope()
 {
 	delete cache;
+}
+
+Scope *R2Scope::buildSubScope(const string &nm)
+{
+	return new ScopeInternal(nm, arch);
 }
 
 static std::string hex(ut64 v)
@@ -582,19 +587,6 @@ LabSymbol *R2Scope::findCodeLabel(const Address &addr) const
 		return nullptr;
 
 	return queryR2FunctionLabel(addr);
-}
-
-bool R2Scope::isNameUsed(const string &name) const
-{
-	if(cache->isNameUsed(name))
-		return true;
-
-	RCoreLock core(arch->getCore());
-	if (r_flag_get(core->flags, name.c_str()))
-		return true;
-	if (r_anal_get_function_byname(core->anal, name.c_str()))
-		return true;
-	return false;
 }
 
 Funcdata *R2Scope::resolveExternalRefFunction(ExternRefSymbol *sym) const
