@@ -2,46 +2,25 @@
 
 #include "SleighAsm.h"
 
-void SleighAsm::init(RAsm *a)
+void SleighAsm::init(const std::string &id, RIO *io, RConfig *cfg)
 {
-	if(description.empty())
-	{
-		/* Initialize sleigh spec files */
-		scanSleigh(getSleighHome(getConfig(a)));
-		collectSpecfiles();
-	}
-
-	if(!sleigh_id.empty() && sleigh_id == std::string(a->cpu))
-		return;
-
-	RBin *bin = a->binb.bin;
-	RIO *io = bin ? bin->iob.io : nullptr;
 	if(!io)
 		throw LowlevelError("Can't get RIO from RBin");
 
-	initInner(io, a->cpu);
-}
-
-void SleighAsm::init(RAnal *a)
-{
 	if(description.empty())
 	{
 		/* Initialize sleigh spec files */
-		scanSleigh(getSleighHome(getConfig(a)));
+		scanSleigh(getSleighHome(cfg));
 		collectSpecfiles();
 	}
 
-	if(!sleigh_id.empty() && sleigh_id == std::string(a->cpu))
+	if(!sleigh_id.empty() && sleigh_id == id)
 		return;
 
-	RIO *io = a ? a->iob.io : nullptr;
-	if(!io)
-		throw LowlevelError("Can't get RIO from RBin");
-
-	initInner(io, a->cpu);
+	initInner(io, id.c_str());
 }
 
-void SleighAsm::initInner(RIO *io, char *cpu)
+void SleighAsm::initInner(RIO *io, const char *cpu)
 {
 	/* Initialize Sleigh */
 	loader = std::move(AsmLoadImage(io));
@@ -408,20 +387,20 @@ void SleighAsm::collectSpecfiles(void)
 		loadLanguageDescription(*iter);
 }
 
-RConfig *SleighAsm::getConfig(RAsm *a)
+RCore *SleighAsm::getCore(RAsm *a)
 {
 	RCore *core = a->num ? (RCore *)(a->num->userptr) : NULL;
 	if(!core)
 		throw LowlevelError("Can't get RCore from RAsm's RNum");
-	return core->config;
+	return core;
 }
 
-RConfig *SleighAsm::getConfig(RAnal *a)
+RCore *SleighAsm::getCore(RAnal *a)
 {
 	RCore *core = a ? (RCore *)a->coreb.core : nullptr;
 	if(!core)
 		throw LowlevelError("Can't get RCore from RAnal's RCoreBind");
-	return core->config;
+	return core;
 }
 
 std::string SleighAsm::getSleighHome(RConfig *cfg)

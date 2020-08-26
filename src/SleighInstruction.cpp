@@ -21,12 +21,12 @@ void SleighParserContext::setPrototype(SleighInstruction *p, int4 maxparam)
 {
 	prototype = p;
 	prototype->rootState.resolve.resize(maxparam);
-	*ExportHelper::getBasestate(this) = &prototype->rootState;
+	*getBaseState() = &prototype->rootState;
 }
 
 SleighParserContext *R2Sleigh::getParserContext(SleighInstruction *proto)
 {
-	SleighParserContext *pos = new SleighParserContext(ExportHelper::getCache(this));
+	SleighParserContext *pos = new SleighParserContext(getContextCache());
 	pos->initialize(75, 20, getConstantSpace());
 	pos->setAddr(proto->baseaddr);
 	pos->setPrototype(proto, 20);

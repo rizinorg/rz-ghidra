@@ -31,7 +31,7 @@ class LRUCache
 private:
 	std::list<std::pair<K, V>> item_list;
 	std::unordered_map<K, decltype(item_list.begin())> item_map;
-	const size_t cache_size = 4096; // This takes about 80M memory.
+	const size_t cache_size = 4096; // This takes ~80MB memory space.
 
 	void clean()
 	{
@@ -76,77 +76,6 @@ public:
 		item_list.splice(item_list.begin(), item_list, it->second);
 		return it->second->second;
 	};
-};
-
-class R2Sleigh;
-class R2DisassemblyCache;
-class SubParserWalker;
-class SleighParserContext;
-class ExportHelper
-{
-	// Please keep all structures in this class sync with origin!!!
-	// A bit hacking here.
-
-	struct ParserWalker
-	{ // ghidra/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/context.hh
-		const ParserContext *const_context;
-		const ParserContext *cross_context;
-		ConstructState *point;
-		int4 depth;
-		int4 breadcrumb[32];
-	};
-
-	struct Sleigh : public SleighBase
-	{ // ghidra/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
-		LoadImage *loader;
-		ContextDatabase *context_db;
-		ContextCache *cache;
-		mutable DisassemblyCache *discache;
-		mutable PcodeCacher pcode_cache;
-		void clearForDelete(void);
-		ParserContext *obtainContext(const Address &addr, int4 state) const;
-		void resolve(ParserContext &pos) const;
-		void resolveHandles(ParserContext &pos) const;
-		Sleigh(LoadImage *ld, ContextDatabase *c_db);
-		virtual ~Sleigh(void);
-		void reset(LoadImage *ld, ContextDatabase *c_db);
-		virtual void initialize(DocumentStorage &store);
-		virtual void registerContext(const string &name, int4 sbit, int4 ebit);
-		virtual void setContextDefault(const string &nm, uintm val);
-		virtual void allowContextSet(bool val) const;
-		virtual int4 instructionLength(const Address &baseaddr) const;
-		virtual int4 oneInstruction(PcodeEmit &emit, const Address &baseaddr) const;
-		virtual int4 printAssembly(AssemblyEmit &emit, const Address &baseaddr) const;
-	};
-
-	struct ParserContext
-	{ // ghidra/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/context.hh
-		int4 parsestate;
-		AddrSpace *const_space;
-		uint1 buf[16];
-		uintm *context;
-		int4 contextsize;
-		ContextCache *contcache;
-		vector<ContextSet> contextcommit;
-		Address addr;
-		Address naddr;
-		Address calladdr;
-		vector<ConstructState> state;
-		ConstructState *base_state;
-		int4 alloc;
-		int4 delayslot;
-	};
-
-public:
-	static const ::ParserContext *getConstcontext(SubParserWalker *xxx)
-	{
-		return ((ExportHelper::ParserWalker *)xxx)->const_context;
-	}
-	static ::ContextCache *getCache(R2Sleigh *xxx) { return ((ExportHelper::Sleigh *)xxx)->cache; }
-	static ::ConstructState **getBasestate(SleighParserContext *xxx)
-	{
-		return &((ExportHelper::ParserContext *)xxx)->base_state;
-	}
 };
 
 enum FlowType

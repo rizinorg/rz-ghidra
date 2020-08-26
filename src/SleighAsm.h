@@ -241,9 +241,7 @@ private:
 	std::vector<LanguageDescription> description;
 	int languageindex;
 
-	RConfig *getConfig(RAsm *a);
-	RConfig *getConfig(RAnal *a);
-	void initInner(RIO *io, char *cpu);
+	void initInner(RIO *io, const char *cpu);
 	std::string getSleighHome(RConfig *cfg);
 	void collectSpecfiles(void);
 	void scanSleigh(const string &rootpath);
@@ -262,11 +260,12 @@ public:
 	std::vector<std::string> ret_names; // default ABI's function retvals
 	std::unordered_map<std::string, std::string> reg_group;
 	SleighAsm(): loader(nullptr), trans(nullptr, nullptr) {}
-	void init(RAsm *a);
-	void init(RAnal *a);
+	void init(const std::string &sleigh_id, RIO *io, RConfig *cfg);
 	int disassemble(RAsmOp *op, unsigned long long offset);
 	int genOpcode(PcodeSlg &pcode_slg, Address &addr);
 	std::vector<R2Reg> getRegs(void);
+	static RCore *getCore(RAsm *a);
+	static RCore *getCore(RAnal *a);
 };
 
 #endif // R2GHIDRA_SLEIGHASM_H

@@ -3,6 +3,7 @@
 #include <r_lib.h>
 #include <r_asm.h>
 #include "SleighAsm.h"
+#include "ArchMap.h"
 
 static SleighAsm sasm;
 
@@ -15,7 +16,19 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 	try
 	{
 #endif
-		sasm.init(a);
+		RCore *core = SleighAsm::getCore(a);
+		std::string id;
+		try
+		{
+			id = SleighIdFromCore(core);
+		}
+		catch(const LowlevelError &e)
+		{
+			if(e.explain != "Could not match asm.arch r2ghidra to sleigh arch.")
+				throw;
+		}
+		RBin *bin = a->binb.bin;
+		sasm.init(id, bin ? bin->iob.io : nullptr, core->cfg);
 		r = sasm.disassemble(op, a->pc);
 #ifndef DEBUG_EXCEPTIONS
 	}
