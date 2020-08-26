@@ -39,6 +39,7 @@ class R2Scope : public Scope
 		explicit R2Scope(R2Architecture *arch);
 		~R2Scope() override;
 
+		Scope *buildSubScope(const string &nm) override;
 		void clear(void) override										{ cache->clear(); }
 		SymbolEntry *addSymbol(const string &name, Datatype *ct, const Address &addr, const Address &usepoint) override	{ return cache->addSymbol(name, ct, addr, usepoint); }
 		string buildVariableName(const Address &addr, const Address &pc, Datatype *ct,int4 &index,uint4 flags) const override { return cache->buildVariableName(addr,pc,ct,index,flags); }
@@ -53,7 +54,7 @@ class R2Scope : public Scope
 		Funcdata *findFunction(const Address &addr) const;
 		ExternRefSymbol *findExternalRef(const Address &addr) const;
 		LabSymbol *findCodeLabel(const Address &addr) const;
-		bool isNameUsed(const string &name) const override;
+		bool isNameUsed(const string &name, const Scope *op2) const override { throw LowlevelError("isNameUsed unimplemented"); }
 		Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
 		SymbolEntry *findOverlap(const Address &addr,int4 size) const	{ throw LowlevelError("findOverlap unimplemented"); }
