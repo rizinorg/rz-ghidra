@@ -133,7 +133,8 @@ Datatype *R2TypeFactory::queryR2Typedef(const string &n, std::set<std::string> &
 		return nullptr;
 
 	Datatype *typedefd = resolved->clone();
-	setName(typedefd, n);
+	setName(typedefd, n); // this removes the old name from the nametree
+	setName(resolved, resolved->getName()); // add the old name back
 	return typedefd;
 }
 
