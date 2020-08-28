@@ -29,15 +29,18 @@ public:
 	}
 };
 
+class SleighAsm;
 class AssemblySlg : public AssemblyEmit
 {
+private:
+	SleighAsm *sasm = nullptr;
+
 public:
 	char *str = nullptr;
 
-	void dump(const Address &addr, const string &mnem, const string &body) override
-	{
-		str = r_str_newf("%s %s", mnem.c_str(), body.c_str());
-	}
+	AssemblySlg(SleighAsm *s): sasm(s) {}
+
+	void dump(const Address &addr, const string &mnem, const string &body) override;
 
 	~AssemblySlg()
 	{
@@ -153,40 +156,14 @@ struct UniquePcodeOperand: public PcodeOperand
 class PcodeSlg : public PcodeEmit
 {
 private:
-	PcodeOperand *parse_vardata(VarnodeData &data)
-	{
-		AddrSpace *space = data.space;
-		PcodeOperand *operand = nullptr;
-		if(space->getName() == "register" || space->getName() == "mem")
-		{
-			operand = new PcodeOperand(
-			    space->getTrans()->getRegisterName(data.space, data.offset, data.size), data.size);
-			operand->type = PcodeOperand::REGISTER;
-		}
-		else if(space->getName() == "ram" || space->getName() == "DATA" || space->getName() == "code")
-		{
-			operand = new PcodeOperand(data.offset, data.size);
-			operand->type = PcodeOperand::RAM;
-		}
-		else if(space->getName() == "const")
-		{
-			// space.cc's ConstantSpace::printRaw()
-			operand = new PcodeOperand(data.offset);
-			operand->type = PcodeOperand::CONST;
-			operand->size = data.size; // To aviod ctor's signature collide with RAM's
-		}
-		else if(space->getName() == "unique")
-		{
-			operand = new PcodeOperand(data.offset, data.size);
-			operand->type = PcodeOperand::UNIQUE;
-		}
-		else
-			throw LowlevelError("Unsupported AddrSpace type appear.");
-		return operand;
-	}
+	SleighAsm *sanal = nullptr;
+
+	PcodeOperand *parse_vardata(VarnodeData &data);
 
 public:
 	std::vector<Pcodeop> pcodes;
+
+	PcodeSlg(SleighAsm *s): sanal(s) {}
 
 	void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars,
 	          int4 isize) override
@@ -242,6 +219,7 @@ private:
 	int languageindex;
 
 	void initInner(RIO *io, const char *cpu);
+	void initRegMapping(void);
 	std::string getSleighHome(RConfig *cfg);
 	void collectSpecfiles(void);
 	void scanSleigh(const string &rootpath);
@@ -259,6 +237,8 @@ public:
 	std::vector<std::string> arg_names; // default ABI's function args
 	std::vector<std::string> ret_names; // default ABI's function retvals
 	std::unordered_map<std::string, std::string> reg_group;
+	// To satisfy radare2's rule: reg name has to be lowercase.
+	std::unordered_map<std::string, std::string> reg_mapping;
 	SleighAsm(): loader(nullptr), trans(nullptr, nullptr) {}
 	void init(const char *sleigh_id, RIO *io, RConfig *cfg);
 	int disassemble(RAsmOp *op, unsigned long long offset);

@@ -34,6 +34,7 @@ void SleighAsm::initInner(RIO *io, const char *cpu)
 	parseCompConfig(docstorage);
 	alignment = trans.getAlignment();
 	trans.clearCache();
+	initRegMapping();
 
 	sleigh_id = cpu;
 }
@@ -448,7 +449,7 @@ std::string SleighAsm::getSleighHome(RConfig *cfg)
 
 int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 {
-	AssemblySlg assem;
+	AssemblySlg assem(this);
 	Address addr(trans.getDefaultCodeSpace(), offset);
 	int length = 0;
 	try
@@ -497,6 +498,25 @@ int SleighAsm::genOpcode(PcodeSlg &pcode_slg, Address &addr)
 		length = -1;
 	}
 	return length;
+}
+
+void SleighAsm::initRegMapping(void)
+{
+	reg_mapping.clear();
+	std::map<VarnodeData, std::string> reglist;
+	std::set<std::string> S;
+	trans.getAllRegisters(reglist);
+
+	for(auto iter = reglist.cbegin(); iter != reglist.cend(); ++iter)
+	{
+		std::string tmp;
+		for(auto p = iter->second.cbegin(); p != iter->second.cend(); ++p)
+			tmp.push_back(std::tolower(*p));
+		while(S.count(tmp))
+			tmp += "_dup";
+		S.insert(tmp);
+		reg_mapping[iter->second] = tmp;
+	}
 }
 
 std::vector<R2Reg> SleighAsm::getRegs(void)
@@ -549,4 +569,54 @@ ostream &operator<<(ostream &s, const Pcodeop &op)
 	if(op.input1)
 		s << " " << *op.input1;
 	return s;
+}
+
+void AssemblySlg::dump(const Address &addr, const string &mnem, const string &body)
+{
+	std::string res;
+	for (ut64 i = 0; i < body.size();)
+	{
+		std::string tmp;
+		while(!std::isalnum(body[i]))
+			res.push_back(body[i++]);
+		while(std::isalnum(body[i]))
+			tmp.push_back(body[i++]);
+		if(sasm->reg_mapping.find(tmp) != sasm->reg_mapping.end())
+			res += sasm->reg_mapping[tmp];
+		else
+			res += tmp;
+	}
+	str = r_str_newf("%s %s", mnem.c_str(), res.c_str());
+}
+
+PcodeOperand *PcodeSlg::parse_vardata(VarnodeData &data)
+{
+	AddrSpace *space = data.space;
+	PcodeOperand *operand = nullptr;
+	if(space->getName() == "register" || space->getName() == "mem")
+	{
+		operand = new PcodeOperand(
+		    sanal->reg_mapping[space->getTrans()->getRegisterName(data.space, data.offset, data.size)], data.size);
+		operand->type = PcodeOperand::REGISTER;
+	}
+	else if(space->getName() == "ram" || space->getName() == "DATA" || space->getName() == "code")
+	{
+		operand = new PcodeOperand(data.offset, data.size);
+		operand->type = PcodeOperand::RAM;
+	}
+	else if(space->getName() == "const")
+	{
+		// space.cc's ConstantSpace::printRaw()
+		operand = new PcodeOperand(data.offset);
+		operand->type = PcodeOperand::CONST;
+		operand->size = data.size; // To aviod ctor's signature collide with RAM's
+	}
+	else if(space->getName() == "unique")
+	{
+		operand = new PcodeOperand(data.offset, data.size);
+		operand->type = PcodeOperand::UNIQUE;
+	}
+	else
+		throw LowlevelError("Unsupported AddrSpace type appear.");
+	return operand;
 }

@@ -391,6 +391,7 @@ class PcodeRawOut : public PcodeEmit
 			if (isize > 1 && vars[0].size == sizeof(AddrSpace *) && vars[0].space->getName() == "const"
 				&& (vars[0].offset >> 24) == ((uintb)vars[1].space >> 24) && trans == ((AddrSpace*)vars[0].offset)->getTrans())
 			{
+				ss << ((AddrSpace*)vars[0].offset)->getName();
 				ss << '[';
 				print_vardata(ss, vars[1]);
 				ss << ']';
