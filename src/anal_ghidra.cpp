@@ -1098,7 +1098,8 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 			case CPUI_PTRADD:
 			case CPUI_PTRSUB: /* Above are not raw P-code */
 			branch_in_pcodes:
-				ss << ",CLEAR,TODO";
+				// ss << ",CLEAR,TODO";
+				ss.str("");
 				esil_stack.clear();
 				iter = --Pcodes.cend(); // Jump out
 				break;
@@ -2237,6 +2238,25 @@ static bool sleigh_esil_float_cmp(RAnalEsil *esil)
 	return ret;
 }
 
+static bool sleigh_esil_cmp(RAnalEsil *esil) {
+	ut64 num, num2;
+	bool ret = false;
+	char *dst = r_anal_esil_pop (esil);
+	char *src = r_anal_esil_pop (esil);
+	if (dst && r_anal_esil_get_parm (esil, dst, &num)) {
+		if (src && r_anal_esil_get_parm (esil, src, &num2)) {
+			esil->old = num;
+			esil->cur = num - num2;
+			ret = true;
+			esil->lastsz = 64;
+			r_anal_esil_pushnum (esil, num == num2);
+		}
+	}
+	free (dst);
+	free (src);
+	return ret;
+}
+
 static bool sleigh_esil_float_negcmp(RAnalEsil *esil)
 {
 	bool ret = false;
@@ -2908,6 +2928,7 @@ static bool sleigh_esil_poke4(RAnalEsil *esil)
 		float res = tmp;
 		esil->lastsz = 32;
 		ret = r_anal_esil_mem_write (esil, addr, (ut8*)&res, 4);
+		float_mem.insert(addr);
 	}
 	else
 	{
@@ -2944,6 +2965,7 @@ static bool sleigh_esil_poke8(RAnalEsil *esil)
 		double res = tmp;
 		esil->lastsz = 64;
 		ret = r_anal_esil_mem_write (esil, addr, (ut8*)&res, 8);
+		float_mem.insert(addr);
 	}
 	else
 	{
@@ -2985,6 +3007,7 @@ static int esil_sleigh_init(RAnalEsil *esil)
 	r_anal_esil_set_op(esil, "[4]", sleigh_esil_peek4, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op(esil, "[8]", sleigh_esil_peek8, 1, 1, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op(esil, "F==", sleigh_esil_float_cmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
+	r_anal_esil_set_op(esil, "==", sleigh_esil_cmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op(esil, "F!=", sleigh_esil_float_negcmp, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op(esil, "F<", sleigh_esil_float_less, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
 	r_anal_esil_set_op(esil, "F<=", sleigh_esil_float_lesseq, 1, 2, R_ANAL_ESIL_OP_TYPE_CUSTOM);
