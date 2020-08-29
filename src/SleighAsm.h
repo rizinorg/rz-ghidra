@@ -213,7 +213,6 @@ private:
 	AsmLoadImage loader;
 	ContextInternal context;
 	DocumentStorage docstorage;
-	std::string sleigh_id;
 	FileManage specpaths;
 	std::vector<LanguageDescription> description;
 	int languageindex;
@@ -231,6 +230,7 @@ private:
 
 public:
 	R2Sleigh trans;
+	std::string sleigh_id;
 	int alignment = 1;
 	std::string pc_name;
 	std::string sp_name;

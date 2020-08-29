@@ -38,16 +38,6 @@ static std::vector<std::string> string_split(const std::string &s)
 	return tokens;
 }
 
-static std::string string_trim(std::string s)
-{
-	if(!s.empty())
-	{
-		s.erase(0, s.find_first_not_of(" "));
-		s.erase(s.find_last_not_of(" ") + 1);
-	}
-	return s;
-}
-
 class InnerAssemblyEmit : public AssemblyEmit
 {
 public:
@@ -2027,6 +2017,15 @@ static char *get_reg_profile(RAnal *anal)
 
 	for(unsigned i = 0; i != sanal.ret_names.size() && i <= 3; ++i)
 		buf << "=R" << i << '\t' << sanal.reg_mapping[sanal.ret_names[i]] << '\n';
+
+
+	ut64 pp = 0;
+    string arch = sanal.sleigh_id.substr(pp, sanal.sleigh_id.find(':', pp) - pp);
+	pp = sanal.sleigh_id.find(':', pp) + 1;
+    bool little = sanal.sleigh_id.substr(pp, sanal.sleigh_id.find(':', pp) - pp) == "LE";
+	pp = sanal.sleigh_id.find(':', pp) + 1;
+    int bits = std::stoi(sanal.sleigh_id.substr(pp, sanal.sleigh_id.find(':', pp) - pp));
+	pp = sanal.sleigh_id.find(':', pp) + 1;
 
 	const std::string &res = buf.str();
 	// fprintf(stderr, res.c_str());
