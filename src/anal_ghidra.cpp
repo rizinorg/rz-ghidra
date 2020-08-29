@@ -586,8 +586,8 @@ static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 			if(iter->input1)
 				out = resolve_arg(anal, iter->input1);
 
-			if((out.reg && sanal.sp_name == out.reg->name) ||
-			   (out.regdelta && sanal.sp_name == out.regdelta->name))
+			if((out.reg && sanal.reg_mapping[sanal.sp_name] == out.reg->name) ||
+			   (out.regdelta && sanal.reg_mapping[sanal.sp_name] == out.regdelta->name))
 			{
 				anal_op->type = R_ANAL_OP_TYPE_UPUSH;
 				anal_op->stackop = R_ANAL_STACK_INC;
@@ -623,8 +623,8 @@ static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 			if(iter->input1)
 				in0 = resolve_arg(anal, iter->input1);
 
-			if((in0.reg && sanal.sp_name == in0.reg->name) ||
-			   (in0.regdelta && sanal.sp_name == in0.regdelta->name))
+			if((in0.reg && sanal.reg_mapping[sanal.sp_name] == in0.reg->name) ||
+			   (in0.regdelta && sanal.reg_mapping[sanal.sp_name] == in0.regdelta->name))
 			{
 				if(iter->output)
 					outs = resolve_out(anal, iter, raw_ops.cend(), iter->output);
@@ -1070,8 +1070,8 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 			if(-1 == index)
 				throw LowlevelError("print_if_unique: Can't find required unique varnodes in stack.");
 
-			if(1 != index)
-				ss << index + offset << ",PICK";
+			ss << index + offset << ",PICK";
+
 			return true;
 		}
 		else
@@ -1110,7 +1110,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 
 					if(iter->type == CPUI_INT_SEXT)
 					{
@@ -1134,7 +1134,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 
 					if(iter->output->is_unique())
 						push_stack(iter->output);
@@ -1152,7 +1152,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input1))
-						ss << *iter->input1;
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					if(iter->input0->is_const() &&
 					   ((AddrSpace *)iter->input0->offset)->getWordSize() != 1)
 						ss << "," << ((AddrSpace *)iter->input0->offset)->getWordSize() << ",*";
@@ -1174,7 +1174,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->output))
-						ss << *iter->output << ",GET";
+						ss << *iter->output << (iter->output->is_reg()? ",GET" : "");
 
 					ss << ",";
 					if(!print_if_unique(iter->input1, 1))
@@ -1205,9 +1205,9 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 						// This means conditional jump in P-codes
 						goto branch_in_pcodes;
 					ss << ",";
-					if(!print_if_unique(iter->output))
-						ss << *iter->output << ",GET";
-					ss << "," << sanal.pc_name << ",=";
+					if(!print_if_unique(iter->input0))
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
+					ss << "," << sanal.reg_mapping[sanal.pc_name] << ",=";
 				}
 				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
@@ -1218,8 +1218,9 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 			{
 				if(iter->input0 && iter->input1)
 				{
+					ss << ",";
 					if(!print_if_unique(iter->input1))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << ",?{";
 
 					if(iter->input0->is_const())
@@ -1227,9 +1228,9 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 						// This means conditional jump in P-codes
 						goto branch_in_pcodes;
 					ss << ",";
-					if(!print_if_unique(iter->output))
-						ss << *iter->output << ",GET";
-					ss << "," << sanal.pc_name << ",=,}";
+					if(!print_if_unique(iter->input0))
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
+					ss << "," << sanal.reg_mapping[sanal.pc_name] << ",=,}";
 				}
 				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
@@ -1242,12 +1243,12 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					ss << "," << iter->input1->size * 8 << ",SWAP,<<";
 
 					ss << ",";
 					if(!print_if_unique(iter->input1, 1))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << ",|";
 					if(iter->output->is_unique())
 						push_stack(iter->output);
@@ -1265,7 +1266,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					if(!iter->input1->is_const())
 						throw LowlevelError("sleigh_esil: input1 is not consts in SUBPIECE.");
 					ss << "," << iter->input1->number * 8 << ",SWAP,>>";
@@ -1302,10 +1303,10 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input1))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << ",";
 					if(!print_if_unique(iter->input0, 1))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					ss << ",";
 					switch(iter->type)
 					{
@@ -1362,10 +1363,10 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input1))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << ",";
 					if(!print_if_unique(iter->input0, 1))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					ss << ",";
 					switch(iter->type)
 					{
@@ -1405,7 +1406,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				auto make_input = [&ss, &print_if_unique](PcodeOperand *input, int offset) {
 					ss << ",";
 					if(!print_if_unique(input))
-						ss << *input << ",GET";
+						ss << *input << (input->is_reg()? ",GET": "");
 				};
 				auto make_2comp = [&ss, &make_input, &make_mask](PcodeOperand *input,
 				                                                 int offset = 0) {
@@ -1451,15 +1452,15 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					ss << ",";
 					if(!print_if_unique(iter->input1, 1))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << ",+," << iter->input0->size * 8 << ",1,<<,1,SWAP,-,&";
 
 					ss << ",";
 					if(!print_if_unique(iter->input0, 1))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					ss << ",>";
 
 					if(iter->output->is_unique())
@@ -1478,22 +1479,22 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					ss << "," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&";
 
 					ss << ",DUP,";
 					if(!print_if_unique(iter->input1, 2))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << "," << iter->input1->size * 8 - 1 << ",SWAP,>>,1,&";
 
 					ss << ",^,1,^,SWAP";
 
 					ss << ",";
 					if(!print_if_unique(iter->input0, 2))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					ss << ",";
 					if(!print_if_unique(iter->input1, 3))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << ",+," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&"; // (a^b^1), a, c
 
 					ss << ",^,&";
@@ -1514,29 +1515,29 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input1))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << ",";
 					if(!print_if_unique(iter->input0, 1))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					ss << ",-," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&";
 
 					ss << ",DUP,";
 					if(!print_if_unique(iter->input1, 2))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << "," << iter->input1->size * 8 - 1 << ",SWAP,>>,1,&";
 
 					ss << ",^,1,^,SWAP";
 
 					ss << ",";
 					if(!print_if_unique(iter->input0, 2))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 					ss << "," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&";
 
 					ss << ",^";
 
 					ss << ",";
 					if(!print_if_unique(iter->input1, 3))
-						ss << *iter->input1 << ",GET";
+						ss << *iter->input1 << (iter->input1->is_reg()? ",GET" : "");
 					ss << ",+," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&"; // (a^b^1), a, c
 
 					ss << ",^,&";
@@ -1559,7 +1560,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 
 					if(iter->type == CPUI_BOOL_NEGATE)
 						ss << ",!";
@@ -1594,7 +1595,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 
 					switch(iter->type)
 					{
@@ -1623,13 +1624,13 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 						case CPUI_FLOAT_FLOAT2FLOAT:
 							ss << "," << iter->output->size * 8 << ",SWAP,F2F";
 							break;
-
-						if(iter->output->is_unique())
-							push_stack(iter->output);
-						else
-							ss << "," << *iter->output << ",=";
-						break;
 					}
+
+					if(iter->output->is_unique())
+						push_stack(iter->output);
+					else
+						ss << "," << *iter->output << ",=";
+					break;
 				}
 				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
@@ -1642,7 +1643,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << ",GET";
+						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
 
 					std::string stmp = ss.str();
 					ss << ",0,SWAP,DUP,?{,SWAP,1,+,SWAP,DUP,1,SWAP,-,&,DUP,?{,";
@@ -1663,6 +1664,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 
 	if(!esil_stack.empty())
 		ss << ",CLEAR";
+	// std::cerr << hex << anal_op->addr << " " << ss.str() << endl;
 	esilprintf(anal_op, ss.str()[0] == ',' ? ss.str().c_str() + 1 : ss.str().c_str());
 }
 
@@ -1875,7 +1877,12 @@ static const char *r_reg_string_arr[] = {"gpr", "gpr", "gpr", "gpr", "gpr", "gpr
 
 static int get_reg_type(const std::string &name)
 {
-	const std::string &group = sanal.reg_group[name];
+	auto p = sanal.reg_mapping.cbegin();
+	for(; p != sanal.reg_mapping.cend() && p->second != name; ++p) {}
+	if(p == sanal.reg_mapping.cend())
+		throw LowlevelError("get_reg_type: reg doesn't exist.");
+
+	const std::string &group = sanal.reg_group[p->first];
 
 	if(group.empty())
 		return R_REG_TYPE_GPR;
@@ -1965,7 +1972,7 @@ constexpr int ESIL_PARM_FLOAT = 127; // Avoid conflict
 static bool esil_pushnum_float(RAnalEsil *esil, long double num)
 {
 	char str[64];
-	snprintf(str, sizeof(str) - 1, "%.*LeF\n", DECIMAL_DIG, num);
+	snprintf(str, sizeof(str) - 1, "%.*LeF", DECIMAL_DIG, num);
 	return r_anal_esil_push(esil, str);
 }
 
@@ -1978,7 +1985,7 @@ static int esil_get_parm_type_float(RAnalEsil *esil, const char *str)
 
 	if((str[len - 1] == 'F') && (str[1] == '.' || (str[2] == '.' && str[0] == '-')))
 		return ESIL_PARM_FLOAT;
-	if(!strcmp(str, "nan") || !strcmp(str, "inf") || !strcmp(str, "-nan") || !strcmp(str, "-inf"))
+	if(!strcmp(str, "nanF") || !strcmp(str, "infF") || !strcmp(str, "-nanF") || !strcmp(str, "-infF"))
 		return ESIL_PARM_FLOAT;
 
 	return R_ANAL_ESIL_PARM_INVALID;
@@ -2070,7 +2077,7 @@ static int esil_get_parm_float(RAnalEsil *esil, const char *str, long double *nu
 	{
 		case ESIL_PARM_FLOAT:
 			// *num = r_num_get (NULL, str);
-			scanf("%LfF", num);
+			sscanf(str, "%LfF", num);
 			ret = 1;
 			break;
 		case R_ANAL_ESIL_PARM_REG:
@@ -2192,11 +2199,11 @@ static bool sleigh_esil_float_to_float(RAnalEsil *esil)
 	if((src && r_anal_esil_get_parm(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
 	{
 		if(isnan(d) || isinf(d))
-			ret = r_anal_esil_pushnum(esil, d);
+			ret = esil_pushnum_float(esil, d);
 		else if(s == 4)
-			ret = r_anal_esil_pushnum(esil, (float)d);
+			ret = esil_pushnum_float(esil, (float)d);
 		else if(s == 8)
-			ret = r_anal_esil_pushnum(esil, (double)d);
+			ret = esil_pushnum_float(esil, (double)d);
 		else
 			throw LowlevelError(
 			    "sleigh_esil_float_to_float: byte-width of float number overflows.");
@@ -2339,12 +2346,12 @@ static bool sleigh_esil_float_sub(RAnalEsil *esil)
 		else
 		{
 			feclearexcept(FE_OVERFLOW);
-			long double tmp = s - d;
+			long double tmp = d - s;
 			auto raised = fetestexcept(FE_OVERFLOW);
 			if(raised & FE_OVERFLOW)
 				ret = esil_pushnum_float(esil, 0.0 / 0.0);
 			else
-				ret = esil_pushnum_float(esil, s + d);
+				ret = esil_pushnum_float(esil, d - s);
 		}
 	}
 	else
@@ -2370,7 +2377,7 @@ static bool sleigh_esil_float_mul(RAnalEsil *esil)
 		else
 		{
 			feclearexcept(FE_OVERFLOW);
-			long double tmp = s - d;
+			long double tmp = s * d;
 			auto raised = fetestexcept(FE_OVERFLOW);
 			if(raised & FE_OVERFLOW)
 				ret = esil_pushnum_float(esil, 0.0 / 0.0);
@@ -2401,12 +2408,12 @@ static bool sleigh_esil_float_div(RAnalEsil *esil)
 		else
 		{
 			feclearexcept(FE_OVERFLOW);
-			long double tmp = s - d;
+			long double tmp = d / s;
 			auto raised = fetestexcept(FE_OVERFLOW);
 			if(raised & FE_OVERFLOW)
 				ret = esil_pushnum_float(esil, 0.0 / 0.0);
 			else
-				ret = esil_pushnum_float(esil, s / d);
+				ret = esil_pushnum_float(esil, d / s);
 		}
 	}
 	else
@@ -2548,13 +2555,13 @@ static bool sleigh_esil_signext(RAnalEsil *esil)
 
 static void sleigh_reg_set_float(RReg *reg, const char *name, int type, bool F)
 {
-	RRegItem *tmp = r_reg_get(reg, name, get_reg_type(name));
+	RRegItem *tmp = r_reg_get(reg, name, type);
 	tmp->is_float = F;
 }
 
 static bool sleigh_reg_get_float(RReg *reg, const char *name, int type)
 {
-	RRegItem *tmp = r_reg_get(reg, name, get_reg_type(name));
+	RRegItem *tmp = r_reg_get(reg, name, type);
 	return tmp->is_float;
 }
 
@@ -2840,7 +2847,7 @@ static bool sleigh_esil_peek4(RAnalEsil *esil) // Read out
 	{
 		float a;
 		ret = !!r_anal_esil_mem_read (esil, addr, (ut8 *)&a, 4);
-		snprintf(str, sizeof(str) - 1, "%.*LeF\n", DECIMAL_DIG, a);
+		snprintf(str, sizeof(str) - 1, "%.*LeF", DECIMAL_DIG, (long double)a);
 		r_anal_esil_push (esil, str);
 		esil->lastsz = 32;
 	}
@@ -2868,7 +2875,7 @@ static bool sleigh_esil_peek8(RAnalEsil *esil)
 	{
 		double a;
 		ret = !!r_anal_esil_mem_read (esil, addr, (ut8 *)&a, 8);
-		snprintf(str, sizeof(str) - 1, "%.*LeF\n", DECIMAL_DIG, a);
+		snprintf(str, sizeof(str) - 1, "%.*LeF", DECIMAL_DIG, (long double)a);
 		r_anal_esil_push (esil, str);
 		esil->lastsz = 64;
 	}
