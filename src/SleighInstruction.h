@@ -60,7 +60,8 @@ public:
 	void put(const K &key, const V &val)
 	{
 		auto it = item_map.find(key);
-		if(it != item_map.end()){
+		if(it != item_map.end())
+		{
 			item_list.erase(it->second);
 			item_map.erase(it);
 		}
@@ -71,7 +72,8 @@ public:
 
 	bool has(const K &key) { return item_map.find(key) != item_map.end(); };
 
-	V get(const K &key){
+	V get(const K &key)
+	{
 		auto it = item_map.find(key);
 		item_list.splice(item_list.begin(), item_list, it->second);
 		return it->second->second;

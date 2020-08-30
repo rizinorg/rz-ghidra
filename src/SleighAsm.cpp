@@ -461,7 +461,7 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 		stringstream ss;
 		ss << assem.str << " " << ins->printFlowType(ins->getFlowType());
 		for(auto p: ins->getFlows())
-			ss << " " << p;
+		    ss << " " << p;
 		r_strbuf_set(&op->buf_asm, ss.str().c_str());
 		*/
 	}
@@ -574,7 +574,7 @@ ostream &operator<<(ostream &s, const Pcodeop &op)
 void AssemblySlg::dump(const Address &addr, const string &mnem, const string &body)
 {
 	std::string res;
-	for (ut64 i = 0; i < body.size();)
+	for(ut64 i = 0; i < body.size();)
 	{
 		std::string tmp;
 		while(!std::isalnum(body[i]))
@@ -595,8 +595,9 @@ PcodeOperand *PcodeSlg::parse_vardata(VarnodeData &data)
 	PcodeOperand *operand = nullptr;
 	if(space->getName() == "register" || space->getName() == "mem")
 	{
-		operand = new PcodeOperand(
-		    sanal->reg_mapping[space->getTrans()->getRegisterName(data.space, data.offset, data.size)], data.size);
+		operand = new PcodeOperand(sanal->reg_mapping[space->getTrans()->getRegisterName(
+		                               data.space, data.offset, data.size)],
+		                           data.size);
 		operand->type = PcodeOperand::REGISTER;
 	}
 	else if(space->getName() == "ram" || space->getName() == "DATA" || space->getName() == "code")

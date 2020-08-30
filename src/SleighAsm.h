@@ -171,7 +171,7 @@ public:
 		PcodeOperand *out = nullptr, *in0 = nullptr, *in1 = nullptr;
 
 		if(opc == CPUI_CALLOTHER)
-			isize = isize > 2 ? 2 : isize;
+			isize = isize > 2? 2: isize;
 
 		switch(isize)
 		{
