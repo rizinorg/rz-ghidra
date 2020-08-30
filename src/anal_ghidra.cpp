@@ -1139,10 +1139,17 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 				{
 					ss << ",";
 					if(!print_if_unique(iter->input0))
-						ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
+					{
+						if(!iter->input0->is_ram())
+							ss << *iter->input0 << (iter->input0->is_reg()? ",GET" : "");
+						else
+							ss << *iter->input0 << ",[" << iter->input0->size << "]";
+					}
 
 					if(iter->output->is_unique())
 						push_stack(iter->output);
+					else if(iter->output->is_ram())
+						ss << "," << *iter->output << ",=[" << iter->output->size << "]";
 					else
 						ss << "," << *iter->output << ",=";
 				}
@@ -1965,6 +1972,109 @@ static int get_reg_type(const std::string &name)
 	return -1;
 }
 
+static void append_hardcoded_regs(std::stringstream &buf, const std::string &arch, bool little, int bits)
+{
+	if(arch.size() < 3)
+		throw LowlevelError("append_hardcoded_regs: Unexpected arch name.");
+
+	switch(arch[0] | arch[1] << 8 | arch[2] << 16)
+	{
+		case ('A' | 'R' << 8 | 'M' << 16): // ARM
+		case ('A' | 'A' << 8 | 'R' << 16): // AARCH64
+			if(bits == 64)
+				buf << "=SN\t" << "x16" << "\n" << "=BP\t" << "x29" << "\n";
+			else
+				buf << "=SN\t" << "r7" << "\n" << "=BP\t" << "r11" << "\n";
+			break;
+
+		// case ('a' | 'v' << 8 | 'r' << 16): // avr8
+		case ('a' | 'v' << 8 | 'r' << 16): // avr32
+			buf << "=BP\t" << "y" << "\n";
+			break;
+
+		case ('6' | '8' << 8 | '0' << 16): // 68000
+			buf << "=BP\t" << "a6" << "\n";
+			break;
+
+		case ('R' | 'I' << 8 | 'S' << 16): // RISCV
+			buf << "=BP\t" << "s0" << "\n";
+			break;
+
+		case ('M' | 'I' << 8 | 'P' << 16): // MIPS
+			buf << "=SN\t" << "v0" << "\n" << "=BP\t" << "f30" << "\n";
+			break;
+
+		case ('D' | 'a' << 8 | 'l' << 16): // Dalvik
+			buf << "=SN\t" << "v0" << "\n" << "=BP\t" << "bp" << "\n";
+			break;
+
+		case ('P' | 'o' << 8 | 'w' << 16): // PowerPC
+			if(bits == 32)
+				buf << "=SN\t" << "r3" << "\n" << "=BP\t" << "r31" << "\n";
+			break;
+
+		case ('x' | '8' << 8 | '6' << 16): // x86
+			if(bits == 16)
+				buf << "=SN\t" << "ah" << "\n" << "=BP\t" << "bp" << "\n";
+			if(bits == 32)
+				buf << "=SN\t" << "eax" << "\n" << "=BP\t" << "ebp" << "\n";
+			if(bits == 64)
+				buf << "=SN\t" << "rax" << "\n" << "=BP\t" << "rbp" << "\n";
+			break;
+
+		case ('s' | 'p' << 8 | 'a' << 16): // sparc
+			buf << "=BP\t" << "fp" << "\n";
+			break;
+
+		case ('V' | '8' << 8 | '5' << 16): // V850
+		// case ('6' | '8' << 8 | '0' << 16): // 6809
+		// case ('6' | '8' << 8 | '0' << 16): // 6805
+		// case ('P' | 'I' << 8 | 'C' << 16): // PIC-24H
+		// case ('P' | 'I' << 8 | 'C' << 16): // PIC-24F
+		// case ('P' | 'I' << 8 | 'C' << 16): // PIC-24E
+		// case ('P' | 'I' << 8 | 'C' << 16): // PIC-18
+		// case ('P' | 'I' << 8 | 'C' << 16): // PIC-17
+		// case ('P' | 'I' << 8 | 'C' << 16): // PIC-16
+		case ('P' | 'I' << 8 | 'C' << 16): // PIC-12
+		// case ('d' | 's' << 8 | 'P' << 16): // dsPIC33F
+		// case ('d' | 's' << 8 | 'P' << 16): // dsPIC33E
+		// case ('d' | 's' << 8 | 'P' << 16): // dsPIC33C
+		case ('d' | 's' << 8 | 'P' << 16): // dsPIC30F
+		// case ('z' | '1' << 8 | '8' << 16): // z182
+		case ('z' | '1' << 8 | '8' << 16): // z180
+		// case ('T' | 'I' << 8 | '_' << 16): // TI_MSP430X
+		case ('T' | 'I' << 8 | '_' << 16): // TI_MSP430
+		case ('p' | 'a' << 8 | '-' << 16): // pa-risc
+		case ('8' | '0' << 8 | '8' << 16): // 8085
+		// case ('H' | 'C' << 8 | 'S' << 16): // HCS12
+		case ('H' | 'C' << 8 | 'S' << 16): // HCS08
+		// case ('H' | 'C' << 8 | '0' << 16): // HC08
+		case ('H' | 'C' << 8 | '0' << 16): // HC05
+		case ('6' | '5' << 8 | '0' << 16): // 6502
+		// case ('S' | 'u' << 8 | 'p' << 16): // SuperH
+		case ('S' | 'u' << 8 | 'p' << 16): // SuperH4
+		case ('T' | 'o' << 8 | 'y' << 16): // Toy
+		case ('C' | 'P' << 8 | '1' << 16): // CP1600
+		case ('J' | 'V' << 8 | 'M' << 16): // JVM
+		case ('t' | 'r' << 8 | 'i' << 16): // tricore
+		case ('z' | '8' << 8 | '0' << 16): // z80
+		case ('8' | '0' << 8 | '5' << 16): // 8051
+		case ('8' | '0' << 8 | '2' << 16): // 80251
+		case ('M' | 'o' << 8 | 'd' << 16): // Mode
+		case ('C' | 'R' << 8 | '1' << 16): // CR16C
+		case ('8' | '0' << 8 | '3' << 16): // 80390
+		case ('D' | 'A' << 8 | 'T' << 16): // DATA
+		case ('z' | '8' << 8 | '4' << 16): // z8401x
+		case ('8' | '0' << 8 | '4' << 16): // 8048
+		case ('M' | 'C' << 8 | 'S' << 16): // MCS96
+		case ('M' | 'a' << 8 | 'n' << 16): // Management
+			break;
+
+		default:
+			throw LowlevelError("append_hardcoded_regs: Impossible arch name.");
+	}
+}
+
 static char *get_reg_profile(RAnal *anal)
 {
 	if(!strcmp(anal->cpu, "x86"))
@@ -2027,8 +2137,10 @@ static char *get_reg_profile(RAnal *anal)
     int bits = std::stoi(sanal.sleigh_id.substr(pp, sanal.sleigh_id.find(':', pp) - pp));
 	pp = sanal.sleigh_id.find(':', pp) + 1;
 
+	append_hardcoded_regs(buf, arch, little, bits);
+
 	const std::string &res = buf.str();
-	// fprintf(stderr, res.c_str());
+	// fprintf(stderr, "%s\n", res.c_str());
 	return strdup(res.c_str());
 }
 
@@ -2778,7 +2890,7 @@ static bool esil_eq(RAnalEsil *esil) {
 	char *src = r_anal_esil_pop (esil);
 	if (!src || !dst) {
 		if (esil->verbose) {
-			eprintf ("Missing elements in the esil stack for '=' at 0x%08"PFMT64x"\n", esil->address);
+			eprintf ("Missing elements in the esil stack for '=' at 0x%08" PFMT64x "\n", esil->address);
 		}
 		return false;
 	}
@@ -2822,7 +2934,7 @@ static bool esil_peek_n(RAnalEsil *esil, int bits) {
 	ut32 bytes = bits / 8;
 	char *dst = r_anal_esil_pop (esil);
 	if (!dst) {
-		eprintf ("ESIL-ERROR at 0x%08"PFMT64x": Cannot peek memory without specifying an address\n", esil->address);
+		eprintf ("ESIL-ERROR at 0x%08" PFMT64x ": Cannot peek memory without specifying an address\n", esil->address);
 		return false;
 	}
 	//eprintf ("GONA PEEK %d dst:%s\n", bits, dst);
