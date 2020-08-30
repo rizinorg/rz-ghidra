@@ -2,34 +2,33 @@ NAME=x86_32
 FILE=r2-testbins/elf/crackme0x05
 EXPECT=<<EOF
             ;-- main:
-            0x08048540      55             PUSH EBP
-            0x08048541      89e5           MOV EBP,ESP
-            0x08048543      81ec88000000   SUB ESP,0x88
-            0x08048549      83e4f0         AND ESP,0xfffffff0
-            0x0804854c      b800000000     MOV EAX,0x0
-            0x08048551      83c00f         ADD EAX,0xf
-            0x08048554      83c00f         ADD EAX,0xf
-            0x08048557      c1e804         SHR EAX,0x4
-            0x0804855a      c1e004         SHL EAX,0x4
-            0x0804855d      29c4           SUB ESP,EAX
-            0x0804855f      c704248e8604.  MOV dword ptr [ESP],str.IOLI_Crackme_Level_0x05
+            0x08048540      55             PUSH ebp
+            0x08048541      89e5           MOV ebp,esp
+            0x08048543      81ec88000000   SUB esp,0x88
+            0x08048549      83e4f0         AND esp,0xfffffff0
+            0x0804854c      b800000000     MOV eax,0x0
+            0x08048551      83c00f         ADD eax,0xf
+            0x08048554      83c00f         ADD eax,0xf
+            0x08048557      c1e804         SHR eax,0x4
+            0x0804855a      c1e004         SHL eax,0x4
+            0x0804855d      29c4           SUB esp,eax
+            0x0804855f      c704248e8604.  MOV dword ptr [esp],str.IOLI_Crackme_Level_0x05
             0x08048566      e829feffff     CALL sym.imp.printf
-            0x0804856b      c70424a78604.  MOV dword ptr [ESP],str.Password:
+            0x0804856b      c70424a78604.  MOV dword ptr [esp],str.Password:
             0x08048572      e81dfeffff     CALL sym.imp.printf
-            0x08048577      8d4588         LEA EAX,[EBP + -0x78]
-            0x0804857a      89442404       MOV dword ptr [ESP + 0x4],EAX
-            0x0804857e      c70424b28604.  MOV dword ptr [ESP],0x80486b2
+            0x08048577      8d4588         LEA eax,[ebp + -0x78]
+            0x0804857a      89442404       MOV dword ptr [esp + 0x4],eax
+            0x0804857e      c70424b28604.  MOV dword ptr [esp],0x80486b2
             0x08048585      e8eafdffff     CALL sym.imp.scanf
-            0x0804858a      8d4588         LEA EAX,[EBP + -0x78]
-            0x0804858d      890424         MOV dword ptr [ESP],EAX
+            0x0804858a      8d4588         LEA eax,[ebp + -0x78]
+            0x0804858d      890424         MOV dword ptr [esp],eax
             0x08048590      e833ffffff     CALL sym.check
-            0x08048595      b800000000     MOV EAX,0x0
+            0x08048595      b800000000     MOV eax,0x0
             0x0804859a      c9             LEAVE
             0x0804859b      c3             RET
 EOF
 CMDS=<<EOF
-e asm.cpu=x86:LE:32:default:gcc
-e asm.arch=r2ghidra
+pdga
 s main
 pd 24
 EOF
@@ -39,54 +38,53 @@ NAME=x86_64
 FILE=r2-testbins/elf/hello_world
 EXPECT=<<EOF
             ;-- main:
-            0x000007aa      55             PUSH RBP
-            0x000007ab      4889e5         MOV RBP,RSP
-            0x000007ae      4883ec20       SUB RSP,0x20
-            0x000007b2      488d051b0100.  LEA RAX,[str.Hello]
-            0x000007b9      488945e8       MOV qword ptr [RBP + -0x18],RAX
-            0x000007bd      488d05160100.  LEA RAX,[str.r2_folks]
-            0x000007c4      488945f0       MOV qword ptr [RBP + -0x10],RAX
-            0x000007c8      488b45e8       MOV RAX,qword ptr [RBP + -0x18]
-            0x000007cc      4889c7         MOV RDI,RAX
+            0x000007aa      55             PUSH rbp
+            0x000007ab      4889e5         MOV rbp,rsp
+            0x000007ae      4883ec20       SUB rsp,0x20
+            0x000007b2      488d051b0100.  LEA rax,[str.Hello]
+            0x000007b9      488945e8       MOV qword ptr [rbp + -0x18],rax
+            0x000007bd      488d05160100.  LEA rax,[str.r2_folks]
+            0x000007c4      488945f0       MOV qword ptr [rbp + -0x10],rax
+            0x000007c8      488b45e8       MOV rax,qword ptr [rbp + -0x18]
+            0x000007cc      4889c7         MOV rdi,rax
             0x000007cf      e88cfeffff     CALL sym.imp.strlen
-            0x000007d4      8945e0         MOV dword ptr [RBP + -0x20],EAX
-            0x000007d7      488b45f0       MOV RAX,qword ptr [RBP + -0x10]
-            0x000007db      4889c7         MOV RDI,RAX
+            0x000007d4      8945e0         MOV dword ptr [rbp + -0x20],eax
+            0x000007d7      488b45f0       MOV rax,qword ptr [rbp + -0x10]
+            0x000007db      4889c7         MOV rdi,rax
             0x000007de      e87dfeffff     CALL sym.imp.strlen
-            0x000007e3      8945e4         MOV dword ptr [RBP + -0x1c],EAX
-            0x000007e6      8b55e0         MOV EDX,dword ptr [RBP + -0x20]
-            0x000007e9      8b45e4         MOV EAX,dword ptr [RBP + -0x1c]
-            0x000007ec      01d0           ADD EAX,EDX
-            0x000007ee      83c001         ADD EAX,0x1
+            0x000007e3      8945e4         MOV dword ptr [rbp + -0x1c],eax
+            0x000007e6      8b55e0         MOV edx,dword ptr [rbp + -0x20]
+            0x000007e9      8b45e4         MOV eax,dword ptr [rbp + -0x1c]
+            0x000007ec      01d0           ADD eax,edx
+            0x000007ee      83c001         ADD eax,0x1
             0x000007f1      4898           CDQE
-            0x000007f3      4889c7         MOV RDI,RAX
+            0x000007f3      4889c7         MOV rdi,rax
             0x000007f6      e875feffff     CALL sym.imp.malloc
-            0x000007fb      488945f8       MOV qword ptr [RBP + -0x8],RAX
-            0x000007ff      48837df800     CMP qword ptr [RBP + -0x8],0x0
-            0x00000804      743e           JZ 0x844
-            0x00000806      488b55e8       MOV RDX,qword ptr [RBP + -0x18]
-            0x0000080a      488b45f8       MOV RAX,qword ptr [RBP + -0x8]
-            0x0000080e      4889d6         MOV RSI,RDX
-            0x00000811      4889c7         MOV RDI,RAX
-            0x00000814      e827feffff     CALL sym.imp.strcpy
-            0x00000819      488b55f0       MOV RDX,qword ptr [RBP + -0x10]
-            0x0000081d      488b45f8       MOV RAX,qword ptr [RBP + -0x8]
-            0x00000821      4889d6         MOV RSI,RDX
-            0x00000824      4889c7         MOV RDI,RAX
-            0x00000827      e854feffff     CALL sym.imp.strcat
-            0x0000082c      488b45f8       MOV RAX,qword ptr [RBP + -0x8]
-            0x00000830      4889c7         MOV RDI,RAX
-            0x00000833      e818feffff     CALL sym.imp.puts
-            0x00000838      488b45f8       MOV RAX,qword ptr [RBP + -0x8]
-            0x0000083c      4889c7         MOV RDI,RAX
-            0x0000083f      e8ecfdffff     CALL sym.imp.free
-            0x00000844      90             NOP
+            0x000007fb      488945f8       MOV qword ptr [rbp + -0x8],rax
+            0x000007ff      48837df800     CMP qword ptr [rbp + -0x8],0x0
+        ,=< 0x00000804      743e           JZ 0x844
+        |   0x00000806      488b55e8       MOV rdx,qword ptr [rbp + -0x18]
+        |   0x0000080a      488b45f8       MOV rax,qword ptr [rbp + -0x8]
+        |   0x0000080e      4889d6         MOV rsi,rdx
+        |   0x00000811      4889c7         MOV rdi,rax
+        |   0x00000814      e827feffff     CALL sym.imp.strcpy
+        |   0x00000819      488b55f0       MOV rdx,qword ptr [rbp + -0x10]
+        |   0x0000081d      488b45f8       MOV rax,qword ptr [rbp + -0x8]
+        |   0x00000821      4889d6         MOV rsi,rdx
+        |   0x00000824      4889c7         MOV rdi,rax
+        |   0x00000827      e854feffff     CALL sym.imp.strcat
+        |   0x0000082c      488b45f8       MOV rax,qword ptr [rbp + -0x8]
+        |   0x00000830      4889c7         MOV rdi,rax
+        |   0x00000833      e818feffff     CALL sym.imp.puts
+        |   0x00000838      488b45f8       MOV rax,qword ptr [rbp + -0x8]
+        |   0x0000083c      4889c7         MOV rdi,rax
+        |   0x0000083f      e8ecfdffff     CALL sym.imp.free
+        `-> 0x00000844      90             NOP
             0x00000845      c9             LEAVE
             0x00000846      c3             RET
 EOF
 CMDS=<<EOF
-e asm.cpu=x86:LE:64:default:gcc
-e asm.arch=r2ghidra
+pdga
 s main
 pd 44
 EOF
@@ -96,28 +94,27 @@ NAME=x86_16
 FILE=r2-testbins/mz/unzip.exe
 EXPECT=<<EOF
             ;-- entry0:
-            0x000156a0      8be8           MOV BP,AX
-            0x000156a2      8cc0           MOV AX,ES
-            0x000156a4      051000         ADD AX,0x10
-            0x000156a7      0e             PUSH CS
-            0x000156a8      1f             POP DS
-            0x000156a9      a30400         MOV [0x4],AX
-            0x000156ac      03060c00       ADD AX,word ptr [0xc]
-            0x000156b0      8ec0           MOV ES,AX
-            0x000156b2      8b0e0600       MOV CX,word ptr [0x6]
-            0x000156b6      8bf9           MOV DI,CX
-            0x000156b8      4f             DEC DI
-            0x000156b9      8bf7           MOV SI,DI
+            0x000156a0      8be8           MOV bp,ax
+            0x000156a2      8cc0           MOV ax,es
+            0x000156a4      051000         ADD ax,0x10
+            0x000156a7      0e             PUSH cs
+            0x000156a8      1f             POP ds
+            0x000156a9      a30400         MOV [0x4],ax
+            0x000156ac      03060c00       ADD ax,word ptr [0xc]
+            0x000156b0      8ec0           MOV es,ax
+            0x000156b2      8b0e0600       MOV cx,word ptr [0x6]
+            0x000156b6      8bf9           MOV di,cx
+            0x000156b8      4f             DEC di
+            0x000156b9      8bf7           MOV si,di
             0x000156bb      fd             STD
-            0x000156bc      f3a4           MOVSB.REP ES:DI,SI
-            0x000156be      50             PUSH AX
-            0x000156bf      b83400         MOV AX,0x34
-            0x000156c2      50             PUSH AX
+            0x000156bc      f3a4           MOVSB.REP es:di,si
+            0x000156be      50             PUSH ax
+            0x000156bf      b83400         MOV ax,0x34
+            0x000156c2      50             PUSH ax
             0x000156c3      cb             RET
 EOF
 CMDS=<<EOF
-e asm.cpu=x86:LE:16:Real Mode:
-e asm.arch=r2ghidra
+pdga
 pd 18
 EOF
 RUN
@@ -142,10 +139,10 @@ EXPECT=<<EOF
             0x0000dafc      9c0200eb       bl sym.fork
             0x0000db00      0030a0e1       cpy r3,r0
             0x0000db04      000053e3       cmp r3,#0x0
-            0x0000db08      0100000a       beq 0xdb14
-            0x0000db0c      0000a0e3       mov r0,#0x0
-            0x0000db10      cb1400eb       bl sym.__GI_exit
-            0x0000db14      9934a0e3       mov r3,#0x99000000
+        ,=< 0x0000db08      0100000a       beq 0xdb14
+        |   0x0000db0c      0000a0e3       mov r0,#0x0
+        |   0x0000db10      cb1400eb       bl sym.__GI_exit
+        `-> 0x0000db14      9934a0e3       mov r3,#0x99000000
             0x0000db18      4339a0e1       mov r3,r3, asr #0x12
             0x0000db1c      14104be2       sub r1,r11,#0x14
             0x0000db20      033091e7       ldr r3,[r1,r3]
@@ -164,22 +161,21 @@ EXPECT=<<EOF
             0x0000db54      e10c00eb       bl sym.strncpy
             0x0000db58      0130a0e3       mov r3,#0x1
             0x0000db5c      40300be5       str r3,[r11,#-0x40]
-            0x0000db60      1b0000ea       b 0xdbd4
-            0x0000db64      40301be5       ldr r3,[r11,#-0x40]
-            0x0000db68      0331a0e1       mov r3,r3, lsl #0x2
-            0x0000db6c      0320a0e1       cpy r2,r3
-            0x0000db70      9934a0e3       mov r3,#0x99000000
-            0x0000db74      4339a0e1       mov r3,r3, asr #0x12
-            0x0000db78      14004be2       sub r0,r11,#0x14
-            0x0000db7c      033090e7       ldr r3,[r0,r3]
-            0x0000db80      033082e0       add r3,r2,r3
-            0x0000db84      004093e5       ldr r4,[r3,#0x0]
-            0x0000db88      40301be5       ldr r3,[r11,#-0x40]
-            0x0000db8c      0331a0e1       mov r3,r3, lsl #0x2
+        ,=< 0x0000db60      1b0000ea       b 0xdbd4
+        |   0x0000db64      40301be5       ldr r3,[r11,#-0x40]
+        |   0x0000db68      0331a0e1       mov r3,r3, lsl #0x2
+        |   0x0000db6c      0320a0e1       cpy r2,r3
+        |   0x0000db70      9934a0e3       mov r3,#0x99000000
+        |   0x0000db74      4339a0e1       mov r3,r3, asr #0x12
+        |   0x0000db78      14004be2       sub r0,r11,#0x14
+        |   0x0000db7c      033090e7       ldr r3,[r0,r3]
+        |   0x0000db80      033082e0       add r3,r2,r3
+        |   0x0000db84      004093e5       ldr r4,[r3,#0x0]
+        |   0x0000db88      40301be5       ldr r3,[r11,#-0x40]
+        |   0x0000db8c      0331a0e1       mov r3,r3, lsl #0x2
 EOF
 CMDS=<<EOF
-e asm.cpu=ARM:LE:32:v7:gcc
-e asm.arch=r2ghidra
+pdga
 s main
 pd 50
 EOF
@@ -196,24 +192,24 @@ EXPECT=<<EOF
             0x8000100c      2508c4b0       addiu t0, t0, -0x3b50
             0x80001010      3c098015       lui t1, 0x8015
             0x80001014      25296530       addiu t1, t1, 0x6530
-            0x80001018      11090005       beq t0, t1, 0x80001030
-            0x8000101c      00000000       nop
-            0x80001020      25080004       addiu t0, t0, 0x4
-            0x80001024      0109082b       sltu at, t0, t1
-            ;-- pc:
-            0x80001028      1420fffd       bne at, zero, 0x80001020
-            0x8000102c      ad00fffc       sw zero, -0x4(t0)
-            0x80001030      3c088003       lui t0, 0x8003
+       ,,=< 0x80001018      11090005       beq t0, t1, 0x80001030
+       |`-> 0x8000101c      00000000       nop
+       |.-> 0x80001020      25080004       addiu t0, t0, 0x4
+       |:   0x80001024      0109082b       sltu at, t0, t1
+       ||   ;-- pc:
+      ,=`=< 0x80001028      1420fffd       bne at, zero, 0x80001020
+      `---> 0x8000102c      ad00fffc       sw zero, -0x4(t0)
+       `--> 0x80001030      3c088003       lui t0, 0x8003
             0x80001034      2508c4b0       addiu t0, t0, -0x3b50
             0x80001038      3c098003       lui t1, 0x8003
             0x8000103c      2529c4b0       addiu t1, t1, -0x3b50
-            0x80001040      11090005       beq t0, t1, 0x80001058
-            0x80001044      00000000       nop
-            0x80001048      25080004       addiu t0, t0, 0x4
-            0x8000104c      0109082b       sltu at, t0, t1
-            0x80001050      1420fffd       bne at, zero, 0x80001048
-            0x80001054      ad00fffc       sw zero, -0x4(t0)
-            0x80001058      3c1c0000       lui gp, 0x0
+       ,,=< 0x80001040      11090005       beq t0, t1, 0x80001058
+       |`-> 0x80001044      00000000       nop
+       |.-> 0x80001048      25080004       addiu t0, t0, 0x4
+       |:   0x8000104c      0109082b       sltu at, t0, t1
+      ,=`=< 0x80001050      1420fffd       bne at, zero, 0x80001048
+      `---> 0x80001054      ad00fffc       sw zero, -0x4(t0)
+       `--> 0x80001058      3c1c0000       lui gp, 0x0
             0x8000105c      279c0000       addiu gp, gp, 0x0
             0x80001060      0c000cbc       jal 0x800032f0
             0x80001064      00000000       nop
@@ -223,28 +219,27 @@ EXPECT=<<EOF
             0x80001074      20170f90       addi s7, zero, 0xf90
             0x80001078      8c3c0030       lw gp, 0x30(at)
             0x8000107c      8c3b0034       lw k1, 0x34(at)
-            0x80001080      40055800       mfc0 a1, Compare
+            0x80001080      40055800       mfc0 a1, compare
             0x80001084      30a40001       andi a0, a1, 0x1
-            0x80001088      10800006       beq a0, zero, 0x800010a4
-            0x8000108c      30a40100       andi a0, a1, 0x100
-            0x80001090      10800004       beq a0, zero, 0x800010a4
-            0x80001094      00000000       nop
-            0x80001098      40045800       mfc0 a0, Compare
-            0x8000109c      30840100       andi a0, a0, 0x100
-            0x800010a0      1c80fffd       bgtz a0, 0x80001098
-            0x800010a4      00000000       nop
+       ,,=< 0x80001088      10800006       beq a0, zero, 0x800010a4
+       |`-> 0x8000108c      30a40100       andi a0, a1, 0x100
+      ,=,=< 0x80001090      10800004       beq a0, zero, 0x800010a4
+      ||`-> 0x80001094      00000000       nop
+      ||.-> 0x80001098      40045800       mfc0 a0, compare
+      ||:   0x8000109c      30840100       andi a0, a0, 0x100
+     ,==`=< 0x800010a0      1c80fffd       bgtz a0, 0x80001098
+     ```--> 0x800010a4      00000000       nop
             0x800010a8      0d000454       jal 0x84001150
             0x800010ac      00000000       nop
             0x800010b0      2002000f       addi v0, zero, 0xf
             0x800010b4      20010320       addi at, zero, 0x320
-            0x800010b8      ac200000       sw zero, 0x0(at)
-            0x800010bc      1c40fffe       bgtz v0, 0x800010b8
-            0x800010c0      2042ffff       addi v0, v0, -0x1
-            0x800010c4      40023000       mfc0 v0, Wired
+        .-> 0x800010b8      ac200000       sw zero, 0x0(at)
+       ,`=< 0x800010bc      1c40fffe       bgtz v0, 0x800010b8
+       `--> 0x800010c0      2042ffff       addi v0, v0, -0x1
+        .-> 0x800010c4      40023000       mfc0 v0, wired
 EOF
 CMDS=<<EOF
-e asm.cpu=MIPS:BE:64:default:
-e asm.arch=r2ghidra
+pdga
 pd 50
 EOF
 RUN
@@ -271,8 +266,7 @@ EXPECT=<<EOF
             0x0040011c      00000000       nop
 EOF
 CMDS=<<EOF
-e asm.cpu=MIPS:BE:32:default:gcc
-e asm.arch=r2ghidra
+pdga
 pd 12
 EOF
 RUN
@@ -282,21 +276,21 @@ FILE=r2-testbins/dol/sqrxz4-gc.dol
 EXPECT=<<EOF
             ;-- entry0:
             ;-- section.text_0:
-            0x80003100      48000020       b 0x80003120                ; [00] -r-x section size 842080 named text_0
-            0x80003104      5f617267       rlwnm. r1,r27,r14,0x9,0x13
-            0x80003108      0000           invalid
-            0x8000310a      0000           invalid
-            0x8000310c      0000           invalid
-            0x8000310e      0000           invalid
-            0x80003110      0000           invalid
-            0x80003112      0000           invalid
-            0x80003114      0000           invalid
-            0x80003116      0000           invalid
-            0x80003118      0000           invalid
-            0x8000311a      0000           invalid
-            0x8000311c      0000           invalid
-            0x8000311e      0000           invalid
-            0x80003120      4800f11d       bl 0x8001223c
+        ,=< 0x80003100      48000020       b 0x80003120                ; [00] -r-x section size 842080 named text_0
+        |   0x80003104      5f617267       rlwnm. r1,r27,r14,0x9,0x13
+        |   0x80003108      0000           invalid
+        |   0x8000310a      0000           invalid
+        |   0x8000310c      0000           invalid
+        |   0x8000310e      0000           invalid
+        |   0x80003110      0000           invalid
+        |   0x80003112      0000           invalid
+        |   0x80003114      0000           invalid
+        |   0x80003116      0000           invalid
+        |   0x80003118      0000           invalid
+        |   0x8000311a      0000           invalid
+        |   0x8000311c      0000           invalid
+        |   0x8000311e      0000           invalid
+        `-> 0x80003120      4800f11d       bl 0x8001223c
             0x80003124      4800005d       bl 0x80003180
             0x80003128      480000f5       bl 0x8000321c
             0x8000312c      4800eff5       bl 0x80012120
@@ -304,38 +298,37 @@ EXPECT=<<EOF
             0x80003134      3c600000       lis r3,0x0
             0x80003138      60630000       ori r3,r3,0x0
             0x8000313c      28030000       cmplwi r3,0x0
-            0x80003140      4082003c       bne 0x8000317c
-            0x80003144      3c60800f       lis r3,-0x7ff1
-            0x80003148      6063fc60       ori r3,r3,0xfc60
-            0x8000314c      38800000       li r4,0x0
-            0x80003150      3ca08010       lis r5,-0x7ff0
-            0x80003154      60a50200       ori r5,r5,0x200
-            0x80003158      7ca32850       subf r5,r3,r5
-            0x8000315c      480000e5       bl 0x80003240
-            0x80003160      3c608010       lis r3,-0x7ff0
-            0x80003164      60630200       ori r3,r3,0x200
-            0x80003168      38800000       li r4,0x0
-            0x8000316c      3ca08044       lis r5,-0x7fbc
-            0x80003170      60a56520       ori r5,r5,0x6520
-            0x80003174      7ca32850       subf r5,r3,r5
-            0x80003178      480000c9       bl 0x80003240
-            0x8000317c      48085ea4       b 0x80089020
-            0x80003180      38000000       li r0,0x0
-            0x80003184      38600000       li r3,0x0
-            0x80003188      38800000       li r4,0x0
-            0x8000318c      38a00000       li r5,0x0
-            0x80003190      38c00000       li r6,0x0
-            0x80003194      38e00000       li r7,0x0
-            0x80003198      39000000       li r8,0x0
-            0x8000319c      39200000       li r9,0x0
-            0x800031a0      39400000       li r10,0x0
-            0x800031a4      39600000       li r11,0x0
-            0x800031a8      39800000       li r12,0x0
-            0x800031ac      39c00000       li r14,0x0
+        ,=< 0x80003140      4082003c       bne 0x8000317c
+        |   0x80003144      3c60800f       lis r3,-0x7ff1
+        |   0x80003148      6063fc60       ori r3,r3,0xfc60
+        |   0x8000314c      38800000       li r4,0x0
+        |   0x80003150      3ca08010       lis r5,-0x7ff0
+        |   0x80003154      60a50200       ori r5,r5,0x200
+        |   0x80003158      7ca32850       subf r5,r3,r5
+        |   0x8000315c      480000e5       bl 0x80003240
+        |   0x80003160      3c608010       lis r3,-0x7ff0
+        |   0x80003164      60630200       ori r3,r3,0x200
+        |   0x80003168      38800000       li r4,0x0
+        |   0x8000316c      3ca08044       lis r5,-0x7fbc
+        |   0x80003170      60a56520       ori r5,r5,0x6520
+        |   0x80003174      7ca32850       subf r5,r3,r5
+        |   0x80003178      480000c9       bl 0x80003240
+       ,`-> 0x8000317c      48085ea4       b 0x80089020
+       |    0x80003180      38000000       li r0,0x0
+       |    0x80003184      38600000       li r3,0x0
+       |    0x80003188      38800000       li r4,0x0
+       |    0x8000318c      38a00000       li r5,0x0
+       |    0x80003190      38c00000       li r6,0x0
+       |    0x80003194      38e00000       li r7,0x0
+       |    0x80003198      39000000       li r8,0x0
+       |    0x8000319c      39200000       li r9,0x0
+       |    0x800031a0      39400000       li r10,0x0
+       |    0x800031a4      39600000       li r11,0x0
+       |    0x800031a8      39800000       li r12,0x0
+       |    0x800031ac      39c00000       li r14,0x0
 EOF
 CMDS=<<EOF
-e asm.cpu=PowerPC:BE:32:default:
-e asm.arch=r2ghidra
+pdga
 pd 50
 EOF
 RUN
@@ -343,39 +336,39 @@ RUN
 NAME=AARCH64_LE_64
 FILE=r2-testbins/elf/mtk-su
 EXPECT=<<EOF
-            ;-- entry0:
-            ;-- section..text:
-            ;-- .text:
-            0x00001660      e0030091       mov x0, sp                  ; [11] -r-x section size 36800 named .text
-            0x00001664      01000014       b 0x1668
-            0x00001668      ffc300d1       sub sp, sp, #0x30
-            0x0000166c      fd7b02a9       stp x29, x30, [sp, #0x20]
-            0x00001670      e80000b0       adrp x8, 0x1e000
-            0x00001674      08fd47f9       ldr x8, [x8, #0xff8]
-            0x00001678      e90000b0       adrp x9, 0x1e000
-            0x0000167c      29ed47f9       ldr x9, [x9, #0xfd8]
-            0x00001680      ea0000b0       adrp x10, 0x1e000
-            0x00001684      4ad947f9       ldr x10, [x10, #0xfb0]
-            0x00001688      0001679e       fmov d0, x8
-            0x0000168c      201d184e       mov v0.D[0x1], x9
-            0x00001690      e003803d       str q0, [sp]
-            0x00001694      ea0b00f9       str x10, [sp, #0x10]
-            0x00001698      e20000b0       adrp x2, 0x1e000
-            0x0000169c      42f447f9       ldr x2, [x2, #0xfe8]
-            0x000016a0      e3030091       mov x3, sp
-            0x000016a4      e1031faa       mov x1, xzr
-            0x000016a8      fd830091       add x29, sp, #0x20
-            0x000016ac      81ffff97       bl sym.imp.__libc_init
-            0x000016b0      400000b4       cbz x0, 0x16b8
-            0x000016b4      00001fd6       br x0
-            0x000016b8      c0035fd6       ret
-            0x000016bc      08000090       adrp x8, 0x1000
-            0x000016c0      08c11a91       add x8, x8, #0x6b0
-            0x000016c4      e20000d0       adrp x2, sym..data
-            0x000016c8      42201691       add x2, x2, #0x588
-            0x000016cc      e10300aa       mov x1, x0
-            0x000016d0      e00308aa       mov x0, x8
-            0x000016d4      97ffff17       b sym.imp.__cxa_atexit
+        :   ;-- entry0:
+        :   ;-- section..text:
+        :   ;-- .text:
+        :   0x00001660      e0030091       mov x0, sp                  ; [11] -r-x section size 36800 named .text
+       ,==< 0x00001664      01000014       b 0x1668
+       `--> 0x00001668      ffc300d1       sub sp, sp, #0x30
+        :   0x0000166c      fd7b02a9       stp x29, x30, [sp, #0x20]
+        :   0x00001670      e80000b0       adrp x8, 0x1e000
+        :   0x00001674      08fd47f9       ldr x8, [x8, #0xff8]
+        :   0x00001678      e90000b0       adrp x9, 0x1e000
+        :   0x0000167c      29ed47f9       ldr x9, [x9, #0xfd8]
+        :   0x00001680      ea0000b0       adrp x10, 0x1e000
+        :   0x00001684      4ad947f9       ldr x10, [x10, #0xfb0]
+        :   0x00001688      0001679e       fmov d0, x8
+        :   0x0000168c      201d184e       mov v0.D[0x1], x9
+        :   0x00001690      e003803d       str q0, [sp]
+        :   0x00001694      ea0b00f9       str x10, [sp, #0x10]
+        :   0x00001698      e20000b0       adrp x2, 0x1e000
+        :   0x0000169c      42f447f9       ldr x2, [x2, #0xfe8]
+        :   0x000016a0      e3030091       mov x3, sp
+        :   0x000016a4      e1031faa       mov x1, xzr
+        :   0x000016a8      fd830091       add x29, sp, #0x20
+        :   0x000016ac      81ffff97       bl sym.imp.__libc_init
+       ,==< 0x000016b0      400000b4       cbz x0, 0x16b8
+       |:   0x000016b4      00001fd6       br x0
+       `--> 0x000016b8      c0035fd6       ret
+        :   0x000016bc      08000090       adrp x8, 0x1000
+        :   0x000016c0      08c11a91       add x8, x8, #0x6b0
+        :   0x000016c4      e20000d0       adrp x2, sym..data
+        :   0x000016c8      42201691       add x2, x2, #0x588
+        :   0x000016cc      e10300aa       mov x1, x0
+        :   0x000016d0      e00308aa       mov x0, x8
+        `=< 0x000016d4      97ffff17       b sym.imp.__cxa_atexit
             0x000016d8      f85fbca9       stp x24, x23, [sp, #-0x40]!
             0x000016dc      f65701a9       stp x22, x21, [sp, #0x10]
             0x000016e0      f44f02a9       stp x20, x19, [sp, #0x20]
@@ -389,17 +382,16 @@ EXPECT=<<EOF
             0x00001700      e00308aa       mov x0, x8
             0x00001704      f30303aa       mov x19, x3
             0x00001708      baffff97       bl sym.imp.open
-            0x0000170c      e003f837       tbnz w0, #0x1f, 0x1788
-            0x00001710      f603002a       mov w22, w0
-            0x00001714      f30200b4       cbz x19, 0x1770
-            0x00001718      b72e40f9       ldr x23, [x21, #0x58]
-            0x0000171c      a80a41f9       ldr x8, [x21, #0x210]
-            0x00001720      e00315aa       mov x0, x21
-            0x00001724      7f0208eb       cmp x19, x8
+        ,=< 0x0000170c      e003f837       tbnz w0, #0x1f, 0x1788
+        |   0x00001710      f603002a       mov w22, w0
+       ,==< 0x00001714      f30200b4       cbz x19, 0x1770
+       ||   0x00001718      b72e40f9       ldr x23, [x21, #0x58]
+       ||   0x0000171c      a80a41f9       ldr x8, [x21, #0x210]
+       ||   0x00001720      e00315aa       mov x0, x21
+       ||   0x00001724      7f0208eb       cmp x19, x8
 EOF
 CMDS=<<EOF
-e asm.cpu=AARCH64:LE:64:v8A:gcc
-e asm.arch=r2ghidra
+pdga
 pd 50
 EOF
 RUN
@@ -422,11 +414,11 @@ EXPECT=<<EOF
             0x00000468      00000000       nop
             0x0000046c      00000000       nop
             ;-- __atexit_handler_wrapper:
-            0x00000470      03008010       beq a0, zero, 0x480
-            0x00000474      21c88000       move t9, a0
-            0x00000478      08002003       jr t9
-            0x0000047c      00000000       nop
-            0x00000480      0800e003       jr ra
+       ,,=< 0x00000470      03008010       beq a0, zero, 0x480
+       |`-> 0x00000474      21c88000       move t9, a0
+       |    0x00000478      08002003       jr t9
+       |    0x0000047c      00000000       nop
+       `--> 0x00000480      0800e003       jr ra
             0x00000484      00000000       nop
             ;-- atexit:
             0x00000488      02001c3c       lui gp, 0x2
@@ -459,17 +451,16 @@ EXPECT=<<EOF
             0x000004f0      1000dc8f       lw gp, 0x10(s8)
             0x000004f4      1c00c2af       sw v0, 0x1c(s8)
             0x000004f8      1c00c28f       lw v0, 0x1c(s8)
-            0x000004fc      04004014       bne v0, zero, 0x510
-            0x00000500      00000000       nop
-            0x00000504      1800c28f       lw v0, 0x18(s8)
-            0x00000508      1d000010       b 0x580
-            0x0000050c      00000000       nop
-            0x00000510      1c00c48f       lw a0, 0x1c(s8)
-            0x00000514      21280000       clear a1
+       ,,=< 0x000004fc      04004014       bne v0, zero, 0x510
+       |`-> 0x00000500      00000000       nop
+       |    0x00000504      1800c28f       lw v0, 0x18(s8)
+       |,=< 0x00000508      1d000010       b 0x580
+       ||   0x0000050c      00000000       nop
+       `--> 0x00000510      1c00c48f       lw a0, 0x1c(s8)
+        |   0x00000514      21280000       clear a1
 EOF
 CMDS=<<EOF
-e asm.cpu=MIPS:LE:32:default:gcc
-e asm.arch=r2ghidra
+pdga
 pd 50
 EOF
 RUN
@@ -477,17 +468,17 @@ RUN
 NAME=PowerPC_LE_64
 FILE=r2-testbins/elf/mosquito-ppc64le
 EXPECT=<<EOF
-            ;-- entry0:
-            0x10001854      0210403c       lis r2,0x1002
-            0x10001858      10c04238       subi r2,r2,0x3ff0
-            0x1000185c      780b297c       or r9,r1,r1
-            0x10001860      e4062178       rldicr r1,r1,0x0,0x3b
-            0x10001864      00000038       li r0,0x0
-            0x10001868      81ff21f8       stdu r1,-0x80(r1)
-            0x1000186c      a603087c       mtspr LR,r0
-            0x10001870      000001f8       std r0,0x0(r1)
-            0x10001874      108002e9       ld r8,-0x7ff0(r2)
-            0x10001878      e8f9ff4b       b 0x10001260
+        :   ;-- entry0:
+        :   0x10001854      0210403c       lis r2,0x1002
+        :   0x10001858      10c04238       subi r2,r2,0x3ff0
+        :   0x1000185c      780b297c       or r9,r1,r1
+        :   0x10001860      e4062178       rldicr r1,r1,0x0,0x3b
+        :   0x10001864      00000038       li r0,0x0
+        :   0x10001868      81ff21f8       stdu r1,-0x80(r1)
+        :   0x1000186c      a603087c       mtspr lr,r0
+        :   0x10001870      000001f8       std r0,0x0(r1)
+        :   0x10001874      108002e9       ld r8,-0x7ff0(r2)
+        `=< 0x10001878      e8f9ff4b       b 0x10001260
             0x1000187c      00000060       ori r0,r0,0x0
             0x10001880      0000           invalid
             0x10001882      0000           invalid
@@ -513,9 +504,9 @@ EXPECT=<<EOF
             0x100018c8      188022e9       ld r9,-0x7fe8(r2)
             0x100018cc      0000a92f       cmpdi cr7,r9,0x0
             0x100018d0      20009e4d       beqlr cr7
-            0x100018d4      a602087c       mfspr r0,LR
+            0x100018d4      a602087c       mfspr r0,lr
             0x100018d8      784b2c7d       or r12,r9,r9
-            0x100018dc      a603297d       mtspr CTR,r9
+            0x100018dc      a603297d       mtspr ctr,r9
             0x100018e0      100001f8       std r0,0x10(r1)
             0x100018e4      e1ff21f8       stdu r1,-0x20(r1)
             0x100018e8      180041f8       std r2,0x18(r1)
@@ -523,15 +514,14 @@ EXPECT=<<EOF
             0x100018f0      180041e8       ld r2,0x18(r1)
             0x100018f4      20002138       addi r1,r1,0x20
             0x100018f8      100001e8       ld r0,0x10(r1)
-            0x100018fc      a603087c       mtspr LR,r0
+            0x100018fc      a603087c       mtspr lr,r0
             0x10001900      2000804e       blr
             0x10001904      00000060       ori r0,r0,0x0
             0x10001908      00000060       ori r0,r0,0x0
             0x1000190c      00004260       ori r2,r2,0x0
 EOF
 CMDS=<<EOF
-e asm.cpu=PowerPC:LE:64:default:gcc
-e asm.arch=r2ghidra
+pdga
 pd 50
 EOF
 RUN
@@ -561,40 +551,39 @@ EXPECT=<<EOF
             0x00011824      2700012d       sethi %hi(0x4b400),l3
             0x00011828      c20ce0c4       ldub [l3+0xc4],g1
             0x0001182c      80a06000       cmp g1,0x0
-            0x00011830      1240001a       bpne,pn %icc,0x11898
-            0x00011834      25000128       sethi %hi(0x4a000),l2
-            0x00011838      23000128       sethi %hi(0x4a000),l1
-            0x0001183c      a414a008       or l2,0x8,l2
-            0x00011840      a214600c       or l1,0xc,l1
-            0x00011844      a2244012       sub l1,l2,l1
-            0x00011848      2100012d       sethi %hi(0x4b400),l0
-            0x0001184c      a33c6002       sra l1,0x2,l1
-            0x00011850      c20420c8       lduw [l0+0xc8],g1
-            0x00011854      a2047fff       add l1,-0x1,l1
-            0x00011858      80a04011       cmp g1,l1
-            0x0001185c      3a40000e       bpcc,a,pn %icc,0x11894
-            0x00011860      82102001       mov 0x1,g1
-            0x00011864      a01420c8       or l0,0xc8,l0
-            0x00011868      82006001       add g1,0x1,g1
-            0x0001186c      c2240000       stw g1,[l0+g0]
-            0x00011870      83286002       sll g1,0x2,g1
-            0x00011874      c2048001       lduw [l2+g1],g1
-            0x00011878      9fc04000       jmpl [g1+g0],o7
-            0x0001187c      01000000       nop
-            0x00011880      c2040000       lduw [l0+g0],g1
-            0x00011884      80a04011       cmp g1,l1
-            0x00011888      0a4ffff9       bpcs,pt %icc,0x1186c
-            0x0001188c      82006001       add g1,0x1,g1
-            0x00011890      82102001       mov 0x1,g1
-            0x00011894      c22ce0c4       stb g1,[l3+0xc4]
-            0x00011898      81cfe008       return
+       ,,=< 0x00011830      1240001a       bpne,pn %icc,0x11898
+       |`-> 0x00011834      25000128       sethi %hi(0x4a000),l2
+       |    0x00011838      23000128       sethi %hi(0x4a000),l1
+       |    0x0001183c      a414a008       or l2,0x8,l2
+       |    0x00011840      a214600c       or l1,0xc,l1
+       |    0x00011844      a2244012       sub l1,l2,l1
+       |    0x00011848      2100012d       sethi %hi(0x4b400),l0
+       |    0x0001184c      a33c6002       sra l1,0x2,l1
+       |    0x00011850      c20420c8       lduw [l0+0xc8],g1
+       |    0x00011854      a2047fff       add l1,-0x1,l1
+       |    0x00011858      80a04011       cmp g1,l1
+      ,=,=< 0x0001185c      3a40000e       bpcc,a,pn %icc,0x11894
+      ||`-> 0x00011860      82102001       mov 0x1,g1
+      ||    0x00011864      a01420c8       or l0,0xc8,l0
+      ||    0x00011868      82006001       add g1,0x1,g1
+      ||.-> 0x0001186c      c2240000       stw g1,[l0+g0]
+      ||:   0x00011870      83286002       sll g1,0x2,g1
+      ||:   0x00011874      c2048001       lduw [l2+g1],g1
+      ||:   0x00011878      9fc04000       jmpl [g1+g0],o7
+      ||:   0x0001187c      01000000       nop
+      ||:   0x00011880      c2040000       lduw [l0+g0],g1
+      ||:   0x00011884      80a04011       cmp g1,l1
+     ,==`=< 0x00011888      0a4ffff9       bpcs,pt %icc,0x1186c
+     `----> 0x0001188c      82006001       add g1,0x1,g1
+      ||    0x00011890      82102001       mov 0x1,g1
+      `---> 0x00011894      c22ce0c4       stb g1,[l3+0xc4]
+       `--> 0x00011898      81cfe008       return
             0x0001189c      01000000       nop
             0x000118a0      9de3bfa0       save sp,-0x60,sp
             0x000118a4      81cfe008       return
 EOF
 CMDS=<<EOF
-e asm.cpu=sparc:BE:32:default:gcc
-e asm.arch=r2ghidra
+pdga
 pd 50
 EOF
 RUN
@@ -603,60 +592,59 @@ NAME=avr8_LE_16
 FILE=r2-testbins/elf/analysis/bugurtos-avr.elf
 EXPECT=<<EOF
             ;-- main:
-            0x00000308      ef92           push R14
-            0x0000030a      ff92           push R15
-            0x0000030c      0f93           push R16
-            0x0000030e      df93           push Yhi
-            0x00000310      cf93           push Ylo
+            0x00000308      ef92           push r14
+            0x0000030a      ff92           push r15
+            0x0000030c      0f93           push r16
+            0x0000030e      df93           push yhi
+            0x00000310      cf93           push ylo
             0x00000312      00d0           rcall .
-            0x00000314      cdb7           in Ylo,SPL
-            0x00000316      deb7           in Yhi,SPH
+            0x00000314      cdb7           in ylo,spl
+            0x00000316      deb7           in yhi,sph
             0x00000318      0e94e904       call sym.init_bugurt
-            0x0000031c      efe4           ldi Zlo,0x4f
-            0x0000031e      f0e0           ldi Zhi,0x0
-            0x00000320      1082           st Z, R1
-            0x00000322      eee4           ldi Zlo,0x4e
-            0x00000324      f0e0           ldi Zhi,0x0
-            0x00000326      8de1           ldi Wlo,0x1d
-            0x00000328      8083           st Z, Wlo
-            0x0000032a      eae4           ldi Zlo,0x4a
-            0x0000032c      f0e0           ldi Zhi,0x0
-            0x0000032e      88e0           ldi Wlo,0x8
-            0x00000330      90e0           ldi Whi,0x0
-            0x00000332      9183           std Z+0x1, Whi
-            0x00000334      8083           st Z, Wlo
-            0x00000336      e8e4           ldi Zlo,0x48
-            0x00000338      f0e0           ldi Zhi,0x0
-            0x0000033a      1182           std Z+0x1, R1
-            0x0000033c      1082           st Z, R1
-            0x0000033e      e6e5           ldi Zlo,0x56
-            0x00000340      f0e0           ldi Zhi,0x0
-            0x00000342      1082           st Z, R1
-            0x00000344      e0e5           ldi Zlo,0x50
-            0x00000346      f0e0           ldi Zhi,0x0
-            0x00000348      1082           st Z, R1
-            0x0000034a      e7e5           ldi Zlo,0x57
-            0x0000034c      f0e0           ldi Zhi,0x0
-            0x0000034e      80e1           ldi Wlo,0x10
-            0x00000350      8083           st Z, Wlo
-            0x00000352      e7e3           ldi Zlo,0x37
-            0x00000354      f0e0           ldi Zhi,0x0
-            0x00000356      8fef           ser Wlo
-            0x00000358      8083           st Z, Wlo
-            0x0000035a      e4e3           ldi Zlo,0x34
-            0x0000035c      f0e0           ldi Zhi,0x0
-            0x0000035e      8fef           ser Wlo
-            0x00000360      8083           st Z, Wlo
-            0x00000362      e1e3           ldi Zlo,0x31
-            0x00000364      f0e0           ldi Zhi,0x0
-            0x00000366      81e0           ldi Wlo,0x1
-            0x00000368      8083           st Z, Wlo
-            0x0000036a      eae6           ldi Zlo,0x6a
-            0x0000036c      f0e0           ldi Zhi,0x0
+            0x0000031c      efe4           ldi zlo,0x4f
+            0x0000031e      f0e0           ldi zhi,0x0
+            0x00000320      1082           st z, r1
+            0x00000322      eee4           ldi zlo,0x4e
+            0x00000324      f0e0           ldi zhi,0x0
+            0x00000326      8de1           ldi wlo,0x1d
+            0x00000328      8083           st z, wlo
+            0x0000032a      eae4           ldi zlo,0x4a
+            0x0000032c      f0e0           ldi zhi,0x0
+            0x0000032e      88e0           ldi wlo,0x8
+            0x00000330      90e0           ldi whi,0x0
+            0x00000332      9183           std z+0x1, whi
+            0x00000334      8083           st z, wlo
+            0x00000336      e8e4           ldi zlo,0x48
+            0x00000338      f0e0           ldi zhi,0x0
+            0x0000033a      1182           std z+0x1, r1
+            0x0000033c      1082           st z, r1
+            0x0000033e      e6e5           ldi zlo,0x56
+            0x00000340      f0e0           ldi zhi,0x0
+            0x00000342      1082           st z, r1
+            0x00000344      e0e5           ldi zlo,0x50
+            0x00000346      f0e0           ldi zhi,0x0
+            0x00000348      1082           st z, r1
+            0x0000034a      e7e5           ldi zlo,0x57
+            0x0000034c      f0e0           ldi zhi,0x0
+            0x0000034e      80e1           ldi wlo,0x10
+            0x00000350      8083           st z, wlo
+            0x00000352      e7e3           ldi zlo,0x37
+            0x00000354      f0e0           ldi zhi,0x0
+            0x00000356      8fef           ser wlo
+            0x00000358      8083           st z, wlo
+            0x0000035a      e4e3           ldi zlo,0x34
+            0x0000035c      f0e0           ldi zhi,0x0
+            0x0000035e      8fef           ser wlo
+            0x00000360      8083           st z, wlo
+            0x00000362      e1e3           ldi zlo,0x31
+            0x00000364      f0e0           ldi zhi,0x0
+            0x00000366      81e0           ldi wlo,0x1
+            0x00000368      8083           st z, wlo
+            0x0000036a      eae6           ldi zlo,0x6a
+            0x0000036c      f0e0           ldi zhi,0x0
 EOF
 CMDS=<<EOF
-e asm.cpu=avr8:LE:16:default:gcc
-e asm.arch=r2ghidra
+pdga
 s main
 pd 50
 EOF
@@ -666,60 +654,59 @@ NAME=68000_BE_32
 FILE=r2-testbins/elf/analysis/busybox.m68k
 EXPECT=<<EOF
             ;-- entry0:
-            0x80000da4      9dce           suba.l A6,A6
-            0x80000da6      201f           move.l (SP)+,D0
-            0x80000da8      204f           movea.l SP,A0
-            0x80000daa      4857           pea (SP)
-            0x80000dac      4851           pea (A1)
+            0x80000da4      9dce           suba.l a6,a6
+            0x80000da6      201f           move.l (sp)+,d0
+            0x80000da8      204f           movea.l sp,a0
+            0x80000daa      4857           pea (sp)
+            0x80000dac      4851           pea (a1)
             0x80000dae      487980001a30   pea (-0x7fffe5d0).l
             0x80000db4      4879800019b0   pea (-0x7fffe650).l
-            0x80000dba      4850           pea (A0)
-            0x80000dbc      2f00           move.l D0,-(SP)
+            0x80000dba      4850           pea (a0)
+            0x80000dbc      2f00           move.l d0,-(sp)
             0x80000dbe      4879800963de   pea (-0x7ff69c22).l
             0x80000dc4      61ff0000068a   bsr.l 0x80001450
             0x80000dca      4afc           illegal
-            0x80000dcc      4e560000       link.w A6,0x0
-            0x80000dd0      203c8015b11c   move.l #-0x7fea4ee4,D0
-            0x80000dd6      04808015b119   subi.l #-0x7fea4ee7,D0
-            0x80000ddc      7206           moveq #0x6,D1
-            0x80000dde      b280           cmp.l D0,D1
-            0x80000de0      6414           bcc.b 0x80000df6
-            0x80000de2      41f900000000   lea (0x0).l,A0
-            0x80000de8      4a88           tst.l A0
-            0x80000dea      670a           beq.b 0x80000df6
-            0x80000dec      48798015b11c   pea (-0x7fea4ee4).l
-            0x80000df2      4e90           jsr (A0)
-            0x80000df4      588f           addq.l #0x4,SP
-            0x80000df6      4e5e           unlk A6
+            0x80000dcc      4e560000       link.w a6,0x0
+            0x80000dd0      203c8015b11c   move.l #-0x7fea4ee4,d0
+            0x80000dd6      04808015b119   subi.l #-0x7fea4ee7,d0
+            0x80000ddc      7206           moveq #0x6,d1
+            0x80000dde      b280           cmp.l d0,d1
+        ,=< 0x80000de0      6414           bcc.b 0x80000df6
+        |   0x80000de2      41f900000000   lea (0x0).l,a0
+        |   0x80000de8      4a88           tst.l a0
+       ,==< 0x80000dea      670a           beq.b 0x80000df6
+       ||   0x80000dec      48798015b11c   pea (-0x7fea4ee4).l
+       ||   0x80000df2      4e90           jsr (a0)
+       ||   0x80000df4      588f           addq.l #0x4,sp
+       ``-> 0x80000df6      4e5e           unlk a6
             0x80000df8      4e75           rts
-            0x80000dfa      4e560000       link.w A6,0x0
-            0x80000dfe      203c8015b11c   move.l #-0x7fea4ee4,D0
-            0x80000e04      04808015b11c   subi.l #-0x7fea4ee4,D0
-            0x80000e0a      e480           asr.l #0x2,D0
-            0x80000e0c      2000           move.l D0,D0
-            0x80000e0e      6a02           bpl.b 0x80000e12
-            0x80000e10      5280           addq.l #0x1,D0
-            0x80000e12      e280           asr.l #0x1,D0
-            0x80000e14      6716           beq.b 0x80000e2c
-            0x80000e16      41f900000000   lea (0x0).l,A0
-            0x80000e1c      4a88           tst.l A0
-            0x80000e1e      670c           beq.b 0x80000e2c
-            0x80000e20      2f00           move.l D0,-(SP)
-            0x80000e22      48798015b11c   pea (-0x7fea4ee4).l
-            0x80000e28      4e90           jsr (A0)
-            0x80000e2a      508f           addq.l #0x8,SP
-            0x80000e2c      4e5e           unlk A6
+            0x80000dfa      4e560000       link.w a6,0x0
+            0x80000dfe      203c8015b11c   move.l #-0x7fea4ee4,d0
+            0x80000e04      04808015b11c   subi.l #-0x7fea4ee4,d0
+            0x80000e0a      e480           asr.l #0x2,d0
+            0x80000e0c      2000           move.l d0,d0
+        ,=< 0x80000e0e      6a02           bpl.b 0x80000e12
+        |   0x80000e10      5280           addq.l #0x1,d0
+        `-> 0x80000e12      e280           asr.l #0x1,d0
+        ,=< 0x80000e14      6716           beq.b 0x80000e2c
+        |   0x80000e16      41f900000000   lea (0x0).l,a0
+        |   0x80000e1c      4a88           tst.l a0
+       ,==< 0x80000e1e      670c           beq.b 0x80000e2c
+       ||   0x80000e20      2f00           move.l d0,-(sp)
+       ||   0x80000e22      48798015b11c   pea (-0x7fea4ee4).l
+       ||   0x80000e28      4e90           jsr (a0)
+       ||   0x80000e2a      508f           addq.l #0x8,sp
+       ``-> 0x80000e2c      4e5e           unlk a6
             0x80000e2e      4e75           rts
-            0x80000e30      4e560000       link.w A6,0x0
+            0x80000e30      4e560000       link.w a6,0x0
             0x80000e34      4a398015b120   tst.b (-0x7fea4ee0).l
-            0x80000e3a      6620           bne.b 0x80000e5c
-            0x80000e3c      4ebaff8e       jsr 0x80000dcc
-            0x80000e40      41f980095264   lea (-0x7ff6ad9c).l,A0
-            0x80000e46      4a88           tst.l A0
+        ,=< 0x80000e3a      6620           bne.b 0x80000e5c
+        |   0x80000e3c      4ebaff8e       jsr 0x80000dcc
+        |   0x80000e40      41f980095264   lea (-0x7ff6ad9c).l,a0
+        |   0x80000e46      4a88           tst.l a0
 EOF
 CMDS=<<EOF
-e asm.cpu=68000:BE:32:default:gcc
-e asm.arch=r2ghidra
+pdga
 pd 50
 EOF
 RUN
