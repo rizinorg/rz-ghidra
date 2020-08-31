@@ -12,7 +12,10 @@ static SleighAsm sanal;
 
 static int archinfo(RAnal *anal, int query)
 {
-	if(!strcmp(anal->cpu, "x86"))
+	// This is to check if RCore plugin set cpu properly.
+	ut64 length = strlen(anal->cpu), i = 0;
+	for(; i < length && anal->cpu[i] != ':'; ++i) {}
+	if(i == length)
 		return -1;
 
 	sanal.init(anal->cpu, anal? anal->iob.io : nullptr, SleighAsm::getConfig(anal));
@@ -1898,21 +1901,21 @@ nopcase:
 				std::cerr << " dst: ";
 				char *tmp = r_anal_value_to_string(anal_op->dst);
 				std::cerr << tmp;
-				free(tmp);
+				r_mem_free(tmp);
 			}
 			if(anal_op->src[0])
 			{
 				std::cerr << " in0: ";
 				char *tmp = r_anal_value_to_string(anal_op->src[0]);
 				std::cerr << tmp;
-				free(tmp);
+				r_mem_free(tmp);
 			}
 			if(anal_op->src[1])
 			{
 				std::cerr << " in1: ";
 				char *tmp = r_anal_value_to_string(anal_op->src[1]);
 				std::cerr << tmp;
-				free(tmp);
+				r_mem_free(tmp);
 			}
 			std::cerr << std::endl;
 		}
@@ -2084,7 +2087,9 @@ static void append_hardcoded_regs(std::stringstream &buf, const std::string &arc
 
 static char *get_reg_profile(RAnal *anal)
 {
-	if(!strcmp(anal->cpu, "x86"))
+	ut64 length = strlen(anal->cpu), z = 0;
+	for(; z < length && anal->cpu[z] != ':'; ++z) {}
+	if(z == length)
 		return nullptr;
 
 	sanal.init(anal->cpu, anal? anal->iob.io: nullptr, SleighAsm::getConfig(anal));
@@ -2151,6 +2156,12 @@ static char *get_reg_profile(RAnal *anal)
 	return strdup(res.c_str());
 }
 
+#define ERR(x)              \
+	if(esil->verbose)       \
+	{                       \
+		eprintf("%s\n", x); \
+	}
+
 constexpr int ESIL_PARM_FLOAT = 127; // Avoid conflict
 
 static bool esil_pushnum_float(RAnalEsil *esil, long double num)
@@ -2213,7 +2224,9 @@ static long double esil_get_double(RReg *reg, RRegItem *item)
 				memcpy(&ret, regset->arena->bytes + off, sizeof(long double));
 			}
 			break;
-		default: eprintf("esil_get_double: Bit size %d not supported\n", item->size); return 0.0f;
+		default:
+			eprintf("esil_get_double: Bit size not supported.\n");
+			return 0.0f;
 	}
 	return ret;
 }
@@ -2226,7 +2239,7 @@ static bool esil_set_double(RReg *reg, RRegItem *item, long double value)
 
 	if(!item)
 	{
-		eprintf("esil_set_double: item is NULL\n");
+		eprintf("esil_set_double: item is NULL.");
 		return false;
 	}
 	switch(item->size)
@@ -2239,7 +2252,9 @@ static bool esil_set_double(RReg *reg, RRegItem *item, long double value)
 			// FIXME: endian
 			src = (ut8 *)&value;
 			break;
-		default: eprintf("esil_set_double: Bit size %d not supported\n", item->size); return false;
+		default:
+			eprintf("esil_set_double: Bit size not supported.");
+			return false;
 	}
 	if(reg->regset[item->arena].arena->size - BITS2BYTES(item->offset) - BITS2BYTES(item->size) >=
 	   0)
@@ -2248,7 +2263,7 @@ static bool esil_set_double(RReg *reg, RRegItem *item, long double value)
 		               item->size);
 		return true;
 	}
-	eprintf("esil_set_double: Cannot set %s to %lf\n", item->name, value);
+	eprintf("esil_set_double: Cannot set register.");
 	return false;
 }
 
@@ -2280,8 +2295,7 @@ static int esil_get_parm_float(RAnalEsil *esil, const char *str, long double *nu
 			break;
 		}
 		default:
-			if(esil->verbose)
-				eprintf("Invalid arg (%s)\n", str);
+			ERR("esil_get_parm_float: Invalid arg.");
 
 			esil->parse_stop = 1;
 			break;
@@ -2300,27 +2314,27 @@ static bool sleigh_esil_consts_pick(RAnalEsil *esil)
 
 	if(R_ANAL_ESIL_PARM_REG == r_anal_esil_get_parm_type(esil, idx))
 	{
-		throw LowlevelError("sleigh_esil_consts_pick: argument is consts only");
+		ERR("sleigh_esil_consts_pick: argument is consts only.");
 		goto end;
 	}
 	if(!idx || !r_anal_esil_get_parm(esil, idx, &i))
 	{
-		throw LowlevelError("esil_pick: invalid index number");
+		ERR("esil_pick: invalid index number.");
 		goto end;
 	}
 	if(esil->stackptr < i)
 	{
-		throw LowlevelError("esil_pick: index out of stack bounds");
+		ERR("esil_pick: index out of stack bounds.");
 		goto end;
 	}
 	if(!esil->stack[esil->stackptr - i])
 	{
-		throw LowlevelError("esil_pick: undefined element");
+		ERR("esil_pick: undefined element.");
 		goto end;
 	}
 	if(!r_anal_esil_push(esil, esil->stack[esil->stackptr - i]))
 	{
-		throw LowlevelError("ESIL stack is full");
+		ERR("ESIL stack is full.");
 		esil->trap = 1;
 		esil->trap_code = 1;
 		goto end;
@@ -2337,12 +2351,18 @@ static bool sleigh_esil_is_nan(RAnalEsil *esil)
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop(esil);
-	if(src && esil_get_parm_float(esil, src, &s))
-		ret = r_anal_esil_pushnum(esil, isnan(s));
-	else
-		throw LowlevelError("sleigh_esil_is_nan: invalid parameters");
+	if(src)
+	{
+		if(esil_get_parm_float(esil, src, &s))
+			ret = r_anal_esil_pushnum(esil, isnan(s));
+		else
+			ERR("sleigh_esil_is_nan: invalid parameters.");
 
-	r_mem_free(src);
+		r_mem_free(src);
+	}
+	else
+		ERR("sleigh_esil_is_nan: fail to get argument from stack.");
+
 	return ret;
 }
 
@@ -2351,12 +2371,18 @@ static bool sleigh_esil_int_to_float(RAnalEsil *esil)
 	bool ret = false;
 	st64 s;
 	char *src = r_anal_esil_pop(esil);
-	if(src && r_anal_esil_get_parm(esil, src, (ut64 *)&s))
-		ret = esil_pushnum_float(esil, (long double)s * 1.0);
-	else
-		throw LowlevelError("sleigh_esil_int_to_float: invalid parameters");
+	if(src)
+	{
+		if(r_anal_esil_get_parm(esil, src, (ut64 *)&s))
+			ret = esil_pushnum_float(esil, (long double)s * 1.0);
+		else
+			ERR("sleigh_esil_int_to_float: invalid parameters.");
 
-	r_mem_free(src);
+		r_mem_free(src);
+	}
+	else
+		ERR("sleigh_esil_int_to_float: fail to get argument from stack.");
+
 	return ret;
 }
 
@@ -2365,16 +2391,22 @@ static bool sleigh_esil_float_to_int(RAnalEsil *esil)
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop(esil);
-	if(src && esil_get_parm_float(esil, src, &s))
+	if(src)
 	{
-		if(isnan(s) || isinf(s))
-			throw LowlevelError("sleigh_esil_float_to_int: nan or inf detected.");
-		ret = r_anal_esil_pushnum(esil, (st64)(s));
+		if(esil_get_parm_float(esil, src, &s))
+		{
+			if(isnan(s) || isinf(s))
+				ERR("sleigh_esil_float_to_int: nan or inf detected.");
+			ret = r_anal_esil_pushnum(esil, (st64)(s));
+		}
+		else
+			ERR("sleigh_esil_float_to_int: invalid parameters.");
+
+		r_mem_free(src);
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_to_int: invalid parameters");
+		ERR("sleigh_esil_float_to_int: fail to get argument from stack.");
 
-	r_mem_free(src);
 	return ret;
 }
 
@@ -2385,7 +2417,19 @@ static bool sleigh_esil_float_to_float(RAnalEsil *esil)
 	ut64 s = 0;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if((src && r_anal_esil_get_parm(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
+
+	if(!src)
+	{
+		ERR("sleigh_esil_float_to_float: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_float_to_float: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(r_anal_esil_get_parm(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(d) || isinf(d))
 			ret = esil_pushnum_float(esil, d);
@@ -2401,10 +2445,12 @@ static bool sleigh_esil_float_to_float(RAnalEsil *esil)
 			*/
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_to_float: invalid parameters");
+		ERR("sleigh_esil_float_to_float: invalid parameters.");
 
-	r_mem_free(src);
+end2:
 	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2414,19 +2460,32 @@ static bool sleigh_esil_float_cmp(RAnalEsil *esil)
 	long double s, d;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if((src && esil_get_parm_float(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
+
+	if(!src)
+	{
+		ERR("sleigh_esil_float_cmp: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_float_cmp: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s) || isnan(d))
 			ret = r_anal_esil_pushnum(esil, 0);
 		else
-			ret = r_anal_esil_pushnum(esil,
-			                          fabs(s - d) < std::numeric_limits<long double>::epsilon());
+			ret = r_anal_esil_pushnum(esil, fabs(s - d) < std::numeric_limits<long double>::epsilon());
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_cmp: invalid parameters");
+		ERR("sleigh_esil_float_cmp: invalid parameters.");
 
-	r_mem_free(src);
+end2:
 	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2436,19 +2495,33 @@ static bool sleigh_esil_cmp(RAnalEsil *esil)
 	bool ret = false;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if(dst && r_anal_esil_get_parm(esil, dst, &num))
+
+	if(!src)
 	{
-		if(src && r_anal_esil_get_parm(esil, src, &num2))
-		{
-			esil->old = num;
-			esil->cur = num - num2;
-			ret = true;
-			esil->lastsz = 64;
-			r_anal_esil_pushnum(esil, num == num2);
-		}
+		ERR("sleigh_esil_cmp: fail to get argument from stack.");
+		goto end1;
 	}
-	free(dst);
-	free(src);
+	if(!dst)
+	{
+		ERR("sleigh_esil_cmp: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(r_anal_esil_get_parm(esil, dst, &num) && r_anal_esil_get_parm(esil, src, &num2))
+	{
+		esil->old = num;
+		esil->cur = num - num2;
+		ret = true;
+		esil->lastsz = 64;
+		r_anal_esil_pushnum(esil, num == num2);
+	}
+	else
+		ERR("sleigh_esil_cmp: invalid parameters.");
+
+end2:
+	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2458,19 +2531,32 @@ static bool sleigh_esil_float_negcmp(RAnalEsil *esil)
 	long double s, d;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if((src && esil_get_parm_float(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
+
+	if(!src)
+	{
+		ERR("sleigh_esil_float_negcmp: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_float_negcmp: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s) || isnan(d))
 			ret = r_anal_esil_pushnum(esil, 0);
 		else
-			ret = r_anal_esil_pushnum(esil,
-			                          fabs(s - d) >= std::numeric_limits<long double>::epsilon());
+			ret = r_anal_esil_pushnum(esil, fabs(s - d) >= std::numeric_limits<long double>::epsilon());
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_negcmp: invalid parameters");
+		ERR("sleigh_esil_float_negcmp: invalid parameters.");
 
-	r_mem_free(src);
+end2:
 	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2480,7 +2566,19 @@ static bool sleigh_esil_float_less(RAnalEsil *esil)
 	long double s, d;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if((src && esil_get_parm_float(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
+
+	if(!src)
+	{
+		ERR("sleigh_esil_float_less: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_float_less: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s) || isnan(d))
 			ret = r_anal_esil_pushnum(esil, 0);
@@ -2488,10 +2586,12 @@ static bool sleigh_esil_float_less(RAnalEsil *esil)
 			ret = r_anal_esil_pushnum(esil, s < d);
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_less: invalid parameters");
+		ERR("sleigh_esil_float_less: invalid parameters.");
 
-	r_mem_free(src);
+end2:
 	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2501,7 +2601,19 @@ static bool sleigh_esil_float_lesseq(RAnalEsil *esil)
 	long double s, d;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if((src && esil_get_parm_float(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
+
+	if(!src)
+	{
+		ERR("sleigh_esil_float_lesseq: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_float_lesseq: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s) || isnan(d))
 			ret = r_anal_esil_pushnum(esil, 0);
@@ -2509,10 +2621,13 @@ static bool sleigh_esil_float_lesseq(RAnalEsil *esil)
 			ret = r_anal_esil_pushnum(esil, s <= d);
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_lesseq: invalid parameters");
+		ERR("sleigh_esil_float_lesseq: invalid parameters.");
 
-	r_mem_free(src);
+
+end2:
 	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2522,7 +2637,19 @@ static bool sleigh_esil_float_add(RAnalEsil *esil)
 	long double s, d;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if((src && esil_get_parm_float(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
+
+	if(!src)
+	{
+		ERR("sleigh_esil_float_add: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_float_add: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s))
 			ret = esil_pushnum_float(esil, s);
@@ -2540,10 +2667,12 @@ static bool sleigh_esil_float_add(RAnalEsil *esil)
 		}
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_add: invalid parameters");
+		ERR("sleigh_esil_float_add: invalid parameters.");
 
-	r_mem_free(src);
+end2:
 	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2553,7 +2682,19 @@ static bool sleigh_esil_float_sub(RAnalEsil *esil)
 	long double s, d;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if((src && esil_get_parm_float(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
+
+	if(!src)
+	{
+		ERR("sleigh_esil_float_sub: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_float_sub: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s))
 			ret = esil_pushnum_float(esil, s);
@@ -2571,10 +2712,12 @@ static bool sleigh_esil_float_sub(RAnalEsil *esil)
 		}
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_sub: invalid parameters");
+		ERR("sleigh_esil_float_sub: invalid parameters.");
 
-	r_mem_free(src);
+end2:
 	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2584,7 +2727,19 @@ static bool sleigh_esil_float_mul(RAnalEsil *esil)
 	long double s, d;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if((src && esil_get_parm_float(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
+
+	if(!src)
+	{
+		ERR("sleigh_esil_float_mul: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_float_mul: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s))
 			ret = esil_pushnum_float(esil, s);
@@ -2602,10 +2757,12 @@ static bool sleigh_esil_float_mul(RAnalEsil *esil)
 		}
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_mul: invalid parameters");
+		ERR("sleigh_esil_float_mul: invalid parameters.");
 
-	r_mem_free(src);
+end2:
 	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2615,7 +2772,19 @@ static bool sleigh_esil_float_div(RAnalEsil *esil)
 	long double s, d;
 	char *dst = r_anal_esil_pop(esil);
 	char *src = r_anal_esil_pop(esil);
-	if((src && esil_get_parm_float(esil, src, &s)) && (dst && esil_get_parm_float(esil, dst, &d)))
+
+	if(!src)
+	{
+		ERR("sleigh_esil_float_div: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_float_div: fail to get argument from stack.");
+		goto end2;
+	}
+
+	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s))
 			ret = esil_pushnum_float(esil, s);
@@ -2633,10 +2802,12 @@ static bool sleigh_esil_float_div(RAnalEsil *esil)
 		}
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_div: invalid parameters");
+		ERR("sleigh_esil_float_div: invalid parameters.");
 
-	r_mem_free(src);
+end2:
 	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 	return ret;
 }
 
@@ -2645,12 +2816,19 @@ static bool sleigh_esil_float_neg(RAnalEsil *esil)
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop(esil);
-	if(src && esil_get_parm_float(esil, src, &s))
-		ret = esil_pushnum_float(esil, -s);
-	else
-		throw LowlevelError("sleigh_esil_float_neg: invalid parameters");
 
-	r_mem_free(src);
+	if(src)
+	{
+		if(esil_get_parm_float(esil, src, &s))
+			ret = esil_pushnum_float(esil, -s);
+		else
+			ERR("sleigh_esil_float_neg: invalid parameters.");
+
+		r_mem_free(src);
+	}
+	else
+		ERR("sleigh_esil_float_neg: fail to get element from stack.");
+
 	return ret;
 }
 
@@ -2659,17 +2837,24 @@ static bool sleigh_esil_float_ceil(RAnalEsil *esil)
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop(esil);
-	if(src && esil_get_parm_float(esil, src, &s))
+
+	if(src)
 	{
-		if(isnan(s))
-			ret = esil_pushnum_float(esil, s);
+		if(esil_get_parm_float(esil, src, &s))
+		{
+			if(isnan(s))
+				ret = esil_pushnum_float(esil, s);
+			else
+				ret = esil_pushnum_float(esil, std::ceil(s));
+		}
 		else
-			ret = esil_pushnum_float(esil, std::ceil(s));
+			ERR("sleigh_esil_float_ceil: invalid parameters.");
+
+		r_mem_free(src);
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_ceil: invalid parameters");
+		ERR("sleigh_esil_float_ceil: fail to get element from stack.");
 
-	r_mem_free(src);
 	return ret;
 }
 
@@ -2678,17 +2863,24 @@ static bool sleigh_esil_float_floor(RAnalEsil *esil)
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop(esil);
-	if(src && esil_get_parm_float(esil, src, &s))
+
+	if(src)
 	{
-		if(isnan(s))
-			ret = esil_pushnum_float(esil, s);
+		if(esil_get_parm_float(esil, src, &s))
+		{
+			if(isnan(s))
+				ret = esil_pushnum_float(esil, s);
+			else
+				ret = esil_pushnum_float(esil, std::floor(s));
+		}
 		else
-			ret = esil_pushnum_float(esil, std::floor(s));
+			ERR("sleigh_esil_float_floor: invalid parameters.");
+
+		r_mem_free(src);
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_floor: invalid parameters");
+		ERR("sleigh_esil_float_floor: fail to get element from stack.");
 
-	r_mem_free(src);
 	return ret;
 }
 
@@ -2697,17 +2889,24 @@ static bool sleigh_esil_float_round(RAnalEsil *esil)
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop(esil);
-	if(src && esil_get_parm_float(esil, src, &s))
+
+	if(src)
 	{
-		if(isnan(s))
-			ret = esil_pushnum_float(esil, s);
+		if(esil_get_parm_float(esil, src, &s))
+		{
+			if(isnan(s))
+				ret = esil_pushnum_float(esil, s);
+			else
+				ret = esil_pushnum_float(esil, std::round(s));
+		}
 		else
-			ret = esil_pushnum_float(esil, std::round(s));
+			ERR("sleigh_esil_float_round: invalid parameters.");
+
+		r_mem_free(src);
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_round: invalid parameters");
+		ERR("sleigh_esil_float_round: fail to get element from stack.");
 
-	r_mem_free(src);
 	return ret;
 }
 
@@ -2716,17 +2915,24 @@ static bool sleigh_esil_float_sqrt(RAnalEsil *esil)
 	bool ret = false;
 	long double s;
 	char *src = r_anal_esil_pop(esil);
-	if(src && esil_get_parm_float(esil, src, &s))
+
+	if(src)
 	{
-		if(isnan(s))
-			ret = esil_pushnum_float(esil, s);
+		if(esil_get_parm_float(esil, src, &s))
+		{
+			if(isnan(s))
+				ret = esil_pushnum_float(esil, s);
+			else
+				ret = esil_pushnum_float(esil, std::sqrt(s));
+		}
 		else
-			ret = esil_pushnum_float(esil, std::sqrt(s));
+			ERR("sleigh_esil_float_sqrt: invalid parameters.");
+
+		r_mem_free(src);
 	}
 	else
-		throw LowlevelError("sleigh_esil_float_sqrt: invalid parameters");
+		ERR("sleigh_esil_float_sqrt: fail to get element from stack.");
 
-	r_mem_free(src);
 	return ret;
 }
 
@@ -2735,19 +2941,26 @@ static bool sleigh_esil_popcount(RAnalEsil *esil)
 	bool ret = false;
 	ut64 s, res = 0;
 	char *src = r_anal_esil_pop(esil);
-	if(src && r_anal_esil_get_parm(esil, src, &s))
+
+	if(src)
 	{
-		while(s)
+		if(src && r_anal_esil_get_parm(esil, src, &s))
 		{
-			s &= s - 1;
-			++res;
+			while(s)
+			{
+				s &= s - 1;
+				++res;
+			}
+			ret = r_anal_esil_pushnum(esil, res);
 		}
-		ret = r_anal_esil_pushnum(esil, res);
+		else
+			ERR("sleigh_esil_popcount: invalid parameters.");
+
+		r_mem_free(src);
 	}
 	else
-		throw LowlevelError("sleigh_esil_popcount: invalid parameters");
+		ERR("sleigh_esil_popcount: fail to get element from stack.");
 
-	r_mem_free(src);
 	return ret;
 }
 
@@ -2762,7 +2975,7 @@ static bool sleigh_esil_signext(RAnalEsil *esil)
 
 	if(!r_anal_esil_get_parm(esil, p_src, &src))
 	{
-		throw LowlevelError("sleigh_esil_signext: invalid parameters");
+		ERR("sleigh_esil_signext: invalid parameters.");
 		r_mem_free(p_src);
 		return false;
 	}
@@ -2775,7 +2988,7 @@ static bool sleigh_esil_signext(RAnalEsil *esil)
 
 	if(!r_anal_esil_get_parm(esil, p_dst, &dst))
 	{
-		throw LowlevelError("sleigh_esil_signext: invalid parameters");
+		ERR("sleigh_esil_signext: invalid parameters.");
 		r_mem_free(p_dst);
 		return false;
 	}
@@ -2822,31 +3035,31 @@ static bool sleigh_esil_reg_get(RAnalEsil *esil)
 	char *name = r_anal_esil_pop(esil);
 	ut64 i;
 
-	if(R_ANAL_ESIL_PARM_REG != r_anal_esil_get_parm_type(esil, name))
-		throw LowlevelError("sleigh_esil_reg_get: stack top isn't register.");
-
-	is_float = sleigh_reg_get_float(esil->anal->reg, name, get_reg_type(name));
-	if(is_float)
+	if(name)
 	{
-		RRegItem *reg = r_reg_get(esil->anal->reg, name, get_reg_type(name));
-		long double res = esil_get_double(esil->anal->reg, reg);
-		ret = esil_pushnum_float(esil, res);
+		if(R_ANAL_ESIL_PARM_REG != r_anal_esil_get_parm_type(esil, name))
+			ERR("sleigh_esil_reg_get: stack top isn't register.");
+
+		is_float = sleigh_reg_get_float(esil->anal->reg, name, get_reg_type(name));
+		if(is_float)
+		{
+			RRegItem *reg = r_reg_get(esil->anal->reg, name, get_reg_type(name));
+			long double res = esil_get_double(esil->anal->reg, reg);
+			ret = esil_pushnum_float(esil, res);
+		}
+		else
+		{
+			r_anal_esil_get_parm(esil, name, &i);
+			ret = r_anal_esil_pushnum(esil, i);
+		}
+
+		r_mem_free(name);
 	}
 	else
-	{
-		r_anal_esil_get_parm(esil, name, &i);
-		ret = r_anal_esil_pushnum(esil, i);
-	}
+		ERR("sleigh_esil_reg_get: fail to get element from stack.");
 
-	r_mem_free(name);
 	return ret;
 }
-
-#define ERR(x)              \
-	if(esil->verbose)       \
-	{                       \
-		eprintf("%s\n", x); \
-	}
 
 static bool isnum(RAnalEsil *esil, const char *str, ut64 *num)
 {
@@ -2928,11 +3141,7 @@ static bool esil_eq(RAnalEsil *esil)
 	char *src = r_anal_esil_pop(esil);
 	if(!src || !dst)
 	{
-		if(esil->verbose)
-		{
-			eprintf("Missing elements in the esil stack for '=' at 0x%08" PFMT64x "\n",
-			        esil->address);
-		}
+		ERR("esil_eq: Missing elements in esil stack.");
 		return false;
 	}
 	if(ispackedreg(esil, dst))
@@ -2940,11 +3149,10 @@ static bool esil_eq(RAnalEsil *esil)
 		char *src2 = r_anal_esil_pop(esil);
 		char *newreg = r_str_newf("%sl", dst);
 		if(r_anal_esil_get_parm(esil, src2, &num2))
-		{
 			ret = r_anal_esil_reg_write(esil, newreg, num2);
-		}
-		free(newreg);
-		free(src2);
+
+		r_mem_free(newreg);
+		r_mem_free(src2);
 		goto beach;
 	}
 
@@ -2958,27 +3166,22 @@ static bool esil_eq(RAnalEsil *esil)
 			esil->lastsz = esil_internal_sizeof_reg(esil, dst);
 		}
 		else
-		{
-			ERR("esil_eq: invalid src");
-		}
+			ERR("esil_eq: invalid src.");
 	}
 	else
-	{
-		ERR("esil_eq: invalid parameters");
-	}
+		ERR("esil_eq: invalid parameters.");
 
 beach:
-	free(src);
-	free(dst);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
 static bool esil_peek_n(RAnalEsil *esil, int bits)
 {
 	if(bits & 7)
-	{
 		return false;
-	}
+
 	bool ret = false;
 	char res[32];
 	ut64 addr;
@@ -2986,9 +3189,7 @@ static bool esil_peek_n(RAnalEsil *esil, int bits)
 	char *dst = r_anal_esil_pop(esil);
 	if(!dst)
 	{
-		eprintf("ESIL-ERROR at 0x%08" PFMT64x
-		        ": Cannot peek memory without specifying an address\n",
-		        esil->address);
+		ERR("esil_peek_n: Can't peek memory without an address.");
 		return false;
 	}
 	// eprintf ("GONA PEEK %d dst:%s\n", bits, dst);
@@ -3004,7 +3205,7 @@ static bool esil_peek_n(RAnalEsil *esil, int bits)
 			r_anal_esil_push(esil, res);
 			snprintf(res, sizeof(res), "0x%" PFMT64x, c);
 			r_anal_esil_push(esil, res);
-			free(dst);
+			r_mem_free(dst);
 			return ret;
 		}
 		ut64 bitmask = genmask(bits - 1);
@@ -3012,14 +3213,13 @@ static bool esil_peek_n(RAnalEsil *esil, int bits)
 		ret = !!r_anal_esil_mem_read(esil, addr, a, bytes);
 		ut64 b = r_read_ble64(a, 0); // esil->anal->big_endian);
 		if(esil->anal->big_endian)
-		{
 			r_mem_swapendian((ut8 *)&b, (const ut8 *)&b, bytes);
-		}
+
 		snprintf(res, sizeof(res), "0x%" PFMT64x, b & bitmask);
 		r_anal_esil_push(esil, res);
 		esil->lastsz = bits;
 	}
-	free(dst);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -3034,8 +3234,8 @@ static bool esil_poke_n(RAnalEsil *esil, int bits)
 	int bytes = R_MIN(sizeof(b), bits / 8);
 	if(bits % 8)
 	{
-		free(src);
-		free(dst);
+		r_mem_free(src);
+		r_mem_free(dst);
 		return false;
 	}
 	bool ret = false;
@@ -3079,9 +3279,9 @@ static bool esil_poke_n(RAnalEsil *esil, int bits)
 		}
 	}
 out:
-	free(src2);
-	free(src);
-	free(dst);
+	r_mem_free(src2);
+	r_mem_free(src);
+	r_mem_free(dst);
 	return ret;
 }
 
@@ -3092,8 +3292,17 @@ static bool sleigh_esil_eq(RAnalEsil *esil)
 	char *src = r_anal_esil_pop(esil);
 	long double tmp;
 
-	if(!dst || !src)
-		throw LowlevelError("sleigh_esil_eq: Can't get value.");
+	if(!src)
+	{
+		ERR("sleigh_esil_eq: fail to get argument from stack.");
+		return false;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_eq: fail to get argument from stack.");
+		r_mem_free(src);
+		return false;
+	}
 
 	RRegItem *reg = r_reg_get(esil->anal->reg, dst, get_reg_type(dst));
 	if(ESIL_PARM_FLOAT == esil_get_parm_type_float(esil, src))
@@ -3110,8 +3319,8 @@ static bool sleigh_esil_eq(RAnalEsil *esil)
 		sleigh_reg_set_float(esil->anal->reg, dst, get_reg_type(dst), false);
 	}
 
-	free(dst);
-	free(src);
+	r_mem_free(dst);
+	r_mem_free(src);
 
 	return ret;
 }
@@ -3125,8 +3334,18 @@ static bool sleigh_esil_peek4(RAnalEsil *esil) // Read out
 	bool ret = false;
 	char str[64];
 
+	if(!src)
+	{
+		ERR("sleigh_esil_peek4: fail to get element from stack.");
+		return false;
+	}
+
 	if(!isnum(esil, src, &addr))
-		throw LowlevelError("sleigh_esil_peek4: Can't get addr.");
+	{
+		ERR("sleigh_esil_peek4: Can't get addr.");
+		r_mem_free(src);
+		return true;
+	}
 
 	if(float_mem.find(addr) != float_mem.end())
 	{
@@ -3142,7 +3361,7 @@ static bool sleigh_esil_peek4(RAnalEsil *esil) // Read out
 		ret = esil_peek_n(esil, 32);
 	}
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -3153,8 +3372,18 @@ static bool sleigh_esil_peek8(RAnalEsil *esil)
 	bool ret = false;
 	char str[64];
 
+	if(!src)
+	{
+		ERR("sleigh_esil_peek8: fail to get element from stack.");
+		return false;
+	}
+
 	if(!isnum(esil, src, &addr))
-		throw LowlevelError("sleigh_esil_peek8: Can't get addr.");
+	{
+		ERR("sleigh_esil_peek8: Can't get addr.");
+		r_mem_free(src);
+		return true;
+	}
 
 	if(float_mem.find(addr) != float_mem.end())
 	{
@@ -3170,7 +3399,7 @@ static bool sleigh_esil_peek8(RAnalEsil *esil)
 		ret = esil_peek_n(esil, 64);
 	}
 
-	free(src);
+	r_mem_free(src);
 	return ret;
 }
 
@@ -3182,10 +3411,21 @@ static bool sleigh_esil_poke4(RAnalEsil *esil)
 	char *src = r_anal_esil_pop(esil);
 	long double tmp;
 
-	if(!dst || !src)
-		throw LowlevelError("sleigh_esil_poke4: Can't get value.");
+	if(!src)
+	{
+		ERR("sleigh_esil_poke4: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_poke4: fail to get argument from stack.");
+		goto end2;
+	}
 	if(!isregornum(esil, dst, &addr))
-		throw LowlevelError("sleigh_esil_poke4: Can't get addr.");
+	{
+		ERR("sleigh_esil_poke4: Can't get addr.");
+		goto end2;
+	}
 
 	if(ESIL_PARM_FLOAT == esil_get_parm_type_float(esil, src))
 	{
@@ -3205,8 +3445,10 @@ static bool sleigh_esil_poke4(RAnalEsil *esil)
 			float_mem.erase(iter);
 	}
 
-	free(dst);
-	free(src);
+end2:
+	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 
 	return ret;
 }
@@ -3219,10 +3461,21 @@ static bool sleigh_esil_poke8(RAnalEsil *esil)
 	char *src = r_anal_esil_pop(esil);
 	long double tmp;
 
-	if(!dst || !src)
-		throw LowlevelError("sleigh_esil_poke4: Can't get value.");
+	if(!src)
+	{
+		ERR("sleigh_esil_poke8: fail to get argument from stack.");
+		goto end1;
+	}
+	if(!dst)
+	{
+		ERR("sleigh_esil_poke8: fail to get argument from stack.");
+		goto end2;
+	}
 	if(!isregornum(esil, dst, &addr))
-		throw LowlevelError("sleigh_esil_poke4: Can't get addr.");
+	{
+		ERR("sleigh_esil_poke8: Can't get addr.");
+		goto end2;
+	}
 
 	if(ESIL_PARM_FLOAT == esil_get_parm_type_float(esil, src))
 	{
@@ -3242,8 +3495,10 @@ static bool sleigh_esil_poke8(RAnalEsil *esil)
 			float_mem.erase(iter);
 	}
 
-	free(dst);
-	free(src);
+end2:
+	r_mem_free(dst);
+end1:
+	r_mem_free(src);
 
 	return ret;
 }

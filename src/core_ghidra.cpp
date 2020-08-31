@@ -100,7 +100,7 @@ static void PrintUsage(const RCore *const core)
 		CMD_PREFIX"s",  "", "# Display loaded Sleigh Languages",
 		CMD_PREFIX"ss", "", "# Display automatically matched Sleigh Language ID",
 		CMD_PREFIX"sd", " N", "# Disassemble N instructions with Sleigh and print pcode",
-		CMD_PREFIX"a", "", "# Enable RAsm and RAnal plugins driven by SLEIGH from Ghidra",
+		CMD_PREFIX"a", "", "# Switch to RAsm and RAnal plugins driven by SLEIGH from Ghidra",
 		CMD_PREFIX"*",  "", "# Decompiled code is returned to r2 as comment",
 		"Environment:", "", "",
 		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
