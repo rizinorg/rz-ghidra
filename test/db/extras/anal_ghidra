@@ -1,0 +1,191 @@
+NAME=x86:LE:32:default:gcc
+FILE=malloc://2048
+EXPECT=<<EOF
+            0x00000000      89e1           MOV ecx,esp
+type: mov
+----
+            0x00000000      a168a00408     MOV eax,[0x804a068]
+type: load
+----
+            0x00000000      a368a00408     MOV [0x804a068],eax
+type: store
+----
+            0x00000000      8945f0         MOV dword ptr [ebp + -0x10],eax
+type: store
+----
+            0x00000000      8b4510         MOV eax,dword ptr [ebp + 0x10]
+type: load
+----
+            0x00000000      0f4c0d030000.  CMOVL ecx,dword ptr [0x3]
+type: load
+----
+            0x00000000      cd80           INT 0x80
+type: swi
+----
+            0x00000000      ff71fc         PUSH dword ptr [ecx + -0x4]
+type: rpush
+----
+            0x00000000      6a00           PUSH 0x0
+type: upush
+----
+            0x00000000      5d             POP ebp
+type: pop
+----
+            0x00000000      83f853         CMP eax,0x53
+type: cmp
+----
+            0x00000000      85c0           TEST eax,eax
+type: acmp
+----
+            0x00000000      83c410         ADD esp,0x10
+type: add
+----
+            0x00000000      81ec88100000   SUB esp,0x1088
+type: sub
+----
+            0x00000000      f7ea           IMUL edx
+type: mul
+----
+            0x00000000      f7f2           DIV edx
+type: mod
+----
+            0x00000000      d1e8           SHR eax,1
+type: shr
+----
+            0x00000000      d1e0           SHL eax,1
+type: shl
+----
+            0x00000000      d1f8           SAR eax,1
+type: sar
+----
+            0x00000000      0b25f0ff0000   OR esp,dword ptr [0xfff0]
+type: or
+----
+            0x00000000      2325f0ff0000   AND esp,dword ptr [0xfff0]
+type: and
+----
+            0x00000000      3325f0ff0000   XOR esp,dword ptr [0xfff0]
+type: xor
+----
+            0x00000000      8703           XCHG dword ptr [ebx],eax
+type: xchg
+EOF
+CMDS=<<EOF
+e asm.cpu=x86
+e asm.bits=32
+pdga
+wx 89e1
+pd 1
+ao | grep type
+?e ----
+wx a168a00408
+pd 1
+ao | grep type
+?e ----
+wx a368a00408
+pd 1
+ao | grep type
+?e ----
+wx 8945f0
+pd 1
+ao | grep type
+?e ----
+wx 8b4510
+pd 1
+ao | grep type
+?e ----
+wx 0f4c0d03000000
+pd 1
+ao | grep type
+?e ----
+wx cd80
+pd 1
+ao | grep type
+?e ----
+wx ff71fc
+pd 1
+ao | grep type
+?e ----
+wx 6a00
+pd 1
+ao | grep type
+?e ----
+wx 5d
+pd 1
+ao | grep type
+?e ----
+wx 83f853
+pd 1
+ao | grep type
+?e ----
+wx 85c0
+pd 1
+ao | grep type
+?e ----
+wx 83c410
+pd 1
+ao | grep type
+?e ----
+wx 81ec88100000
+pd 1
+ao | grep type
+?e ----
+wx f7ea
+pd 1
+ao | grep type
+?e ----
+wx f7f2
+pd 1
+ao | grep type
+?e ----
+wx d1e8
+pd 1
+ao | grep type
+?e ----
+wx d1e0
+pd 1
+ao | grep type
+?e ----
+wx d1f8
+pd 1
+ao | grep type
+?e ----
+wx 0b25f0ff0000
+pd 1
+ao | grep type
+?e ----
+wx 2325f0ff0000
+pd 1
+ao | grep type
+?e ----
+wx 3325f0ff0000
+pd 1
+ao | grep type
+?e ----
+wx 8703
+pd 1
+ao | grep type
+EOF
+RUN
+
+NAME=AARCH64:LE:64:v8A:gcc
+FILE=malloc://2048
+EXPECT=<<EOF
+            0x00000000      298947f9       ldr x9, [x9, #0xf10]
+type: load
+----
+            0x00000200      690200f9       str x9, [x19]
+type: store
+EOF
+CMDS=<<EOF
+e asm.cpu=AARCH64:LE:64:v8A:gcc
+e asm.arch=r2ghidra
+wx 298947f9
+pd 1
+ao | grep type
+?e ----
+wx 690200f9 @ 0x200
+pd 1 @ 0x200
+ao @ 0x200| grep type
+EOF
+RUN

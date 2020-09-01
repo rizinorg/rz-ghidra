@@ -407,6 +407,7 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 
 			if(iter->input1)
 				out = resolve_arg(anal, iter->input1);
+			out.memref = iter->output->size;
 
 			if(in0.imm && iter->input1 && out.absolute != -1)
 			{
@@ -452,8 +453,11 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 				out = *p;
 
 				if(iter->type == key_pcode_load? iter->input1: iter->input0)
+				{
 					in0 = resolve_arg(anal,
 					                  iter->type == key_pcode_load? iter->input1: iter->input0);
+					if(iter->type == key_pcode_load) in0.memref = iter->output->size;
+				}
 
 				if(in0.absolute != -1 && in0.memref)
 				{
@@ -497,6 +501,7 @@ static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 				continue;
 
 			out = resolve_arg(anal, iter->input1);
+			out.memref = iter->output->size;
 
 			if(out.absolute != -1 && out.memref)
 			{
@@ -582,7 +587,10 @@ static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 		if(iter->type == key_pcode)
 		{
 			if(iter->input1)
+			{
 				out = resolve_arg(anal, iter->input1);
+				out.memref = iter->output->size;
+			}
 
 			if((out.reg && sanal.reg_mapping[sanal.sp_name] == out.reg->name) ||
 			   (out.regdelta && sanal.reg_mapping[sanal.sp_name] == out.regdelta->name))
@@ -596,6 +604,7 @@ static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 				if(arg_set_has(arg_set, in))
 					anal_op->type = R_ANAL_OP_TYPE_RPUSH;
 				anal_op->src[0] = anal_value_dup(in);
+				anal_op->dst = anal_value_dup(out);
 
 				return anal_op->type;
 			}
@@ -637,6 +646,7 @@ static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 				anal_op->type = this_type;
 				anal_op->stackop = R_ANAL_STACK_INC;
 				anal_op->dst = anal_value_dup(out);
+				anal_op->src[0] = anal_value_dup(in0);
 
 				return this_type;
 			}
@@ -666,12 +676,10 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 		{
 			if(iter->input0)
 				in0 = resolve_arg(anal, iter->input0);
-			if(!arg_set_has(arg_set, in0))
-				continue;
 
 			if(iter->input1)
 				in1 = resolve_arg(anal, iter->input1);
-			if(!arg_set_has(arg_set, in1))
+			if(!arg_set_has(arg_set, in0) && !arg_set_has(arg_set, in1))
 				continue;
 
 			if(iter->output && iter->output->is_unique())
@@ -903,29 +911,31 @@ static ut32 anal_type_XCHG(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 {
 	const ut32 this_type = R_ANAL_OP_TYPE_XCHG;
 	const PcodeOpType key_pcode = CPUI_COPY;
+	std::vector<decltype(raw_ops.cbegin())> copy_vec;
 
-	if(raw_ops.size() == 3 && raw_ops[0].type == raw_ops[1].type &&
-	   raw_ops[1].type == raw_ops[2].type && raw_ops[2].type == key_pcode)
+	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
-		if(!raw_ops[0].input0 || !raw_ops[0].output)
-			return 0;
-		if(!raw_ops[1].input0 || !raw_ops[1].output)
-			return 0;
-		if(!raw_ops[2].input0 || !raw_ops[2].output)
-			return 0;
-
-		if(*raw_ops[0].input0 == *raw_ops[1].output && *raw_ops[0].output == *raw_ops[2].input0 &&
-		   *raw_ops[1].input0 == *raw_ops[2].output)
-		{
-			anal_op->type = this_type;
-			anal_op->src[0] = anal_value_dup(resolve_arg(anal, raw_ops[0].input0));
-			anal_op->src[1] = anal_value_dup(resolve_arg(anal, raw_ops[1].input0));
-			anal_op->dst = anal_value_dup(resolve_arg(anal, raw_ops[1].output));
-
-			return this_type;
-		}
+		if(iter->type == key_pcode)
+			copy_vec.emplace_back(iter);
 	}
 
+	if(copy_vec.size() == 3)
+	{
+		if(!(*copy_vec[0]->input0 == *copy_vec[1]->output))
+			goto fail;
+		if(!(*copy_vec[0]->output == *copy_vec[2]->input0))
+			goto fail;
+		if(!(*copy_vec[1]->input0 == *copy_vec[2]->output))
+			goto fail;
+
+		anal_op->type = this_type;
+		anal_op->src[0] = anal_value_dup(resolve_arg(anal, copy_vec[0]->input0));
+		anal_op->dst = anal_value_dup(resolve_arg(anal, copy_vec[2]->output));
+
+		return this_type;
+	}
+
+fail:
 	return 0;
 }
 
@@ -988,6 +998,10 @@ static void anal_type(RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerA
 
 		if(pco->type != CPUI_STORE)
 		{
+			// You should know this case:
+			// (unique, 0xffff, 4) = INT_ADD (unique, 0xffff, 4), 2
+			// Even unique varnode can be overwritten!
+			// Here midvar_op will always track the latest define place.
 			if(pco->output && pco->output->is_unique())
 				midvar_op[pco->output->offset] = &(*pco);
 		}
@@ -1019,13 +1033,13 @@ static void anal_type(RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, InnerA
 		return;
 	if(anal_type_POP(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
-	if(anal_type_INT_XXX(anal, anal_op, pcode_slg.pcodes, arg_set))
-		return;
-	if(anal_type_NOT(anal, anal_op, pcode_slg.pcodes, arg_set))
-		return;
 	if(anal_type_STORE(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
 	if(anal_type_LOAD(anal, anal_op, pcode_slg.pcodes, arg_set))
+		return;
+	if(anal_type_INT_XXX(anal, anal_op, pcode_slg.pcodes, arg_set))
+		return;
+	if(anal_type_NOT(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
 	if(anal_type_MOV(anal, anal_op, pcode_slg.pcodes, arg_set))
 		return;
@@ -1086,10 +1100,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 		if(!arg)
 			throw LowlevelError("push_stack: arg is nullptr.");
 
-		auto iter = esil_stack.cbegin();
-		for(; iter != esil_stack.cend() && !(**iter == *arg); ++iter) {}
-		if(iter == esil_stack.cend())
-			esil_stack.push_back(arg);
+		esil_stack.push_back(arg);
 	};
 
 	for(auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter)
@@ -1368,6 +1379,8 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 			case CPUI_INT_MULT:
 			case CPUI_INT_DIV:
 			case CPUI_INT_REM:
+			case CPUI_INT_SDIV:
+			case CPUI_INT_SREM:
 			case CPUI_BOOL_XOR:
 			case CPUI_INT_XOR:
 			case CPUI_BOOL_AND:
@@ -1392,8 +1405,11 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 					switch(iter->type)
 					{
 						case CPUI_INT_MULT: ss << "*"; break;
-						case CPUI_INT_DIV: ss << "/"; break;
-						case CPUI_INT_REM: ss << "%"; break;
+						// If divide by zero happen, give out 0
+						case CPUI_INT_DIV: ss << "SWAP,DUP,!,?{,1,|,SWAP,0,&,},/"; break;
+						case CPUI_INT_REM: ss << "SWAP,DUP,!,?{,1,|,SWAP,0,&,},%"; break;
+						case CPUI_INT_SDIV: ss << "SIGN,SWAP,SIGN,DUP,!,?{,1,|,SWAP,0,&,},/"; break;
+						case CPUI_INT_SREM: ss << "SIGN,SWAP,SIGN,DUP,!,?{,1,|,SWAP,0,&,},%"; break;
 						case CPUI_INT_SUB: ss << "-"; break;
 						case CPUI_INT_ADD: ss << "+"; break;
 						case CPUI_BOOL_XOR:
@@ -1409,53 +1425,6 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 							break;
 					}
 					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
-
-					if(iter->output->is_unique())
-						push_stack(iter->output);
-					else
-						ss << "," << *iter->output << ",=";
-				}
-				else
-					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
-				break;
-			}
-
-			case CPUI_INT_SREM:
-			case CPUI_INT_SDIV:
-			{
-				auto make_mask = [&ss](int4 bytes) { ss << "," << bytes * 8 << ",1,<<,1,SWAP,-"; };
-				auto make_input = [&ss, &print_if_unique](PcodeOperand *input, int offset) {
-					ss << ",";
-					if(!print_if_unique(input))
-						ss << *input << (input->is_reg()? ",GET": "");
-				};
-				auto make_2comp = [&ss, &make_input, &make_mask](PcodeOperand *input,
-				                                                 int offset = 0) {
-					make_input(input, offset);
-					ss << ",DUP," << input->size * 8 - 1 << ",SWAP,>>,1,&,?{";
-					make_mask(input->size);
-					ss << ",^,1,+,}";
-				};
-
-				if(iter->input0 && iter->input1 && iter->output)
-				{
-					make_2comp(iter->input1);
-					make_2comp(iter->input0, 1);
-					ss << ",";
-					switch(iter->type)
-					{
-						case CPUI_INT_SREM: ss << "%"; break;
-						case CPUI_INT_SDIV: ss << "/"; break;
-					} // Now, one unsigned result is on stack
-
-					make_input(iter->input1, 1);
-					ss << "," << iter->input1->size * 8 - 1 << ",SWAP,>>,1,&";
-					make_input(iter->input0, 2);
-					ss << "," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&";
-
-					ss << ",^,?{";
-					make_mask(iter->output->size);
-					ss << ",^,1,+,}";
 
 					if(iter->output->is_unique())
 						push_stack(iter->output);
@@ -1552,14 +1521,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 					ss << ",";
 					if(!print_if_unique(iter->input0, 2))
 						ss << *iter->input0 << (iter->input0->is_reg()? ",GET": "");
-					ss << "," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&";
-
-					ss << ",^";
-
-					ss << ",";
-					if(!print_if_unique(iter->input1, 3))
-						ss << *iter->input1 << (iter->input1->is_reg()? ",GET": "");
-					ss << ",+," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&"; // (a^b^1), a, c
+					ss << "," << iter->input0->size * 8 - 1 << ",SWAP,>>,1,&"; // (r^b^1), a, r
 
 					ss << ",^,&";
 
@@ -1588,7 +1550,7 @@ static void sleigh_esil(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, 
 					else
 					{
 						ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,^";
-						ss << (iter->type == CPUI_INT_2COMP)? ",1,+": "";
+						ss << ((iter->type == CPUI_INT_2COMP)? ",1,+": "");
 					}
 
 					if(iter->output->is_unique())
@@ -1673,15 +1635,10 @@ static bool anal_type_NOP(const std::vector<Pcodeop> &Pcodes)
 	for(auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter)
 	{
 		if(iter->type == CPUI_STORE)
-		{
-			if(iter->input1 && !iter->input1->is_unique())
-				return false;
-		}
-		else
-		{
-			if(iter->output && !iter->output->is_unique())
-				return false;
-		}
+			return false;
+
+		if(iter->output && !iter->output->is_unique())
+			return false;
 	}
 
 	return true;
@@ -1690,13 +1647,9 @@ static bool anal_type_NOP(const std::vector<Pcodeop> &Pcodes)
 static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len,
                      RAnalOpMask mask)
 {
-	// anal_op->jump = UT64_MAX;
-	// anal_op->fail = UT64_MAX;
-	// anal_op->ptr = anal_op->val = UT64_MAX;
 	anal_op->addr = addr;
 	anal_op->sign = true;
 	anal_op->type = R_ANAL_OP_TYPE_ILL;
-	// anal_op->id = -1;
 
 	PcodeSlg pcode_slg(&sanal);
 	InnerAssemblyEmit assem;
@@ -1707,7 +1660,6 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 
 	if(pcode_slg.pcodes.empty())
 	{ // NOP case
-nopcase:
 		anal_op->type = R_ANAL_OP_TYPE_NOP;
 		esilprintf(anal_op, "");
 		return anal_op->size;
@@ -1844,9 +1796,6 @@ nopcase:
 	}
 	else
 	{
-		if(anal_type_NOP(pcode_slg.pcodes))
-			goto nopcase;
-
 		anal_type(a, anal_op, pcode_slg, assem);
 #if 0
 		switch(anal_op->type)
@@ -2157,6 +2106,7 @@ static char *get_reg_profile(RAnal *anal)
 }
 
 #define ERR(x)              \
+	throw LowlevelError(x); \
 	if(esil->verbose)       \
 	{                       \
 		eprintf("%s\n", x); \
@@ -2273,10 +2223,16 @@ static int esil_get_parm_float(RAnalEsil *esil, const char *str, long double *nu
 	if(!str || !*str)
 		return false;
 
-	int parm_type = esil_get_parm_type_float(esil, str);
 	if(!num || !esil)
 		return false;
 
+	if(!strcmp("0x0", str) || !strcmp("0", str))
+	{
+		*num = 0.0;
+		return true;
+	}
+
+	int parm_type = esil_get_parm_type_float(esil, str);
 	switch(parm_type)
 	{
 		case ESIL_PARM_FLOAT:
@@ -3156,7 +3112,7 @@ static bool esil_eq(RAnalEsil *esil)
 		goto beach;
 	}
 
-	if(src && dst && r_anal_esil_reg_read_nocallback(esil, dst, &num, NULL))
+	if(r_anal_esil_reg_read_nocallback(esil, dst, &num, NULL))
 	{
 		if(r_anal_esil_get_parm(esil, src, &num2))
 		{

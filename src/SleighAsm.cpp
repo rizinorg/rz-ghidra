@@ -454,6 +454,8 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 	int length = 0;
 	try
 	{
+		//PcodeEmitDummy tmp;
+		//length = trans.oneInstruction(tmp, addr); // To refresh ins cache.
 		length = trans.printAssembly(assem, addr);
 		r_strbuf_set(&op->buf_asm, assem.str);
 		/*

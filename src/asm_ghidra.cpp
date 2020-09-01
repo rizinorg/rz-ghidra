@@ -18,6 +18,7 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 		RBin *bin = a->binb.bin;
 		sasm.init(a->cpu, bin? bin->iob.io: nullptr, SleighAsm::getConfig(a));
 
+		sasm.check(a->pc, buf, len);
 		r = sasm.disassemble(op, a->pc);
 #ifndef DEBUG_EXCEPTIONS
 	}

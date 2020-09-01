@@ -311,6 +311,11 @@ public:
 	VarnodeData dumpInvar(OpTpl *op, Address &addr);
 
 	void clearCache() { ins_cache.clear(); }
+
+	ParserContext *getContext(const Address &addr,int4 state) const
+	{
+		return obtainContext(addr, state);
+	}
 };
 
 class SleighInstruction
