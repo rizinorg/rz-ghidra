@@ -2106,7 +2106,6 @@ static char *get_reg_profile(RAnal *anal)
 }
 
 #define ERR(x)              \
-	throw LowlevelError(x); \
 	if(esil->verbose)       \
 	{                       \
 		eprintf("%s\n", x); \
