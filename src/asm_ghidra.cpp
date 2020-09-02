@@ -15,7 +15,10 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 	try
 	{
 #endif
-		sasm.init(a);
+		RBin *bin = a->binb.bin;
+		sasm.init(a->cpu, bin? bin->iob.io: nullptr, SleighAsm::getConfig(a));
+
+		sasm.check(a->pc, buf, len);
 		r = sasm.disassemble(op, a->pc);
 #ifndef DEBUG_EXCEPTIONS
 	}
@@ -25,28 +28,28 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 		r = 1;
 	}
 #endif
-    op->size = r;
-    return r;
+	op->size = r;
+	return r;
 }
 
 RAsmPlugin r_asm_plugin_ghidra = {
-    /* .name = */ "r2ghidra",
-    /* .arch = */ "sleigh",
-    /* .author = */ "FXTi",
-    /* .version = */ nullptr,
-    /* .cpus = */ nullptr,
-    /* .desc = */ "SLEIGH Disassembler from Ghidra",
-    /* .license = */ "GPL3",
-    /* .user = */ nullptr,
-    /* .bits = */ 0,
-    /* .endian = */ 0,
-    /* .init = */ nullptr,
-    /* .fini = */ nullptr,
-    /* .disassemble = */ &disassemble,
-    /* .assemble = */ nullptr,
-    /* .modify */ nullptr,
-    /* .mnemonics = */ nullptr,
-    /* .features = */ nullptr
+	/* .name = */ "r2ghidra",
+	/* .arch = */ "sleigh",
+	/* .author = */ "FXTi",
+	/* .version = */ nullptr,
+	/* .cpus = */ nullptr,
+	/* .desc = */ "SLEIGH Disassembler from Ghidra",
+	/* .license = */ "GPL3",
+	/* .user = */ nullptr,
+	/* .bits = */ 0,
+	/* .endian = */ 0,
+	/* .init = */ nullptr,
+	/* .fini = */ nullptr,
+	/* .disassemble = */ &disassemble,
+	/* .assemble = */ nullptr,
+	/* .modify */ nullptr,
+	/* .mnemonics = */ nullptr,
+	/* .features = */ nullptr
 };
 
 #ifndef CORELIB

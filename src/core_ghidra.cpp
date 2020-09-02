@@ -100,6 +100,7 @@ static void PrintUsage(const RCore *const core)
 		CMD_PREFIX"s",  "", "# Display loaded Sleigh Languages",
 		CMD_PREFIX"ss", "", "# Display automatically matched Sleigh Language ID",
 		CMD_PREFIX"sd", " N", "# Disassemble N instructions with Sleigh and print pcode",
+		CMD_PREFIX"a", "", "# Switch to RAsm and RAnal plugins driven by SLEIGH from Ghidra",
 		CMD_PREFIX"*",  "", "# Decompiled code is returned to r2 as comment",
 		"Environment:", "", "",
 		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
@@ -324,31 +325,94 @@ class AssemblyRaw : public AssemblyEmit
 class PcodeRawOut : public PcodeEmit
 {
 	private:
-		static void print_vardata(ostream &s, VarnodeData &data)
+		const Translate *trans = nullptr;
+
+		void print_vardata(ostream &s, VarnodeData &data)
 		{
-			s << '(' << data.space->getName() << ',';
-			data.space->printOffset(s,data.offset);
-			s << ',' << dec << data.size << ')';
-		}
+			AddrSpace *space = data.space;
+			if(space->getName() == "register" || space->getName() == "mem")
+			    s << space->getTrans()->getRegisterName(data.space, data.offset, data.size);
+		    else if(space->getName() == "ram")
+		    {
+			    if(data.size == 1)
+				    s << "byte_ptr(";
+			    if(data.size == 2)
+				    s << "word_ptr(";
+			    if(data.size == 4)
+				    s << "dword_ptr(";
+			    if(data.size == 8)
+				    s << "qword_ptr(";
+			    space->printRaw(s, data.offset);
+			    s << ')';
+		    }
+		    else if(space->getName() == "const")
+			    static_cast<ConstantSpace *>(space)->printRaw(s, data.offset);
+		    else if(space->getName() == "unique")
+		    {
+			    s << '(' << data.space->getName() << ',';
+			    data.space->printOffset(s, data.offset);
+			    s << ',' << dec << data.size << ')';
+		    }
+		    else if(space->getName() == "DATA")
+			{
+				s << '(' << data.space->getName() << ',';
+				data.space->printOffset(s,data.offset);
+				s << ',' << dec << data.size << ')';
+			}
+			else
+			{
+			    s << '(' << data.space->getName() << ',';
+			    data.space->printOffset(s, data.offset);
+			    s << ',' << dec << data.size << ')';
+		    }
+	    }
 
 	public:
-		void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars, int4 isize) override
-		{
-			std::stringstream ss;
-			if(outvar)
-			{
-				print_vardata(ss,*outvar);
+	    PcodeRawOut(const Translate *t): trans(t) {}
+
+	    void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars,
+	              int4 isize) override
+	    {
+		    std::stringstream ss;
+		    if(opc == CPUI_STORE && isize == 3)
+		    {
+			    print_vardata(ss, vars[2]);
+			    ss << " = ";
+			    isize = 2;
+		    }
+		    if(outvar)
+		    {
+			    print_vardata(ss,*outvar);
 				ss << " = ";
-			}
-			ss << get_opname(opc);
+		    }
+		    ss << get_opname(opc);
 			// Possibly check for a code reference or a space reference
-			for(int4 i=0; i<isize; ++i)
+			ss << ' ';
+			// For indirect case in SleighBuilder::dump(OpTpl *op)'s "vn->isDynamic(*walker)" branch.
+			if (isize > 1 && vars[0].size == sizeof(AddrSpace *) && vars[0].space->getName() == "const"
+				&& (vars[0].offset >> 24) == ((uintb)vars[1].space >> 24) && trans == ((AddrSpace*)vars[0].offset)->getTrans())
 			{
-				ss << ' ';
-				print_vardata(ss, vars[i]);
-			}
+				ss << ((AddrSpace*)vars[0].offset)->getName();
+			    ss << '[';
+			    print_vardata(ss, vars[1]);
+			    ss << ']';
+			    for(int4 i = 2; i < isize; ++i)
+			    {
+				    ss << ", ";
+				    print_vardata(ss, vars[i]);
+			    }
+		    }
+		    else
+		    {
+			    print_vardata(ss, vars[0]);
+			    for(int4 i = 1; i < isize; ++i)
+			    {
+				    ss << ", ";
+					print_vardata(ss, vars[i]);
+			    }
+		    }
 			r_cons_printf("    %s\n", ss.str().c_str());
-		}
+	    }
 };
 
 static void Disassemble(RCore *core, ut64 ops)
@@ -361,14 +425,24 @@ static void Disassemble(RCore *core, ut64 ops)
 	arch.init(store);
 
 	const Translate *trans = arch.translate;
-	PcodeRawOut emit;
+	PcodeRawOut emit(arch.translate);
 	AssemblyRaw assememit;
 	Address addr(trans->getDefaultCodeSpace(), core->offset);
 	for(ut64 i=0; i<ops; i++)
 	{
-		trans->printAssembly(assememit, addr);
-		auto length = trans->oneInstruction(emit, addr);
-		addr = addr + length;
+		try
+		{
+			trans->printAssembly(assememit, addr);
+			auto length = trans->oneInstruction(emit, addr);
+			addr = addr + length;
+		}
+		catch(const BadDataError &error)
+		{
+			std::stringstream ss;
+			addr.printRaw(ss);
+			r_cons_printf("%s: invalid\n", ss.str().c_str());
+			addr = addr + trans->getAlignment();
+		}
 	}
 }
 
@@ -406,9 +480,17 @@ static void PrintAutoSleighLang(RCore *core)
 	}
 }
 
+static void EnablePlugin(RCore *core)
+{
+	auto id = SleighIdFromCore(core);
+	r_config_set(core->config, "r2ghidra.lang", id.c_str());
+	r_config_set(core->config, "asm.cpu", id.c_str());
+	r_config_set(core->config, "asm.arch", "r2ghidra");
+}
+
 static void _cmd(RCore *core, const char *input)
 {
-	switch (*input)
+	switch(*input)
 	{
 		case 'd': // "pdgd"
 			DecompileCmd(core, DecompileMode::DEBUG_XML);
@@ -441,6 +523,9 @@ static void _cmd(RCore *core, const char *input)
 					ListSleighLangs();
 					break;
 			}
+			break;
+		case 'a': // "pdga"
+			EnablePlugin(core);
 			break;
 		default:
 			PrintUsage(core);
