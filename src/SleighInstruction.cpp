@@ -455,6 +455,8 @@ int SleighInstruction::getFallThroughOffset()
 		Address off_addr = baseaddr + offset;
 		SleighInstruction ins(sleigh, off_addr);
 		int len = ins.getLength();
+		if(!len)
+			throw LowlevelError("getFallThroughOffset(): length of current instruction is zero.");
 		offset += len;
 		bytecount += len;
 	} while(bytecount < delaySlotByteCnt);
