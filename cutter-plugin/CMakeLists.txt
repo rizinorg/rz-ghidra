@@ -17,13 +17,10 @@ target_link_libraries(r2ghidra_cutter Radare2::libr)
 
 find_package(Cutter REQUIRED)
 target_link_libraries(r2ghidra_cutter Cutter::Cutter)
+target_link_libraries(r2ghidra_cutter core_ghidra)
 
 if(APPLE)
 	target_link_options(r2ghidra_cutter PRIVATE -undefined dynamic_lookup)
-endif()
-
-if(WIN32)
-	target_link_options(r2ghidra_cutter PRIVATE -FORCE:UNRESOLVED)
 endif()
 
 install(TARGETS r2ghidra_cutter DESTINATION "${CUTTER_INSTALL_PLUGDIR}")
