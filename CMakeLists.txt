@@ -3,8 +3,8 @@ set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH True)
 
 project(r2ghidra)
 
-set(RADARE2_INSTALL_PLUGDIR "share/radare2/plugins" CACHE PATH "Directory to install radare2 plugin into")
-set(CUTTER_INSTALL_PLUGDIR "share/RadareOrg/Cutter/plugins/native" CACHE PATH "Directory to install Cutter plugin into")
+set(RADARE2_INSTALL_PLUGDIR "share/radare2/plugins" CACHE STRING "Directory to install radare2 plugin into")
+set(CUTTER_INSTALL_PLUGDIR "share/RadareOrg/Cutter/plugins/native" CACHE STRING "Directory to install Cutter plugin into")
 
 set(CUTTER_SOURCE_DIR CUTTER_SOURCE_DIR-NOTFOUND CACHE STRING "Root directory of Cutter source")
 
@@ -58,10 +58,6 @@ endif()
 
 find_package(Radare2 REQUIRED)
 
-if(BUILD_CUTTER_PLUGIN)
-	add_subdirectory(cutter-plugin)
-endif()
-
 add_library(core_ghidra SHARED ${CORE_SOURCE})
 target_link_libraries(core_ghidra ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
 target_link_libraries(core_ghidra pugixml)
@@ -69,6 +65,11 @@ target_link_libraries(core_ghidra Radare2::libr)
 set_target_properties(core_ghidra PROPERTIES
 		OUTPUT_NAME core_ghidra
 		PREFIX "")
+
+
+if(BUILD_CUTTER_PLUGIN)
+	add_subdirectory(cutter-plugin)
+endif()
 
 if(BUILD_SLEIGH_PLUGIN)
 add_library(asm_ghidra SHARED ${ASM_SOURCE})
