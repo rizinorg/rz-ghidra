@@ -22,7 +22,7 @@ type: load
             0x00000000      cd80           INT 0x80
 type: swi
 ----
-            0x00000000      ff71fc         PUSH dword ptr [ecx + -0x4]
+            0x00000000      55             PUSH ebp
 type: rpush
 ----
             0x00000000      6a00           PUSH 0x0
@@ -102,7 +102,7 @@ wx cd80
 pd 1
 ao | grep type
 ?e ----
-wx ff71fc
+wx 55
 pd 1
 ao | grep type
 ?e ----

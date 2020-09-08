@@ -579,9 +579,9 @@ void AssemblySlg::dump(const Address &addr, const string &mnem, const string &bo
 	for(ut64 i = 0; i < body.size();)
 	{
 		std::string tmp;
-		while(!std::isalnum(body[i]))
+		while(i < body.size() && !std::isalnum(body[i]))
 			res.push_back(body[i++]);
-		while(std::isalnum(body[i]))
+		while(i < body.size() && std::isalnum(body[i]))
 			tmp.push_back(body[i++]);
 		if(sasm->reg_mapping.find(tmp) != sasm->reg_mapping.end())
 			res += sasm->reg_mapping[tmp];
