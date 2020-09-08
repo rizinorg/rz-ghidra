@@ -62,6 +62,8 @@ set(ANAL_SOURCE
 		src/SleighAsm.cpp
 		src/SleighInstruction.h
 		src/SleighInstruction.cpp
+		src/SleighAnalValue.h
+		src/SleighAnalValue.cpp
 		src/anal_ghidra.cpp)
 endif()
 
