@@ -11,27 +11,16 @@
 #include <unordered_map>
 #include <list>
 
-/**
- * There is still room for optimization, Now SleighInstruction
- * is actually SleighInstructionPrototype in JAVA codebase.
- * But changes to per-instruction implementation.
- * In JAVA codebase, SleighInstructionPrototype is Constructor
- * pattern of one kind of instructions. And concrete flow destination
- * address will be resolved on actual buffer of specified instruction.
- * That's why JAVA codebase cache SleighInstructionPrototype in SleighLanguage.
- * Multiple InstructionContext will be mapped to one single cache prototype,
- * which will save time and space of collecting Constructors.
- * But to implement that in C++ codebase, you will have to create something
- * like InstructionContext and move necessary status and API to that.
- */
-
 template<typename K, typename V>
 class LRUCache
 {
 private:
 	std::list<std::pair<K, V>> item_list;
 	std::unordered_map<K, decltype(item_list.begin())> item_map;
-	const size_t cache_size = 4096; // This takes ~80MB memory space.
+	// Do not enlarge this.
+	// This sync with DisassemblyCache's windowsize,
+	// inited with sleigh itself.
+	const size_t cache_size = 32;
 
 	void clean()
 	{
@@ -276,41 +265,50 @@ public:
 	}
 };
 
-class SleighInstruction;
+class SleighInstructionPrototype;
 class SleighParserContext : public ParserContext
 {
 private:
-	SleighInstruction *prototype = nullptr;
+	SleighInstructionPrototype *prototype = nullptr;
 
 public:
 	SleighParserContext(ContextCache *ccache): ParserContext(ccache) {}
-	SleighInstruction *getPrototype() { return prototype; }
-	void setPrototype(SleighInstruction *p, int4 maxparam);
+	SleighInstructionPrototype *getPrototype() { return prototype; }
+	void setPrototype(SleighInstructionPrototype *p);
 };
 
 class SleighInstruction;
+class SleighInstructionPrototype;
 class R2Sleigh : public Sleigh
 {
-	// To export protected member functions to SleighInstruction
-	friend SleighInstruction;
+	// To export protected member functions to SleighInstructionPrototype
+	friend SleighInstructionPrototype;
 
 private:
+	LoadImage *R2loader = nullptr;
 	mutable LRUCache<uintm, SleighInstruction *> ins_cache;
+	mutable unordered_map<uint4, SleighInstructionPrototype *> proto_cache;
 
 	void generateLocation(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker);
 	void generatePointer(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker);
 
 public:
-	R2Sleigh(LoadImage *ld, ContextDatabase *c_db): Sleigh(ld, c_db) {}
+	R2Sleigh(LoadImage *ld, ContextDatabase *c_db): R2loader(ld), Sleigh(ld, c_db) {}
 	~R2Sleigh() { clearCache(); }
+	
+	void reset(LoadImage *ld,ContextDatabase *c_db) { R2loader = ld; Sleigh::reset(ld, c_db); }
+	void reconstructContext(ParserContext &protoContext);
+	SleighParserContext *newSleighParserContext(Address &addr, SleighInstructionPrototype *proto);
+	SleighParserContext *getParserContext(Address &addr, SleighInstructionPrototype *proto);
 
-	SleighParserContext *getParserContext(SleighInstruction *proto);
-
+	SleighInstructionPrototype *getPrototype(SleighInstruction *context);
 	SleighInstruction *getInstruction(Address &addr);
 
 	VarnodeData dumpInvar(OpTpl *op, Address &addr);
 
-	void clearCache() { ins_cache.clear(); }
+	void resolve(SleighParserContext &pos) const;
+	void clearCache();
+	LRUCache<uintm, SleighInstruction *> *getInsCache() { return &ins_cache; }
 
 	ParserContext *getContext(const Address &addr,int4 state) const
 	{
@@ -318,7 +316,22 @@ public:
 	}
 };
 
-class SleighInstruction
+struct SleighInstruction
+{
+	Address baseaddr;
+	SleighInstructionPrototype *proto = nullptr;
+
+	SleighInstruction(Address &addr): baseaddr(addr) {}
+
+	FlowType getFlowType();
+	std::vector<Address> getFlows();
+	SleighParserContext *getParserContext();
+	SleighParserContext *getParserContext(Address &addr);
+	Address getFallThrough();
+	VarnodeData getIndirectInvar();
+};
+
+class SleighInstructionPrototype
 {
 	/* Compared to Java version of SleighInstructionPrototype,
 	 * Java choose to resolve all the constructors involved in instruction in ctor
@@ -362,13 +375,10 @@ private:
 	std::vector<FlowRecord *> flowStateList;
 	std::vector<std::vector<FlowRecord *>> flowStateListNamed;
 	R2Sleigh *sleigh = nullptr;
-	SleighParserContext *protoContext = nullptr;
 
-	FlowFlags gatherFlags(FlowFlags curflags, int secnum);
-	void gatherFlows(std::vector<Address> &res, ParserContext *parsecontext, int secnum);
+	FlowFlags gatherFlags(FlowFlags curflags, SleighInstruction *inst, int secnum);
+	void gatherFlows(std::vector<Address> &res, SleighInstruction *inst, int secnum);
 	Address getHandleAddr(FixedHandle &hand, AddrSpace *curSpace);
-	void cacheTreeInfo(); // It could be renamed to parse(), but keep original name to ease later
-	                      // update
 	static FlowType convertFlowFlags(FlowFlags flags);
 	static FlowType flowListToFlowType(std::vector<FlowRecord *> &flowstate);
 	static bool handleIsInvalid(FixedHandle &hand);
@@ -377,67 +387,84 @@ private:
 	                            FlowSummary &summary);
 
 public:
-	Address baseaddr;
+	SleighInstruction *inst = nullptr;
 	ConstructState rootState;
 	uint4 hashCode = 0;
 
-	FlowType getFlowType();
-	std::vector<Address> getFlows();
+	FlowType getFlowType(SleighInstruction *inst);
+	std::vector<Address> getFlows(SleighInstruction *inst);
 	static const char *printFlowType(FlowType t);
 	int getLength() { return length; }
-	Address getFallThrough();
-	int getFallThroughOffset();
-	bool isFallthrough() { return flowTypeHasFallthrough(getFlowType()); }
-	VarnodeData getIndirectInvar()
-	{
-		std::vector<FlowRecord *> curlist = flowStateList;
-		for(FlowRecord *rec: curlist)
-		{
-			if((rec->flowFlags & (FLOW_BRANCH_INDIRECT | FLOW_CALL_INDIRECT)) != 0)
-				return sleigh->dumpInvar(rec->op, baseaddr);
-		}
-		return VarnodeData();
-	}
+	Address getFallThrough(SleighInstruction *inst);
+	int getFallThroughOffset(SleighInstruction *inst);
+	// bool isFallthrough() { return flowTypeHasFallthrough(getFlowType()); }
+	SleighParserContext *getParserContext(Address &addr) { return sleigh->getParserContext(addr, this); }
+	void cacheTreeInfo(); // It could be renamed to parse(), but keep original name to ease update
+	VarnodeData getIndirectInvar(SleighInstruction *ins);
 
-	SleighInstruction(R2Sleigh *s, Address &addr): sleigh(s), baseaddr(addr)
+	SleighInstructionPrototype(R2Sleigh *s, SleighInstruction *i): sleigh(s), inst(i)
 	{
 		if(sleigh == nullptr)
-			throw LowlevelError("Null pointer in SleighInstruction ctor");
+			throw LowlevelError("Null pointer in SleighInstructionPrototype ctor");
 
 		rootState.parent = nullptr; // rootState = new ConstructState(null);
 
-		protoContext = sleigh->getParserContext(this);
-
+		SleighParserContext *protoContext = sleigh->newSleighParserContext(inst->baseaddr, this);
+		sleigh->resolve(*protoContext);
+		delete protoContext;
 		hashCode = hashConstructState(&rootState, 0x56c93c59);
+		// std::cerr << inst->baseaddr << ": 0x" << hex << hashCode << std::endl;
 
 		length = rootState.length;
-
-		cacheTreeInfo();
 	}
 
-	~SleighInstruction()
+	~SleighInstructionPrototype()
 	{
-		if(protoContext)
-			delete protoContext;
-
 		flowStateListNamed.push_back(flowStateList);
-
 		for(auto outer = flowStateListNamed.begin(); outer != flowStateListNamed.end(); outer++)
 			for(auto inner = outer->begin(); inner != outer->end(); inner++)
 				delete *inner;
+
+		clearRootState(&rootState);
+	}
+
+	void clearRootState(ConstructState *curr)
+	{
+		// Classic DFS
+		if(curr)
+		{
+			for(auto iter = curr->resolve.begin(); iter != curr->resolve.end(); ++iter)
+			{
+				if(*iter)
+					clearRootState(*iter);
+				delete *iter;
+			}
+		}
 	}
 };
 
-class SubParserWalker : public ParserWalker
+class SleighParserWalker : public ParserWalkerChange
 {
 public:
-	SubParserWalker(const ParserContext *c): ParserWalker(c) {}
+	SleighParserWalker(ParserContext *c): ParserWalkerChange(c) {}
 
 	void subTreeState(ConstructState *subtree)
 	{
 		point = subtree;
 		depth = 0;
 		breadcrumb[0] = 0;
+	}
+
+	void allocateOperand(int4 i)
+	{
+		ConstructState *opstate = new ConstructState;
+		opstate->ct = nullptr;
+		opstate->parent = point;
+
+		point->resolve.emplace_back(opstate);
+		breadcrumb[depth++] += 1;
+		point = opstate;
+		breadcrumb[depth] = 0;
 	}
 };
 

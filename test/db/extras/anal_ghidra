@@ -20,7 +20,7 @@ type: load
 type: load
 ----
             0x00000000      cd80           INT 0x80
-type: swi
+type: ucall
 ----
             0x00000000      55             PUSH ebp
 type: rpush

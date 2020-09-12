@@ -2,37 +2,155 @@
 
 #include "SleighInstruction.h"
 
-SleighInstruction *R2Sleigh::getInstruction(Address &addr)
+SleighInstructionPrototype *R2Sleigh::getPrototype(SleighInstruction *context)
 {
-	SleighInstruction *ins = nullptr;
-	if(!ins_cache.has(addr.getOffset()))
+	SleighInstructionPrototype *new_proto = new SleighInstructionPrototype(this, context);
+	uint4 hash = new_proto->hashCode;
+
+	if(proto_cache.find(hash) == proto_cache.end())
 	{
-		ins = new SleighInstruction(this, addr);
-		// ins->cacheTreeInfo();
-		ins_cache.put(addr.getOffset(), ins);
+		new_proto->cacheTreeInfo();
+		proto_cache[hash] = new_proto;
 	}
 	else
-		ins = ins_cache.get(addr.getOffset());
+	{
+		delete new_proto;
+		new_proto = proto_cache[hash];
+	}
 
-	return ins;
+	return new_proto;
 }
 
-void SleighParserContext::setPrototype(SleighInstruction *p, int4 maxparam)
+SleighInstruction *R2Sleigh::getInstruction(Address &addr)
+{
+	SleighInstruction *inst = nullptr;
+	if(!ins_cache.has(addr.getOffset()))
+	{
+		inst = new SleighInstruction(addr);
+		inst->proto = getPrototype(inst);
+		ins_cache.put(addr.getOffset(), inst);
+	}
+	else
+		inst = ins_cache.get(addr.getOffset());
+
+	return inst;
+}
+
+void SleighParserContext::setPrototype(SleighInstructionPrototype *p)
 {
 	prototype = p;
-	prototype->rootState.resolve.resize(maxparam);
 	*getBaseState() = &prototype->rootState;
 }
 
-SleighParserContext *R2Sleigh::getParserContext(SleighInstruction *proto)
+void R2Sleigh::reconstructContext(ParserContext &protoContext)
+{
+	// R2loader->loadFill(protoContext.getBuffer(), 16, protoContext.getAddr());
+	ParserWalkerChange walker(&protoContext);
+	protoContext.deallocateState(walker);	// Clear the previous resolve and initialize the walker
+	protoContext.setDelaySlot(0);
+	// protoContext.loadContext();
+	while(walker.isState())
+	{
+		Constructor *ct = walker.getConstructor();
+		if(ct)
+		{
+			int oper = walker.getOperand();
+			int numoper = ct->getNumOperands();
+			if(oper == 0)		// Upon first entry to this Constructor
+				ct->applyContext(walker); // Apply its context changes
+			if(oper < numoper)
+			{
+				walker.pushOperand(oper);
+				continue;
+			}
+			if(oper >= numoper)
+			{
+				ConstructTpl *templ = ct->getTempl();
+				if (templ && templ->delaySlot() > 0)
+					protoContext.setDelaySlot(templ->delaySlot());
+			}
+		}
+		walker.popOperand();
+	}
+	protoContext.setNaddr(protoContext.getAddr() + protoContext.getLength());	// Update Naddr to pointer after instruction
+	protoContext.setParserState(ParserContext::disassembly);
+}
+
+SleighParserContext *R2Sleigh::getParserContext(Address &addr, SleighInstructionPrototype *proto)
+{
+	SleighParserContext *pos = newSleighParserContext(addr, proto);
+	reconstructContext(*pos);
+	resolveHandles(*pos);
+
+	return pos;
+}
+
+SleighParserContext *R2Sleigh::newSleighParserContext(Address &addr, SleighInstructionPrototype *proto)
 {
 	SleighParserContext *pos = new SleighParserContext(getContextCache());
-	pos->initialize(75, 20, getConstantSpace());
-	pos->setAddr(proto->baseaddr);
-	pos->setPrototype(proto, 20);
-	resolve(*pos); // Resolve ALL the constructors involved in the instruction at this address
-	resolveHandles(*pos); // Resolve handles (assuming Constructors already resolved)
+	pos->initialize(1, 0, getConstantSpace());
+	pos->setAddr(addr);
+	pos->setPrototype(proto);
+	// resolve(*pos); // Resolve ALL the constructors involved in the instruction at this address
+	// resolveHandles(*pos); // Resolve handles (assuming Constructors already resolved)
 	return pos;
+}
+
+void R2Sleigh::resolve(SleighParserContext &pos) const
+{				// Resolve ALL the constructors involved in the
+				// instruction at this address
+	R2loader->loadFill(pos.getBuffer(), 16, pos.getAddr());
+	SleighParserWalker walker(&pos);
+	pos.deallocateState(walker);	// Clear the previous resolve and initialize the walker
+	Constructor *ct, *subct;
+	uint4 off;
+	int4 oper, numoper;
+
+	pos.setDelaySlot(0);
+	walker.setOffset(0);		// Initial offset
+	pos.clearCommits();		// Clear any old context commits
+	pos.loadContext();		// Get context for current address
+	ct = root->resolve(walker);	// Base constructor
+	walker.setConstructor(ct);
+	ct->applyContext(walker);
+	while(walker.isState())
+	{
+		ct = walker.getConstructor();
+		oper = walker.getOperand();
+		numoper = ct->getNumOperands();
+		while(oper < numoper)
+		{
+			OperandSymbol *sym = ct->getOperand(oper);
+			off = walker.getOffset(sym->getOffsetBase()) + sym->getRelativeOffset();
+			walker.allocateOperand(oper); // Here's the only difference from original one in sleigh.cc
+			walker.setOffset(off);
+			TripleSymbol *tsym = sym->getDefiningSymbol();
+			if(tsym)
+			{
+				subct = tsym->resolve(walker);
+				if(subct)
+				{
+					walker.setConstructor(subct);
+					subct->applyContext(walker);
+					break;
+				}
+			}
+			walker.setCurrentLength(sym->getMinimumLength());
+			walker.popOperand();
+			oper += 1;
+		}
+		if(oper >= numoper)
+		{ // Finished processing constructor
+			walker.calcCurrentLength(ct->getMinimumLength(),numoper);
+			walker.popOperand();
+			// Check for use of delayslot
+			ConstructTpl *templ = ct->getTempl();
+			if(templ && templ->delaySlot() > 0)
+				pos.setDelaySlot(templ->delaySlot());
+		}
+	}
+	pos.setNaddr(pos.getAddr() + pos.getLength());	// Update Naddr to pointer after instruction
+	pos.setParserState(ParserContext::disassembly);
 }
 
 void R2Sleigh::generateLocation(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker)
@@ -83,7 +201,7 @@ VarnodeData R2Sleigh::dumpInvar(OpTpl *op, Address &addr)
 	return res;
 }
 
-const char *SleighInstruction::printFlowType(FlowType t)
+const char *SleighInstructionPrototype::printFlowType(FlowType t)
 {
 	switch(t)
 	{
@@ -107,7 +225,7 @@ const char *SleighInstruction::printFlowType(FlowType t)
 	}
 }
 
-FlowType SleighInstruction::convertFlowFlags(FlowFlags flags)
+FlowType SleighInstructionPrototype::convertFlowFlags(FlowFlags flags)
 {
 	if((flags & FLOW_LABEL) != 0)
 		flags = FlowFlags(flags | FLOW_BRANCH_TO_END);
@@ -156,7 +274,7 @@ FlowType SleighInstruction::convertFlowFlags(FlowFlags flags)
 	return FlowType::INVALID;
 }
 
-void SleighInstruction::addExplicitFlow(ConstructState *state, OpTpl *op, FlowFlags flags,
+void SleighInstructionPrototype::addExplicitFlow(ConstructState *state, OpTpl *op, FlowFlags flags,
                                         FlowSummary &summary)
 {
 	FlowRecord *res = new FlowRecord();
@@ -192,7 +310,7 @@ void SleighInstruction::addExplicitFlow(ConstructState *state, OpTpl *op, FlowFl
  * Collect flowFlags FlowRecords
  * @param walker the pcode template walker
  */
-SleighInstruction::FlowSummary SleighInstruction::walkTemplates(OpTplWalker &walker)
+SleighInstructionPrototype::FlowSummary SleighInstructionPrototype::walkTemplates(OpTplWalker &walker)
 {
 	FlowSummary res;
 	ConstTpl::const_type destType;
@@ -271,7 +389,7 @@ SleighInstruction::FlowSummary SleighInstruction::walkTemplates(OpTplWalker &wal
 	return res;
 }
 
-FlowType SleighInstruction::flowListToFlowType(std::vector<FlowRecord *> &flowstate)
+FlowType SleighInstructionPrototype::flowListToFlowType(std::vector<FlowRecord *> &flowstate)
 {
 	if(flowstate.empty())
 		return FlowType::FALL_THROUGH;
@@ -288,7 +406,7 @@ FlowType SleighInstruction::flowListToFlowType(std::vector<FlowRecord *> &flowst
  * Walk the Constructor tree gathering ConstructStates which are flow destinations (flowStateList)
  * flowFlags and delayslot directives
  */
-void SleighInstruction::cacheTreeInfo()
+void SleighInstructionPrototype::cacheTreeInfo()
 {
 	OpTplWalker walker(&rootState, -1);
 	FlowSummary summary = walkTemplates(walker);
@@ -313,7 +431,18 @@ void SleighInstruction::cacheTreeInfo()
 	}
 }
 
-SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, int secnum)
+VarnodeData SleighInstructionPrototype::getIndirectInvar(SleighInstruction *inst)
+{
+	std::vector<FlowRecord *> curlist = flowStateList;
+	for(FlowRecord *rec: curlist)
+	{
+		if((rec->flowFlags & (FLOW_BRANCH_INDIRECT | FLOW_CALL_INDIRECT)) != 0)
+			return sleigh->dumpInvar(rec->op, inst->baseaddr);
+	}
+	return VarnodeData();
+}
+
+SleighInstructionPrototype::FlowFlags SleighInstructionPrototype::gatherFlags(FlowFlags curflags, SleighInstruction *inst, int secnum)
 {
 	std::vector<FlowRecord *> curlist;
 	if(secnum < 0)
@@ -324,14 +453,15 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 	if(curlist.empty())
 		return curflags;
 
+	SleighParserContext *pos = inst->getParserContext();
+	pos->applyCommits();
+	pos->clearCommits();
+
 	for(FlowRecord *rec: curlist)
 	{
 		if((rec->flowFlags & FLOW_CROSSBUILD) != 0)
 		{
-			SleighParserContext *pos = protoContext;
-			pos->applyCommits();
-			pos->clearCommits();
-			SubParserWalker walker(pos);
+			SleighParserWalker walker(pos);
 			walker.subTreeState(rec->addressnode);
 
 			VarnodeTpl *vn = rec->op->getIn(0);
@@ -339,9 +469,10 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 			uintb addr = spc->wrapOffset(vn->getOffset().fix(walker));
 
 			Address newaddr(spc, addr);
+			SleighParserContext *crosscontext = inst->getParserContext(newaddr);
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
-			SleighInstruction *crossproto = sleigh->getInstruction(newaddr);
-			curflags = crossproto->gatherFlags(curflags, newsecnum);
+			curflags = crosscontext->getPrototype()->gatherFlags(curflags, inst, newsecnum);
+			delete crosscontext;
 		}
 		else
 		{
@@ -349,10 +480,13 @@ SleighInstruction::FlowFlags SleighInstruction::gatherFlags(FlowFlags curflags, 
 			curflags = FlowFlags(curflags | rec->flowFlags);
 		}
 	}
+
+	delete pos;
+
 	return curflags;
 }
 
-void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *parsecontext,
+void SleighInstructionPrototype::gatherFlows(std::vector<Address> &res, SleighInstruction *inst,
                                     int secnum)
 {
 	std::vector<FlowRecord *> curlist;
@@ -364,20 +498,26 @@ void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *pa
 	if(curlist.empty())
 		return;
 
+	SleighParserContext *parsecontext = inst->getParserContext();
+	parsecontext->applyCommits();
+	parsecontext->clearCommits();
+
 	for(FlowRecord *rec: curlist)
 	{
 		if((rec->flowFlags & FLOW_CROSSBUILD) != 0)
 		{
-			SubParserWalker walker(parsecontext);
+			SleighParserWalker walker(parsecontext);
 			walker.subTreeState(rec->addressnode);
 
 			VarnodeTpl *vn = rec->op->getIn(0);
 			AddrSpace *spc = vn->getSpace().fixSpace(walker);
 			uintb addr = spc->wrapOffset(vn->getOffset().fix(walker));
+
 			Address newaddr(spc, addr);
+			SleighParserContext *crosscontext = inst->getParserContext(newaddr);
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
-			SleighInstruction *crossproto = sleigh->getInstruction(newaddr);
-			crossproto->gatherFlows(res, crossproto->protoContext, newsecnum);
+			crosscontext->getPrototype()->gatherFlows(res, inst, newsecnum);
+			delete crosscontext;
 		}
 		else if((rec->flowFlags & (FLOW_JUMPOUT | FLOW_CALL)) != 0)
 		{
@@ -389,9 +529,11 @@ void SleighInstruction::gatherFlows(std::vector<Address> &res, ParserContext *pa
 			}
 		}
 	}
+
+	delete parsecontext;
 }
 
-Address SleighInstruction::getHandleAddr(FixedHandle &hand, AddrSpace *curSpace)
+Address SleighInstructionPrototype::getHandleAddr(FixedHandle &hand, AddrSpace *curSpace)
 {
 	if(handleIsInvalid(hand) || hand.space->getType() == spacetype::IPTR_INTERNAL ||
 	   hand.offset_space != nullptr)
@@ -408,42 +550,39 @@ Address SleighInstruction::getHandleAddr(FixedHandle &hand, AddrSpace *curSpace)
 	return newaddr;
 }
 
-bool SleighInstruction::handleIsInvalid(FixedHandle &hand)
+bool SleighInstructionPrototype::handleIsInvalid(FixedHandle &hand)
 {
 	return hand.space == nullptr;
 }
 
-FlowType SleighInstruction::getFlowType()
+FlowType SleighInstructionPrototype::getFlowType(SleighInstruction *inst)
 {
 	if(!hasCrossBuilds)
 		return flowType;
 
-	return convertFlowFlags(gatherFlags(FlowFlags(0), -1));
+	return convertFlowFlags(gatherFlags(FlowFlags(0), inst, -1));
 }
 
-std::vector<Address> SleighInstruction::getFlows()
+std::vector<Address> SleighInstructionPrototype::getFlows(SleighInstruction *inst)
 {
 	std::vector<Address> addresses;
 	if(flowStateList.empty())
 		return addresses;
 
-	SleighParserContext *pos = protoContext;
-	pos->applyCommits();
-	pos->clearCommits();
-	gatherFlows(addresses, pos, -1);
+	gatherFlows(addresses, inst, -1);
 
 	return addresses;
 }
 
-Address SleighInstruction::getFallThrough()
+Address SleighInstructionPrototype::getFallThrough(SleighInstruction *inst)
 {
 	if(flowTypeHasFallthrough(flowType))
-		return baseaddr + getFallThroughOffset();
+		return inst->baseaddr + getFallThroughOffset(inst);
 
 	return Address();
 }
 
-int SleighInstruction::getFallThroughOffset()
+int SleighInstructionPrototype::getFallThroughOffset(SleighInstruction *inst)
 {
 	if(delaySlotByteCnt <= 0)
 		return getLength();
@@ -452,13 +591,64 @@ int SleighInstruction::getFallThroughOffset()
 	int bytecount = 0;
 	do
 	{
-		Address off_addr = baseaddr + offset;
-		SleighInstruction ins(sleigh, off_addr);
-		int len = ins.getLength();
+		Address off_addr = inst->baseaddr + offset;
+		SleighInstruction inst(off_addr);
+
+		SleighInstructionPrototype *ins = sleigh->getPrototype(&inst);
+		int len = ins->getLength();
 		if(!len)
 			throw LowlevelError("getFallThroughOffset(): length of current instruction is zero.");
 		offset += len;
 		bytecount += len;
 	} while(bytecount < delaySlotByteCnt);
 	return offset;
+}
+
+void R2Sleigh::clearCache()
+{
+	ins_cache.clear();
+	for(auto p = proto_cache.begin(); p != proto_cache.end(); ++p)
+		delete p->second;
+}
+
+FlowType SleighInstruction::getFlowType()
+{
+	if(!proto)
+		throw LowlevelError("getFlowType: proto is not inited.");
+	return proto->getFlowType(this);
+}
+
+std::vector<Address> SleighInstruction::getFlows()
+{
+	if(!proto)
+		throw LowlevelError("getFlows: proto is not inited.");
+	return proto->getFlows(this);
+}
+
+SleighParserContext *SleighInstruction::getParserContext(Address &addr)
+{
+	if(!proto)
+		throw LowlevelError("getParserContext: proto is not inited.");
+	return proto->getParserContext(addr);
+}
+
+SleighParserContext *SleighInstruction::getParserContext()
+{
+	if(!proto)
+		throw LowlevelError("getParserContext: proto is not inited.");
+	return proto->getParserContext(baseaddr);
+}
+
+Address SleighInstruction::getFallThrough()
+{
+	if(!proto)
+		throw LowlevelError("getFallThrough: proto is not inited.");
+	return proto->getFallThrough(this);
+}
+
+VarnodeData SleighInstruction::getIndirectInvar()
+{
+	if(!proto)
+		throw LowlevelError("getIndirectInvar: proto is not inited.");
+	return proto->getIndirectInvar(this);
 }
