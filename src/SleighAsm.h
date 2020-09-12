@@ -257,6 +257,9 @@ public:
 			if(i != len)
 				ctx->setParserState(ParserContext::uninitialized);
 		}
+
+		if(trans.getInsCache()->has(offset))
+			trans.getInsCache()->clear();
 	}
 };
 

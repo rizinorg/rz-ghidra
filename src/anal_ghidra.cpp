@@ -432,7 +432,7 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 	return 0;
 }
 
-static ut32 anal_type_INT_XXX(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 anal_type_XXX(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
                               const std::unordered_set<std::string> &reg_set)
 {
 	// R_ANAL_OP_TYPE_ADD
@@ -743,7 +743,7 @@ static void anal_type(RAnal *anal, RAnalOp *anal_op, PcodeSlg &pcode_slg, Assemb
 		return;
 	if(anal_type_LOAD(anal, anal_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_INT_XXX(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(anal_type_XXX(anal, anal_op, pcode_slg.pcodes, reg_set))
 		return;
 	if(anal_type_NOT(anal, anal_op, pcode_slg.pcodes, reg_set))
 		return;
@@ -1362,6 +1362,7 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	PcodeSlg pcode_slg(&sanal);
 	AssemblySlg assem(&sanal);
 	Address caddr(sanal.trans.getDefaultCodeSpace(), addr);
+	sanal.check(addr, data, len);
 	anal_op->size = sanal.genOpcode(pcode_slg, caddr);
 	if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, caddr) < 1))
 		return anal_op->size; // When current place has no available code, return ILL.
