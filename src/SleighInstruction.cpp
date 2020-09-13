@@ -24,14 +24,18 @@ SleighInstructionPrototype *R2Sleigh::getPrototype(SleighInstruction *context)
 SleighInstruction *R2Sleigh::getInstruction(Address &addr)
 {
 	SleighInstruction *inst = nullptr;
+	/*
 	if(!ins_cache.has(addr.getOffset()))
 	{
+		*/
 		inst = new SleighInstruction(addr);
 		inst->proto = getPrototype(inst);
+		/*
 		ins_cache.put(addr.getOffset(), inst);
 	}
 	else
 		inst = ins_cache.get(addr.getOffset());
+	*/
 
 	return inst;
 }
