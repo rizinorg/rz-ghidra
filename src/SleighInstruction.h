@@ -17,9 +17,9 @@ class LRUCache
 private:
 	std::list<std::pair<K, V>> item_list;
 	std::unordered_map<K, decltype(item_list.begin())> item_map;
-	// Do not enlarge this.
-	// This sync with DisassemblyCache's windowsize,
-	// inited with sleigh itself.
+	// This should sync cachesize with DisassemblyCache,
+	// but default setting of it is just 2 elements cached.
+	// So disable this cache for now.
 	const size_t cache_size = 32;
 
 	void clean()
@@ -460,6 +460,9 @@ public:
 		ConstructState *opstate = new ConstructState;
 		opstate->ct = nullptr;
 		opstate->parent = point;
+		opstate->length = opstate->offset = 0;
+		opstate->hand.space = opstate->hand.offset_space = opstate->hand.temp_space = nullptr;
+		opstate->hand.size = opstate->hand.offset_offset = opstate->hand.offset_size = opstate->hand.temp_offset = 0;
 
 		point->resolve.emplace_back(opstate);
 		breadcrumb[depth++] += 1;

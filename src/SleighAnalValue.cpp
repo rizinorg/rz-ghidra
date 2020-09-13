@@ -219,9 +219,7 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RAnal *anal,
 	}
 	else
 	{
-		auto iter = curr_op;
-
-		while(++iter != end_op)
+		for(auto iter = ++curr_op; iter != end_op; ++iter)
 		{
 			if(iter->type == CPUI_STORE)
 			{
