@@ -408,6 +408,10 @@ public:
 			throw LowlevelError("Null pointer in SleighInstructionPrototype ctor");
 
 		rootState.parent = nullptr; // rootState = new ConstructState(null);
+		rootState.ct = nullptr;
+		rootState.length = rootState.offset = 0;
+		rootState.hand.space = rootState.hand.offset_space = rootState.hand.temp_space = nullptr;
+		rootState.hand.size = rootState.hand.offset_offset = rootState.hand.offset_size = rootState.hand.temp_offset = 0;
 
 		SleighParserContext *protoContext = sleigh->newSleighParserContext(inst->baseaddr, this);
 		sleigh->resolve(*protoContext);

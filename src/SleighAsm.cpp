@@ -454,8 +454,6 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 	int length = 0;
 	try
 	{
-		//PcodeEmitDummy tmp;
-		//length = trans.oneInstruction(tmp, addr); // To refresh ins cache.
 		length = trans.printAssembly(assem, addr);
 		r_strbuf_set(&op->buf_asm, assem.str);
 		/*
@@ -622,4 +620,17 @@ PcodeOperand *PcodeSlg::parse_vardata(VarnodeData &data)
 	else
 		throw LowlevelError("Unsupported AddrSpace type appear.");
 	return operand;
+}
+
+void SleighAsm::check(ut64 offset, const ut8 *buf, int len)
+{ // To refresh cache when file content is modified.
+	ParserContext *ctx = trans.getContext(Address(trans.getDefaultCodeSpace(), offset), ParserContext::uninitialized);
+	if(ctx->getParserState() > ParserContext::uninitialized)
+	{
+		ut8 *cached = ctx->getBuffer();
+		int i = 0;
+		for(; i < len && cached[i] == buf[i]; ++i) {}
+		if(i != len)
+			ctx->setParserState(ParserContext::uninitialized);
+	}
 }

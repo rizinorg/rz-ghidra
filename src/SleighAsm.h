@@ -246,21 +246,7 @@ public:
 	std::vector<R2Reg> getRegs(void);
 	static RConfig *getConfig(RAsm *a);
 	static RConfig *getConfig(RAnal *a);
-	void check(ut64 offset, const ut8 *buf, int len)
-	{ // To refresh cache when file content is modified.
-		ParserContext *ctx = trans.getContext(Address(trans.getDefaultCodeSpace(), offset), ParserContext::uninitialized);
-		if(ctx->getParserState() > ParserContext::uninitialized)
-		{
-			ut8 *cached = ctx->getBuffer();
-			int i = 0;
-			for(; i < len && cached[i] == buf[i]; ++i) {}
-			if(i != len)
-				ctx->setParserState(ParserContext::uninitialized);
-		}
-
-		if(trans.getInsCache()->has(offset))
-			trans.getInsCache()->clear();
-	}
+	void check(ut64 offset, const ut8 *buf, int len);
 };
 
 #endif // R2GHIDRA_SLEIGHASM_H

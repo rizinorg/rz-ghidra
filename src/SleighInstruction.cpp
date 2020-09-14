@@ -48,7 +48,7 @@ void SleighParserContext::setPrototype(SleighInstructionPrototype *p)
 
 void R2Sleigh::reconstructContext(ParserContext &protoContext)
 {
-	// R2loader->loadFill(protoContext.getBuffer(), 16, protoContext.getAddr());
+	R2loader->loadFill(protoContext.getBuffer(), 16, protoContext.getAddr());
 	ParserWalkerChange walker(&protoContext);
 	protoContext.deallocateState(walker);	// Clear the previous resolve and initialize the walker
 	protoContext.setDelaySlot(0);
