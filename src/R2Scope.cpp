@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2019 - thestr4ng3r */
+/* radare - LGPL - Copyright 2019-2020 - thestr4ng3r */
 
 #include "R2Scope.h"
 #include "R2Architecture.h"
@@ -6,6 +6,7 @@
 
 #include <funcdata.hh>
 
+#include <r_version.h>
 #include <r_anal.h>
 #include <r_core.h>
 
@@ -497,7 +498,11 @@ LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 	if(!fcn)
 		return nullptr;
 
+#if R2_VERSION_MAJOR < 4 || R2_VERSION_MINOR < 6
 	const char *label = r_anal_fcn_label_at(core->anal, fcn, addr.getOffset());
+#else
+	const char *label = r_anal_function_get_label_at(fcn, addr.getOffset());
+#endif
 	if(!label)
 		return nullptr;
 
