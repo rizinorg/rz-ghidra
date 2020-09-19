@@ -78,8 +78,6 @@ set_target_properties(core_ghidra PROPERTIES
 		PREFIX "")
 
 
-
-# set(MACOSX_RPATH "@loader_path")
 if(BUILD_CUTTER_PLUGIN)
 	add_subdirectory(cutter-plugin)
 endif()
