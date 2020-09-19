@@ -276,7 +276,8 @@ void SleighAsm::resolveArch(const string &archid)
 	languageindex = -1;
 	for(size_t i = 0; i < description.size(); i++)
 	{
-		if(description[i].getId() == baseid)
+		std::string id = description[i].getId();
+		if(id == archid || id == baseid)
 		{
 			languageindex = i;
 			if(description[i].isDeprecated())
