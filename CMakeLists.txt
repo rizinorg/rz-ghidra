@@ -78,8 +78,17 @@ set_target_properties(core_ghidra PROPERTIES
 		PREFIX "")
 
 
+
+# set(MACOSX_RPATH "@loader_path")
 if(BUILD_CUTTER_PLUGIN)
 	add_subdirectory(cutter-plugin)
+endif()
+
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+string (REPLACE ";" " " LD_RPATH_STR "@loader_path")
+else()
+string (REPLACE ";" " " LD_RPATH_STR "$ORIGIN")
 endif()
 
 if(BUILD_SLEIGH_PLUGIN)
@@ -87,16 +96,18 @@ add_library(asm_ghidra SHARED ${ASM_SOURCE})
 target_link_libraries(asm_ghidra core_ghidra)
 set_target_properties(asm_ghidra PROPERTIES
 		OUTPUT_NAME asm_ghidra
-		BUILD_RPATH "\$ORIGIN"
-		INSTALL_RPATH "\$ORIGIN"
+		# BUILD_RPATH "\$ORIGIN"
+		# INSTALL_RPATH "\$ORIGIN"
+		BUILD_RPATH "${LD_RPATH_STR}"
+		INSTALL_RPATH "${LD_RPATH_STR}"
 		PREFIX "")
 
 add_library(anal_ghidra SHARED ${ANAL_SOURCE})
 target_link_libraries(anal_ghidra core_ghidra)
 set_target_properties(anal_ghidra PROPERTIES
 		OUTPUT_NAME anal_ghidra
-		BUILD_RPATH "\$ORIGIN"
-		INSTALL_RPATH "\$ORIGIN"
+		BUILD_RPATH "${LD_RPATH_STR}"
+		INSTALL_RPATH "${LD_RPATH_STR}"
 		PREFIX "")
 endif()
 
