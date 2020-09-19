@@ -398,6 +398,7 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 	uintb unique_off = 0;
 	PcodeOpType key_pcode = CPUI_MAX;
 
+	anal_op->type = R_ANAL_OP_TYPE_CMP;
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
 		if(iter->type == key_pcode_sub || iter->type == key_pcode_and)
