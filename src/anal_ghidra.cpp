@@ -1698,6 +1698,8 @@ static void append_hardcoded_regs(std::stringstream &buf, const std::string &arc
 			break;
 
 		case ('V' | '8' << 8 | '5' << 16): // V850
+			buf << "=SN\t" << "r6" << "\n" << "=BP\t" << "sp" << "\n";
+			break;
 		// case ('6' | '8' << 8 | '0' << 16): // 6809
 		// case ('6' | '8' << 8 | '0' << 16): // 6805
 		// case ('P' | 'I' << 8 | 'C' << 16): // PIC-24H
