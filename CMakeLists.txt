@@ -94,8 +94,6 @@ add_library(asm_ghidra SHARED ${ASM_SOURCE})
 target_link_libraries(asm_ghidra core_ghidra)
 set_target_properties(asm_ghidra PROPERTIES
 		OUTPUT_NAME asm_ghidra
-		# BUILD_RPATH "\$ORIGIN"
-		# INSTALL_RPATH "\$ORIGIN"
 		BUILD_RPATH "${LD_RPATH_STR}"
 		INSTALL_RPATH "${LD_RPATH_STR}"
 		PREFIX "")
