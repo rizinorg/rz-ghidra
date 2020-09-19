@@ -114,7 +114,16 @@ static const std::map<std::string, ArchMapper> arch_map = {
 		"default",
 		CUSTOM_BITS((RCore *core) {
 			return BITS == 32 ? 32 : 16;
-		})}}
+		})}},
+
+	{ "v850", {
+		CUSTOM_BASEID((RCore *core) {
+			return "V850";
+		}),
+		"default",
+		CUSTOM_BITS((RCore *core) {
+			return 32;
+		})}},
 };
 
 static const std::map<std::string, std::string> compiler_map = {
