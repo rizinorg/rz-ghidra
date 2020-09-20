@@ -1680,7 +1680,7 @@ static void append_hardcoded_regs(std::stringstream &buf, const std::string &arc
 			if(bits == 32)
 				buf << "=SN\t" << "r3" << "\n" << "=BP\t" << "r31" << "\n";
 			break;
-		case ('v' | '8' << 8 | '5' << 16): // x86
+		case ('v' | '8' << 8 | '5' << 16): // V850
 				buf << "=SN\t" << "r0" << "\n" << "=BP\t" << "psw" << "\n";
 			break;
 
