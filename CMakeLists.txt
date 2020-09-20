@@ -84,9 +84,9 @@ endif()
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-string (REPLACE ";" " " LD_RPATH_STR "@loader_path")
+	string (REPLACE ";" " " LD_RPATH_STR "@loader_path")
 else()
-string (REPLACE ";" " " LD_RPATH_STR "$ORIGIN")
+	string (REPLACE ";" " " LD_RPATH_STR "$ORIGIN")
 endif()
 
 if(BUILD_SLEIGH_PLUGIN)
