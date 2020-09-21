@@ -1750,7 +1750,8 @@ static void append_hardcoded_regs(std::stringstream &buf, const std::string &arc
 
 static char *get_reg_profile(RAnal *anal)
 {
-	ut64 length = strlen(anal->cpu), z = 0;
+	ut64 length = anal->cpu ? strlen(anal->cpu): 0;
+	ut64 z = 0;
 	for(; z < length && anal->cpu[z] != ':'; ++z) {}
 	if(z == length)
 		return nullptr;
