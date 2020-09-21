@@ -1,3 +1,12 @@
+NAME=v850
+FILE=-
+CMDS=<<EOF
+rasm2 -a r2ghidra -c V859 -d 8500c52a
+EOF
+EXPECT=<<EOF
+EOF
+RUN
+
 NAME=x86_32
 FILE=r2-testbins/elf/crackme0x05
 EXPECT=<<EOF
