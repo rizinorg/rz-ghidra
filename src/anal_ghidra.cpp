@@ -1355,235 +1355,244 @@ static bool anal_type_NOP(const std::vector<Pcodeop> &Pcodes)
 static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len,
                      RAnalOpMask mask)
 {
-	anal_op->addr = addr;
-	anal_op->sign = true;
-	anal_op->type = R_ANAL_OP_TYPE_ILL;
-
-	PcodeSlg pcode_slg(&sanal);
-	AssemblySlg assem(&sanal);
-	Address caddr(sanal.trans.getDefaultCodeSpace(), addr);
-	sanal.check(addr, data, len);
-	anal_op->size = sanal.genOpcode(pcode_slg, caddr);
-	if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, caddr) < 1))
-		return anal_op->size; // When current place has no available code, return ILL.
-
-	if(pcode_slg.pcodes.empty())
-	{ // NOP case
-		anal_op->type = R_ANAL_OP_TYPE_NOP;
-		esilprintf(anal_op, "");
-		return anal_op->size;
-	}
-
-	SleighInstruction &ins = *sanal.trans.getInstruction(caddr);
-	FlowType ftype = ins.getFlowType();
-	bool isRefed = false;
-
-	// std::cerr << caddr << " " << ins.printFlowType(ftype) << std::endl;
-	if(ftype != FlowType::FALL_THROUGH)
+	try
 	{
-		switch(ftype)
-		{
-			case FlowType::TERMINATOR:
-				// Stack info could be added
-				anal_op->type = R_ANAL_OP_TYPE_RET;
-				anal_op->eob = true;
-				break;
+		sanal.init(a->cpu, a? a->iob.io : nullptr, SleighAsm::getConfig(a));
 
-			case FlowType::CONDITIONAL_TERMINATOR:
-				anal_op->type = R_ANAL_OP_TYPE_CRET;
-				anal_op->fail = ins.getFallThrough().getOffset();
-				anal_op->eob = true;
-				break;
+		anal_op->addr = addr;
+		anal_op->sign = true;
+		anal_op->type = R_ANAL_OP_TYPE_ILL;
 
-			case FlowType::JUMP_TERMINATOR: anal_op->eob = true;
-			case FlowType::UNCONDITIONAL_JUMP:
-				anal_op->type = R_ANAL_OP_TYPE_JMP;
-				anal_op->jump = ins.getFlows().begin()->getOffset();
-				break;
+		PcodeSlg pcode_slg(&sanal);
+		AssemblySlg assem(&sanal);
+		Address caddr(sanal.trans.getDefaultCodeSpace(), addr);
+		sanal.check(addr, data, len);
+		anal_op->size = sanal.genOpcode(pcode_slg, caddr);
+		if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, caddr) < 1))
+			return anal_op->size; // When current place has no available code, return ILL.
 
-			case FlowType::COMPUTED_JUMP:
-			{
-				char *reg = getIndirectReg(ins, isRefed);
-				if(reg)
-				{
-					if(isRefed)
-					{
-						anal_op->type = R_ANAL_OP_TYPE_MJMP;
-						anal_op->ireg = reg;
-					}
-					else
-					{
-						anal_op->type = R_ANAL_OP_TYPE_IRJMP;
-						anal_op->reg = reg;
-					}
-				}
-				else
-					anal_op->type = R_ANAL_OP_TYPE_IJMP;
-				break;
-			}
-
-			case FlowType::CONDITIONAL_COMPUTED_JUMP:
-			{
-				char *reg = getIndirectReg(ins, isRefed);
-				if(reg)
-				{
-					if(isRefed)
-					{
-						anal_op->type = R_ANAL_OP_TYPE_MCJMP;
-						anal_op->ireg = reg;
-					}
-					else
-					{
-						anal_op->type = R_ANAL_OP_TYPE_RCJMP;
-						anal_op->reg = reg;
-					}
-				}
-				else
-					anal_op->type = R_ANAL_OP_TYPE_UCJMP;
-				anal_op->fail = ins.getFallThrough().getOffset();
-				break;
-			}
-
-			case FlowType::CONDITIONAL_JUMP:
-				anal_op->type = R_ANAL_OP_TYPE_CJMP;
-				anal_op->jump = ins.getFlows().begin()->getOffset();
-				anal_op->fail = ins.getFallThrough().getOffset();
-				break;
-
-			case FlowType::CALL_TERMINATOR: anal_op->eob = true;
-			case FlowType::UNCONDITIONAL_CALL:
-				anal_op->type = R_ANAL_OP_TYPE_CALL;
-				anal_op->jump = ins.getFlows().begin()->getOffset();
-				anal_op->fail = ins.getFallThrough().getOffset();
-				break;
-
-			case FlowType::CONDITIONAL_COMPUTED_CALL:
-			{
-				char *reg = getIndirectReg(ins, isRefed);
-				if(reg)
-					if(isRefed)
-						anal_op->ireg = reg;
-					else
-						anal_op->reg = reg;
-
-				anal_op->type = R_ANAL_OP_TYPE_UCCALL;
-				anal_op->fail = ins.getFallThrough().getOffset();
-				break;
-			}
-
-			case FlowType::CONDITIONAL_CALL:
-				anal_op->type |= R_ANAL_OP_TYPE_CCALL;
-				anal_op->jump = ins.getFlows().begin()->getOffset();
-				anal_op->fail = ins.getFallThrough().getOffset();
-				break;
-
-			case FlowType::COMPUTED_CALL_TERMINATOR: anal_op->eob = true;
-			case FlowType::COMPUTED_CALL:
-			{
-				char *reg = getIndirectReg(ins, isRefed);
-				if(reg)
-				{
-					if(isRefed)
-					{
-						anal_op->type = R_ANAL_OP_TYPE_IRCALL;
-						anal_op->ireg = reg;
-					}
-					else
-					{
-						anal_op->type = R_ANAL_OP_TYPE_IRCALL;
-						anal_op->reg = reg;
-					}
-				}
-				else
-					anal_op->type = R_ANAL_OP_TYPE_ICALL;
-				anal_op->fail = ins.getFallThrough().getOffset();
-				break;
-			}
-
-			default: throw LowlevelError("Unexpected FlowType occured in sleigh_op.");
+		if(pcode_slg.pcodes.empty())
+		{ // NOP case
+			anal_op->type = R_ANAL_OP_TYPE_NOP;
+			esilprintf(anal_op, "");
+			return anal_op->size;
 		}
-	}
-	else
-	{
-		anal_type(a, anal_op, pcode_slg, assem);
-#if 0
-		switch(anal_op->type)
+
+		SleighInstruction &ins = *sanal.trans.getInstruction(caddr);
+		FlowType ftype = ins.getFlowType();
+		bool isRefed = false;
+
+		// std::cerr << caddr << " " << ins.printFlowType(ftype) << std::endl;
+		if(ftype != FlowType::FALL_THROUGH)
 		{
-			case R_ANAL_OP_TYPE_IRCALL: std::cerr << caddr << ": R_ANAL_OP_TYPE_IRCALL"; break;
-			case R_ANAL_OP_TYPE_RET: std::cerr << caddr << ": R_ANAL_OP_TYPE_RET"; break;
-			case R_ANAL_OP_TYPE_ABS: std::cerr << caddr << ": R_ANAL_OP_TYPE_ABS"; break;
-			case R_ANAL_OP_TYPE_CRET: std::cerr << caddr << ": R_ANAL_OP_TYPE_CRET"; break;
-			case R_ANAL_OP_TYPE_IJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_IJMP"; break;
-			case R_ANAL_OP_TYPE_RPUSH: std::cerr << caddr << ": R_ANAL_OP_TYPE_RPUSH"; break;
-			case R_ANAL_OP_TYPE_NOP: std::cerr << caddr << ": R_ANAL_OP_TYPE_NOP"; break;
-			case R_ANAL_OP_TYPE_SAR: std::cerr << caddr << ": R_ANAL_OP_TYPE_SAR"; break;
-			case R_ANAL_OP_TYPE_NOT: std::cerr << caddr << ": R_ANAL_OP_TYPE_NOT"; break;
-			case R_ANAL_OP_TYPE_CALL: std::cerr << caddr << ": R_ANAL_OP_TYPE_CALL"; break;
-			case R_ANAL_OP_TYPE_UPUSH: std::cerr << caddr << ": R_ANAL_OP_TYPE_UPUSH"; break;
-			case R_ANAL_OP_TYPE_LOAD: std::cerr << caddr << ": R_ANAL_OP_TYPE_LOAD"; break;
-			case R_ANAL_OP_TYPE_XCHG: std::cerr << caddr << ": R_ANAL_OP_TYPE_XCHG"; break;
-			case R_ANAL_OP_TYPE_RCJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_RCJMP"; break;
-			case R_ANAL_OP_TYPE_CAST: std::cerr << caddr << ": R_ANAL_OP_TYPE_CAST"; break;
-			case R_ANAL_OP_TYPE_UCJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_UCJMP"; break;
-			case R_ANAL_OP_TYPE_MOV: std::cerr << caddr << ": R_ANAL_OP_TYPE_MOV"; break;
-			case R_ANAL_OP_TYPE_OR: std::cerr << caddr << ": R_ANAL_OP_TYPE_OR"; break;
-			case R_ANAL_OP_TYPE_SHR: std::cerr << caddr << ": R_ANAL_OP_TYPE_SHR"; break;
-			case R_ANAL_OP_TYPE_XOR: std::cerr << caddr << ": R_ANAL_OP_TYPE_XOR"; break;
-			case R_ANAL_OP_TYPE_SHL: std::cerr << caddr << ": R_ANAL_OP_TYPE_SHL"; break;
-			case R_ANAL_OP_TYPE_JMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_JMP"; break;
-			case R_ANAL_OP_TYPE_ILL: std::cerr << caddr << ": R_ANAL_OP_TYPE_ILL"; break;
-			case R_ANAL_OP_TYPE_AND: std::cerr << caddr << ": R_ANAL_OP_TYPE_AND"; break;
-			case R_ANAL_OP_TYPE_SUB: std::cerr << caddr << ": R_ANAL_OP_TYPE_SUB"; break;
-			case R_ANAL_OP_TYPE_DIV: std::cerr << caddr << ": R_ANAL_OP_TYPE_DIV"; break;
-			case R_ANAL_OP_TYPE_UNK: std::cerr << caddr << ": R_ANAL_OP_TYPE_UNK"; break;
-			case R_ANAL_OP_TYPE_CJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_CJMP"; break;
-			case R_ANAL_OP_TYPE_MCJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_MCJMP"; break;
-			case R_ANAL_OP_TYPE_UCCALL: std::cerr << caddr << ": R_ANAL_OP_TYPE_UCCALL"; break;
-			case R_ANAL_OP_TYPE_MJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_MJMP"; break;
-			case R_ANAL_OP_TYPE_NEW: std::cerr << caddr << ": R_ANAL_OP_TYPE_NEW"; break;
-			case R_ANAL_OP_TYPE_IRJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_IRJMP"; break;
-			case R_ANAL_OP_TYPE_ADD: std::cerr << caddr << ": R_ANAL_OP_TYPE_ADD"; break;
-			case R_ANAL_OP_TYPE_POP: std::cerr << caddr << ": R_ANAL_OP_TYPE_POP"; break;
-			case R_ANAL_OP_TYPE_MOD: std::cerr << caddr << ": R_ANAL_OP_TYPE_MOD"; break;
-			case R_ANAL_OP_TYPE_STORE: std::cerr << caddr << ": R_ANAL_OP_TYPE_STORE"; break;
-			case R_ANAL_OP_TYPE_NOR: std::cerr << caddr << ": R_ANAL_OP_TYPE_NOR"; break;
-			case R_ANAL_OP_TYPE_ICALL: std::cerr << caddr << ": R_ANAL_OP_TYPE_ICALL"; break;
-			case R_ANAL_OP_TYPE_MUL: std::cerr << caddr << ": R_ANAL_OP_TYPE_MUL"; break;
+			switch(ftype)
+			{
+				case FlowType::TERMINATOR:
+					// Stack info could be added
+					anal_op->type = R_ANAL_OP_TYPE_RET;
+					anal_op->eob = true;
+					break;
+
+				case FlowType::CONDITIONAL_TERMINATOR:
+					anal_op->type = R_ANAL_OP_TYPE_CRET;
+					anal_op->fail = ins.getFallThrough().getOffset();
+					anal_op->eob = true;
+					break;
+
+				case FlowType::JUMP_TERMINATOR: anal_op->eob = true;
+				case FlowType::UNCONDITIONAL_JUMP:
+					anal_op->type = R_ANAL_OP_TYPE_JMP;
+					anal_op->jump = ins.getFlows().begin()->getOffset();
+					break;
+
+				case FlowType::COMPUTED_JUMP:
+				{
+					char *reg = getIndirectReg(ins, isRefed);
+					if(reg)
+					{
+						if(isRefed)
+						{
+							anal_op->type = R_ANAL_OP_TYPE_MJMP;
+							anal_op->ireg = reg;
+						}
+						else
+						{
+							anal_op->type = R_ANAL_OP_TYPE_IRJMP;
+							anal_op->reg = reg;
+						}
+					}
+					else
+						anal_op->type = R_ANAL_OP_TYPE_IJMP;
+					break;
+				}
+
+				case FlowType::CONDITIONAL_COMPUTED_JUMP:
+				{
+					char *reg = getIndirectReg(ins, isRefed);
+					if(reg)
+					{
+						if(isRefed)
+						{
+							anal_op->type = R_ANAL_OP_TYPE_MCJMP;
+							anal_op->ireg = reg;
+						}
+						else
+						{
+							anal_op->type = R_ANAL_OP_TYPE_RCJMP;
+							anal_op->reg = reg;
+						}
+					}
+					else
+						anal_op->type = R_ANAL_OP_TYPE_UCJMP;
+					anal_op->fail = ins.getFallThrough().getOffset();
+					break;
+				}
+
+				case FlowType::CONDITIONAL_JUMP:
+					anal_op->type = R_ANAL_OP_TYPE_CJMP;
+					anal_op->jump = ins.getFlows().begin()->getOffset();
+					anal_op->fail = ins.getFallThrough().getOffset();
+					break;
+
+				case FlowType::CALL_TERMINATOR: anal_op->eob = true;
+				case FlowType::UNCONDITIONAL_CALL:
+					anal_op->type = R_ANAL_OP_TYPE_CALL;
+					anal_op->jump = ins.getFlows().begin()->getOffset();
+					anal_op->fail = ins.getFallThrough().getOffset();
+					break;
+
+				case FlowType::CONDITIONAL_COMPUTED_CALL:
+				{
+					char *reg = getIndirectReg(ins, isRefed);
+					if(reg)
+						if(isRefed)
+							anal_op->ireg = reg;
+						else
+							anal_op->reg = reg;
+
+					anal_op->type = R_ANAL_OP_TYPE_UCCALL;
+					anal_op->fail = ins.getFallThrough().getOffset();
+					break;
+				}
+
+				case FlowType::CONDITIONAL_CALL:
+					anal_op->type |= R_ANAL_OP_TYPE_CCALL;
+					anal_op->jump = ins.getFlows().begin()->getOffset();
+					anal_op->fail = ins.getFallThrough().getOffset();
+					break;
+
+				case FlowType::COMPUTED_CALL_TERMINATOR: anal_op->eob = true;
+				case FlowType::COMPUTED_CALL:
+				{
+					char *reg = getIndirectReg(ins, isRefed);
+					if(reg)
+					{
+						if(isRefed)
+						{
+							anal_op->type = R_ANAL_OP_TYPE_IRCALL;
+							anal_op->ireg = reg;
+						}
+						else
+						{
+							anal_op->type = R_ANAL_OP_TYPE_IRCALL;
+							anal_op->reg = reg;
+						}
+					}
+					else
+						anal_op->type = R_ANAL_OP_TYPE_ICALL;
+					anal_op->fail = ins.getFallThrough().getOffset();
+					break;
+				}
+
+				default: throw LowlevelError("Unexpected FlowType occured in sleigh_op.");
+			}
 		}
-		if(anal_op->val && anal_op->val != -1)
-			std::cerr << " val: " << anal_op->val << std::endl;
 		else
 		{
-			if(anal_op->dst)
+			anal_type(a, anal_op, pcode_slg, assem);
+#if 0
+			switch(anal_op->type)
 			{
-				std::cerr << " dst: ";
-				char *tmp = r_anal_value_to_string(anal_op->dst);
-				std::cerr << tmp;
-				r_mem_free(tmp);
+				case R_ANAL_OP_TYPE_IRCALL: std::cerr << caddr << ": R_ANAL_OP_TYPE_IRCALL"; break;
+				case R_ANAL_OP_TYPE_RET: std::cerr << caddr << ": R_ANAL_OP_TYPE_RET"; break;
+				case R_ANAL_OP_TYPE_ABS: std::cerr << caddr << ": R_ANAL_OP_TYPE_ABS"; break;
+				case R_ANAL_OP_TYPE_CRET: std::cerr << caddr << ": R_ANAL_OP_TYPE_CRET"; break;
+				case R_ANAL_OP_TYPE_IJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_IJMP"; break;
+				case R_ANAL_OP_TYPE_RPUSH: std::cerr << caddr << ": R_ANAL_OP_TYPE_RPUSH"; break;
+				case R_ANAL_OP_TYPE_NOP: std::cerr << caddr << ": R_ANAL_OP_TYPE_NOP"; break;
+				case R_ANAL_OP_TYPE_SAR: std::cerr << caddr << ": R_ANAL_OP_TYPE_SAR"; break;
+				case R_ANAL_OP_TYPE_NOT: std::cerr << caddr << ": R_ANAL_OP_TYPE_NOT"; break;
+				case R_ANAL_OP_TYPE_CALL: std::cerr << caddr << ": R_ANAL_OP_TYPE_CALL"; break;
+				case R_ANAL_OP_TYPE_UPUSH: std::cerr << caddr << ": R_ANAL_OP_TYPE_UPUSH"; break;
+				case R_ANAL_OP_TYPE_LOAD: std::cerr << caddr << ": R_ANAL_OP_TYPE_LOAD"; break;
+				case R_ANAL_OP_TYPE_XCHG: std::cerr << caddr << ": R_ANAL_OP_TYPE_XCHG"; break;
+				case R_ANAL_OP_TYPE_RCJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_RCJMP"; break;
+				case R_ANAL_OP_TYPE_CAST: std::cerr << caddr << ": R_ANAL_OP_TYPE_CAST"; break;
+				case R_ANAL_OP_TYPE_UCJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_UCJMP"; break;
+				case R_ANAL_OP_TYPE_MOV: std::cerr << caddr << ": R_ANAL_OP_TYPE_MOV"; break;
+				case R_ANAL_OP_TYPE_OR: std::cerr << caddr << ": R_ANAL_OP_TYPE_OR"; break;
+				case R_ANAL_OP_TYPE_SHR: std::cerr << caddr << ": R_ANAL_OP_TYPE_SHR"; break;
+				case R_ANAL_OP_TYPE_XOR: std::cerr << caddr << ": R_ANAL_OP_TYPE_XOR"; break;
+				case R_ANAL_OP_TYPE_SHL: std::cerr << caddr << ": R_ANAL_OP_TYPE_SHL"; break;
+				case R_ANAL_OP_TYPE_JMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_JMP"; break;
+				case R_ANAL_OP_TYPE_ILL: std::cerr << caddr << ": R_ANAL_OP_TYPE_ILL"; break;
+				case R_ANAL_OP_TYPE_AND: std::cerr << caddr << ": R_ANAL_OP_TYPE_AND"; break;
+				case R_ANAL_OP_TYPE_SUB: std::cerr << caddr << ": R_ANAL_OP_TYPE_SUB"; break;
+				case R_ANAL_OP_TYPE_DIV: std::cerr << caddr << ": R_ANAL_OP_TYPE_DIV"; break;
+				case R_ANAL_OP_TYPE_UNK: std::cerr << caddr << ": R_ANAL_OP_TYPE_UNK"; break;
+				case R_ANAL_OP_TYPE_CJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_CJMP"; break;
+				case R_ANAL_OP_TYPE_MCJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_MCJMP"; break;
+				case R_ANAL_OP_TYPE_UCCALL: std::cerr << caddr << ": R_ANAL_OP_TYPE_UCCALL"; break;
+				case R_ANAL_OP_TYPE_MJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_MJMP"; break;
+				case R_ANAL_OP_TYPE_NEW: std::cerr << caddr << ": R_ANAL_OP_TYPE_NEW"; break;
+				case R_ANAL_OP_TYPE_IRJMP: std::cerr << caddr << ": R_ANAL_OP_TYPE_IRJMP"; break;
+				case R_ANAL_OP_TYPE_ADD: std::cerr << caddr << ": R_ANAL_OP_TYPE_ADD"; break;
+				case R_ANAL_OP_TYPE_POP: std::cerr << caddr << ": R_ANAL_OP_TYPE_POP"; break;
+				case R_ANAL_OP_TYPE_MOD: std::cerr << caddr << ": R_ANAL_OP_TYPE_MOD"; break;
+				case R_ANAL_OP_TYPE_STORE: std::cerr << caddr << ": R_ANAL_OP_TYPE_STORE"; break;
+				case R_ANAL_OP_TYPE_NOR: std::cerr << caddr << ": R_ANAL_OP_TYPE_NOR"; break;
+				case R_ANAL_OP_TYPE_ICALL: std::cerr << caddr << ": R_ANAL_OP_TYPE_ICALL"; break;
+				case R_ANAL_OP_TYPE_MUL: std::cerr << caddr << ": R_ANAL_OP_TYPE_MUL"; break;
 			}
-			if(anal_op->src[0])
+			if(anal_op->val && anal_op->val != -1)
+				std::cerr << " val: " << anal_op->val << std::endl;
+			else
 			{
-				std::cerr << " in0: ";
-				char *tmp = r_anal_value_to_string(anal_op->src[0]);
-				std::cerr << tmp;
-				r_mem_free(tmp);
+				if(anal_op->dst)
+				{
+					std::cerr << " dst: ";
+					char *tmp = r_anal_value_to_string(anal_op->dst);
+					std::cerr << tmp;
+					r_mem_free(tmp);
+				}
+				if(anal_op->src[0])
+				{
+					std::cerr << " in0: ";
+					char *tmp = r_anal_value_to_string(anal_op->src[0]);
+					std::cerr << tmp;
+					r_mem_free(tmp);
+				}
+				if(anal_op->src[1])
+				{
+					std::cerr << " in1: ";
+					char *tmp = r_anal_value_to_string(anal_op->src[1]);
+					std::cerr << tmp;
+					r_mem_free(tmp);
+				}
+				std::cerr << std::endl;
 			}
-			if(anal_op->src[1])
-			{
-				std::cerr << " in1: ";
-				char *tmp = r_anal_value_to_string(anal_op->src[1]);
-				std::cerr << tmp;
-				r_mem_free(tmp);
-			}
-			std::cerr << std::endl;
-		}
 #endif
+		}
+
+		if(mask & R_ANAL_OP_MASK_ESIL)
+			sleigh_esil(a, anal_op, addr, data, len, pcode_slg.pcodes);
+
+		return anal_op->size;
 	}
-
-	if(mask & R_ANAL_OP_MASK_ESIL)
-		sleigh_esil(a, anal_op, addr, data, len, pcode_slg.pcodes);
-
-	return anal_op->size;
+	catch(const LowlevelError &e)
+	{
+		return 0;
+	}
 }
 
 /*
