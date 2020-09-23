@@ -11,6 +11,8 @@ static SleighAsm sasm;
 static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 {
 	int r = 0;
+	if(!a->cpu)
+		return r;
 #ifndef DEBUG_EXCEPTIONS
 	try
 	{

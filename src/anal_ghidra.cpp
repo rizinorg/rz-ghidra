@@ -14,6 +14,9 @@ static SleighAsm sanal;
 static int archinfo(RAnal *anal, int query)
 {
 	// This is to check if RCore plugin set cpu properly.
+	if(!anal->cpu)
+		return -1;
+
 	ut64 length = strlen(anal->cpu), i = 0;
 	for(; i < length && anal->cpu[i] != ':'; ++i) {}
 	if(i == length)
@@ -1768,6 +1771,9 @@ static void append_hardcoded_regs(std::stringstream &buf, const std::string &arc
 
 static char *get_reg_profile(RAnal *anal)
 {
+	if(!anal->cpu)
+		return nullptr;
+
 	ut64 length = strlen(anal->cpu), z = 0;
 	for(; z < length && anal->cpu[z] != ':'; ++z) {}
 	if(z == length)
