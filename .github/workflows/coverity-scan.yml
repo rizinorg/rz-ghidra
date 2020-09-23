@@ -64,18 +64,18 @@ jobs:
           export PATH=`pwd`/cov-analysis-linux64/bin:$PATH
           cd build
           cov-build --dir cov-int make
-#
-#      - name: Submit the result to Coverity Scan
-#        run: |
-#          cd build
-#          tar czvf r2ghidra.tgz cov-int
-#          curl \
-#            --form project=radareorg-cutter \
-#            --form token=$TOKEN \
-#            --form email=noreply@radare.org \
-#            --form file=@r2ghidra.tgz \
-#            --form version=trunk \
-#            --form description="r2ghidra" \
-#            https://scan.coverity.com/builds?project=radareorg%2Fr2ghidra-dec
-#        env:
-#          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+
+      - name: Submit the result to Coverity Scan
+        run: |
+          cd build
+          tar czvf r2ghidra.tgz cov-int
+          curl \
+            --form project=radareorg-cutter \
+            --form token=$TOKEN \
+            --form email=noreply@radare.org \
+            --form file=@r2ghidra.tgz \
+            --form version=trunk \
+            --form description="r2ghidra" \
+            https://scan.coverity.com/builds?project=radareorg%2Fr2ghidra-dec
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
