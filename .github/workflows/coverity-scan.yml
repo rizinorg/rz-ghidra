@@ -1,7 +1,7 @@
 name: coverity-scan
-on:  [push]
-#  schedule:
-#    - cron: '0 9 * * 1,5' # Bi-weekly at 09:00 UTC on Monday and Thursday
+on:
+  schedule:
+    - cron: '0 9 * * 1,5' # Bi-weekly at 09:00 UTC on Monday and Thursday
 
 jobs:
   latest:
