@@ -78,6 +78,7 @@ static ut32 anal_type_MOV(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	const PcodeOpType key_pcode_store = CPUI_STORE;
 	SleighAnalValue in0, out;
+	in0.invalid(); out.invalid();
 	std::vector<SleighAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -143,6 +144,7 @@ static ut32 anal_type_LOAD(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 	const PcodeOpType key_pcode_load = CPUI_LOAD;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	SleighAnalValue in0, out;
+	in0.invalid(); out.invalid();
 	std::vector<SleighAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -196,6 +198,7 @@ static ut32 anal_type_STORE(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 	const PcodeOpType key_pcode_store = CPUI_STORE;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	SleighAnalValue in0, out;
+	in0.invalid(); out.invalid();
 	std::vector<SleighAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -288,6 +291,7 @@ static ut32 anal_type_XPUSH(RAnal *anal, RAnalOp *anal_op, const std::vector<Pco
 	// R_ANAL_OP_TYPE_PUSH
 	const PcodeOpType key_pcode = CPUI_STORE;
 	SleighAnalValue out, in;
+	out.invalid(); in.invalid();
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
@@ -332,6 +336,7 @@ static ut32 anal_type_POP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 	const ut32 this_type = R_ANAL_OP_TYPE_POP;
 	const PcodeOpType key_pcode = CPUI_LOAD;
 	SleighAnalValue in0, out;
+	in0.invalid(); out.invalid();
 	std::vector<SleighAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -378,6 +383,7 @@ static ut32 anal_type_XCMP(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcod
 	const PcodeOpType key_pcode_and = CPUI_INT_AND;
 	const PcodeOpType key_pcode_equal = CPUI_INT_EQUAL;
 	SleighAnalValue in0, in1;
+	in0.invalid(); in1.invalid();
 	uintb unique_off = 0;
 	PcodeOpType key_pcode = CPUI_MAX;
 
@@ -447,6 +453,7 @@ static ut32 anal_type_XXX(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 	// R_ANAL_OP_TYPE_SHL
 	// R_ANAL_OP_TYPE_SAR
 	SleighAnalValue in0, in1, out;
+	in0.invalid(); in1.invalid(); out.invalid();
 	std::vector<SleighAnalValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -523,6 +530,7 @@ static ut32 anal_type_NOR(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 	const PcodeOpType key_pcode_or = CPUI_INT_OR;
 	const PcodeOpType key_pcode_negate = CPUI_INT_NEGATE;
 	SleighAnalValue in0, in1, out;
+	in0.invalid(); in1.invalid(); out.invalid();
 	std::vector<SleighAnalValue> outs;
 	uintb unique_off = 0;
 
@@ -578,6 +586,7 @@ static ut32 anal_type_NOT(RAnal *anal, RAnalOp *anal_op, const std::vector<Pcode
 	const ut32 this_type = R_ANAL_OP_TYPE_NOT;
 	const PcodeOpType key_pcode = CPUI_INT_NEGATE;
 	SleighAnalValue in0, out;
+	in0.invalid(); out.invalid();
 	std::vector<SleighAnalValue> outs;
 	uintb unique_off = 0;
 
