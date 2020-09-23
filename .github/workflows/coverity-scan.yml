@@ -14,18 +14,18 @@ jobs:
         with:
           python-version: 3.7.x
 
-#      - name: Download Coverity Build Tool
-#        run: |
-#          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=radareorg%2Fr2ghidra-dec" -O cov-analysis-linux64.tar.gz
-#          mkdir cov-analysis-linux64
-#          tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
-#        env:
-#          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
-#
-#      - name: Fixed world writable dirs
-#        run: |
-#          chmod go-w $HOME
-#          sudo chmod -R go-w /usr/share
+      - name: Download Coverity Build Tool
+        run: |
+          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=radareorg%2Fr2ghidra-dec" -O cov-analysis-linux64.tar.gz
+          mkdir cov-analysis-linux64
+          tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+
+      - name: Fixed world writable dirs
+        run: |
+          chmod go-w $HOME
+          sudo chmod -R go-w /usr/share
 
       - name: apt dependencies
         run: sudo apt-get install ninja-build libgraphviz-dev bison flex qt5-default
@@ -59,25 +59,11 @@ jobs:
             -DBUILD_SLEIGH_PLUGIN=ON \
             ..
 
-      - name: Build and Install
+      - name: Build with cov-build
         run: |
+          export PATH=`pwd`/cov-analysis-linux64/bin:$PATH
           cd build
-          make -j4
-          make install
-
-      - name: Test
-        run: |
-          export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:$INSTALL_PREFIX/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
-          export PATH="$INSTALL_PREFIX/bin:$PATH"
-          export R2_LIBR_PLUGINS="$INSTALL_PREFIX/share/radare2/plugins"
-          cd test
-          make
-
-#      - name: Build with cov-build
-#        run: |
-#          export PATH=`pwd`/cov-analysis-linux64/bin:$PATH
-#          cd build
-#          cov-build --dir cov-int make
+          cov-build --dir cov-int make
 #
 #      - name: Submit the result to Coverity Scan
 #        run: |
