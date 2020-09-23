@@ -5,7 +5,7 @@ on:  [push]
 
 jobs:
   latest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
         with:
@@ -28,7 +28,7 @@ jobs:
 #          sudo chmod -R go-w /usr/share
 
       - name: apt dependencies
-        run: sudo apt-get install ninja-build libgraphviz-dev bison flex
+        run: sudo apt-get install ninja-build libgraphviz-dev bison flex qt5-default
 
       - name: py dependencies
         run: |
