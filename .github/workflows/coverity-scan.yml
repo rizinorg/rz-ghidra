@@ -26,17 +26,17 @@ jobs:
 #        run: |
 #          chmod go-w $HOME
 #          sudo chmod -R go-w /usr/share
-      
+
       - name: apt dependencies
         run: sudo apt-get install ninja-build libgraphviz-dev bison flex
-      
+
       - name: py dependencies
         run: |
           pip install meson
 
       - name: Prepare Radare2 and Cutter
         run: |
-          export INSTALL_PREFIX=$GITHUB_WORKSPACE}/radare2-prefix
+          export INSTALL_PREFIX=${GITHUB_WORKSPACE}/radare2-prefix
           git clone --depth 1 https://github.com/radareorg/radare2
           cd radare2 && mkdir build && cd build
           meson --prefix="${INSTALL_PREFIX}" ..
