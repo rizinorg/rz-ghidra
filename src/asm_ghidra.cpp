@@ -22,16 +22,19 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 		if(!bin)
 		{
 			rio = r_io_new();
-			RBuffer *tmp_buf = r_buf_new_with_bytes (buf, len);
-			r_io_open_buffer (rio, tmp_buf, R_PERM_RWX, 0);
+			RBuffer *tmp_buf = r_buf_new_with_bytes(buf, len);
+			r_io_open_buffer(rio, tmp_buf, R_PERM_RWX, 0);
 			r_buf_free(tmp_buf);
+			sasm.sleigh_id.clear(); // For newly created RIO
 			sasm.init(a->cpu, rio, SleighAsm::getConfig(a));
+			r = sasm.disassemble(op, 0);
 		}
 		else
+		{
 			sasm.init(a->cpu, bin->iob.io, SleighAsm::getConfig(a));
-
-		sasm.check(a->pc, buf, len);
-		r = sasm.disassemble(op, a->pc);
+			sasm.check(a->pc, buf, len);
+			r = sasm.disassemble(op, a->pc);
+		}
 #ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &e)
