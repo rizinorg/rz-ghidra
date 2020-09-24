@@ -11,6 +11,7 @@ static SleighAsm sasm;
 static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 {
 	int r = 0;
+	RIO *rio = nullptr;
 	if(!a->cpu)
 		return r;
 #ifndef DEBUG_EXCEPTIONS
@@ -18,7 +19,14 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 	{
 #endif
 		RBin *bin = a->binb.bin;
-		sasm.init(a->cpu, bin? bin->iob.io: nullptr, SleighAsm::getConfig(a));
+		if(!bin)
+		{
+			rio = r_io_new();
+			r_io_write_at(rio, 0, buf, len);
+			sasm.init(a->cpu, rio, SleighAsm::getConfig(a));
+		}
+		else
+			sasm.init(a->cpu, bin->iob.io, SleighAsm::getConfig(a));
 
 		sasm.check(a->pc, buf, len);
 		r = sasm.disassemble(op, a->pc);
@@ -30,6 +38,8 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 		r = 1;
 	}
 #endif
+	if(rio)
+		r_io_free(rio);
 	op->size = r;
 	return r;
 }

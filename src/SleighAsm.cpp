@@ -393,7 +393,7 @@ RConfig *SleighAsm::getConfig(RAsm *a)
 {
 	RCore *core = a->num ? (RCore *)(a->num->userptr) : NULL;
 	if(!core)
-		throw LowlevelError("Can't get RCore from RAsm's RNum");
+		return nullptr;
 	return core->config;
 }
 
@@ -407,13 +407,11 @@ RConfig *SleighAsm::getConfig(RAnal *a)
 
 std::string SleighAsm::getSleighHome(RConfig *cfg)
 {
-	if(!cfg)
-		throw LowlevelError("SleighAsm::get_sleigh_home: cfg is nullptr.");
 	const char varname[] = "r2ghidra.sleighhome";
 	const char *path = nullptr;
 
 	// user-set, for example from .radare2rc
-	if(r_config_node_get(cfg, varname))
+	if(cfg && r_config_node_get(cfg, varname))
 	{
 		path = r_config_get(cfg, varname);
 		if(path && *path)
@@ -424,14 +422,16 @@ std::string SleighAsm::getSleighHome(RConfig *cfg)
 	path = getenv("SLEIGHHOME");
 	if(path && *path)
 	{
-		r_config_set(cfg, varname, path);
+		if(cfg)
+			r_config_set(cfg, varname, path);
 		return path;
 	}
 
 #ifdef R2GHIDRA_SLEIGHHOME_DEFAULT
 	if(r_file_is_directory(R2GHIDRA_SLEIGHHOME_DEFAULT))
 	{
-		r_config_set(cfg, varname, R2GHIDRA_SLEIGHHOME_DEFAULT);
+		if(cfg)
+			r_config_set(cfg, varname, R2GHIDRA_SLEIGHHOME_DEFAULT);
 		return R2GHIDRA_SLEIGHHOME_DEFAULT;
 	}
 #endif
@@ -439,7 +439,8 @@ std::string SleighAsm::getSleighHome(RConfig *cfg)
 	path = r_str_home(".local/share/radare2/r2pm/git/ghidra");
 	if(r_file_is_directory(path))
 	{
-		r_config_set(cfg, varname, path);
+		if(cfg)
+			r_config_set(cfg, varname, path);
 		std::string res(path);
 		r_mem_free((void *)path);
 		return res;
