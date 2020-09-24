@@ -22,7 +22,9 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 		if(!bin)
 		{
 			rio = r_io_new();
-			r_io_write_at(rio, 0, buf, len);
+			RBuffer *tmp_buf = r_buf_new_with_bytes (buf, len);
+			r_io_open_buffer (rio, tmp_buf, R_PERM_RWX, 0);
+			r_buf_free(tmp_buf);
 			sasm.init(a->cpu, rio, SleighAsm::getConfig(a));
 		}
 		else
