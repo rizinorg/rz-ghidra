@@ -710,3 +710,13 @@ pdga
 pd 50
 EOF
 RUN
+
+NAME=rasm2
+FILE=-
+CMDS=<<EOF
+rasm2 -a r2ghidra -c x86:LE:32:default:gcc -d 89e1
+EOF
+EXPECT=<<EOF
+MOV ecx, esp
+EOF
+RUN
