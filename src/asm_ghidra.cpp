@@ -5,36 +5,41 @@
 #include "SleighAsm.h"
 
 static SleighAsm sasm;
+static RIO *rio = nullptr;
 
 //#define DEBUG_EXCEPTIONS
 
 static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 {
 	int r = 0;
-	RIO *rio = nullptr;
+
 	if(!a->cpu)
 		return r;
+
 #ifndef DEBUG_EXCEPTIONS
 	try
 	{
 #endif
 		RBin *bin = a->binb.bin;
+
 		if(!bin)
 		{
-			rio = r_io_new();
+			if(!rio)
+			{
+				rio = r_io_new();
+				sasm.sleigh_id.clear(); // For newly created RIO, refresh SleighAsm.
+			}
+			else
+				r_io_close_all(rio);
+
 			RBuffer *tmp_buf = r_buf_new_with_bytes(buf, len);
 			r_io_open_buffer(rio, tmp_buf, R_PERM_RWX, 0);
 			r_buf_free(tmp_buf);
-			sasm.sleigh_id.clear(); // For newly created RIO
-			sasm.init(a->cpu, rio, SleighAsm::getConfig(a));
-			r = sasm.disassemble(op, 0);
 		}
-		else
-		{
-			sasm.init(a->cpu, bin->iob.io, SleighAsm::getConfig(a));
-			sasm.check(a->pc, buf, len);
-			r = sasm.disassemble(op, a->pc);
-		}
+
+		sasm.init(a->cpu, bin? bin->iob.io : rio, SleighAsm::getConfig(a));
+		sasm.check(bin? a->pc : 0, buf, len);
+		r = sasm.disassemble(op, bin? a->pc : 0);
 #ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &e)
@@ -43,10 +48,16 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 		r = 1;
 	}
 #endif
-	if(rio)
-		r_io_free(rio);
+
 	op->size = r;
 	return r;
+}
+
+static bool fini(void *p)
+{
+	if(rio)
+		r_io_free(rio);
+	rio = nullptr;
 }
 
 RAsmPlugin r_asm_plugin_ghidra = {
@@ -61,7 +72,7 @@ RAsmPlugin r_asm_plugin_ghidra = {
 	/* .bits = */ 0,
 	/* .endian = */ 0,
 	/* .init = */ nullptr,
-	/* .fini = */ nullptr,
+	/* .fini = */ &fini,
 	/* .disassemble = */ &disassemble,
 	/* .assemble = */ nullptr,
 	/* .modify */ nullptr,
