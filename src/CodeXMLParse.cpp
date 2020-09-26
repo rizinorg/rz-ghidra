@@ -209,12 +209,21 @@ void AnnotateVariable(ANNOTATOR_PARAMS)
 	if(varrefnode == ctx->varnodes.end())
 		return;
 	Varnode *varnode = varrefnode->second;
-	if (varnode->getHigh()->isPersist() && varnode->getHigh()->isAddrTied())
+	HighVariable *high;
+	try
+	{
+		high = varnode->getHigh();
+	}
+	catch(const LowlevelError &e)
+	{
+		return;
+	}
+	if (high->isPersist() && high->isAddrTied())
 		AnnotateGlobalVariable(varnode, out);
-	else if (varnode->getHigh()->isConstant() && varnode->getHigh()->getType()->getMetatype() == TYPE_PTR) 
+	else if (high->isConstant() && high->getType()->getMetatype() == TYPE_PTR)
 		AnnotateConstantVariable(varnode, out);
-	else if (!varnode->getHigh()->isPersist())
-		AnnotateLocalVariable(varnode->getHigh()->getSymbol(), out);
+	else if (!high->isPersist())
+		AnnotateLocalVariable(high->getSymbol(), out);
 }
 
 static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > annotators = {
