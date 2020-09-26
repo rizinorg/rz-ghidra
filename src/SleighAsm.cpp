@@ -588,7 +588,10 @@ void AssemblySlg::dump(const Address &addr, const string &mnem, const string &bo
 		else
 			res += tmp;
 	}
-	str = r_str_newf("%s %s", mnem.c_str(), res.c_str());
+	if(res.empty())
+		str = r_str_newf("%s", mnem.c_str());
+	else
+		str = r_str_newf("%s %s", mnem.c_str(), res.c_str());
 }
 
 PcodeOperand *PcodeSlg::parse_vardata(VarnodeData &data)
