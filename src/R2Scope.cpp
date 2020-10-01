@@ -6,9 +6,9 @@
 
 #include <funcdata.hh>
 
-#include <r_version.h>
-#include <r_anal.h>
-#include <r_core.h>
+#include <rz_version.h>
+#include <rz_anal.h>
+#include <rz_core.h>
 
 #include "R2Utils.h"
 
@@ -92,11 +92,11 @@ static std::string to_string(const char *str)
 	return std::string(str ? str : "(null)");
 }
 
-FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
+FunctionSymbol *R2Scope::registerFunction(RzAnalFunction *fcn) const
 {
-	RCoreLock core(arch->getCore());
+	RzCoreLock core(arch->getCore());
 
-	const std::string r2Arch(r_config_get(core->config, "asm.arch"));
+	const std::string r2Arch(rz_config_get(core->config, "asm.arch"));
 
 	// We use xml here, because the public interface for Functions
 	// doesn't let us set up the scope parenting as we need it :-(
@@ -111,15 +111,15 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 	const char *fcn_name = fcn->name;
 	if (core->flags->realnames) {
-		const RList *flags = r_flag_get_list(core->flags, fcn->addr);
+		const RzList *flags = rz_flag_get_list(core->flags, fcn->addr);
 		if(flags)
 		{
-			RListIter *iter;
+			RzListIter *iter;
 			void *pos;
-			r_list_foreach(flags, iter, pos)
+			rz_list_foreach(flags, iter, pos)
 			{
-				auto flag = reinterpret_cast<RFlagItem *>(pos);
-				if(flag->space && flag->space->name && !strcmp(flag->space->name, R_FLAGS_FS_SECTIONS))
+				auto flag = reinterpret_cast<RzFlagItem *>(pos);
+				if(flag->space && flag->space->name && !strcmp(flag->space->name, RZ_FLAGS_FS_SECTIONS))
 					continue;
 				if (flag->realname && *flag->realname) {
 					fcn_name = flag->realname;
@@ -164,13 +164,13 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		extraPop = arch->translate->getDefaultSize();
 
 	RangeList varRanges; // to check for overlaps
-	RList *vars = r_anal_var_all_list(core->anal, fcn);
+	RzList *vars = rz_anal_var_all_list(core->anal, fcn);
 	auto stackSpace = arch->getStackSpace();
 
-	auto addrForVar = [&](RAnalVar *var, bool warn_on_fail) {
+	auto addrForVar = [&](RzAnalVar *var, bool warn_on_fail) {
 		switch(var->kind)
 		{
-			case R_ANAL_VAR_KIND_BPV:
+			case RZ_ANAL_VAR_KIND_BPV:
 			{
 				uintb off;
 				int delta = var->delta + fcn->bp_off - extraPop; // not 100% sure if extraPop is correct here
@@ -180,9 +180,9 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 					off = stackSpace->getHighest() + delta + 1;
 				return Address(stackSpace, off);
 			}
-			case R_ANAL_VAR_KIND_REG:
+			case RZ_ANAL_VAR_KIND_REG:
 			{
-				RRegItem *reg = r_reg_index_get(core->anal->reg, var->delta);
+				RzRegItem *reg = rz_reg_index_get(core->anal->reg, var->delta);
 				if(!reg)
 				{
 					if(warn_on_fail)
@@ -196,7 +196,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 
 				return ret;
 			}
-			case R_ANAL_VAR_KIND_SPV:
+			case RZ_ANAL_VAR_KIND_SPV:
 				if(warn_on_fail)
 					arch->addWarning("Var " + to_string(var->name) + " is stack pointer based, which is not supported for decompilation.");
 				return Address();
@@ -207,13 +207,13 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		}
 	};
 
-	std::map<RAnalVar *, Datatype *> var_types;
+	std::map<RzAnalVar *, Datatype *> var_types;
 
 	ParamActive params(false);
 
 	if(vars)
 	{
-		r_list_foreach_cpp<RAnalVar>(vars, [&](RAnalVar *var) {
+		rz_list_foreach_cpp<RzAnalVar>(vars, [&](RzAnalVar *var) {
 			std::string typeError;
 			Datatype *type = var->type ? arch->getTypeFactory()->fromCString(var->type, &typeError) : nullptr;
 			if(!type)
@@ -256,7 +256,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 	{
 		std::vector<Element *> argsByIndex;
 
-		r_list_foreach_cpp<RAnalVar>(vars, [&](RAnalVar *var) {
+		rz_list_foreach_cpp<RzAnalVar>(vars, [&](RzAnalVar *var) {
 			auto type_it = var_types.find(var);
 			if(type_it == var_types.end())
 				return;
@@ -335,7 +335,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 			childAddr(mapsymElement, "addr", addr);
 
 			auto rangelist = child(mapsymElement, "rangelist");
-			if(var->isarg && var->kind == R_ANAL_VAR_KIND_REG)
+			if(var->isarg && var->kind == RZ_ANAL_VAR_KIND_REG)
 				childRegRange(rangelist);
 		});
 
@@ -370,7 +370,7 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 		}
 	}
 
-	r_list_free(vars);
+	rz_list_free(vars);
 
 	auto prototypeElement = child(functionElement, "prototype", {
 			{ "extrapop", to_string(extraPop) },
@@ -413,13 +413,13 @@ FunctionSymbol *R2Scope::registerFunction(RAnalFunction *fcn) const
 	return dynamic_cast<FunctionSymbol *>(sym);
 }
 
-Symbol *R2Scope::registerFlag(RFlagItem *flag) const
+Symbol *R2Scope::registerFlag(RzFlagItem *flag) const
 {
-	RCoreLock core(arch->getCore());
+	RzCoreLock core(arch->getCore());
 
 	uint4 attr = Varnode::namelock | Varnode::typelock;
 	Datatype *type = nullptr;
-	if(flag->space && !strcmp(flag->space->name, R_FLAGS_FS_STRINGS))
+	if(flag->space && !strcmp(flag->space->name, RZ_FLAGS_FS_STRINGS))
 	{
 		Datatype *ptype = arch->types->findByName("char");
 		type = arch->types->getTypeArray(static_cast<int4>(flag->size), ptype);
@@ -447,17 +447,17 @@ Symbol *R2Scope::registerFlag(RFlagItem *flag) const
 
 Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
 {
-	RCoreLock core(arch->getCore());
+	RzCoreLock core(arch->getCore());
 
-	RAnalFunction *fcn = r_anal_get_function_at(core->anal, addr);
+	RzAnalFunction *fcn = rz_anal_get_function_at(core->anal, addr);
 #if 0
 	// This can cause functions to be registered twice (hello-arm test)
 	if(!fcn && contain)
 	{
-		RList *fcns = r_anal_get_functions_in(core->anal, addr);
-		if(!r_list_empty(fcns))
-			fcn = reinterpret_cast<RAnalFunction *>(r_list_first(fcns));
-		r_list_free(fcns);
+		RzList *fcns = rz_anal_get_functions_in(core->anal, addr);
+		if(!rz_list_empty(fcns))
+			fcn = reinterpret_cast<RzAnalFunction *>(rz_list_first(fcns));
+		rz_list_free(fcns);
 	}
 #endif
 	if(fcn)
@@ -466,15 +466,15 @@ Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
 	// TODO: register more things
 
 	// TODO: correctly handle contain for flags
-	const RList *flags = r_flag_get_list(core->flags, addr);
+	const RzList *flags = rz_flag_get_list(core->flags, addr);
 	if(flags)
 	{
-		RListIter *iter;
+		RzListIter *iter;
 		void *pos;
-		r_list_foreach(flags, iter, pos)
+		rz_list_foreach(flags, iter, pos)
 		{
-			auto flag = reinterpret_cast<RFlagItem *>(pos);
-			if(flag->space && flag->space->name && !strcmp(flag->space->name, R_FLAGS_FS_SECTIONS))
+			auto flag = reinterpret_cast<RzFlagItem *>(pos);
+			if(flag->space && flag->space->name && !strcmp(flag->space->name, RZ_FLAGS_FS_SECTIONS))
 				continue;
 			return registerFlag(flag);
 		}
@@ -492,16 +492,16 @@ Symbol *R2Scope::queryR2(const Address &addr, bool contain) const
 
 LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 {
-	RCoreLock core(arch->getCore());
+	RzCoreLock core(arch->getCore());
 
-	RAnalFunction *fcn = r_anal_get_fcn_in(core->anal, addr.getOffset(), R_ANAL_FCN_TYPE_NULL);
+	RzAnalFunction *fcn = rz_anal_get_fcn_in(core->anal, addr.getOffset(), RZ_ANAL_FCN_TYPE_NULL);
 	if(!fcn)
 		return nullptr;
 
-#if R2_VERSION_MAJOR < 4 || R2_VERSION_MINOR < 6
-	const char *label = r_anal_fcn_label_at(core->anal, fcn, addr.getOffset());
+#if RZ_VERSION_MAJOR < 4 || RZ_VERSION_MINOR < 6
+	const char *label = rz_anal_fcn_label_at(core->anal, fcn, addr.getOffset());
 #else
-	const char *label = r_anal_function_get_label_at(fcn, addr.getOffset());
+	const char *label = rz_anal_function_get_label_at(fcn, addr.getOffset());
 #endif
 	if(!label)
 		return nullptr;

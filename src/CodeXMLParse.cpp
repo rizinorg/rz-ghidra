@@ -1,13 +1,13 @@
 
 #include "CodeXMLParse.h"
-#include <r_util/r_annotated_code.h>
+#include <rz_util/rz_annotated_code.h>
 
 #ifdef LoadImage
 #undef LoadImage
 #endif
 
 #include <funcdata.hh>
-#include <r_util.h>
+#include <rz_util.h>
 #include <pugixml.hpp>
 #include <sstream>
 #include <string>
@@ -57,7 +57,7 @@ void AnnotateOpref(ANNOTATOR_PARAMS)
 	out->emplace_back();
 	auto &annotation = out->back();
 	annotation = {};
-	annotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
+	annotation.type = RZ_CODE_ANNOTATION_TYPE_OFFSET;
 	annotation.offset.offset = op->getAddr().getOffset();
 }
 void AnnotateFunctionName(ANNOTATOR_PARAMS)
@@ -66,7 +66,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	if(!func_name)
 		return;
 	RCodeAnnotation annotation = {};
-	annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_NAME;
+	annotation.type = RZ_CODE_ANNOTATION_TYPE_FUNCTION_NAME;
 	pugi::xml_attribute attr = node.attribute("opref");
 	if(attr.empty())
 	{
@@ -77,7 +77,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 			out->push_back(annotation);
 			// Code below makes an offset annotation for the function name(for the currently decompiled function)
 			RCodeAnnotation offsetAnnotation = {};
-			offsetAnnotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
+			offsetAnnotation.type = RZ_CODE_ANNOTATION_TYPE_OFFSET;
 			offsetAnnotation.offset.offset = annotation.reference.offset;
 			out->push_back(offsetAnnotation);
 		}
@@ -114,7 +114,7 @@ void AnnotateCommentOffset(ANNOTATOR_PARAMS)
 	out->emplace_back();
 	auto &annotation = out->back();
 	annotation = {};
-	annotation.type = R_CODE_ANNOTATION_TYPE_OFFSET;
+	annotation.type = RZ_CODE_ANNOTATION_TYPE_OFFSET;
 	annotation.offset.offset = off;
 }
 
@@ -134,25 +134,25 @@ void AnnotateColor(ANNOTATOR_PARAMS)
 
 	RSyntaxHighlightType type;
 	if (color == "keyword")
-		type = R_SYNTAX_HIGHLIGHT_TYPE_KEYWORD;
+		type = RZ_SYNTAX_HIGHLIGHT_TYPE_KEYWORD;
 	else if (color == "comment")
-		type = R_SYNTAX_HIGHLIGHT_TYPE_COMMENT;
+		type = RZ_SYNTAX_HIGHLIGHT_TYPE_COMMENT;
 	else if (color == "type")
-		type = R_SYNTAX_HIGHLIGHT_TYPE_DATATYPE;
+		type = RZ_SYNTAX_HIGHLIGHT_TYPE_DATATYPE;
 	else if (color == "funcname")
-		type = R_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_NAME;
+		type = RZ_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_NAME;
 	else if (color == "param")
-		type = R_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_PARAMETER;
+		type = RZ_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_PARAMETER;
 	else if (color == "var")
-		type = R_SYNTAX_HIGHLIGHT_TYPE_LOCAL_VARIABLE;
+		type = RZ_SYNTAX_HIGHLIGHT_TYPE_LOCAL_VARIABLE;
 	else if (color == "const")
-		type = R_SYNTAX_HIGHLIGHT_TYPE_CONSTANT_VARIABLE;
+		type = RZ_SYNTAX_HIGHLIGHT_TYPE_CONSTANT_VARIABLE;
 	else if (color == "global")
-		type = R_SYNTAX_HIGHLIGHT_TYPE_GLOBAL_VARIABLE;
+		type = RZ_SYNTAX_HIGHLIGHT_TYPE_GLOBAL_VARIABLE;
 	else
 		return;
 	RCodeAnnotation annotation = {};
-	annotation.type = R_CODE_ANNOTATION_TYPE_SYNTAX_HIGHLIGHT;
+	annotation.type = RZ_CODE_ANNOTATION_TYPE_SYNTAX_HIGHLIGHT;
 	annotation.syntax_highlight.type = type;
 	out->push_back(annotation);
 }
@@ -160,7 +160,7 @@ void AnnotateColor(ANNOTATOR_PARAMS)
 void AnnotateGlobalVariable(Varnode *varnode, std::vector<RCodeAnnotation> *out)
 {
 	RCodeAnnotation annotation = {};
-	annotation.type = R_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE;
+	annotation.type = RZ_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE;
 	annotation.reference.offset = varnode->getOffset();
 	out->push_back(annotation);
 }
@@ -168,7 +168,7 @@ void AnnotateGlobalVariable(Varnode *varnode, std::vector<RCodeAnnotation> *out)
 void AnnotateConstantVariable(Varnode *varnode, std::vector<RCodeAnnotation> *out)
 {
 	RCodeAnnotation annotation = {};
-	annotation.type = R_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
+	annotation.type = RZ_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
 	annotation.reference.offset = varnode->getOffset();
 	out->push_back(annotation);
 }
@@ -181,9 +181,9 @@ void AnnotateLocalVariable(Symbol *symbol, std::vector<RCodeAnnotation> *out)
 	RCodeAnnotation annotation = {};
 	annotation.variable.name = strdup(symbol->getName().c_str());
 	if(symbol->getCategory() == 0)
-		annotation.type = R_CODE_ANNOTATION_TYPE_FUNCTION_PARAMETER;
+		annotation.type = RZ_CODE_ANNOTATION_TYPE_FUNCTION_PARAMETER;
 	else
-		annotation.type = R_CODE_ANNOTATION_TYPE_LOCAL_VARIABLE;
+		annotation.type = RZ_CODE_ANNOTATION_TYPE_LOCAL_VARIABLE;
 	out->push_back(annotation);
 }
 
@@ -297,7 +297,7 @@ static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostrea
 	for(auto &annotation : annotations)
 	{
 		annotation.end = stream.tellp();
-		r_annotated_code_add_annotation(code, &annotation);
+		rz_annotated_code_add_annotation(code, &annotation);
 	}
 
 #ifdef TEST_UNKNOWN_NODES
@@ -306,14 +306,14 @@ static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostrea
 #endif
 }
 
-R_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
+RZ_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
 {
 	pugi::xml_document doc;
 	if(!doc.load_string(xml, pugi::parse_default | pugi::parse_ws_pcdata))
 		return nullptr;
 
 	std::stringstream ss;
-	RAnnotatedCode *code = r_annotated_code_new(nullptr);
+	RAnnotatedCode *code = rz_annotated_code_new(nullptr);
 	if(!code)
 		return nullptr;
 
@@ -321,10 +321,10 @@ R_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
 	ParseNode(doc.child("function"), &ctx, ss, code);
 
 	std::string str = ss.str();
-	code->code = reinterpret_cast<char *>(r_malloc(str.length() + 1));
+	code->code = reinterpret_cast<char *>(rz_malloc(str.length() + 1));
 	if(!code->code)
 	{
-		r_annotated_code_free(code);
+		rz_annotated_code_free(code);
 		return nullptr;
 	}
 	memcpy(code->code, str.c_str(), str.length());

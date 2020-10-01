@@ -1,7 +1,7 @@
 /* radare - LGPL - Copyright 2020 - FXTi */
 
-#ifndef R2GHIDRA_SLEIGHINSTRUCTION_H
-#define R2GHIDRA_SLEIGHINSTRUCTION_H
+#ifndef RZ_GHIDRA_SLEIGHINSTRUCTION_H
+#define RZ_GHIDRA_SLEIGHINSTRUCTION_H
 
 #include <vector>
 #include <unordered_set>
@@ -475,4 +475,4 @@ public:
 	}
 };
 
-#endif // R2GHIDRA_SLEIGHINSTRUCTION_H
+#endif // RZ_GHIDRA_SLEIGHINSTRUCTION_H

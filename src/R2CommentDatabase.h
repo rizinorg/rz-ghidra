@@ -1,7 +1,7 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
-#ifndef R2GHIDRA_R2COMMENTDATABASE_H
-#define R2GHIDRA_R2COMMENTDATABASE_H
+#ifndef RZ_GHIDRA_R2COMMENTDATABASE_H
+#define RZ_GHIDRA_R2COMMENTDATABASE_H
 
 #include <comment.hh>
 
@@ -32,4 +32,4 @@ class R2CommentDatabase : public CommentDatabase
 		void restoreXml(const Element *el, const AddrSpaceManager *trans) override { throw LowlevelError("commentdb::restoreXml unimplemented"); }
 };
 
-#endif //R2GHIDRA_R2COMMENTDATABASE_H
+#endif //RZ_GHIDRA_R2COMMENTDATABASE_H

@@ -1,27 +1,27 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
-#ifndef R2GHIDRA_R2UTILS_H
-#define R2GHIDRA_R2UTILS_H
+#ifndef RZ_GHIDRA_R2UTILS_H
+#define RZ_GHIDRA_R2UTILS_H
 
-typedef struct r_list_t RList;
-typedef struct r_list_iter_t RListIter;
+typedef struct rz_list_t RzList;
+typedef struct rz_list_iter_t RzListIter;
 
-template<typename T, typename F> void r_list_foreach_cpp(RList *list, const F &func)
+template<typename T, typename F> void rz_list_foreach_cpp(RzList *list, const F &func)
 {
-	for(RListIter *it = list->head; it; it = it->n)
+	for(RzListIter *it = list->head; it; it = it->n)
 	{
 		func(reinterpret_cast<T *>(it->data));
 	}
 }
 
-template<typename T, typename F> void r_interval_tree_foreach_cpp(RIntervalTree *tree, const F &func)
+template<typename T, typename F> void rz_interval_tree_foreach_cpp(RIntervalTree *tree, const F &func)
 {
 	RIntervalTreeIter it;
-	for(it = r_rbtree_first (&(tree)->root->node); r_rbtree_iter_has(&it); r_rbtree_iter_next (&(it)))
+	for(it = rz_rbtree_first (&(tree)->root->node); rz_rbtree_iter_has(&it); rz_rbtree_iter_next (&(it)))
 	{
-		RIntervalNode *node = r_interval_tree_iter_get (&it);
+		RIntervalNode *node = rz_interval_tree_iter_get (&it);
 		func(node, reinterpret_cast<T *>(node->data));
 	}
 }
 
-#endif //R2GHIDRA_R2UTILS_H
+#endif //RZ_GHIDRA_R2UTILS_H

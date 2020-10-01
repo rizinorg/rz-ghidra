@@ -1,7 +1,7 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
-#ifndef R2GHIDRA_R2PRINTC_H
-#define R2GHIDRA_R2PRINTC_H
+#ifndef RZ_GHIDRA_R2PRINTC_H
+#define RZ_GHIDRA_R2PRINTC_H
 
 #include <printc.hh>
 
@@ -25,4 +25,4 @@ class R2PrintCCapability : public PrintLanguageCapability
 		PrintLanguage *buildLanguage(Architecture *glb) override;
 };
 
-#endif //R2GHIDRA_R2PRINTC_H
+#endif //RZ_GHIDRA_R2PRINTC_H

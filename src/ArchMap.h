@@ -1,20 +1,20 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
-#ifndef R2GHIDRA_ARCHMAP_H
-#define R2GHIDRA_ARCHMAP_H
+#ifndef RZ_GHIDRA_ARCHMAP_H
+#define RZ_GHIDRA_ARCHMAP_H
 
 #include <sleigh_arch.hh>
 
-#include <r_core.h>
+#include <rz_core.h>
 
 #include <string>
 
 /**
  * Match sleigh id from whatever is currently configured.
- * For regular r2 plugins, guess the matching sleigh id,
+ * For regular rizin plugins, guess the matching sleigh id,
  * for the specific sleigh plugin, same as SleighIdFromSleighAsmConfig()
  */
-std::string SleighIdFromCore(RCore *core);
+std::string SleighIdFromCore(RzCore *core);
 
 /**
  * Match sleigh id from sleigh-plugin specific settings (asm.cpu)

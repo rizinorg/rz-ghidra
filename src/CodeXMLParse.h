@@ -1,12 +1,12 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
-#ifndef R2GHIDRA_CODEXMLPARSE_H
-#define R2GHIDRA_CODEXMLPARSE_H
+#ifndef RZ_GHIDRA_CODEXMLPARSE_H
+#define RZ_GHIDRA_CODEXMLPARSE_H
 
-#include <r_util/r_annotated_code.h>
+#include <rz_util/rz_annotated_code.h>
 
 class Funcdata;
 
-R_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml);
+RZ_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml);
 
-#endif //R2GHIDRA_CODEXMLPARSE_H
+#endif //RZ_GHIDRA_CODEXMLPARSE_H

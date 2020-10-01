@@ -3,10 +3,10 @@
 #include "SleighAsm.h"
 #include "ArchMap.h"
 
-void SleighAsm::init(const char *cpu, int bits, bool bigendian, RIO *io, RConfig *cfg)
+void SleighAsm::init(const char *cpu, int bits, bool bigendian, RzIO *io, RzConfig *cfg)
 {
 	if(!io)
-		throw LowlevelError("Can't get RIO from RBin");
+		throw LowlevelError("Can't get RzIO from RBin");
 
 	if(description.empty())
 	{
@@ -23,7 +23,7 @@ void SleighAsm::init(const char *cpu, int bits, bool bigendian, RIO *io, RConfig
 	initInner(io, new_sleigh_id);
 }
 
-void SleighAsm::initInner(RIO *io, std::string sleigh_id)
+void SleighAsm::initInner(RzIO *io, std::string sleigh_id)
 {
 	/* Initialize Sleigh */
 	loader = std::move(AsmLoadImage(io));
@@ -392,31 +392,31 @@ void SleighAsm::collectSpecfiles(void)
 		loadLanguageDescription(*iter);
 }
 
-RConfig *SleighAsm::getConfig(RAsm *a)
+RzConfig *SleighAsm::getConfig(RzAsm *a)
 {
-	RCore *core = a->num ? (RCore *)(a->num->userptr) : NULL;
+	RzCore *core = a->num ? (RzCore *)(a->num->userptr) : NULL;
 	if(!core)
 		return nullptr;
 	return core->config;
 }
 
-RConfig *SleighAsm::getConfig(RAnal *a)
+RzConfig *SleighAsm::getConfig(RzAnal *a)
 {
-	RCore *core = a ? (RCore *)a->coreb.core : nullptr;
+	RzCore *core = a ? (RzCore *)a->coreb.core : nullptr;
 	if(!core)
-		throw LowlevelError("Can't get RCore from RAnal's RCoreBind");
+		throw LowlevelError("Can't get RzCore from RzAnal's RzCoreBind");
 	return core->config;
 }
 
-std::string SleighAsm::getSleighHome(RConfig *cfg)
+std::string SleighAsm::getSleighHome(RzConfig *cfg)
 {
 	const char varname[] = "r2ghidra.sleighhome";
 	const char *path = nullptr;
 
 	// user-set, for example from .radare2rc
-	if(cfg && r_config_node_get(cfg, varname))
+	if(cfg && rz_config_node_get(cfg, varname))
 	{
-		path = r_config_get(cfg, varname);
+		path = rz_config_get(cfg, varname);
 		if(path && *path)
 			return path;
 	}
@@ -426,33 +426,33 @@ std::string SleighAsm::getSleighHome(RConfig *cfg)
 	if(path && *path)
 	{
 		if(cfg)
-			r_config_set(cfg, varname, path);
+			rz_config_set(cfg, varname, path);
 		return path;
 	}
 
-#ifdef R2GHIDRA_SLEIGHHOME_DEFAULT
-	if(r_file_is_directory(R2GHIDRA_SLEIGHHOME_DEFAULT))
+#ifdef RZ_GHIDRA_SLEIGHHOME_DEFAULT
+	if(rz_file_is_directory(RZ_GHIDRA_SLEIGHHOME_DEFAULT))
 	{
 		if(cfg)
-			r_config_set(cfg, varname, R2GHIDRA_SLEIGHHOME_DEFAULT);
-		return R2GHIDRA_SLEIGHHOME_DEFAULT;
+			rz_config_set(cfg, varname, RZ_GHIDRA_SLEIGHHOME_DEFAULT);
+		return RZ_GHIDRA_SLEIGHHOME_DEFAULT;
 	}
 #endif
 
-	path = r_str_home(".local/share/radare2/r2pm/git/ghidra");
-	if(r_file_is_directory(path))
+	path = rz_str_home(".local/share/radare2/r2pm/git/ghidra");
+	if(rz_file_is_directory(path))
 	{
 		if(cfg)
-			r_config_set(cfg, varname, path);
+			rz_config_set(cfg, varname, path);
 		std::string res(path);
-		r_mem_free((void *)path);
+		rz_mem_free((void *)path);
 		return res;
 	}
 	else
 		throw LowlevelError("No Sleigh Home found!");
 }
 
-int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
+int SleighAsm::disassemble(RzAsmOp *op, unsigned long long offset)
 {
 	AssemblySlg assem(this);
 	Address addr(trans.getDefaultCodeSpace(), offset);
@@ -460,26 +460,26 @@ int SleighAsm::disassemble(RAsmOp *op, unsigned long long offset)
 	try
 	{
 		length = trans.printAssembly(assem, addr);
-		r_strbuf_set(&op->buf_asm, assem.str);
+		rz_strbuf_set(&op->buf_asm, assem.str);
 		/*
 		auto *ins = trans.getInstruction(addr);
 		stringstream ss;
 		ss << assem.str << " " << ins->printFlowType(ins->getFlowType());
 		for(auto p: ins->getFlows())
 		    ss << " " << p;
-		r_strbuf_set(&op->buf_asm, ss.str().c_str());
+		rz_strbuf_set(&op->buf_asm, ss.str().c_str());
 		*/
 	}
 	catch(BadDataError &err)
 	{
 		/* Meet unknown data -> invalid opcode */
-		r_strbuf_set(&op->buf_asm, "invalid");
+		rz_strbuf_set(&op->buf_asm, "invalid");
 		length = alignment;
 	}
 	catch(UnimplError &err)
 	{
 		/* Meet unimplemented data -> invalid opcode */
-		r_strbuf_set(&op->buf_asm, "invalid");
+		rz_strbuf_set(&op->buf_asm, "invalid");
 		length = alignment;
 	}
 	return length;
@@ -592,9 +592,9 @@ void AssemblySlg::dump(const Address &addr, const string &mnem, const string &bo
 			res += tmp;
 	}
 	if(res.empty())
-		str = r_str_newf("%s", mnem.c_str());
+		str = rz_str_newf("%s", mnem.c_str());
 	else
-		str = r_str_newf("%s %s", mnem.c_str(), res.c_str());
+		str = rz_str_newf("%s %s", mnem.c_str(), res.c_str());
 }
 
 PcodeOperand *PcodeSlg::parse_vardata(VarnodeData &data)

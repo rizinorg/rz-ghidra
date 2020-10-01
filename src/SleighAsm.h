@@ -1,11 +1,11 @@
 /* radare - LGPL - Copyright 2020 - FXTi */
 
-#ifndef R2GHIDRA_SLEIGHASM_H
-#define R2GHIDRA_SLEIGHASM_H
+#ifndef RZ_GHIDRA_SLEIGHASM_H
+#define RZ_GHIDRA_SLEIGHASM_H
 
 #include <string>
 #include <vector>
-#include <r_core.h>
+#include <rz_core.h>
 #include <unordered_map>
 #include "architecture.hh"
 #include "sleigh_arch.hh"
@@ -14,13 +14,13 @@
 class AsmLoadImage : public LoadImage
 {
 private:
-	RIO *io = nullptr;
+	RzIO *io = nullptr;
 
 public:
-	AsmLoadImage(RIO *io): LoadImage("radare2_program"), io(io) {}
+	AsmLoadImage(RzIO *io): LoadImage("radare2_program"), io(io) {}
 	virtual void loadFill(uint1 *ptr, int4 size, const Address &addr)
 	{
-		r_io_read_at(io, addr.getOffset(), ptr, size);
+		rz_io_read_at(io, addr.getOffset(), ptr, size);
 	}
 	virtual string getArchType(void) const { return "radare2"; }
 	virtual void adjustVma(long adjust)
@@ -45,7 +45,7 @@ public:
 	~AssemblySlg()
 	{
 		if(str)
-			r_mem_free(str);
+			rz_mem_free(str);
 	}
 };
 
@@ -217,9 +217,9 @@ private:
 	std::vector<LanguageDescription> description;
 	int languageindex;
 
-	void initInner(RIO *io, std::string sleigh_id);
+	void initInner(RzIO *io, std::string sleigh_id);
 	void initRegMapping(void);
-	std::string getSleighHome(RConfig *cfg);
+	std::string getSleighHome(RzConfig *cfg);
 	void collectSpecfiles(void);
 	void scanSleigh(const string &rootpath);
 	void resolveArch(const string &archid);
@@ -240,13 +240,13 @@ public:
 	// To satisfy radare2's rule: reg name has to be lowercase.
 	std::unordered_map<std::string, std::string> reg_mapping;
 	SleighAsm(): loader(nullptr), trans(nullptr, nullptr) {}
-	void init(const char *cpu, int bits, bool bigendian, RIO *io, RConfig *cfg);
-	int disassemble(RAsmOp *op, unsigned long long offset);
+	void init(const char *cpu, int bits, bool bigendian, RzIO *io, RzConfig *cfg);
+	int disassemble(RzAsmOp *op, unsigned long long offset);
 	int genOpcode(PcodeSlg &pcode_slg, Address &addr);
 	std::vector<R2Reg> getRegs(void);
-	static RConfig *getConfig(RAsm *a);
-	static RConfig *getConfig(RAnal *a);
+	static RzConfig *getConfig(RzAsm *a);
+	static RzConfig *getConfig(RzAnal *a);
 	void check(ut64 offset, const ut8 *buf, int len);
 };
 
-#endif // R2GHIDRA_SLEIGHASM_H
+#endif // RZ_GHIDRA_SLEIGHASM_H

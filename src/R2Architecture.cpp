@@ -28,14 +28,14 @@ static const std::map<std::string, std::string> cc_map = {
 		{ "arm16", "__stdcall" } /* not actually __stdcall */
 };
 
-std::string FilenameFromCore(RCore *core)
+std::string FilenameFromCore(RzCore *core)
 {
 	if(core && core->bin && core->bin->file)
 		return core->bin->file;
 	return std::string();
 }
 
-R2Architecture::R2Architecture(RCore *core, const std::string &sleigh_id)
+R2Architecture::R2Architecture(RzCore *core, const std::string &sleigh_id)
 	: SleighArchitecture(FilenameFromCore(core), sleigh_id.empty() ? SleighIdFromCore(core) : sleigh_id, &cout),
 	coreMutex(core)
 {
@@ -108,8 +108,8 @@ ContextDatabase *R2Architecture::getContextDatabase()
 
 void R2Architecture::postSpecFile()
 {
-	RCoreLock core(getCore());
-	r_list_foreach_cpp<RAnalFunction>(core->anal->fcns, [&](RAnalFunction *func) {
+	RzCoreLock core(getCore());
+	rz_list_foreach_cpp<RzAnalFunction>(core->anal->fcns, [&](RzAnalFunction *func) {
 		if (func->is_noreturn)
 		{
 			// Configure noreturn functions
@@ -136,7 +136,7 @@ void R2Architecture::buildAction(DocumentStorage &store)
 
 void R2Architecture::buildLoader(DocumentStorage &store)
 {
-	RCoreLock core(getCore());
+	RzCoreLock core(getCore());
 	collectSpecFiles(*errorstream);
 	loader = new R2LoadImage(getCore());
 }

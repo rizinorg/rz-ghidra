@@ -1,15 +1,15 @@
 /* radare - LGPL - Copyright 2020 - FXTi */
 
-#include <r_lib.h>
-#include <r_asm.h>
+#include <rz_lib.h>
+#include <rz_asm.h>
 #include "SleighAsm.h"
 
 static SleighAsm sasm;
-static RIO *rio = nullptr;
+static RzIO *rio = nullptr;
 
 //#define DEBUG_EXCEPTIONS
 
-static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
+static int disassemble(RzAsm *a, RzAsmOp *op, const ut8 *buf, int len)
 {
 	int r = 0;
 
@@ -26,15 +26,15 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 		{
 			if(!rio)
 			{
-				rio = r_io_new();
-				sasm.sleigh_id.clear(); // For newly created RIO, refresh SleighAsm.
+				rio = rz_io_new();
+				sasm.sleigh_id.clear(); // For newly created RzIO, refresh SleighAsm.
 			}
 			else
-				r_io_close_all(rio);
+				rz_io_close_all(rio);
 
-			RBuffer *tmp_buf = r_buf_new_with_bytes(buf, len);
-			r_io_open_buffer(rio, tmp_buf, R_PERM_RWX, 0);
-			r_buf_free(tmp_buf);
+			RBuffer *tmp_buf = rz_buf_new_with_bytes(buf, len);
+			rz_io_open_buffer(rio, tmp_buf, RZ_PERM_RWX, 0);
+			rz_buf_free(tmp_buf);
 		}
 
 		sasm.init(a->cpu, a->bits, a->big_endian, bin? bin->iob.io : rio, SleighAsm::getConfig(a));
@@ -44,7 +44,7 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 	}
 	catch(const LowlevelError &e)
 	{
-		r_strbuf_set(&op->buf_asm, e.explain.c_str());
+		rz_strbuf_set(&op->buf_asm, e.explain.c_str());
 		r = 1;
 	}
 #endif
@@ -56,13 +56,13 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 static bool fini(void *p)
 {
 	if(rio)
-		r_io_free(rio);
+		rz_io_free(rio);
 	rio = nullptr;
 	return true;
 }
 
-RAsmPlugin r_asm_plugin_ghidra = {
-	/* .name = */ "r2ghidra",
+RzAsmPlugin rz_asm_plugin_ghidra = {
+	/* .name = */ "ghidra",
 	/* .arch = */ "sleigh",
 	/* .author = */ "FXTi",
 	/* .version = */ nullptr,
@@ -85,13 +85,13 @@ RAsmPlugin r_asm_plugin_ghidra = {
 #ifdef __cplusplus
 extern "C"
 #endif
-R_API RLibStruct radare_plugin = {
-	/* .type = */ R_LIB_TYPE_ASM,
-	/* .data = */ &r_asm_plugin_ghidra,
-	/* .version = */ R2_VERSION,
+RZ_API RzLibStruct radare_plugin = {
+	/* .type = */ RZ_LIB_TYPE_ASM,
+	/* .data = */ &rz_asm_plugin_ghidra,
+	/* .version = */ RZ_VERSION,
 	/* .free = */ nullptr
-#if R2_VERSION_MAJOR >= 4 && R2_VERSION_MINOR >= 2
-	, "r2ghidra-dec"
+#if RZ_VERSION_MAJOR >= 4 && RZ_VERSION_MINOR >= 2
+	, "rz-ghidra"
 #endif
 };
 #endif

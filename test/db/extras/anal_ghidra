@@ -179,7 +179,7 @@ type: store
 EOF
 CMDS=<<EOF
 e asm.cpu=AARCH64:LE:64:v8A:gcc
-e asm.arch=r2ghidra
+e asm.arch=ghidra
 wx 298947f9
 pd 1
 ao | grep type
@@ -193,7 +193,7 @@ RUN
 NAME=v850cmp
 FILE=-
 EXPECT=<<EOF
-r2ghidra
+ghidra
 V850:LE:32:default
 address: 0x0
 opcode: cmp r7, r6
@@ -216,7 +216,7 @@ EOF
 CMDS=<<EOF
 e asm.cpu=v850
 e asm.bits=32
-e asm.arch=r2ghidra
+e asm.arch=ghidra
 pdga
 e anal.arch
 e anal.cpu
@@ -228,7 +228,7 @@ RUN
 NAME=v850load
 FILE=-
 EXPECT=<<EOF
-r2ghidra
+ghidra
 V850:LE:32:default
 address: 0x0
 opcode: ld.w 0x4[r29], r11
@@ -251,7 +251,7 @@ EOF
 CMDS=<<EOF
 e asm.cpu=v850
 e asm.bits=32
-e asm.arch=r2ghidra
+e asm.arch=ghidra
 pdga
 e anal.arch
 e anal.cpu

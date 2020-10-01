@@ -1,20 +1,20 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
-#ifndef R2GHIDRA_R2ARCHITECTURE_H
-#define R2GHIDRA_R2ARCHITECTURE_H
+#ifndef RZ_GHIDRA_R2ARCHITECTURE_H
+#define RZ_GHIDRA_R2ARCHITECTURE_H
 
 #include "architecture.hh"
 #include "sleigh_arch.hh"
 
-#include "RCoreMutex.h"
+#include "RzCoreMutex.h"
 
 class R2TypeFactory;
-typedef struct r_core_t RCore;
+typedef struct rz_core_t RzCore;
 
 class R2Architecture : public SleighArchitecture
 {
 	private:
-		RCoreMutex coreMutex;
+		RzCoreMutex coreMutex;
 
 		R2TypeFactory *r2TypeFactory = nullptr;
 		std::map<std::string, VarnodeData> registers;
@@ -25,9 +25,9 @@ class R2Architecture : public SleighArchitecture
 		void loadRegisters(const Translate *translate);
 
 	public:
-		explicit R2Architecture(RCore *core, const std::string &sleigh_id);
+		explicit R2Architecture(RzCore *core, const std::string &sleigh_id);
 
-		RCoreMutex *getCore() { return &coreMutex; }
+		RzCoreMutex *getCore() { return &coreMutex; }
 
 		R2TypeFactory *getTypeFactory() const { return r2TypeFactory; }
 
@@ -51,4 +51,4 @@ class R2Architecture : public SleighArchitecture
 };
 
 
-#endif //R2GHIDRA_R2ARCHITECTURE_H
+#endif //RZ_GHIDRA_R2ARCHITECTURE_H

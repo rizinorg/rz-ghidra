@@ -3,7 +3,7 @@
 #include "R2CommentDatabase.h"
 #include "R2Architecture.h"
 
-#include <r_core.h>
+#include <rz_core.h>
 
 #include "R2Utils.h"
 
@@ -15,23 +15,23 @@ R2CommentDatabase::R2CommentDatabase(R2Architecture *arch)
 
 void R2CommentDatabase::fillCache(const Address &fad) const
 {
-	RCoreLock core(arch->getCore());
+	RzCoreLock core(arch->getCore());
 
-	RAnalFunction *fcn = r_anal_get_function_at(core->anal, fad.getOffset());
+	RzAnalFunction *fcn = rz_anal_get_function_at(core->anal, fad.getOffset());
 	if(!fcn)
 	{
-		RList *fcns = r_anal_get_functions_in(core->anal, fad.getOffset());
-		if(!r_list_empty(fcns))
-			fcn = reinterpret_cast<RAnalFunction *>(r_list_first(fcns));
-		r_list_free(fcns);
+		RzList *fcns = rz_anal_get_functions_in(core->anal, fad.getOffset());
+		if(!rz_list_empty(fcns))
+			fcn = reinterpret_cast<RzAnalFunction *>(rz_list_first(fcns));
+		rz_list_free(fcns);
 	}
 	if(!fcn)
 		return;
 
-	r_interval_tree_foreach_cpp<RAnalMetaItem>(&core->anal->meta, [fad, fcn, this](RIntervalNode *node, RAnalMetaItem *meta) {
-		if(!meta || meta->type != R_META_TYPE_COMMENT || !meta->str)
+	rz_interval_tree_foreach_cpp<RzAnalMetaItem>(&core->anal->meta, [fad, fcn, this](RIntervalNode *node, RzAnalMetaItem *meta) {
+		if(!meta || meta->type != RZ_META_TYPE_COMMENT || !meta->str)
 			return;
-		if(!r_anal_function_contains(fcn, node->start))
+		if(!rz_anal_function_contains(fcn, node->start))
 			return;
 		cache.addComment(Comment::user2, fad, Address(arch->getDefaultCodeSpace(), node->start), meta->str);
 	});

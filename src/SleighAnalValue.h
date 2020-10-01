@@ -1,38 +1,38 @@
 /* radare - LGPL - Copyright 2020 - FXTi */
 
-#ifndef R2GHIDRA_SLEIGHANALVALUE_H
-#define R2GHIDRA_SLEIGHANALVALUE_H
+#ifndef RZ_GHIDRA_SLEIGHANALVALUE_H
+#define RZ_GHIDRA_SLEIGHANALVALUE_H
 
 #include "SleighAsm.h"
 
-struct SleighAnalValue: public RAnalValue
+struct SleighAnalValue: public RzAnalValue
 {
 public:
 	SleighAnalValue()
 	{
-		access = RAnalValueAccess(0);
+		access = RzAnalValueAccess(0);
 		absolute = memref = base = delta = imm = mul = 0;
 		seg = reg = regdelta = nullptr;
 	}
 
-	static SleighAnalValue resolve_arg(RAnal *anal, const PcodeOperand *arg);
+	static SleighAnalValue resolve_arg(RzAnal *anal, const PcodeOperand *arg);
 
-	static std::vector<SleighAnalValue> resolve_out(RAnal *anal,
+	static std::vector<SleighAnalValue> resolve_out(RzAnal *anal,
                                            std::vector<Pcodeop>::const_iterator curr_op,
                                            std::vector<Pcodeop>::const_iterator end_op,
                                            const PcodeOperand *arg);
 
 	bool is_valid() const { return absolute != -1; }
-	bool is_imm() const { return type == R_ANAL_VAL_IMM; }
-	bool is_reg() const { return type == R_ANAL_VAL_REG; }
-	bool is_mem() const { return type == R_ANAL_VAL_MEM; }
+	bool is_imm() const { return type == RZ_ANAL_VAL_IMM; }
+	bool is_reg() const { return type == RZ_ANAL_VAL_REG; }
+	bool is_mem() const { return type == RZ_ANAL_VAL_MEM; }
 
 	void invalid() { absolute = -1; }
 	void mem(uint4 size);
-	RAnalValue *dup() const;
+	RzAnalValue *dup() const;
 
 private:
-	static RAnalValueType type_from_values(const SleighAnalValue &in0, const SleighAnalValue &in1);
+	static RzAnalValueType type_from_values(const SleighAnalValue &in0, const SleighAnalValue &in1);
 
 	template<typename T>
 	static inline T inner_max(T foo, T bar)
@@ -41,4 +41,4 @@ private:
 	}
 };
 
-#endif // R2GHIDRA_SLEIGHANALVALUE_H
+#endif // RZ_GHIDRA_SLEIGHANALVALUE_H

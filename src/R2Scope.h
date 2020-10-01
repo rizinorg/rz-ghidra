@@ -1,11 +1,11 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
-#ifndef R2GHIDRA_R2SCOPE_H
-#define R2GHIDRA_R2SCOPE_H
+#ifndef RZ_GHIDRA_R2SCOPE_H
+#define RZ_GHIDRA_R2SCOPE_H
 
 #include <database.hh>
 
-#include <r_types.h>
+#include <rz_types.h>
 
 // Windows defines LoadImage to LoadImageA
 #ifdef LoadImage
@@ -13,8 +13,8 @@
 #endif
 
 class R2Architecture;
-typedef struct r_anal_function_t RAnalFunction;
-typedef struct r_flag_item_t RFlagItem;
+typedef struct rz_anal_function_t RzAnalFunction;
+typedef struct rz_flag_item_t RzFlagItem;
 
 class R2Scope : public Scope
 {
@@ -22,8 +22,8 @@ class R2Scope : public Scope
 		R2Architecture *arch;
 		ScopeInternal *cache;
 
-		FunctionSymbol *registerFunction(RAnalFunction *fcn) const;
-		Symbol *registerFlag(RFlagItem *flag) const;
+		FunctionSymbol *registerFunction(RzAnalFunction *fcn) const;
+		Symbol *registerFlag(RzFlagItem *flag) const;
 		Symbol *queryR2Absolute(ut64 addr, bool contain) const;
 		Symbol *queryR2(const Address &addr, bool contain) const;
 		LabSymbol *queryR2FunctionLabel(const Address &addr) const;
@@ -84,4 +84,4 @@ class R2Scope : public Scope
 		void setCategory(Symbol *sym,int4 cat,int4 ind) override		{ throw LowlevelError("setCategory unimplemented"); }
 };
 
-#endif //R2GHIDRA_R2SCOPE_H
+#endif //RZ_GHIDRA_R2SCOPE_H

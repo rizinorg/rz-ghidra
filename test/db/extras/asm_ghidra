@@ -1,5 +1,5 @@
 NAME=x86_32
-FILE=r2-testbins/elf/crackme0x05
+FILE=rizin-testbins/elf/crackme0x05
 EXPECT=<<EOF
             ;-- main:
             0x08048540      55             PUSH ebp
@@ -35,7 +35,7 @@ EOF
 RUN
 
 NAME=x86_64
-FILE=r2-testbins/elf/hello_world
+FILE=rizin-testbins/elf/hello_world
 EXPECT=<<EOF
             ;-- main:
             0x000007aa      55             PUSH rbp
@@ -91,7 +91,7 @@ EOF
 RUN
 
 NAME=x86_16
-FILE=r2-testbins/mz/unzip.exe
+FILE=rizin-testbins/mz/unzip.exe
 EXPECT=<<EOF
             ;-- entry0:
             0x000156a0      8be8           MOV bp,ax
@@ -120,7 +120,7 @@ EOF
 RUN
 
 NAME=ARM_LE_32
-FILE=r2-testbins/elf/analysis/dwarf_load
+FILE=rizin-testbins/elf/analysis/dwarf_load
 EXPECT=<<EOF
             ;-- main:
             0x0000dac8      0dc0a0e1       cpy r12,sp
@@ -182,7 +182,7 @@ EOF
 RUN
 
 NAME=MIPS_BE_64
-FILE=r2-testbins/z64/demo.z64
+FILE=rizin-testbins/z64/demo.z64
 EXPECT=<<EOF
             ;-- entry0:
             ;-- section.text:
@@ -245,7 +245,7 @@ EOF
 RUN
 
 NAME=MIPS_BE_32
-FILE=r2-testbins/elf/syscall_mips
+FILE=rizin-testbins/elf/syscall_mips
 EXPECT=<<EOF
             ;-- entry0:
             ;-- section..text:
@@ -272,7 +272,7 @@ EOF
 RUN
 
 NAME=PowerPC_BE_32
-FILE=r2-testbins/dol/sqrxz4-gc.dol
+FILE=rizin-testbins/dol/sqrxz4-gc.dol
 EXPECT=<<EOF
             ;-- entry0:
             ;-- section.text_0:
@@ -334,7 +334,7 @@ EOF
 RUN
 
 NAME=AARCH64_LE_64
-FILE=r2-testbins/elf/mtk-su
+FILE=rizin-testbins/elf/mtk-su
 EXPECT=<<EOF
         :   ;-- entry0:
         :   ;-- section..text:
@@ -397,7 +397,7 @@ EOF
 RUN
 
 NAME=MIPS_LE_32
-FILE=r2-testbins/elf/jni/jniO0-mips
+FILE=rizin-testbins/elf/jni/jniO0-mips
 EXPECT=<<EOF
             ;-- entry0:
             ;-- entry.fini0:
@@ -466,7 +466,7 @@ EOF
 RUN
 
 NAME=PowerPC_LE_64
-FILE=r2-testbins/elf/mosquito-ppc64le
+FILE=rizin-testbins/elf/mosquito-ppc64le
 EXPECT=<<EOF
         :   ;-- entry0:
         :   0x10001854      0210403c       lis r2,0x1002
@@ -527,7 +527,7 @@ EOF
 RUN
 
 NAME=sparc_BE_32
-FILE=r2-testbins/elf/analysis/elf-sparc-execstack
+FILE=rizin-testbins/elf/analysis/elf-sparc-execstack
 EXPECT=<<EOF
             ;-- entry0:
             ;-- section..text:
@@ -589,7 +589,7 @@ EOF
 RUN
 
 NAME=avr8_LE_16
-FILE=r2-testbins/elf/analysis/bugurtos-avr.elf
+FILE=rizin-testbins/elf/analysis/bugurtos-avr.elf
 EXPECT=<<EOF
             ;-- main:
             0x00000308      ef92           push r14
@@ -651,7 +651,7 @@ EOF
 RUN
 
 NAME=68000_BE_32
-FILE=r2-testbins/elf/analysis/busybox.m68k
+FILE=rizin-testbins/elf/analysis/busybox.m68k
 EXPECT=<<EOF
             ;-- entry0:
             0x80000da4      9dce           suba.l a6,a6
@@ -711,10 +711,10 @@ pd 50
 EOF
 RUN
 
-NAME=rasm2
+NAME=rz-asm
 FILE=-
 CMDS=<<EOF
-rasm2 -a r2ghidra -c x86:LE:32:default:gcc -d 89e1909090909090909090909090
+!rz-asm -a ghidra -c x86:LE:32:default:gcc -d 89e1909090909090909090909090
 EOF
 EXPECT=<<EOF
 MOV ecx,esp
@@ -736,7 +736,7 @@ RUN
 NAME=asm.cpu short
 FILE=-
 CMDS=<<EOF
-e asm.arch=r2ghidra
+e asm.arch=ghidra
 e asm.cpu=v850
 e asm.bits=32
 pdgss
@@ -758,10 +758,10 @@ V850:LE:32:default
 EOF
 RUN
 
-NAME=rasm2 short
+NAME=rz-asm short
 FILE=-
 CMDS=<<EOF
-rasm2 -a r2ghidra -c v850 -b 32 -d 8100e009
+rz-asm -a ghidra -c v850 -b 32 -d 8100e009
 EOF
 EXPECT=<<EOF
 zxb r1

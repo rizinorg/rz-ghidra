@@ -1,12 +1,12 @@
 /* radare - LGPL - Copyright 2019 - thestr4ng3r */
 
-#ifndef R2GHIDRA_R2TYPEFACTORY_H
-#define R2GHIDRA_R2TYPEFACTORY_H
+#ifndef RZ_GHIDRA_R2TYPEFACTORY_H
+#define RZ_GHIDRA_R2TYPEFACTORY_H
 
 #include <type.hh>
 
-typedef struct r_parse_ctype_t RParseCType;
-typedef struct r_parse_ctype_type_t RParseCTypeType;
+typedef struct rz_parse_ctype_t RParseCType;
+typedef struct rz_parse_ctype_type_t RParseCTypeType;
 
 class R2Architecture;
 
@@ -35,4 +35,4 @@ class R2TypeFactory : public TypeFactory
 		Datatype *fromCType(const RParseCTypeType *ctype, string *error = nullptr, std::set<std::string> *stackTypes = nullptr);
 };
 
-#endif //R2GHIDRA_R2TYPEFACTORY_H
+#endif //RZ_GHIDRA_R2TYPEFACTORY_H

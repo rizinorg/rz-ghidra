@@ -5,17 +5,17 @@
 #include <map>
 #include <functional>
 
-std::string CompilerFromCore(RCore *core);
+std::string CompilerFromCore(RzCore *core);
 
 template<typename T>
 class BaseMapper
 {
 	private:
-		const std::function<T(RCore *)> func;
+		const std::function<T(RzCore *)> func;
 	public:
-		BaseMapper(const std::function<T(RCore *)> &func) : func(func) {}
-		BaseMapper(const T constant) : func([constant](RCore *core) { return constant; }) {}
-		T Map(RCore *core) const { return func(core); }
+		BaseMapper(const std::function<T(RzCore *)> &func) : func(func) {}
+		BaseMapper(const T constant) : func([constant](RzCore *core) { return constant; }) {}
+		T Map(RzCore *core) const { return func(core); }
 };
 
 template<typename T> class Mapper;
@@ -26,11 +26,11 @@ template<> class Mapper<std::string> : public BaseMapper<std::string>
 {
 	public:
 		using BaseMapper<std::string>::BaseMapper;
-		Mapper<std::string>(const char *constant) : BaseMapper([constant](RCore *core) { return constant; }) {}
+		Mapper<std::string>(const char *constant) : BaseMapper([constant](RzCore *core) { return constant; }) {}
 };
 
-static const Mapper<bool> big_endian_mapper_default = std::function<bool(RCore *)>([](RCore *core) { return r_config_get_i(core->config, "cfg.bigendian") != 0; });
-static const Mapper<ut64> bits_mapper_default = std::function<ut64(RCore *)>([](RCore *core) { return r_config_get_i(core->config, "asm.bits"); });
+static const Mapper<bool> big_endian_mapper_default = std::function<bool(RzCore *)>([](RzCore *core) { return rz_config_get_i(core->config, "cfg.bigendian") != 0; });
+static const Mapper<ut64> bits_mapper_default = std::function<ut64(RzCore *)>([](RzCore *core) { return rz_config_get_i(core->config, "asm.bits"); });
 
 class ArchMapper
 {
@@ -48,7 +48,7 @@ class ArchMapper
 				const Mapper<bool> big_endian = big_endian_mapper_default)
 			: arch(arch), flavor(flavor), bits(bits), big_endian(big_endian) {}
 
-		std::string Map(RCore *core) const
+		std::string Map(RzCore *core) const
 		{
 			return arch.Map(core)
 				+ ":" + (big_endian.Map(core) ? "BE" : "LE")
@@ -58,16 +58,16 @@ class ArchMapper
 		}
 };
 
-#define BITS (r_config_get_i(core->config, "asm.bits"))
-#define CUSTOM_BASEID(lambda) std::function<std::string(RCore *)>([]lambda)
-#define CUSTOM_FLAVOR(lambda) std::function<std::string(RCore *)>([]lambda)
-#define CUSTOM_BITS(lambda) std::function<ut64(RCore *)>([]lambda)
+#define BITS (rz_config_get_i(core->config, "asm.bits"))
+#define CUSTOM_BASEID(lambda) std::function<std::string(RzCore *)>([]lambda)
+#define CUSTOM_FLAVOR(lambda) std::function<std::string(RzCore *)>([]lambda)
+#define CUSTOM_BITS(lambda) std::function<ut64(RzCore *)>([]lambda)
 
 // keys = asm.arch values
 static const std::map<std::string, ArchMapper> arch_map = {
 	{ "x86", {
 		"x86",
-		CUSTOM_FLAVOR((RCore *core) {
+		CUSTOM_FLAVOR((RzCore *core) {
 			return BITS == 16 ? "Real Mode" : "default";
 		})}},
 
@@ -82,8 +82,8 @@ static const std::map<std::string, ArchMapper> arch_map = {
 	{ "msp430", { "TI_MSP430" } },
 	{ "m68k", {
 		"68000",
-		CUSTOM_FLAVOR((RCore *core) {
-			const char *cpu = r_config_get(core->config, "asm.cpu");
+		CUSTOM_FLAVOR((RzCore *core) {
+			const char *cpu = rz_config_get(core->config, "asm.cpu");
 			if(!cpu)
 				return "default";
 			if(strcmp(cpu, "68020") == 0)
@@ -97,31 +97,31 @@ static const std::map<std::string, ArchMapper> arch_map = {
 		32 } },
 
 	{ "arm", {
-	 	CUSTOM_BASEID((RCore *core) {
+	 	CUSTOM_BASEID((RzCore *core) {
 			return BITS == 64 ? "AARCH64" : "ARM";
 		}),
-		CUSTOM_FLAVOR((RCore *core) {
+		CUSTOM_FLAVOR((RzCore *core) {
 			return BITS == 64 ? "v8A" : "v7";
 		}),
-		CUSTOM_BITS((RCore *core) {
+		CUSTOM_BITS((RzCore *core) {
 			return BITS == 64 ? 64 : 32;
 		})}},
 
 	{ "avr", {
-		CUSTOM_BASEID((RCore *core) {
+		CUSTOM_BASEID((RzCore *core) {
 			return BITS == 32 ? "avr32a" : "avr8";
 		}),
 		"default",
-		CUSTOM_BITS((RCore *core) {
+		CUSTOM_BITS((RzCore *core) {
 			return BITS == 32 ? 32 : 16;
 		})}},
 
 	{ "v850", {
-		CUSTOM_BASEID((RCore *core) {
+		CUSTOM_BASEID((RzCore *core) {
 			return "V850";
 		}),
 		"default",
-		CUSTOM_BITS((RCore *core) {
+		CUSTOM_BITS((RzCore *core) {
 			return 32;
 		})}},
 };
@@ -132,9 +132,9 @@ static const std::map<std::string, std::string> compiler_map = {
 	{ "mach0", "gcc" }
 };
 
-std::string CompilerFromCore(RCore *core)
+std::string CompilerFromCore(RzCore *core)
 {
-	RBinInfo *info = r_bin_get_info(core->bin);
+	RBinInfo *info = rz_bin_get_info(core->bin);
 	if (!info || !info->rclass)
 		return std::string();
 
@@ -145,12 +145,12 @@ std::string CompilerFromCore(RCore *core)
 	return comp_it->second;
 }
 
-std::string SleighIdFromCore(RCore *core)
+std::string SleighIdFromCore(RzCore *core)
 {
 	SleighArchitecture::collectSpecFiles(std::cerr);
 	auto langs = SleighArchitecture::getLanguageDescriptions();
-	const char *arch = r_config_get(core->config, "asm.arch");
-	if(!strcmp(arch, "r2ghidra"))
+	const char *arch = rz_config_get(core->config, "asm.arch");
+	if(!strcmp(arch, "ghidra"))
 		return SleighIdFromSleighAsmConfig(core->rasm->cpu, core->rasm->bits, core->rasm->big_endian, langs);
 	auto arch_it = arch_map.find(arch);
 	if(arch_it == arch_map.end())

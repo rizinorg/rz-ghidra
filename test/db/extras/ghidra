@@ -1,5 +1,5 @@
 NAME=x86_32
-FILE=r2-testbins/elf/crackme0x05
+FILE=rizin-testbins/elf/crackme0x05
 EXPECT=<<EOF
 x86:LE:32:default:gcc
 
@@ -25,7 +25,7 @@ RUN
 NAME=x86_32
 FILE=r2-testbins/elf/crackme0x05
 EXPECT=<<EOF
-r2ghidra
+ghidra
 x86:LE:32:default:gcc
 
 undefined4 main(void)
@@ -50,7 +50,7 @@ EOF
 RUN
 
 NAME=x86_64
-FILE=r2-testbins/elf/hello_world
+FILE=rizin-testbins/elf/hello_world
 EXPECT=<<EOF
 x86:LE:64:default:gcc
 
@@ -87,7 +87,7 @@ EOF
 RUN
 
 NAME=x86_16
-FILE=r2-testbins/mz/unzip.exe
+FILE=rizin-testbins/mz/unzip.exe
 EXPECT=<<EOF
 x86:LE:16:Real Mode:
 
@@ -153,7 +153,7 @@ EOF
 RUN
 
 NAME=x86_64
-FILE=r2-testbins/elf/hello_world
+FILE=rizin-testbins/elf/hello_world
 EXPECT=<<EOF
 x86:LE:64:default:gcc
 
@@ -191,7 +191,7 @@ RUN
 
 
 NAME=6502
-FILE=r2-testbins/prg/t01.prg
+FILE=rizin-testbins/prg/t01.prg
 ARGS=-F prg
 EXPECT=<<EOF
 6502:LE:16:default:
@@ -244,10 +244,10 @@ EOF
 CMDS=<<EOF
 s sym.get_global_array_entry
 af
-e r2ghidra.rawptr=1
+e ghidra.rawptr=1
 pdg
 ?e --
-e r2ghidra.rawptr=0
+e ghidra.rawptr=0
 pdg
 EOF
 RUN
@@ -272,10 +272,10 @@ EOF
 CMDS=<<EOF
 s sym.get_global_var
 af
-e r2ghidra.rawptr=1
+e ghidra.rawptr=1
 pdg
 ?e --
-e r2ghidra.rawptr=0
+e ghidra.rawptr=0
 pdg
 EOF
 RUN
@@ -2328,7 +2328,7 @@ EOF
 RUN
 
 NAME=macos args
-FILE=r2-testbins/mach0/arg
+FILE=rizin-testbins/mach0/arg
 EXPECT=<<EOF
 
 // WARNING: Variable defined which should be unmapped: var_4h
@@ -2371,7 +2371,7 @@ EOF
 RUN
 
 NAME=code printing
-FILE=r2-testbins/elf/crackme0x05
+FILE=rizin-testbins/elf/crackme0x05
 EXPECT=<<EOF
 
 undefined4 main(void)
@@ -2724,7 +2724,7 @@ EOF
 RUN
 
 NAME=pdgo align
-FILE=r2-testbins/elf/hello_world
+FILE=rizin-testbins/elf/hello_world
 ARGS=-B 0x1000000000000000
 EXPECT=<<EOF
     0x10000000000007aa    |
@@ -2919,7 +2919,7 @@ EOF
 RUN
 
 NAME=pdgsd
-FILE=r2-testbins/elf/crackme0x05
+FILE=rizin-testbins/elf/crackme0x05
 EXPECT=<<EOF
 push ebp
 mov ebp, esp
@@ -3025,7 +3025,7 @@ EOF
 RUN
 
 NAME=comments
-FILE=r2-testbins/elf/crackme0x05
+FILE=rizin-testbins/elf/crackme0x05
 EXPECT=<<EOF
 
 undefined4 main(void)
@@ -3056,7 +3056,7 @@ EOF
 RUN
 
 NAME=comment-function_name-offset
-FILE=r2-testbins/elf/crackme0x05
+FILE=rizin-testbins/elf/crackme0x05
 EXPECT=<<EOF
                   |
     0x08048540    |undefined4 main(void)
