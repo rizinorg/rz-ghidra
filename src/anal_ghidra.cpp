@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cfenv>
 #include "SleighAsm.h"
+#include "ArchMap.h"
 #include "SleighAnalValue.h"
 
 static SleighAsm sanal;
@@ -16,23 +17,28 @@ static int archinfo(RAnal *anal, int query)
 	// This is to check if RCore plugin set cpu properly.
 	if(!anal->cpu)
 		return -1;
+	char *cpu = strdup (SleighIdFromArch(anal->cpu, anal->bits).c_str());
 
-	ut64 length = strlen(anal->cpu), i = 0;
-	for(; i < length && anal->cpu[i] != ':'; ++i) {}
-	if(i == length)
-		return -1;
-
-	try {
-		sanal.init(anal->cpu, anal? anal->iob.io : nullptr, SleighAsm::getConfig(anal));
-	} catch (const LowlevelError &e) {
-		std::cerr << "SleightInit " << e.explain << std::endl;
+	ut64 length = strlen(cpu), i = 0;
+	for(; i < length && cpu[i] != ':'; ++i) {}
+	if(i == length) {
+		free (cpu);
 		return -1;
 	}
 
-	if(query == R_ANAL_ARCHINFO_ALIGN)
-		return sanal.alignment;
-	else
+	try {
+		sanal.init(cpu, anal? anal->iob.io : nullptr, SleighAsm::getConfig(anal));
+		free (cpu);
+	} catch (const LowlevelError &e) {
+		std::cerr << "SleightInit " << e.explain << std::endl;
+		free (cpu);
 		return -1;
+	}
+
+	if(query == R_ANAL_ARCHINFO_ALIGN) {
+		return sanal.alignment;
+	}
+	return -1;
 }
 
 static std::vector<std::string> string_split(const std::string &s)
@@ -1372,9 +1378,11 @@ static bool anal_type_NOP(const std::vector<Pcodeop> &Pcodes)
 static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int len,
                      RAnalOpMask mask)
 {
+	char *cpu = strdup (SleighIdFromArch(a->cpu, a->bits).c_str());
 	try
 	{
-		sanal.init(a->cpu, a? a->iob.io : nullptr, SleighAsm::getConfig(a));
+		sanal.init(cpu, a? a->iob.io : nullptr, SleighAsm::getConfig(a));
+		R_FREE (cpu);
 
 		anal_op->addr = addr;
 		anal_op->sign = true;
@@ -1608,6 +1616,7 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	}
 	catch(const LowlevelError &e)
 	{
+		free (cpu);
 		return 0;
 	}
 }
@@ -1779,15 +1788,20 @@ static char *get_reg_profile(RAnal *anal)
 	if(!anal->cpu)
 		return nullptr;
 
-	ut64 length = strlen(anal->cpu), z = 0;
-	for(; z < length && anal->cpu[z] != ':'; ++z) {}
-	if(z == length)
+	char *cpu = strdup (SleighIdFromArch(anal->cpu, anal->bits).c_str());
+	ut64 length = strlen(cpu), z = 0;
+	for(; z < length && cpu[z] != ':'; ++z) {}
+	if(z == length) {
+		free (cpu);
 		return nullptr;
+	}
 
 	try {
-		sanal.init(anal->cpu, anal? anal->iob.io: nullptr, SleighAsm::getConfig(anal));
+		sanal.init(cpu, anal? anal->iob.io: nullptr, SleighAsm::getConfig(anal));
+		free (cpu);
 	} catch (const LowlevelError &e) {
 		std::cerr << "SleightInit " << e.explain << std::endl;
+		free (cpu);
 		return nullptr;
 	}
 

@@ -2,6 +2,7 @@
 
 #include "ArchMap.h"
 #include <error.hh>
+#include <r_config.h>
 #include <map>
 #include <functional>
 
@@ -50,11 +51,18 @@ class ArchMapper
 
 		std::string Map(RCore *core) const
 		{
+			std::string compiler = CompilerFromCore(core);
+			if (compiler == "") {
+				return arch.Map(core)
+					+ ":" + (big_endian.Map(core) ? "BE" : "LE")
+					+ ":" + to_string(bits.Map(core))
+					+ ":" + flavor.Map(core);
+			}
 			return arch.Map(core)
 				+ ":" + (big_endian.Map(core) ? "BE" : "LE")
 				+ ":" + to_string(bits.Map(core))
 				+ ":" + flavor.Map(core)
-				+ ":" + CompilerFromCore(core);
+				+ ":" + compiler;
 		}
 };
 
@@ -134,6 +142,8 @@ static const std::map<std::string, std::string> compiler_map = {
 
 std::string CompilerFromCore(RCore *core)
 {
+	if (!core || !core->bin)
+		return std::string();
 	RBinInfo *info = r_bin_get_info(core->bin);
 	if (!info || !info->rclass)
 		return std::string();
@@ -143,6 +153,21 @@ std::string CompilerFromCore(RCore *core)
 		return std::string();
 
 	return comp_it->second;
+}
+
+std::string SleighIdFromArch(const char *arch, int bits)
+{
+	RCore core = {0};
+	core.config = r_config_new (NULL);
+	r_config_set (core.config, "asm.arch", arch);
+	r_config_set (core.config, "anal.arch", arch);
+	r_config_set_i (core.config, "asm.bits", bits);
+	// r_config_set_i (core.config, "anal.bits", bits);
+	auto arch_it = arch_map.find(arch);
+	std::string res = (arch_it == arch_map.end())
+		? arch: arch_it->second.Map(&core);
+	r_config_free (core.config);
+	return res;
 }
 
 std::string SleighIdFromCore(RCore *core)

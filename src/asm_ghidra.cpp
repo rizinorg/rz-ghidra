@@ -3,6 +3,7 @@
 #include <r_lib.h>
 #include <r_asm.h>
 #include "SleighAsm.h"
+#include "ArchMap.h"
 
 static SleighAsm sasm;
 static RIO *rio = nullptr;
@@ -37,7 +38,8 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 			r_buf_free(tmp_buf);
 		}
 
-		sasm.init(a->cpu, bin? bin->iob.io : rio, SleighAsm::getConfig(a));
+		std::string sid = SleighIdFromArch(a->cpu, a->bits);
+		sasm.init(sid.c_str(), bin? bin->iob.io : rio, SleighAsm::getConfig(a));
 		sasm.check(bin? a->pc : 0, buf, len);
 		r = sasm.disassemble(op, bin? a->pc : 0);
 #ifndef DEBUG_EXCEPTIONS

@@ -8,5 +8,6 @@
 #include <string>
 
 std::string SleighIdFromCore(RCore *core);
+std::string SleighIdFromArch(const char *arch, int bits);
 
 #endif
