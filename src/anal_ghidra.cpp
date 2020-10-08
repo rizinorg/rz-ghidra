@@ -22,7 +22,12 @@ static int archinfo(RAnal *anal, int query)
 	if(i == length)
 		return -1;
 
-	sanal.init(anal->cpu, anal? anal->iob.io : nullptr, SleighAsm::getConfig(anal));
+	try {
+		sanal.init(anal->cpu, anal? anal->iob.io : nullptr, SleighAsm::getConfig(anal));
+	} catch (const LowlevelError &e) {
+		std::cerr << "SleightInit " << e.explain << std::endl;
+		return -1;
+	}
 
 	if(query == R_ANAL_ARCHINFO_ALIGN)
 		return sanal.alignment;
@@ -1779,7 +1784,12 @@ static char *get_reg_profile(RAnal *anal)
 	if(z == length)
 		return nullptr;
 
-	sanal.init(anal->cpu, anal? anal->iob.io: nullptr, SleighAsm::getConfig(anal));
+	try {
+		sanal.init(anal->cpu, anal? anal->iob.io: nullptr, SleighAsm::getConfig(anal));
+	} catch (const LowlevelError &e) {
+		std::cerr << "SleightInit " << e.explain << std::endl;
+		return nullptr;
+	}
 
 	auto reg_list = sanal.getRegs();
 	std::stringstream buf;
