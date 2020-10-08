@@ -158,9 +158,7 @@ std::string SleighIdFromCore(RCore *core)
 	}
 	auto arch_it = arch_map.find(arch);
 	if(arch_it == arch_map.end()) {
-		if(arch_it == arch_map.end()) {
-			throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
-		}
+		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
 	}
 	return arch_it->second.Map(core);
 }
