@@ -148,7 +148,7 @@ std::string CompilerFromCore(RCore *core)
 std::string SleighIdFromCore(RCore *core)
 {
 	const char *arch = r_config_get(core->config, "asm.arch");
-	if (!strcmp (arch, "r2ghidra")) {
+	if (!strcmp(arch, "r2ghidra")) {
 		const char *cpu = r_config_get(core->config, "asm.cpu");
 		auto arch_it = arch_map.find(cpu);
 		if(arch_it == arch_map.end()) {
