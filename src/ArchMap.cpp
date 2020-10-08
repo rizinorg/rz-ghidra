@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2019 - thestr4ng3r */
+/* radare - LGPL - Copyright 2019-2020 - thestr4ng3r */
 
 #include "ArchMap.h"
 #include <error.hh>
@@ -148,20 +148,16 @@ std::string CompilerFromCore(RCore *core)
 std::string SleighIdFromCore(RCore *core)
 {
 	const char *arch = r_config_get(core->config, "asm.arch");
+	if (!strcmp (arch, "r2ghidra")) {
+		const char *cpu = r_config_get(core->config, "asm.cpu");
+		auto arch_it = arch_map.find(cpu);
+		if(arch_it == arch_map.end()) {
+			throw LowlevelError("Could not match asm.arch " + std::string(cpu) + " to sleigh arch.");
+		}
+		return arch_it->second.Map(core);
+	}
 	auto arch_it = arch_map.find(arch);
 	if(arch_it == arch_map.end()) {
-		char *cpu = strdup (r_config_get(core->config, "asm.cpu"));
-		char *colon = cpu;
-		while (*colon) {
-			if (*colon == ':') {
-				*colon = 0;
-				break;
-			}
-			*colon = tolower (*colon);
-			colon++;
-		}
-		arch_it = arch_map.find(cpu);
-		free (cpu);
 		if(arch_it == arch_map.end()) {
 			throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
 		}
