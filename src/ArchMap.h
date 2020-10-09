@@ -7,6 +7,16 @@
 
 #include <string>
 
+/**
+ * Match sleigh id from whatever is currently configured.
+ * For regular r2 plugins, guess the matching sleigh id,
+ * for the specific sleigh plugin, same as SleighIdFromSleighAsmConfig()
+ */
 std::string SleighIdFromCore(RCore *core);
+
+/**
+ * Match sleigh id from sleigh-plugin specific settings (asm.cpu)
+ */
+std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian);
 
 #endif

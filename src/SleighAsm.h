@@ -240,7 +240,7 @@ public:
 	// To satisfy radare2's rule: reg name has to be lowercase.
 	std::unordered_map<std::string, std::string> reg_mapping;
 	SleighAsm(): loader(nullptr), trans(nullptr, nullptr) {}
-	void init(const char *sleigh_id, RIO *io, RConfig *cfg);
+	void init(const char *cpu, int bits, bool bigendian, RIO *io, RConfig *cfg);
 	int disassemble(RAsmOp *op, unsigned long long offset);
 	int genOpcode(PcodeSlg &pcode_slg, Address &addr);
 	std::vector<R2Reg> getRegs(void);

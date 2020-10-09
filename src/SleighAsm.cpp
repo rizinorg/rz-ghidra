@@ -1,8 +1,9 @@
 /* radare - LGPL - Copyright 2020 - FXTi */
 
 #include "SleighAsm.h"
+#include "ArchMap.h"
 
-void SleighAsm::init(const char *id, RIO *io, RConfig *cfg)
+void SleighAsm::init(const char *cpu, int bits, bool bigendian, RIO *io, RConfig *cfg)
 {
 	if(!io)
 		throw LowlevelError("Can't get RIO from RBin");
@@ -14,18 +15,20 @@ void SleighAsm::init(const char *id, RIO *io, RConfig *cfg)
 		collectSpecfiles();
 	}
 
-	if(!sleigh_id.empty() && sleigh_id == id)
+	std::string new_sleigh_id = SleighIdFromSleighAsmConfig(cpu, bits, bigendian);
+
+	if(!sleigh_id.empty() && sleigh_id == new_sleigh_id)
 		return;
 
-	initInner(io, id);
+	initInner(io, cpu);
 }
 
-void SleighAsm::initInner(RIO *io, const char *cpu)
+void SleighAsm::initInner(RIO *io, const char *sleigh_id)
 {
 	/* Initialize Sleigh */
 	loader = std::move(AsmLoadImage(io));
 	docstorage = std::move(DocumentStorage());
-	resolveArch(cpu);
+	resolveArch(sleigh_id);
 	buildSpecfile(docstorage);
 	context = std::move(ContextInternal());
 	trans.reset(&loader, &context);
@@ -36,7 +39,7 @@ void SleighAsm::initInner(RIO *io, const char *cpu)
 	trans.clearCache();
 	initRegMapping();
 
-	sleigh_id = cpu;
+	this->sleigh_id = sleigh_id;
 }
 
 static void parseProto(const Element *el, std::vector<std::string> &arg_names,
