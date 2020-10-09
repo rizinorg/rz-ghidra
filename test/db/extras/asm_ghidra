@@ -732,3 +732,48 @@ NOP
 NOP
 EOF
 RUN
+
+NAME=rasm2-cpu-alias
+FILE=-
+CMDS=<<EOF
+rasm2 -a r2ghidra -c x86 -d 89e1909090909090909090909090
+EOF
+EXPECT=<<EOF
+MOV ecx,esp
+NOP
+NOP
+NOP
+NOP
+NOP
+NOP
+NOP
+NOP
+NOP
+NOP
+NOP
+NOP
+EOF
+RUN
+
+NAME=r2-v850
+FILE=-
+CMDS=<<EOF
+e asm.arch=r2ghidra
+e asm.cpu=v850
+e asm.bits=32
+wx 8100e009ba154007b8a8042a400e000184ff88990c0a400faba80c0a400faca8
+pd 10
+EOF
+EXPECT=<<EOF
+            0x00000000      8100           zxb r1
+            0x00000002      e009           cmp r0, r1
+        ,=< 0x00000004      ba15           bne 0x2a
+        |   0x00000006      4007b8a8       st.b r0, -0x5748[r0]
+        |   0x0000000a      042a           mov 0x4, tp
+        |   0x0000000c      400e0001       movhi 0x100, r0, r1
+        |   0x00000010      84ff8899       jarl 0x49998, lp
+        |   0x00000014      0c0a           mov 0xc, r1
+        |   0x00000016      400faba8       st.b r1, -0x5755[r0]
+        |   0x0000001a      0c0a           mov 0xc, r1
+EOF
+RUN
