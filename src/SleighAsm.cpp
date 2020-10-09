@@ -15,15 +15,15 @@ void SleighAsm::init(const char *cpu, int bits, bool bigendian, RIO *io, RConfig
 		collectSpecfiles();
 	}
 
-	std::string new_sleigh_id = SleighIdFromSleighAsmConfig(cpu, bits, bigendian);
+	std::string new_sleigh_id = SleighIdFromSleighAsmConfig(cpu, bits, bigendian, description);
 
 	if(!sleigh_id.empty() && sleigh_id == new_sleigh_id)
 		return;
 
-	initInner(io, cpu);
+	initInner(io, new_sleigh_id);
 }
 
-void SleighAsm::initInner(RIO *io, const char *sleigh_id)
+void SleighAsm::initInner(RIO *io, std::string sleigh_id)
 {
 	/* Initialize Sleigh */
 	loader = std::move(AsmLoadImage(io));
