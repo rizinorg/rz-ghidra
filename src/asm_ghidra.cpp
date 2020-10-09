@@ -37,7 +37,7 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len)
 			r_buf_free(tmp_buf);
 		}
 
-		sasm.init(a->cpu, bin? bin->iob.io : rio, SleighAsm::getConfig(a));
+		sasm.init(a->cpu, a->bits, a->big_endian, bin? bin->iob.io : rio, SleighAsm::getConfig(a));
 		sasm.check(bin? a->pc : 0, buf, len);
 		r = sasm.disassemble(op, bin? a->pc : 0);
 #ifndef DEBUG_EXCEPTIONS
@@ -58,6 +58,7 @@ static bool fini(void *p)
 	if(rio)
 		r_io_free(rio);
 	rio = nullptr;
+	return true;
 }
 
 RAsmPlugin r_asm_plugin_ghidra = {

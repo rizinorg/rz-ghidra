@@ -148,8 +148,18 @@ std::string CompilerFromCore(RCore *core)
 std::string SleighIdFromCore(RCore *core)
 {
 	const char *arch = r_config_get(core->config, "asm.arch");
+	if(!strcmp(arch, "r2ghidra"))
+		return SleighIdFromSleighAsmConfig(core->rasm->cpu, core->rasm->bits, core->rasm->big_endian);
 	auto arch_it = arch_map.find(arch);
 	if(arch_it == arch_map.end())
 		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
 	return arch_it->second.Map(core);
+}
+
+std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian)
+{
+	if(std::string(cpu).find(':') != string::npos) // complete id specified
+		return cpu;
+	// TODO: short form
+	return cpu;
 }
