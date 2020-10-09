@@ -217,7 +217,7 @@ private:
 	std::vector<LanguageDescription> description;
 	int languageindex;
 
-	void initInner(RIO *io, const char *cpu);
+	void initInner(RIO *io, std::string sleigh_id);
 	void initRegMapping(void);
 	std::string getSleighHome(RConfig *cfg);
 	void collectSpecfiles(void);

@@ -147,19 +147,39 @@ std::string CompilerFromCore(RCore *core)
 
 std::string SleighIdFromCore(RCore *core)
 {
+	SleighArchitecture::collectSpecFiles(std::cerr);
+	auto langs = SleighArchitecture::getLanguageDescriptions();
 	const char *arch = r_config_get(core->config, "asm.arch");
 	if(!strcmp(arch, "r2ghidra"))
-		return SleighIdFromSleighAsmConfig(core->rasm->cpu, core->rasm->bits, core->rasm->big_endian);
+		return SleighIdFromSleighAsmConfig(core->rasm->cpu, core->rasm->bits, core->rasm->big_endian, langs);
 	auto arch_it = arch_map.find(arch);
 	if(arch_it == arch_map.end())
 		throw LowlevelError("Could not match asm.arch " + std::string(arch) + " to sleigh arch.");
 	return arch_it->second.Map(core);
 }
 
-std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian)
+std::string StrToLower(std::string s)
+{
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+    return s;
+}
+
+std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian, const vector<LanguageDescription> &langs)
 {
 	if(std::string(cpu).find(':') != string::npos) // complete id specified
 		return cpu;
-	// TODO: short form
+	// short form if possible
+	std::string low_cpu = StrToLower(cpu);
+	for(const auto &lang : langs)
+	{
+		auto proc = lang.getProcessor();
+		if(StrToLower(proc) == low_cpu)
+		{
+			return proc 
+				+ ":" + (bigendian ? "BE" : "LE")
+				+ ":" + to_string(bits)
+				+ ":" + "default";
+		}
+	}
 	return cpu;
 }

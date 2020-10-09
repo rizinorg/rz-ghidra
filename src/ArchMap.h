@@ -3,6 +3,8 @@
 #ifndef R2GHIDRA_ARCHMAP_H
 #define R2GHIDRA_ARCHMAP_H
 
+#include <sleigh_arch.hh>
+
 #include <r_core.h>
 
 #include <string>
@@ -17,6 +19,6 @@ std::string SleighIdFromCore(RCore *core);
 /**
  * Match sleigh id from sleigh-plugin specific settings (asm.cpu)
  */
-std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian);
+std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian, const vector<LanguageDescription> &langs);
 
 #endif
