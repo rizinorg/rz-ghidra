@@ -17,27 +17,29 @@ static int archinfo(RAnal *anal, int query)
 	// This is to check if RCore plugin set cpu properly.
 	if(!anal->cpu)
 		return -1;
-	char *cpu = strdup (SleighIdFromArch(anal->cpu, anal->bits).c_str());
+	char *cpu = strdup(SleighIdFromArch(anal->cpu, anal->bits).c_str());
 
 	ut64 length = strlen(cpu), i = 0;
 	for(; i < length && cpu[i] != ':'; ++i) {}
 	if(i == length) {
-		free (cpu);
+		free(cpu);
 		return -1;
 	}
 
-	try {
+	try
+	{
 		sanal.init(cpu, anal? anal->iob.io : nullptr, SleighAsm::getConfig(anal));
-		free (cpu);
-	} catch (const LowlevelError &e) {
+		free(cpu);
+	}
+	catch(const LowlevelError &e)
+	{
 		std::cerr << "SleightInit " << e.explain << std::endl;
-		free (cpu);
+		free(cpu);
 		return -1;
 	}
 
-	if(query == R_ANAL_ARCHINFO_ALIGN) {
+	if(query == R_ANAL_ARCHINFO_ALIGN)
 		return sanal.alignment;
-	}
 	return -1;
 }
 
@@ -1616,7 +1618,7 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	}
 	catch(const LowlevelError &e)
 	{
-		free (cpu);
+		free(cpu);
 		return 0;
 	}
 }
@@ -1792,16 +1794,19 @@ static char *get_reg_profile(RAnal *anal)
 	ut64 length = strlen(cpu), z = 0;
 	for(; z < length && cpu[z] != ':'; ++z) {}
 	if(z == length) {
-		free (cpu);
+		free(cpu);
 		return nullptr;
 	}
 
-	try {
+	try
+	{
 		sanal.init(cpu, anal? anal->iob.io: nullptr, SleighAsm::getConfig(anal));
-		free (cpu);
-	} catch (const LowlevelError &e) {
+		free(cpu);
+	}
+	catch (const LowlevelError &e)
+	{
 		std::cerr << "SleightInit " << e.explain << std::endl;
-		free (cpu);
+		free(cpu);
 		return nullptr;
 	}
 

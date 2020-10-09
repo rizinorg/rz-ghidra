@@ -1,5 +1,31 @@
 NAME=x86_32
 FILE=r2-testbins/elf/crackme0x05
+ARGS=-n
+EXPECT=<<EOF
+
+// WARNING: [r2ghidra] Function fcn.000003d0 has no calling convention set, args may be inaccurate.
+// WARNING: [r2ghidra] Function fcn.00000364 has no calling convention set, args may be inaccurate.
+
+void fcn.000003d0(void)
+{
+    fcn.00000364(0x8048540);
+    do {
+    // WARNING: Do nothing block with infinite loop
+    } while( true );
+}
+EOF
+CMDS=<<EOF
+s 0x3d0
+e asm.arch=r2ghidra
+e asm.bits=32
+e asm.cpu=x86
+af
+pdg
+EOF
+RUN
+
+NAME=x86_32
+FILE=r2-testbins/elf/crackme0x05
 EXPECT=<<EOF
 x86:LE:32:default:gcc
 
@@ -62,7 +88,7 @@ RUN
 NAME=x86_16
 FILE=r2-testbins/mz/unzip.exe
 EXPECT=<<EOF
-x86:LE:16:Real Mode:
+x86:LE:16:Real Mode
 
 // WARNING: Variable defined which should be unmapped: var_8h
 // WARNING: Variable defined which should be unmapped: var_4h
@@ -167,7 +193,7 @@ NAME=6502
 FILE=r2-testbins/prg/t01.prg
 ARGS=-F prg
 EXPECT=<<EOF
-6502:LE:16:default:
+6502:LE:16:default
 
 // WARNING: [r2ghidra] Function fcn.0000080e has no calling convention set, args may be inaccurate.
 
