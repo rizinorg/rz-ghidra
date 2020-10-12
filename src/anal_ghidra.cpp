@@ -2715,13 +2715,14 @@ static bool sleigh_esil_signext(RAnalEsil *esil)
 static void sleigh_reg_set_float(RReg *reg, const char *name, int type, bool F)
 {
 	RRegItem *tmp = r_reg_get(reg, name, type);
-	tmp->is_float = F;
+	if(tmp)
+		tmp->is_float = F;
 }
 
 static bool sleigh_reg_get_float(RReg *reg, const char *name, int type)
 {
 	RRegItem *tmp = r_reg_get(reg, name, type);
-	return tmp->is_float;
+	return tmp? tmp->is_float: false;
 }
 
 // All register's value will be resolved immediately thanks to NUM.
@@ -2752,9 +2753,12 @@ static bool sleigh_esil_reg_num(RAnalEsil *esil)
 		is_float = sleigh_reg_get_float(esil->anal->reg, name, get_reg_type(name));
 		if(is_float)
 		{
-			RRegItem *reg = r_reg_get(esil->anal->reg, name, get_reg_type(name));
-			long double res = esil_get_double(esil->anal->reg, reg);
-			ret = esil_pushnum_float(esil, res);
+			RRegItem *ri = r_reg_get(esil->anal->reg, name, get_reg_type(name));
+			if (ri)
+			{
+				long double res = esil_get_double(esil->anal->reg, ri);
+				ret = esil_pushnum_float(esil, res);
+			}
 		}
 		else
 		{
@@ -3013,12 +3017,15 @@ static bool sleigh_esil_eq(RAnalEsil *esil)
 		return false;
 	}
 
-	RRegItem *reg = r_reg_get(esil->anal->reg, dst, get_reg_type(dst));
 	if(ESIL_PARM_FLOAT == esil_get_parm_type_float(esil, src))
 	{
-		esil_get_parm_float(esil, src, &tmp);
-		ret = esil_set_double(esil->anal->reg, reg, tmp);
-		sleigh_reg_set_float(esil->anal->reg, dst, get_reg_type(dst), true);
+		RRegItem *ri = r_reg_get(esil->anal->reg, dst, get_reg_type(dst));
+		if(ri)
+		{
+			esil_get_parm_float(esil, src, &tmp);
+			ret = esil_set_double(esil->anal->reg, ri, tmp);
+			sleigh_reg_set_float(esil->anal->reg, dst, get_reg_type(dst), true);
+		}
 	}
 	else
 	{
