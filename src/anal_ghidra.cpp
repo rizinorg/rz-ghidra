@@ -2722,8 +2722,7 @@ static void sleigh_reg_set_float(RReg *reg, const char *name, int type, bool F)
 static bool sleigh_reg_get_float(RReg *reg, const char *name, int type)
 {
 	RRegItem *tmp = r_reg_get(reg, name, type);
-	if(tmp)
-		return tmp->is_float;
+	return tmp? tmp->is_float: false;
 }
 
 // All register's value will be resolved immediately thanks to NUM.
