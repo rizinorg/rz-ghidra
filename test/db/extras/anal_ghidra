@@ -189,3 +189,73 @@ pd 1 @ 0x200
 ao @ 0x200| grep type
 EOF
 RUN
+
+NAME=v850cmp
+FILE=-
+EXPECT=<<EOF
+r2ghidra
+V850:LE:32:default
+address: 0x0
+opcode: cmp r7, r6
+esilcost: 0
+disasm: cmp r7, r6
+pseudo: var = r7 - r6
+mnemonic: cmp
+mask: ffff
+prefix: 0
+id: 0
+bytes: e731
+refptr: 0
+size: 2
+sign: true
+type: cmp
+cycles: 0
+esil: r7,NUM,r6,NUM,-,32,1,<<,1,SWAP,-,&,4294967287,psw,NUM,&,32,1,<<,1,SWAP,-,&,r7,NUM,r6,NUM,<,1,PICK,3,2,PICK,<<,32,1,<<,1,SWAP,-,&,1,PICK,5,PICK,|,32,1,<<,1,SWAP,-,&,psw,=,r6,NUM,r7,NUM,1,PICK,3,PICK,-,32,1,<<,1,SWAP,-,&,31,4,PICK,>>,32,1,<<,1,SWAP,-,&,1,PICK,0,SWAP,>>,8,1,<<,1,SWAP,-,&,31,5,PICK,>>,32,1,<<,1,SWAP,-,&,1,PICK,0,SWAP,>>,8,1,<<,1,SWAP,-,&,31,6,PICK,>>,32,1,<<,1,SWAP,-,&,1,PICK,0,SWAP,>>,8,1,<<,1,SWAP,-,&,1,2,PICK,&,8,1,<<,1,SWAP,-,&,4294967291,psw,NUM,&,32,1,<<,1,SWAP,-,&,5,PICK,8,PICK,==,!,3,PICK,7,PICK,==,1,PICK,3,PICK,&,8,1,<<,1,SWAP,-,&,1,PICK,2,2,PICK,<<,32,1,<<,1,SWAP,-,&,1,PICK,7,PICK,|,32,1,<<,1,SWAP,-,&,psw,=,4294967293,psw,NUM,&,32,1,<<,1,SWAP,-,&,0,23,PICK,32,SWAP,SIGN,SWAP,32,SWAP,SIGN,SWAP,<,1,PICK,1,2,PICK,<<,32,1,<<,1,SWAP,-,&,1,PICK,5,PICK,|,32,1,<<,1,SWAP,-,&,psw,=,4294967294,psw,NUM,&,32,1,<<,1,SWAP,-,&,0,27,PICK,==,1,PICK,1,PICK,4,PICK,|,32,1,<<,1,SWAP,-,&,psw,=,CLEAR
+family: cpu
+EOF
+CMDS=<<EOF
+e asm.cpu=v850
+e asm.bits=32
+e asm.arch=r2ghidra
+pdga
+e anal.arch
+e anal.cpu
+wx e731
+ao 1
+EOF
+RUN
+
+NAME=v850load
+FILE=-
+EXPECT=<<EOF
+r2ghidra
+V850:LE:32:default
+address: 0x0
+opcode: ld.w 0x4[r29], r11
+esilcost: 4
+disasm: ld.w 0x4[r29], r11
+pseudo: ld.w 0x4[r29],r11 
+mnemonic: ld.w
+mask: ffffffff
+prefix: 0
+id: 0
+bytes: 3d5f0500
+refptr: 0
+size: 4
+sign: true
+type: load
+cycles: 0
+esil: 4,r29,NUM,+,32,1,<<,1,SWAP,-,&,1,PICK,[4],r11,=,CLEAR
+family: cpu
+EOF
+CMDS=<<EOF
+e asm.cpu=v850
+e asm.bits=32
+e asm.arch=r2ghidra
+pdga
+e anal.arch
+e anal.cpu
+wx 3d5f0500
+ao 1
+EOF
+RUN
