@@ -1,5 +1,5 @@
 PACKAGE=r2ghidra-dec
-VERSION=3.9.0
+VERSION=$(shell r2 -qv)
 ARCH=amd64
 DEPENDS=radare2
 SECTION=user/shell
