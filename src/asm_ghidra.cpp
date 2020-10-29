@@ -20,7 +20,7 @@ static int disassemble(RzAsm *a, RzAsmOp *op, const ut8 *buf, int len)
 	try
 	{
 #endif
-		RBin *bin = a->binb.bin;
+		RzBin *bin = a->binb.bin;
 
 		if(!bin)
 		{

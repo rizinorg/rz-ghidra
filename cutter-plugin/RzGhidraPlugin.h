@@ -7,7 +7,7 @@
 #include <QtPlugin>
 #include <plugins/CutterPlugin.h>
 
-class R2GhidraPlugin : public QObject, CutterPlugin
+class RzGhidraPlugin : public QObject, CutterPlugin
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "org.radare.cutter.plugins.r2ghidra")

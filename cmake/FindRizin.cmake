@@ -52,7 +52,6 @@ if(WIN32)
 			search
 			syscall
 			socket
-			fs
 			magic
 			crypto)
 

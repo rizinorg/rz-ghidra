@@ -6,14 +6,14 @@
 #include "Decompiler.h"
 #include "R2Task.h"
 
-class R2GhidraDecompiler: public Decompiler
+class RzGhidraDecompiler: public Decompiler
 {
 	enum DecompilerState {DecompilerRunning, DecompilerFinished};
 	private:
 		DecompilerState task;
 
 	public:
-		R2GhidraDecompiler(QObject *parent = nullptr);
+		RzGhidraDecompiler(QObject *parent = nullptr);
 		void decompileAt(RVA addr) override;
 		bool isRunning() override				{ return task == DecompilerRunning; }
 };
