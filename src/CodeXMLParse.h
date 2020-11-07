@@ -7,6 +7,6 @@
 
 class Funcdata;
 
-RZ_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml);
+RZ_API RzAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml);
 
 #endif //RZ_GHIDRA_CODEXMLPARSE_H

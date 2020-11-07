@@ -38,7 +38,7 @@ struct ParseCodeXMLContext
 	}
 };
 
-#define ANNOTATOR_PARAMS pugi::xml_node node, ParseCodeXMLContext *ctx, std::vector<RCodeAnnotation> *out
+#define ANNOTATOR_PARAMS pugi::xml_node node, ParseCodeXMLContext *ctx, std::vector<RzCodeAnnotation> *out
 #define ANNOTATOR [](ANNOTATOR_PARAMS) -> void
 
 void AnnotateOpref(ANNOTATOR_PARAMS)
@@ -65,7 +65,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	const char *func_name = node.child_value();
 	if(!func_name)
 		return;
-	RCodeAnnotation annotation = {};
+	RzCodeAnnotation annotation = {};
 	annotation.type = RZ_CODE_ANNOTATION_TYPE_FUNCTION_NAME;
 	pugi::xml_attribute attr = node.attribute("opref");
 	if(attr.empty())
@@ -76,7 +76,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 			annotation.reference.offset = ctx->func->getAddress().getOffset();
 			out->push_back(annotation);
 			// Code below makes an offset annotation for the function name(for the currently decompiled function)
-			RCodeAnnotation offsetAnnotation = {};
+			RzCodeAnnotation offsetAnnotation = {};
 			offsetAnnotation.type = RZ_CODE_ANNOTATION_TYPE_OFFSET;
 			offsetAnnotation.offset.offset = annotation.reference.offset;
 			out->push_back(offsetAnnotation);
@@ -151,34 +151,34 @@ void AnnotateColor(ANNOTATOR_PARAMS)
 		type = RZ_SYNTAX_HIGHLIGHT_TYPE_GLOBAL_VARIABLE;
 	else
 		return;
-	RCodeAnnotation annotation = {};
+	RzCodeAnnotation annotation = {};
 	annotation.type = RZ_CODE_ANNOTATION_TYPE_SYNTAX_HIGHLIGHT;
 	annotation.syntax_highlight.type = type;
 	out->push_back(annotation);
 }
 
-void AnnotateGlobalVariable(Varnode *varnode, std::vector<RCodeAnnotation> *out)
+void AnnotateGlobalVariable(Varnode *varnode, std::vector<RzCodeAnnotation> *out)
 {
-	RCodeAnnotation annotation = {};
+	RzCodeAnnotation annotation = {};
 	annotation.type = RZ_CODE_ANNOTATION_TYPE_GLOBAL_VARIABLE;
 	annotation.reference.offset = varnode->getOffset();
 	out->push_back(annotation);
 }
 
-void AnnotateConstantVariable(Varnode *varnode, std::vector<RCodeAnnotation> *out)
+void AnnotateConstantVariable(Varnode *varnode, std::vector<RzCodeAnnotation> *out)
 {
-	RCodeAnnotation annotation = {};
+	RzCodeAnnotation annotation = {};
 	annotation.type = RZ_CODE_ANNOTATION_TYPE_CONSTANT_VARIABLE;
 	annotation.reference.offset = varnode->getOffset();
 	out->push_back(annotation);
 }
 
 // Annotates local variables and function parameters
-void AnnotateLocalVariable(Symbol *symbol, std::vector<RCodeAnnotation> *out)
+void AnnotateLocalVariable(Symbol *symbol, std::vector<RzCodeAnnotation> *out)
 {
 	if(symbol == (Symbol *)0)
 		return;
-	RCodeAnnotation annotation = {};
+	RzCodeAnnotation annotation = {};
 	annotation.variable.name = strdup(symbol->getName().c_str());
 	if(symbol->getCategory() == 0)
 		annotation.type = RZ_CODE_ANNOTATION_TYPE_FUNCTION_PARAMETER;
@@ -245,9 +245,9 @@ static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > an
  * This function is a DFS traversal over Ghidra's AST.
  * It parses some of the annotatations (e.g. decompilation offsets, token classes, ..)
  * and translates them into a suitable format
- * that can be natively saved in the RAnnotatedCode structure.
+ * that can be natively saved in the RzAnnotatedCode structure.
  **/
-static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostream &stream, RAnnotatedCode *code)
+static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostream &stream, RzAnnotatedCode *code)
 {
 	// A leaf is an XML node which contains parts of the high level decompilation language
 	if(node.type() == pugi::xml_node_type::node_pcdata)
@@ -256,7 +256,7 @@ static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostrea
 		return;
 	}
 
-	std::vector<RCodeAnnotation> annotations;
+	std::vector<RzCodeAnnotation> annotations;
 #ifdef TEST_UNKNOWN_NODES
 	bool close_test = false;
 	static const std::set<std::string> boring_tags = { "syntax" };
@@ -306,14 +306,14 @@ static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostrea
 #endif
 }
 
-RZ_API RAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
+RZ_API RzAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
 {
 	pugi::xml_document doc;
 	if(!doc.load_string(xml, pugi::parse_default | pugi::parse_ws_pcdata))
 		return nullptr;
 
 	std::stringstream ss;
-	RAnnotatedCode *code = rz_annotated_code_new(nullptr);
+	RzAnnotatedCode *code = rz_annotated_code_new(nullptr);
 	if(!code)
 		return nullptr;
 

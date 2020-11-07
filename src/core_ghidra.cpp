@@ -134,7 +134,7 @@ static void ApplyPrintCConfig(RzConfig *cfg, PrintC *print_c)
 	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
 }
 
-static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringstream &out_stream, RAnnotatedCode **out_code)
+static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringstream &out_stream, RzAnnotatedCode **out_code)
 {
 	RzAnalFunction *function = rz_anal_get_fcn_in(core->anal, addr, RZ_ANAL_FCN_TYPE_NULL);
 	if(!function)
@@ -221,10 +221,10 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	}
 }
 
-RZ_API RAnnotatedCode *r2ghidra_decompile_annotated_code(RzCore *core, ut64 addr)
+RZ_API RzAnnotatedCode *r2ghidra_decompile_annotated_code(RzCore *core, ut64 addr)
 {
 	DecompilerLock lock;
-	RAnnotatedCode *code = nullptr;
+	RzAnnotatedCode *code = nullptr;
 #ifndef DEBUG_EXCEPTIONS
 	try
 	{
@@ -240,7 +240,7 @@ RZ_API RAnnotatedCode *r2ghidra_decompile_annotated_code(RzCore *core, ut64 addr
 		char *err = strdup (s.c_str());
  		code = rz_annotated_code_new(err);
 		// Push an annotation with: range = full string, type = error
-		// For this, we have to modify RAnnotatedCode to have one more type; for errors
+		// For this, we have to modify RzAnnotatedCode to have one more type; for errors
 		return code;
 	}
 #endif
@@ -254,7 +254,7 @@ static void DecompileCmd(RzCore *core, DecompileMode mode)
 	try
 	{
 #endif
-		RAnnotatedCode *code = nullptr;
+		RzAnnotatedCode *code = nullptr;
 		std::stringstream out_stream;
 		Decompile(core, core->offset, mode, out_stream, &code);
 		switch(mode)
@@ -632,7 +632,7 @@ RzCorePlugin rz_core_plugin_ghidra = {
 #ifdef __cplusplus
 extern "C"
 #endif
-RZ_API RzLibStruct radare_plugin = {
+RZ_API RzLibStruct rizin_plugin = {
 	/* .type = */ RZ_LIB_TYPE_CORE,
 	/* .data = */ &rz_core_plugin_ghidra,
 	/* .version = */ RZ_VERSION,

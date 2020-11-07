@@ -6,7 +6,7 @@
 void SleighAsm::init(const char *cpu, int bits, bool bigendian, RzIO *io, RzConfig *cfg)
 {
 	if(!io)
-		throw LowlevelError("Can't get RzIO from RBin");
+		throw LowlevelError("Can't get RzIO from RzBin");
 
 	if(description.empty())
 	{

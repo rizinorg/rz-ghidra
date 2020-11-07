@@ -18,7 +18,7 @@ RzGhidraDecompiler::RzGhidraDecompiler(QObject *parent)
 void RzGhidraDecompiler::decompileAt(ut64 addr)
 {
 	task = DecompilerRunning;
-	RAnnotatedCode *code = r2ghidra_decompile_annotated_code(Core()->core(), addr);
-	emit finished(code); //Here, we emit RAnnotatedCode *code or by value
+	RzAnnotatedCode *code = r2ghidra_decompile_annotated_code(Core()->core(), addr);
+	emit finished(code); //Here, we emit RzAnnotatedCode *code or by value
 	task = DecompilerFinished;
 }

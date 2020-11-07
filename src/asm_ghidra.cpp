@@ -85,7 +85,7 @@ RzAsmPlugin rz_asm_plugin_ghidra = {
 #ifdef __cplusplus
 extern "C"
 #endif
-RZ_API RzLibStruct radare_plugin = {
+RZ_API RzLibStruct rizin_plugin = {
 	/* .type = */ RZ_LIB_TYPE_ASM,
 	/* .data = */ &rz_asm_plugin_ghidra,
 	/* .version = */ RZ_VERSION,
