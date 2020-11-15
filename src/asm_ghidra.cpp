@@ -32,7 +32,7 @@ static int disassemble(RzAsm *a, RzAsmOp *op, const ut8 *buf, int len)
 			else
 				rz_io_close_all(rio);
 
-			RBuffer *tmp_buf = rz_buf_new_with_bytes(buf, len);
+			RzBuffer *tmp_buf = rz_buf_new_with_bytes(buf, len);
 			rz_io_open_buffer(rio, tmp_buf, RZ_PERM_RWX, 0);
 			rz_buf_free(tmp_buf);
 		}

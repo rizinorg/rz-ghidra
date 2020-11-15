@@ -14,12 +14,12 @@ template<typename T, typename F> void rz_list_foreach_cpp(RzList *list, const F 
 	}
 }
 
-template<typename T, typename F> void rz_interval_tree_foreach_cpp(RIntervalTree *tree, const F &func)
+template<typename T, typename F> void rz_interval_tree_foreach_cpp(RzIntervalTree *tree, const F &func)
 {
-	RIntervalTreeIter it;
+	RzIntervalTreeIter it;
 	for(it = rz_rbtree_first (&(tree)->root->node); rz_rbtree_iter_has(&it); rz_rbtree_iter_next (&(it)))
 	{
-		RIntervalNode *node = rz_interval_tree_iter_get (&it);
+		RzIntervalNode *node = rz_interval_tree_iter_get (&it);
 		func(node, reinterpret_cast<T *>(node->data));
 	}
 }

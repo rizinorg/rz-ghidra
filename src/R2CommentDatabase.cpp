@@ -28,7 +28,7 @@ void R2CommentDatabase::fillCache(const Address &fad) const
 	if(!fcn)
 		return;
 
-	rz_interval_tree_foreach_cpp<RzAnalMetaItem>(&core->anal->meta, [fad, fcn, this](RIntervalNode *node, RzAnalMetaItem *meta) {
+	rz_interval_tree_foreach_cpp<RzAnalMetaItem>(&core->anal->meta, [fad, fcn, this](RzIntervalNode *node, RzAnalMetaItem *meta) {
 		if(!meta || meta->type != RZ_META_TYPE_COMMENT || !meta->str)
 			return;
 		if(!rz_anal_function_contains(fcn, node->start))
