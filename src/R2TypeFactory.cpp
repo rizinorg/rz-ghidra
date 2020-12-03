@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2019 - thestr4ng3r */
+// SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include "R2TypeFactory.h"
 #include "R2Architecture.h"

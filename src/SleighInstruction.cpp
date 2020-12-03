@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2020 - FXTi */
+// SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include "SleighInstruction.h"
 

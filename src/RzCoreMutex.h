@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2020 - thestr4ng3r */
+// SPDX-License-Identifier: LGPL-3.0-or-later
 
 #ifndef RZ_GHIDRA_RCOREMUTEX_H
 #define RZ_GHIDRA_RCOREMUTEX_H
