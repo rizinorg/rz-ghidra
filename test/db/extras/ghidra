@@ -54,7 +54,7 @@ FILE=rizin-testbins/elf/hello_world
 EXPECT=<<EOF
 x86:LE:64:default:gcc
 
-// WARNING: [r2ghidra] Detected overlap for variable var_1ch
+// WARNING: [rz-ghidra] Detected overlap for variable var_1ch
 
 void main(void)
 {
@@ -94,7 +94,7 @@ x86:LE:16:Real Mode:
 // WARNING: Variable defined which should be unmapped: var_8h
 // WARNING: Variable defined which should be unmapped: var_4h
 // WARNING: Unknown calling convention yet parameter storage is locked
-// WARNING: [r2ghidra] Matching calling convention fastcall of function fcn.00001c98 failed, args may be inaccurate.
+// WARNING: [rz-ghidra] Matching calling convention fastcall of function fcn.00001c98 failed, args may be inaccurate.
 
 undefined4 fcn.00001c98(int16_t arg_8h, int16_t arg_6h, int16_t arg_eh)
 {
@@ -157,7 +157,7 @@ FILE=rizin-testbins/elf/hello_world
 EXPECT=<<EOF
 x86:LE:64:default:gcc
 
-// WARNING: [r2ghidra] Detected overlap for variable var_1ch
+// WARNING: [rz-ghidra] Detected overlap for variable var_1ch
 
 void main(void)
 {
@@ -196,7 +196,7 @@ ARGS=-F prg
 EXPECT=<<EOF
 6502:LE:16:default:
 
-// WARNING: [r2ghidra] Function fcn.0000080e has no calling convention set, args may be inaccurate.
+// WARNING: [rz-ghidra] Function fcn.0000080e has no calling convention set, args may be inaccurate.
 
 void fcn.0000080e(void)
 {
@@ -284,7 +284,7 @@ NAME=function variable annotations
 FILE=bins/dectest64
 EXPECT=<<EOF
 {
-  "code": "\n// WARNING: Could not reconcile some variable overlaps\n// WARNING: [r2ghidra] Failed to match type int for variable argc to Decompiler type: Unknown type identifier int\n// WARNING: [r2ghidra] Detected overlap for variable var_20h\n// WARNING: [r2ghidra] Detected overlap for variable var_ch\n\nundefined8 main(undefined8 argc, char **argv)\n{\n    undefined8 uVar1;\n    int64_t in_FS_OFFSET;\n    int64_t var_30h;\n    int64_t var_24h;\n    int64_t var_8h;\n    \n    var_8h = *(int64_t *)(in_FS_OFFSET + 0x28);\n    var_24h._0_4_ = (undefined4)argc;\n    sym.Aeropause((int64_t)&var_24h + 4, (undefined4)argc, argv, (undefined4)argc);\n    uVar1 = 0;\n    if (var_8h != *(int64_t *)(in_FS_OFFSET + 0x28)) {\n        uVar1 = sym.imp.__stack_chk_fail();\n    }\n    return uVar1;\n}\n",
+  "code": "\n// WARNING: Could not reconcile some variable overlaps\n// WARNING: [rz-ghidra] Failed to match type int for variable argc to Decompiler type: Unknown type identifier int\n// WARNING: [rz-ghidra] Detected overlap for variable var_20h\n// WARNING: [rz-ghidra] Detected overlap for variable var_ch\n\nundefined8 main(undefined8 argc, char **argv)\n{\n    undefined8 uVar1;\n    int64_t in_FS_OFFSET;\n    int64_t var_30h;\n    int64_t var_24h;\n    int64_t var_8h;\n    \n    var_8h = *(int64_t *)(in_FS_OFFSET + 0x28);\n    var_24h._0_4_ = (undefined4)argc;\n    sym.Aeropause((int64_t)&var_24h + 4, (undefined4)argc, argv, (undefined4)argc);\n    uVar1 = 0;\n    if (var_8h != *(int64_t *)(in_FS_OFFSET + 0x28)) {\n        uVar1 = sym.imp.__stack_chk_fail();\n    }\n    return uVar1;\n}\n",
   "annotations": [
     {
       "start": 1,
@@ -2039,8 +2039,8 @@ NAME=aeropause64 (many features combined)
 FILE=bins/dectest64
 EXPECT=<<EOF
 
-// WARNING: [r2ghidra] Detected overlap for variable var_ch
-// WARNING: [r2ghidra] Failed to match type size_t for variable size to Decompiler type: Unknown type identifier size_t
+// WARNING: [rz-ghidra] Detected overlap for variable var_ch
+// WARNING: [rz-ghidra] Failed to match type size_t for variable size to Decompiler type: Unknown type identifier size_t
 
 void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
 {
@@ -2332,7 +2332,7 @@ FILE=rizin-testbins/mach0/arg
 EXPECT=<<EOF
 
 // WARNING: Variable defined which should be unmapped: var_4h
-// WARNING: [r2ghidra] Detected overlap for variable var_14h
+// WARNING: [rz-ghidra] Detected overlap for variable var_14h
 
 void entry0(void)
 {
@@ -2488,7 +2488,7 @@ CCu base64:Jg== @ 0x804858a
 <property_changepoint space="register" offset="0x103c" val="0x20000000"/>
 <property_changepoint space="register" offset="0x1046" val="0x20000000"/>
 <property_changepoint space="register" offset="0x1050" val="0x0"/>
-<scope name="radare2-internal">
+<scope name="rizin-internal">
 <parent>
 </parent>
 <rangelist>
@@ -2728,7 +2728,7 @@ FILE=rizin-testbins/elf/hello_world
 ARGS=-B 0x1000000000000000
 EXPECT=<<EOF
     0x10000000000007aa    |
-    0x10000000000007aa    |// WARNING: [r2ghidra] Detected overlap for variable var_1ch
+    0x10000000000007aa    |// WARNING: [rz-ghidra] Detected overlap for variable var_1ch
                           |
     0x10000000000007aa    |void main(void)
                           |{

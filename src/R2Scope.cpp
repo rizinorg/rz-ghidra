@@ -15,7 +15,7 @@
 R2Scope::R2Scope(R2Architecture *arch)
 		: Scope("", arch, this),
 		  arch(arch),
-		  cache(new ScopeInternal("radare2-internal", arch, this))
+		  cache(new ScopeInternal("rizin-internal", arch, this))
 {
 }
 

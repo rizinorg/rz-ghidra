@@ -1,8 +1,8 @@
-<!--<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="rz-ghidra-dec logo" src="https://raw.githubusercontent.com/radareorg/rz-ghidra-dec/master/assets/logo.png">-->
+<!--<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="rz-ghidra-dec logo" src="https://raw.githubusercontent.com/rizinorg/rz-ghidra-dec/master/assets/logo.png">-->
 
 # rz-ghidra
 
-<!--[![Build Status](https://travis-ci.com/radareorg/rz-ghidra-dec.svg?token=JDmXp2pDhXxtPErySVHM&branch=master)](https://travis-ci.com/rizinorg/rz-ghidra)-->
+<!--[![Build Status](https://travis-ci.com/rizinorg/rz-ghidra-dec.svg?token=JDmXp2pDhXxtPErySVHM&branch=master)](https://travis-ci.com/rizinorg/rz-ghidra)-->
 
 This is an integration of the Ghidra decompiler and Sleigh Disassembler for [rizin](https://github.com/rizinorg/rizin).
 It is solely based on the decompiler part of Ghidra, which is written entirely in

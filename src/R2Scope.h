@@ -30,7 +30,7 @@ class R2Scope : public Scope
 
 	protected:
 		// TODO? void addRange(AddrSpace *spc,uintb first,uintb last) override;
-		void removeRange(AddrSpace *spc,uintb first,uintb last) override				{ throw LowlevelError("remove_range should not be performed on radare2 scope"); }
+		void removeRange(AddrSpace *spc,uintb first,uintb last) override				{ throw LowlevelError("remove_range should not be performed on rizin scope"); }
 		void addSymbolInternal(Symbol *sym) override									{ throw LowlevelError("addSymbolInternal unimplemented"); }
 		SymbolEntry *addMapInternal(Symbol *sym, uint4 exfl, const Address &addr, int4 off, int4 sz, const RangeList &uselim) override { throw LowlevelError("addMapInternal unimplemented"); }
 		SymbolEntry *addDynamicMapInternal(Symbol *sym, uint4 exfl, uint8 hash, int4 off, int4 sz, const RangeList &uselim) override { throw LowlevelError("addMap unimplemented"); }

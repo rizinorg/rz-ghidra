@@ -20,23 +20,23 @@ addons:
        - libgl1-mesa-dev
 
 env:
-  - INSTALL_PREFIX=$TRAVIS_BUILD_DIR/radare2-prefix
+  - INSTALL_PREFIX=$TRAVIS_BUILD_DIR/rizin-prefix
 
 install:
   - pip3 install meson
-  - git clone --depth 1 https://github.com/radareorg/radare2
-  - cd radare2 && mkdir build && cd build
+  - git clone --depth 1 https://github.com/rizinorg/rizin
+  - cd rizin && mkdir build && cd build
   - meson --prefix="$INSTALL_PREFIX" ..
   - ninja
   - ninja install
   - cd ../..
-  - git clone --depth 1 https://github.com/radareorg/cutter
+  - git clone --depth 1 https://github.com/rizinorg/cutter
 
 script:
   - mkdir build && cd build
   - cmake
       -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_PREFIX_PATH="$TRAVIS_BUILD_DIR/radare2-prefix;/opt/qt512"
+      -DCMAKE_PREFIX_PATH="$TRAVIS_BUILD_DIR/rizin-prefix;/opt/qt512"
       -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
       -DBUILD_CUTTER_PLUGIN=ON
       -DCUTTER_SOURCE_DIR="$TRAVIS_BUILD_DIR/cutter"
@@ -46,7 +46,7 @@ script:
   - make install
   - export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:$INSTALL_PREFIX/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
   - export PATH="$INSTALL_PREFIX/bin:$PATH"
-  - export R2_LIBR_PLUGINS="$INSTALL_PREFIX/share/radare2/plugins"
+  - export R2_LIBR_PLUGINS="$INSTALL_PREFIX/share/rizin/plugins"
   - cd ../test
   - make
 

@@ -17,7 +17,7 @@ jobs:
 
       - name: Download Coverity Build Tool
         run: |
-          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=radareorg%2Fr2ghidra-dec" -O cov-analysis-linux64.tar.gz
+          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=rizinorg%2Frz-ghidra-dec" -O cov-analysis-linux64.tar.gz
           mkdir cov-analysis-linux64
           tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
         env:
@@ -37,18 +37,18 @@ jobs:
 
       - name: Prepare Radare2 and Cutter
         run: |
-          export INSTALL_PREFIX=${GITHUB_WORKSPACE}/radare2-prefix
-          git clone --depth 1 https://github.com/radareorg/radare2
-          cd radare2 && mkdir build && cd build
+          export INSTALL_PREFIX=${GITHUB_WORKSPACE}/rizin-prefix
+          git clone --depth 1 https://github.com/rizinorg/rizin
+          cd rizin && mkdir build && cd build
           meson --prefix="${INSTALL_PREFIX}" ..
           ninja
           ninja install
           cd ../..
-          git clone --depth 1 https://github.com/radareorg/cutter
+          git clone --depth 1 https://github.com/rizinorg/cutter
 
       - name: CMake
         run: |
-          export INSTALL_PREFIX=${GITHUB_WORKSPACE}/radare2-prefix
+          export INSTALL_PREFIX=${GITHUB_WORKSPACE}/rizin-prefix
           export PKG_CONFIG_PATH=${INSTALL_PREFIX}/lib/pkgconfig:${INSTALL_PREFIX}/lib/$(uname -m)-linux-gnu/pkgconfig:${PKG_CONFIG_PATH}
           mkdir build && cd build
           cmake \
@@ -69,14 +69,14 @@ jobs:
       - name: Submit the result to Coverity Scan
         run: |
           cd build
-          tar czvf r2ghidra.tgz cov-int
+          tar czvf rz-ghidra.tgz cov-int
           curl \
-            --form project=radareorg-cutter \
+            --form project=rizinorg-rz-ghidra \
             --form token=$TOKEN \
-            --form email=noreply@radare.org \
-            --form file=@r2ghidra.tgz \
+            --form email=noreply@rizin.re \
+            --form file=@rz-ghidra.tgz \
             --form version=trunk \
-            --form description="r2ghidra" \
-            https://scan.coverity.com/builds?project=radareorg%2Fr2ghidra-dec
+            --form description="rz-ghidra" \
+            https://scan.coverity.com/builds?project=rizinorg%2Frz-ghidra
         env:
           TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}

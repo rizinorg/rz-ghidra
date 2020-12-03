@@ -410,10 +410,10 @@ RzConfig *SleighAsm::getConfig(RzAnal *a)
 
 std::string SleighAsm::getSleighHome(RzConfig *cfg)
 {
-	const char varname[] = "r2ghidra.sleighhome";
+	const char varname[] = "rz-ghidra.sleighhome";
 	const char *path = nullptr;
 
-	// user-set, for example from .radare2rc
+	// user-set, for example from .rizinrc
 	if(cfg && rz_config_node_get(cfg, varname))
 	{
 		path = rz_config_get(cfg, varname);
@@ -439,7 +439,7 @@ std::string SleighAsm::getSleighHome(RzConfig *cfg)
 	}
 #endif
 
-	path = rz_str_home(".local/share/radare2/r2pm/git/ghidra");
+	path = rz_str_home(".local/share/rizin/r2pm/git/ghidra");
 	if(rz_file_is_directory(path))
 	{
 		if(cfg)

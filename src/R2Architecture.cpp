@@ -14,7 +14,7 @@
 #include <iostream>
 #include <cassert>
 
-// maps radare2 calling conventions to decompiler proto models
+// maps rizin calling conventions to decompiler proto models
 static const std::map<std::string, std::string> cc_map = {
 		{ "cdecl", "__cdecl" },
 		{ "fastcall", "__fastcall" },

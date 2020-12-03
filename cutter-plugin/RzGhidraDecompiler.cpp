@@ -10,7 +10,7 @@
 #include <QJsonArray>
 
 RzGhidraDecompiler::RzGhidraDecompiler(QObject *parent)
-	: Decompiler("r2ghidra", "Ghidra", parent)
+	: Decompiler("rz-ghidra", "Ghidra", parent)
 {
 	task = DecompilerFinished;
 }
@@ -18,7 +18,7 @@ RzGhidraDecompiler::RzGhidraDecompiler(QObject *parent)
 void RzGhidraDecompiler::decompileAt(ut64 addr)
 {
 	task = DecompilerRunning;
-	RzAnnotatedCode *code = r2ghidra_decompile_annotated_code(Core()->core(), addr);
+	RzAnnotatedCode *code = rz_ghidra_decompile_annotated_code(Core()->core(), addr);
 	emit finished(code); //Here, we emit RzAnnotatedCode *code or by value
 	task = DecompilerFinished;
 }

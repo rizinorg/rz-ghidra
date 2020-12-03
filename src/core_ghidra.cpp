@@ -178,7 +178,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	if(cfg_var_verbose.GetBool(core->config))
 	{
 		for(const auto &warning : arch.getWarnings())
-			func->warningHeader("[r2ghidra] " + warning);
+			func->warningHeader("[rz-ghidra] " + warning);
 	}
 	switch (mode)
 	{
@@ -221,7 +221,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	}
 }
 
-RZ_API RzAnnotatedCode *r2ghidra_decompile_annotated_code(RzCore *core, ut64 addr)
+RZ_API RzAnnotatedCode *rz_ghidra_decompile_annotated_code(RzCore *core, ut64 addr)
 {
 	DecompilerLock lock;
 	RzAnnotatedCode *code = nullptr;
@@ -533,7 +533,7 @@ static void _cmd(RzCore *core, const char *input)
 	}
 }
 
-static int r2ghidra_cmd(void *user, const char *input)
+static int rz_ghidra_cmd(void *user, const char *input)
 {
 	RzCore *core = (RzCore *) user;
 	if (!strncmp (input, CMD_PREFIX, strlen(CMD_PREFIX)))
@@ -557,7 +557,7 @@ bool SleighHomeConfig(void */* user */, void *data)
 
 static void SetInitialSleighHome(RzConfig *cfg)
 {
-	// user-set, for example from .radare2rc
+	// user-set, for example from .rizinrc
 	if(!cfg_var_sleighhome.GetString(cfg).empty())
 		return;
 
@@ -586,7 +586,7 @@ static void SetInitialSleighHome(RzConfig *cfg)
 	rz_mem_free (homepath);
 }
 
-static int r2ghidra_init(void *user, const char *cmd)
+static int rz_ghidra_init(void *user, const char *cmd)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	startDecompilerLibrary(nullptr);
@@ -610,7 +610,7 @@ static int r2ghidra_init(void *user, const char *cmd)
 	return true;
 }
 
-static int r2ghidra_fini(void *user, const char *cmd)
+static int rz_ghidra_fini(void *user, const char *cmd)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	shutdownDecompilerLibrary();
@@ -623,9 +623,9 @@ RzCorePlugin rz_core_plugin_ghidra = {
 	/* .license = */ "GPL3",
 	/* .author = */ "thestr4ng3r",
 	/* .version = */ nullptr,
-	/*.call = */ r2ghidra_cmd,
-	/*.init = */ r2ghidra_init,
-	/*.fini = */ r2ghidra_fini
+	/*.call = */ rz_ghidra_cmd,
+	/*.init = */ rz_ghidra_init,
+	/*.fini = */ rz_ghidra_fini
 };
 
 #ifndef CORELIB

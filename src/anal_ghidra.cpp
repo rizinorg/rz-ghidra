@@ -2676,7 +2676,7 @@ static bool sleigh_esil_popcount(RzAnalEsil *esil)
 
 static bool sleigh_esil_signext(RzAnalEsil *esil)
 {
-	// From https://github.com/radareorg/radare2/pull/17436/
+	// From https://github.com/rizinorg/rizin/pull/17436/
 	ut64 src, dst;
 
 	char *p_src = rz_anal_esil_pop(esil);

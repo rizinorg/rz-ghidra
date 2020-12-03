@@ -4,7 +4,7 @@
 #include "R2Architecture.h"
 
 R2LoadImage::R2LoadImage(RzCoreMutex *coreMutex)
-	: LoadImage("radare2_program"),
+	: LoadImage("rizin_program"),
 	coreMutex(coreMutex)
 {
 }
@@ -17,10 +17,10 @@ void R2LoadImage::loadFill(uint1 *ptr, int4 size, const Address &addr)
 
 string R2LoadImage::getArchType() const
 {
-	return "radare2";
+	return "rizin";
 }
 
 void R2LoadImage::adjustVma(long adjust)
 {
-	throw LowlevelError("Cannot adjust radare2 virtual memory");
+	throw LowlevelError("Cannot adjust rizin virtual memory");
 }

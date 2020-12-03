@@ -17,15 +17,15 @@ private:
 	RzIO *io = nullptr;
 
 public:
-	AsmLoadImage(RzIO *io): LoadImage("radare2_program"), io(io) {}
+	AsmLoadImage(RzIO *io): LoadImage("rizin_program"), io(io) {}
 	virtual void loadFill(uint1 *ptr, int4 size, const Address &addr)
 	{
 		rz_io_read_at(io, addr.getOffset(), ptr, size);
 	}
-	virtual string getArchType(void) const { return "radare2"; }
+	virtual string getArchType(void) const { return "rizin"; }
 	virtual void adjustVma(long adjust)
 	{
-		throw LowlevelError("Cannot adjust radare2 virtual memory");
+		throw LowlevelError("Cannot adjust rizin virtual memory");
 	}
 };
 
@@ -237,7 +237,7 @@ public:
 	std::vector<std::string> arg_names; // default ABI's function args
 	std::vector<std::string> ret_names; // default ABI's function retvals
 	std::unordered_map<std::string, std::string> reg_group;
-	// To satisfy radare2's rule: reg name has to be lowercase.
+	// To satisfy rizin's rule: reg name has to be lowercase.
 	std::unordered_map<std::string, std::string> reg_mapping;
 	SleighAsm(): loader(nullptr), trans(nullptr, nullptr) {}
 	void init(const char *cpu, int bits, bool bigendian, RzIO *io, RzConfig *cfg);
