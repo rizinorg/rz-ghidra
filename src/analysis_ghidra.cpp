@@ -32,7 +32,7 @@ static int archinfo(RzAnalysis *analysis, int query)
 		return -1;
 	}
 
-	if(query == RZ_ANAL_ARCHINFO_ALIGN)
+	if(query == RZ_ANALYSIS_ARCHINFO_ALIGN)
 		return sanal.alignment;
 	else
 		return -1;
@@ -67,15 +67,15 @@ static inline bool reg_set_has(const std::unordered_set<std::string> &reg_set,
 }
 
 /* After some consideration, I decide to classify mov operation:
- * RZ_ANAL_OP_TYPE_STORE:
+ * RZ_ANALYSIS_OP_TYPE_STORE:
  *     CONST -> MEM (Key: STORE)
  *     CONST -> MEM (Key: COPY)
  *     REG -> MEM (Key: STORE)
  *     REG -> MEM (Key: COPY)
- * RZ_ANAL_OP_TYPE_LOAD:
+ * RZ_ANALYSIS_OP_TYPE_LOAD:
  *     MEM -> REG (Key: LOAD)
  *     MEM -> REG (Key: COPY)
- * RZ_ANAL_OP_TYPE_MOV:
+ * RZ_ANALYSIS_OP_TYPE_MOV:
  *     REG   -> REG (Key: COPY)
  *     CONST -> REG (Key: COPY)
  *     CONST -> MEM (Key: STORE)
@@ -85,7 +85,7 @@ static inline bool reg_set_has(const std::unordered_set<std::string> &reg_set,
 static ut32 analysis_type_MOV(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &reg_set)
 {
-	const ut32 this_type = RZ_ANAL_OP_TYPE_MOV;
+	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_MOV;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	const PcodeOpType key_pcode_store = CPUI_STORE;
 	SleighAnalValue in0, out;
@@ -147,11 +147,11 @@ static ut32 analysis_type_LOAD(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
                            const std::unordered_set<std::string> &reg_set)
 {
 	/*
-	 * RZ_ANAL_OP_TYPE_LOAD:
+	 * RZ_ANALYSIS_OP_TYPE_LOAD:
 	 *     MEM -> REG (Key: LOAD)
 	 *     MEM -> REG (Key: COPY)
 	 */
-	const ut32 this_type = RZ_ANAL_OP_TYPE_LOAD;
+	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_LOAD;
 	const PcodeOpType key_pcode_load = CPUI_LOAD;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	SleighAnalValue in0, out;
@@ -199,13 +199,13 @@ static ut32 analysis_type_STORE(RzAnalysis *analysis, RzAnalysisOp *analysis_op,
                             const std::unordered_set<std::string> &reg_set)
 {
 	/*
-	 * RZ_ANAL_OP_TYPE_STORE:
+	 * RZ_ANALYSIS_OP_TYPE_STORE:
 	 *     CONST -> MEM (Key: STORE)
 	 *     CONST -> MEM (Key: COPY)
 	 *     REG -> MEM (Key: STORE)
 	 *     REG -> MEM (Key: COPY)
 	 */
-	const ut32 this_type = RZ_ANAL_OP_TYPE_STORE;
+	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_STORE;
 	const PcodeOpType key_pcode_store = CPUI_STORE;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	SleighAnalValue in0, out;
@@ -269,8 +269,8 @@ static ut32 analysis_type_STORE(RzAnalysis *analysis, RzAnalysisOp *analysis_op,
 static ut32 analysis_type_XSWI(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &reg_set)
 {
-	// RZ_ANAL_OP_TYPE_CSWI
-	// RZ_ANAL_OP_TYPE_SWI
+	// RZ_ANALYSIS_OP_TYPE_CSWI
+	// RZ_ANALYSIS_OP_TYPE_SWI
 	const PcodeOpType key_pcode_callother = CPUI_CALLOTHER;
 	const PcodeOpType key_pcode_cbranch = CPUI_CBRANCH;
 	bool has_cbranch = false;
@@ -285,7 +285,7 @@ static ut32 analysis_type_XSWI(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 			if(iter->input1)
 				analysis_op->val = iter->input1->number;
 
-			analysis_op->type = has_cbranch? RZ_ANAL_OP_TYPE_CSWI: RZ_ANAL_OP_TYPE_SWI;
+			analysis_op->type = has_cbranch? RZ_ANALYSIS_OP_TYPE_CSWI: RZ_ANALYSIS_OP_TYPE_SWI;
 
 			return analysis_op->type;
 		}
@@ -297,9 +297,9 @@ static ut32 analysis_type_XSWI(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 static ut32 analysis_type_XPUSH(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                             const std::unordered_set<std::string> &reg_set)
 {
-	// RZ_ANAL_OP_TYPE_UPUSH
-	// RZ_ANAL_OP_TYPE_RPUSH
-	// RZ_ANAL_OP_TYPE_PUSH
+	// RZ_ANALYSIS_OP_TYPE_UPUSH
+	// RZ_ANALYSIS_OP_TYPE_RPUSH
+	// RZ_ANALYSIS_OP_TYPE_PUSH
 	const PcodeOpType key_pcode = CPUI_STORE;
 	SleighAnalValue out, in;
 	out.invalid(); in.invalid();
@@ -319,8 +319,8 @@ static ut32 analysis_type_XPUSH(RzAnalysis *analysis, RzAnalysisOp *analysis_op,
 			if((out.reg && sanal.reg_mapping[sanal.sp_name] == out.reg->name) ||
 			   (out.regdelta && sanal.reg_mapping[sanal.sp_name] == out.regdelta->name))
 			{
-				analysis_op->type = RZ_ANAL_OP_TYPE_UPUSH;
-				analysis_op->stackop = RZ_ANAL_STACK_INC;
+				analysis_op->type = RZ_ANALYSIS_OP_TYPE_UPUSH;
+				analysis_op->stackop = RZ_ANALYSIS_STACK_INC;
 
 				if(iter->output)
 					in = SleighAnalValue::resolve_arg(analysis, iter->output);
@@ -329,7 +329,7 @@ static ut32 analysis_type_XPUSH(RzAnalysis *analysis, RzAnalysisOp *analysis_op,
 					continue;
 
 				if(reg_set_has(reg_set, in))
-					analysis_op->type = RZ_ANAL_OP_TYPE_RPUSH;
+					analysis_op->type = RZ_ANALYSIS_OP_TYPE_RPUSH;
 				analysis_op->src[0] = in.dup();
 				analysis_op->dst = out.dup();
 
@@ -344,7 +344,7 @@ static ut32 analysis_type_XPUSH(RzAnalysis *analysis, RzAnalysisOp *analysis_op,
 static ut32 analysis_type_POP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &reg_set)
 {
-	const ut32 this_type = RZ_ANAL_OP_TYPE_POP;
+	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_POP;
 	const PcodeOpType key_pcode = CPUI_LOAD;
 	SleighAnalValue in0, out;
 	in0.invalid(); out.invalid();
@@ -373,7 +373,7 @@ static ut32 analysis_type_POP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 				out = *p;
 
 				analysis_op->type = this_type;
-				analysis_op->stackop = RZ_ANAL_STACK_INC;
+				analysis_op->stackop = RZ_ANALYSIS_STACK_INC;
 				analysis_op->dst = out.dup();
 				analysis_op->src[0] = in0.dup();
 
@@ -388,8 +388,8 @@ static ut32 analysis_type_POP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 static ut32 analysis_type_XCMP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &reg_set)
 {
-	// RZ_ANAL_OP_TYPE_CMP
-	// RZ_ANAL_OP_TYPE_ACMP
+	// RZ_ANALYSIS_OP_TYPE_CMP
+	// RZ_ANALYSIS_OP_TYPE_ACMP
 	const PcodeOpType key_pcode_sub = CPUI_INT_SUB;
 	const PcodeOpType key_pcode_and = CPUI_INT_AND;
 	const PcodeOpType key_pcode_equal = CPUI_INT_EQUAL;
@@ -398,7 +398,7 @@ static ut32 analysis_type_XCMP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 	uintb unique_off = 0;
 	PcodeOpType key_pcode = CPUI_MAX;
 
-	anal_op->type = R_ANAL_OP_TYPE_CMP;
+	analysis_op->type = RZ_ANALYSIS_OP_TYPE_CMP;
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
 		if(iter->type == key_pcode_sub || iter->type == key_pcode_and)
@@ -437,8 +437,8 @@ static ut32 analysis_type_XCMP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 			else
 				continue;
 
-			analysis_op->type = key_pcode == key_pcode_sub? RZ_ANAL_OP_TYPE_CMP: RZ_ANAL_OP_TYPE_ACMP;
-			// analysis_op->cond = RZ_ANAL_COND_EQ; Should I enable this? I think sub can judge equal and
+			analysis_op->type = key_pcode == key_pcode_sub? RZ_ANALYSIS_OP_TYPE_CMP: RZ_ANALYSIS_OP_TYPE_ACMP;
+			// analysis_op->cond = RZ_ANALYSIS_COND_EQ; Should I enable this? I think sub can judge equal and
 			// less or more.
 			analysis_op->src[0] = in0.dup();
 			analysis_op->src[1] = in1.dup();
@@ -453,17 +453,17 @@ static ut32 analysis_type_XCMP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 static ut32 analysis_type_XXX(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                               const std::unordered_set<std::string> &reg_set)
 {
-	// RZ_ANAL_OP_TYPE_ADD
-	// RZ_ANAL_OP_TYPE_SUB
-	// RZ_ANAL_OP_TYPE_MUL
-	// RZ_ANAL_OP_TYPE_DIV
-	// RZ_ANAL_OP_TYPE_MOD
-	// RZ_ANAL_OP_TYPE_OR
-	// RZ_ANAL_OP_TYPE_AND
-	// RZ_ANAL_OP_TYPE_XOR
-	// RZ_ANAL_OP_TYPE_SHR
-	// RZ_ANAL_OP_TYPE_SHL
-	// RZ_ANAL_OP_TYPE_SAR
+	// RZ_ANALYSIS_OP_TYPE_ADD
+	// RZ_ANALYSIS_OP_TYPE_SUB
+	// RZ_ANALYSIS_OP_TYPE_MUL
+	// RZ_ANALYSIS_OP_TYPE_DIV
+	// RZ_ANALYSIS_OP_TYPE_MOD
+	// RZ_ANALYSIS_OP_TYPE_OR
+	// RZ_ANALYSIS_OP_TYPE_AND
+	// RZ_ANALYSIS_OP_TYPE_XOR
+	// RZ_ANALYSIS_OP_TYPE_SHR
+	// RZ_ANALYSIS_OP_TYPE_SHL
+	// RZ_ANALYSIS_OP_TYPE_SAR
 	SleighAnalValue in0, in1, out;
 	in0.invalid(); in1.invalid(); out.invalid();
 	std::vector<SleighAnalValue> outs;
@@ -504,18 +504,18 @@ static ut32 analysis_type_XXX(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 
 						switch(iter->type)
 						{
-							case CPUI_INT_ADD: analysis_op->type = RZ_ANAL_OP_TYPE_ADD; break;
-							case CPUI_INT_SUB: analysis_op->type = RZ_ANAL_OP_TYPE_SUB; break;
-							case CPUI_INT_MULT: analysis_op->type = RZ_ANAL_OP_TYPE_MUL; break;
-							case CPUI_INT_DIV: analysis_op->type = RZ_ANAL_OP_TYPE_DIV; break;
+							case CPUI_INT_ADD: analysis_op->type = RZ_ANALYSIS_OP_TYPE_ADD; break;
+							case CPUI_INT_SUB: analysis_op->type = RZ_ANALYSIS_OP_TYPE_SUB; break;
+							case CPUI_INT_MULT: analysis_op->type = RZ_ANALYSIS_OP_TYPE_MUL; break;
+							case CPUI_INT_DIV: analysis_op->type = RZ_ANALYSIS_OP_TYPE_DIV; break;
 							case CPUI_INT_REM:
-							case CPUI_INT_SREM: analysis_op->type = RZ_ANAL_OP_TYPE_MOD; break;
-							case CPUI_INT_OR: analysis_op->type = RZ_ANAL_OP_TYPE_OR; break;
-							case CPUI_INT_AND: analysis_op->type = RZ_ANAL_OP_TYPE_AND; break;
-							case CPUI_INT_XOR: analysis_op->type = RZ_ANAL_OP_TYPE_XOR; break;
-							case CPUI_INT_RIGHT: analysis_op->type = RZ_ANAL_OP_TYPE_SHR; break;
-							case CPUI_INT_LEFT: analysis_op->type = RZ_ANAL_OP_TYPE_SHL; break;
-							case CPUI_INT_SRIGHT: analysis_op->type = RZ_ANAL_OP_TYPE_SAR; break;
+							case CPUI_INT_SREM: analysis_op->type = RZ_ANALYSIS_OP_TYPE_MOD; break;
+							case CPUI_INT_OR: analysis_op->type = RZ_ANALYSIS_OP_TYPE_OR; break;
+							case CPUI_INT_AND: analysis_op->type = RZ_ANALYSIS_OP_TYPE_AND; break;
+							case CPUI_INT_XOR: analysis_op->type = RZ_ANALYSIS_OP_TYPE_XOR; break;
+							case CPUI_INT_RIGHT: analysis_op->type = RZ_ANALYSIS_OP_TYPE_SHR; break;
+							case CPUI_INT_LEFT: analysis_op->type = RZ_ANALYSIS_OP_TYPE_SHL; break;
+							case CPUI_INT_SRIGHT: analysis_op->type = RZ_ANALYSIS_OP_TYPE_SAR; break;
 							default: break;
 						}
 						analysis_op->src[0] = in0.dup();
@@ -538,7 +538,7 @@ static ut32 analysis_type_XXX(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 static ut32 analysis_type_NOR(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &reg_set)
 {
-	const ut32 this_type = RZ_ANAL_OP_TYPE_NOR;
+	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_NOR;
 	const PcodeOpType key_pcode_or = CPUI_INT_OR;
 	const PcodeOpType key_pcode_negate = CPUI_INT_NEGATE;
 	SleighAnalValue in0, in1, out;
@@ -595,7 +595,7 @@ static ut32 analysis_type_NOR(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 static ut32 analysis_type_NOT(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &reg_set)
 {
-	const ut32 this_type = RZ_ANAL_OP_TYPE_NOT;
+	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_NOT;
 	const PcodeOpType key_pcode = CPUI_INT_NEGATE;
 	SleighAnalValue in0, out;
 	in0.invalid(); out.invalid();
@@ -636,7 +636,7 @@ static ut32 analysis_type_NOT(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 static ut32 analysis_type_XCHG(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &reg_set)
 {
-	const ut32 this_type = RZ_ANAL_OP_TYPE_XCHG;
+	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_XCHG;
 	const PcodeOpType key_pcode = CPUI_COPY;
 	std::vector<decltype(raw_ops.cbegin())> copy_vec;
 
@@ -669,16 +669,16 @@ fail:
 static ut32 analysis_type_SINGLE(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                              const std::unordered_set<std::string> &reg_set)
 {
-	// RZ_ANAL_OP_TYPE_CAST
-	// RZ_ANAL_OP_TYPE_NEW
-	// RZ_ANAL_OP_TYPE_ABS
+	// RZ_ANALYSIS_OP_TYPE_CAST
+	// RZ_ANALYSIS_OP_TYPE_NEW
+	// RZ_ANALYSIS_OP_TYPE_ABS
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
 		switch(iter->type)
 		{
-			case CPUI_CAST: analysis_op->type = RZ_ANAL_OP_TYPE_CAST; return analysis_op->type;
-			case CPUI_NEW: analysis_op->type = RZ_ANAL_OP_TYPE_NEW; return analysis_op->type;
-			case CPUI_FLOAT_ABS: analysis_op->type = RZ_ANAL_OP_TYPE_ABS; return analysis_op->type;
+			case CPUI_CAST: analysis_op->type = RZ_ANALYSIS_OP_TYPE_CAST; return analysis_op->type;
+			case CPUI_NEW: analysis_op->type = RZ_ANALYSIS_OP_TYPE_NEW; return analysis_op->type;
+			case CPUI_FLOAT_ABS: analysis_op->type = RZ_ANALYSIS_OP_TYPE_ABS; return analysis_op->type;
 			default: break;
 		}
 	}
@@ -744,7 +744,7 @@ static void analysis_type(RzAnalysis *analysis, RzAnalysisOp *analysis_op, Pcode
 		}
 	}
 
-	analysis_op->type = RZ_ANAL_OP_TYPE_UNK;
+	analysis_op->type = RZ_ANALYSIS_OP_TYPE_UNK;
 
 	if(analysis_type_XCHG(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
@@ -1382,7 +1382,7 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 
 		analysis_op->addr = addr;
 		analysis_op->sign = true;
-		analysis_op->type = RZ_ANAL_OP_TYPE_ILL;
+		analysis_op->type = RZ_ANALYSIS_OP_TYPE_ILL;
 
 		PcodeSlg pcode_slg(&sanal);
 		AssemblySlg assem(&sanal);
@@ -1394,7 +1394,7 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 
 		if(pcode_slg.pcodes.empty())
 		{ // NOP case
-			analysis_op->type = RZ_ANAL_OP_TYPE_NOP;
+			analysis_op->type = RZ_ANALYSIS_OP_TYPE_NOP;
 			esilprintf(analysis_op, "");
 			return analysis_op->size;
 		}
@@ -1410,19 +1410,19 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 			{
 				case FlowType::TERMINATOR:
 					// Stack info could be added
-					analysis_op->type = RZ_ANAL_OP_TYPE_RET;
+					analysis_op->type = RZ_ANALYSIS_OP_TYPE_RET;
 					analysis_op->eob = true;
 					break;
 
 				case FlowType::CONDITIONAL_TERMINATOR:
-					analysis_op->type = RZ_ANAL_OP_TYPE_CRET;
+					analysis_op->type = RZ_ANALYSIS_OP_TYPE_CRET;
 					analysis_op->fail = ins.getFallThrough().getOffset();
 					analysis_op->eob = true;
 					break;
 
 				case FlowType::JUMP_TERMINATOR: analysis_op->eob = true;
 				case FlowType::UNCONDITIONAL_JUMP:
-					analysis_op->type = RZ_ANAL_OP_TYPE_JMP;
+					analysis_op->type = RZ_ANALYSIS_OP_TYPE_JMP;
 					analysis_op->jump = ins.getFlows().begin()->getOffset();
 					break;
 
@@ -1433,17 +1433,17 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 					{
 						if(isRefed)
 						{
-							analysis_op->type = RZ_ANAL_OP_TYPE_MJMP;
+							analysis_op->type = RZ_ANALYSIS_OP_TYPE_MJMP;
 							analysis_op->ireg = reg;
 						}
 						else
 						{
-							analysis_op->type = RZ_ANAL_OP_TYPE_IRJMP;
+							analysis_op->type = RZ_ANALYSIS_OP_TYPE_IRJMP;
 							analysis_op->reg = reg;
 						}
 					}
 					else
-						analysis_op->type = RZ_ANAL_OP_TYPE_IJMP;
+						analysis_op->type = RZ_ANALYSIS_OP_TYPE_IJMP;
 					break;
 				}
 
@@ -1454,30 +1454,30 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 					{
 						if(isRefed)
 						{
-							analysis_op->type = RZ_ANAL_OP_TYPE_MCJMP;
+							analysis_op->type = RZ_ANALYSIS_OP_TYPE_MCJMP;
 							analysis_op->ireg = reg;
 						}
 						else
 						{
-							analysis_op->type = RZ_ANAL_OP_TYPE_RCJMP;
+							analysis_op->type = RZ_ANALYSIS_OP_TYPE_RCJMP;
 							analysis_op->reg = reg;
 						}
 					}
 					else
-						analysis_op->type = RZ_ANAL_OP_TYPE_UCJMP;
+						analysis_op->type = RZ_ANALYSIS_OP_TYPE_UCJMP;
 					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 				}
 
 				case FlowType::CONDITIONAL_JUMP:
-					analysis_op->type = RZ_ANAL_OP_TYPE_CJMP;
+					analysis_op->type = RZ_ANALYSIS_OP_TYPE_CJMP;
 					analysis_op->jump = ins.getFlows().begin()->getOffset();
 					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 
 				case FlowType::CALL_TERMINATOR: analysis_op->eob = true;
 				case FlowType::UNCONDITIONAL_CALL:
-					analysis_op->type = RZ_ANAL_OP_TYPE_CALL;
+					analysis_op->type = RZ_ANALYSIS_OP_TYPE_CALL;
 					analysis_op->jump = ins.getFlows().begin()->getOffset();
 					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
@@ -1491,13 +1491,13 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 						else
 							analysis_op->reg = reg;
 
-					analysis_op->type = RZ_ANAL_OP_TYPE_UCCALL;
+					analysis_op->type = RZ_ANALYSIS_OP_TYPE_UCCALL;
 					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 				}
 
 				case FlowType::CONDITIONAL_CALL:
-					analysis_op->type |= RZ_ANAL_OP_TYPE_CCALL;
+					analysis_op->type |= RZ_ANALYSIS_OP_TYPE_CCALL;
 					analysis_op->jump = ins.getFlows().begin()->getOffset();
 					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
@@ -1510,17 +1510,17 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 					{
 						if(isRefed)
 						{
-							analysis_op->type = RZ_ANAL_OP_TYPE_IRCALL;
+							analysis_op->type = RZ_ANALYSIS_OP_TYPE_IRCALL;
 							analysis_op->ireg = reg;
 						}
 						else
 						{
-							analysis_op->type = RZ_ANAL_OP_TYPE_IRCALL;
+							analysis_op->type = RZ_ANALYSIS_OP_TYPE_IRCALL;
 							analysis_op->reg = reg;
 						}
 					}
 					else
-						analysis_op->type = RZ_ANAL_OP_TYPE_ICALL;
+						analysis_op->type = RZ_ANALYSIS_OP_TYPE_ICALL;
 					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 				}
@@ -1534,46 +1534,46 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 #if 0
 			switch(analysis_op->type)
 			{
-				case RZ_ANAL_OP_TYPE_IRCALL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_IRCALL"; break;
-				case RZ_ANAL_OP_TYPE_RET: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_RET"; break;
-				case RZ_ANAL_OP_TYPE_ABS: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_ABS"; break;
-				case RZ_ANAL_OP_TYPE_CRET: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_CRET"; break;
-				case RZ_ANAL_OP_TYPE_IJMP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_IJMP"; break;
-				case RZ_ANAL_OP_TYPE_RPUSH: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_RPUSH"; break;
-				case RZ_ANAL_OP_TYPE_NOP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_NOP"; break;
-				case RZ_ANAL_OP_TYPE_SAR: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_SAR"; break;
-				case RZ_ANAL_OP_TYPE_NOT: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_NOT"; break;
-				case RZ_ANAL_OP_TYPE_CALL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_CALL"; break;
-				case RZ_ANAL_OP_TYPE_UPUSH: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_UPUSH"; break;
-				case RZ_ANAL_OP_TYPE_LOAD: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_LOAD"; break;
-				case RZ_ANAL_OP_TYPE_XCHG: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_XCHG"; break;
-				case RZ_ANAL_OP_TYPE_RCJMP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_RCJMP"; break;
-				case RZ_ANAL_OP_TYPE_CAST: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_CAST"; break;
-				case RZ_ANAL_OP_TYPE_UCJMP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_UCJMP"; break;
-				case RZ_ANAL_OP_TYPE_MOV: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_MOV"; break;
-				case RZ_ANAL_OP_TYPE_OR: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_OR"; break;
-				case RZ_ANAL_OP_TYPE_SHR: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_SHR"; break;
-				case RZ_ANAL_OP_TYPE_XOR: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_XOR"; break;
-				case RZ_ANAL_OP_TYPE_SHL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_SHL"; break;
-				case RZ_ANAL_OP_TYPE_JMP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_JMP"; break;
-				case RZ_ANAL_OP_TYPE_ILL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_ILL"; break;
-				case RZ_ANAL_OP_TYPE_AND: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_AND"; break;
-				case RZ_ANAL_OP_TYPE_SUB: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_SUB"; break;
-				case RZ_ANAL_OP_TYPE_DIV: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_DIV"; break;
-				case RZ_ANAL_OP_TYPE_UNK: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_UNK"; break;
-				case RZ_ANAL_OP_TYPE_CJMP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_CJMP"; break;
-				case RZ_ANAL_OP_TYPE_MCJMP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_MCJMP"; break;
-				case RZ_ANAL_OP_TYPE_UCCALL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_UCCALL"; break;
-				case RZ_ANAL_OP_TYPE_MJMP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_MJMP"; break;
-				case RZ_ANAL_OP_TYPE_NEW: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_NEW"; break;
-				case RZ_ANAL_OP_TYPE_IRJMP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_IRJMP"; break;
-				case RZ_ANAL_OP_TYPE_ADD: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_ADD"; break;
-				case RZ_ANAL_OP_TYPE_POP: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_POP"; break;
-				case RZ_ANAL_OP_TYPE_MOD: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_MOD"; break;
-				case RZ_ANAL_OP_TYPE_STORE: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_STORE"; break;
-				case RZ_ANAL_OP_TYPE_NOR: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_NOR"; break;
-				case RZ_ANAL_OP_TYPE_ICALL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_ICALL"; break;
-				case RZ_ANAL_OP_TYPE_MUL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_MUL"; break;
+				case RZ_ANALYSIS_OP_TYPE_IRCALL: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_IRCALL"; break;
+				case RZ_ANALYSIS_OP_TYPE_RET: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_RET"; break;
+				case RZ_ANALYSIS_OP_TYPE_ABS: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_ABS"; break;
+				case RZ_ANALYSIS_OP_TYPE_CRET: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_CRET"; break;
+				case RZ_ANALYSIS_OP_TYPE_IJMP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_IJMP"; break;
+				case RZ_ANALYSIS_OP_TYPE_RPUSH: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_RPUSH"; break;
+				case RZ_ANALYSIS_OP_TYPE_NOP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_NOP"; break;
+				case RZ_ANALYSIS_OP_TYPE_SAR: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_SAR"; break;
+				case RZ_ANALYSIS_OP_TYPE_NOT: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_NOT"; break;
+				case RZ_ANALYSIS_OP_TYPE_CALL: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_CALL"; break;
+				case RZ_ANALYSIS_OP_TYPE_UPUSH: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_UPUSH"; break;
+				case RZ_ANALYSIS_OP_TYPE_LOAD: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_LOAD"; break;
+				case RZ_ANALYSIS_OP_TYPE_XCHG: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_XCHG"; break;
+				case RZ_ANALYSIS_OP_TYPE_RCJMP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_RCJMP"; break;
+				case RZ_ANALYSIS_OP_TYPE_CAST: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_CAST"; break;
+				case RZ_ANALYSIS_OP_TYPE_UCJMP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_UCJMP"; break;
+				case RZ_ANALYSIS_OP_TYPE_MOV: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_MOV"; break;
+				case RZ_ANALYSIS_OP_TYPE_OR: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_OR"; break;
+				case RZ_ANALYSIS_OP_TYPE_SHR: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_SHR"; break;
+				case RZ_ANALYSIS_OP_TYPE_XOR: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_XOR"; break;
+				case RZ_ANALYSIS_OP_TYPE_SHL: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_SHL"; break;
+				case RZ_ANALYSIS_OP_TYPE_JMP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_JMP"; break;
+				case RZ_ANALYSIS_OP_TYPE_ILL: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_ILL"; break;
+				case RZ_ANALYSIS_OP_TYPE_AND: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_AND"; break;
+				case RZ_ANALYSIS_OP_TYPE_SUB: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_SUB"; break;
+				case RZ_ANALYSIS_OP_TYPE_DIV: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_DIV"; break;
+				case RZ_ANALYSIS_OP_TYPE_UNK: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_UNK"; break;
+				case RZ_ANALYSIS_OP_TYPE_CJMP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_CJMP"; break;
+				case RZ_ANALYSIS_OP_TYPE_MCJMP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_MCJMP"; break;
+				case RZ_ANALYSIS_OP_TYPE_UCCALL: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_UCCALL"; break;
+				case RZ_ANALYSIS_OP_TYPE_MJMP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_MJMP"; break;
+				case RZ_ANALYSIS_OP_TYPE_NEW: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_NEW"; break;
+				case RZ_ANALYSIS_OP_TYPE_IRJMP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_IRJMP"; break;
+				case RZ_ANALYSIS_OP_TYPE_ADD: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_ADD"; break;
+				case RZ_ANALYSIS_OP_TYPE_POP: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_POP"; break;
+				case RZ_ANALYSIS_OP_TYPE_MOD: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_MOD"; break;
+				case RZ_ANALYSIS_OP_TYPE_STORE: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_STORE"; break;
+				case RZ_ANALYSIS_OP_TYPE_NOR: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_NOR"; break;
+				case RZ_ANALYSIS_OP_TYPE_ICALL: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_ICALL"; break;
+				case RZ_ANALYSIS_OP_TYPE_MUL: std::cerr << caddr << ": RZ_ANALYSIS_OP_TYPE_MUL"; break;
 			}
 			if(analysis_op->val && analysis_op->val != -1)
 				std::cerr << " val: " << analysis_op->val << std::endl;
@@ -1605,7 +1605,7 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 #endif
 		}
 
-		if(mask & RZ_ANAL_OP_MASK_ESIL)
+		if(mask & RZ_ANALYSIS_OP_MASK_ESIL)
 			sleigh_esil(a, analysis_op, addr, data, len, pcode_slg.pcodes);
 
 		return analysis_op->size;
@@ -1880,7 +1880,7 @@ static int esil_get_parm_type_float(RzAnalysisEsil *esil, const char *str)
 	int len, i;
 
 	if(!str || !(len = strlen(str)))
-		return RZ_ANAL_ESIL_PARM_INVALID;
+		return RZ_ANALYSIS_ESIL_PARM_INVALID;
 
 	if((str[len - 1] == 'F') && (str[1] == '.' || (str[2] == '.' && str[0] == '-')))
 		return ESIL_PARM_FLOAT;
@@ -1888,7 +1888,7 @@ static int esil_get_parm_type_float(RzAnalysisEsil *esil, const char *str)
 	   !strcmp(str, "-infF"))
 		return ESIL_PARM_FLOAT;
 
-	return RZ_ANAL_ESIL_PARM_INVALID;
+	return RZ_ANALYSIS_ESIL_PARM_INVALID;
 }
 
 static long double esil_get_double(RzReg *reg, RzRegItem *item)
@@ -1994,7 +1994,7 @@ static int esil_get_parm_float(RzAnalysisEsil *esil, const char *str, long doubl
 			sscanf(str, "%LfF", num);
 			ret = 1;
 			break;
-		case RZ_ANAL_ESIL_PARM_REG:
+		case RZ_ANALYSIS_ESIL_PARM_REG:
 		{
 			RzRegItem *reg = rz_reg_get(esil->analysis->reg, str, get_reg_type(str));
 			if(reg)
@@ -2022,7 +2022,7 @@ static bool sleigh_esil_consts_pick(RzAnalysisEsil *esil)
 	ut64 i;
 	int ret = false;
 
-	if(RZ_ANAL_ESIL_PARM_REG == rz_analysis_esil_get_parm_type(esil, idx))
+	if(RZ_ANALYSIS_ESIL_PARM_REG == rz_analysis_esil_get_parm_type(esil, idx))
 	{
 		ERR("sleigh_esil_consts_pick: argument is consts only.");
 		goto end;
@@ -2748,7 +2748,7 @@ static bool sleigh_esil_reg_num(RzAnalysisEsil *esil)
 
 	if(name)
 	{
-		if(RZ_ANAL_ESIL_PARM_REG != rz_analysis_esil_get_parm_type(esil, name))
+		if(RZ_ANALYSIS_ESIL_PARM_REG != rz_analysis_esil_get_parm_type(esil, name))
 			ERR("sleigh_esil_reg_num: stack top isn't register.");
 
 		is_float = sleigh_reg_get_float(esil->analysis->reg, name, get_reg_type(name));
@@ -3228,37 +3228,37 @@ static int esil_sleigh_init(RzAnalysisEsil *esil)
 	float_mem.clear();
 
 	// Only consts-only version PICK will meet my demand
-	rz_analysis_esil_set_op(esil, "PICK", sleigh_esil_consts_pick, 1, 0, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "PICK", sleigh_esil_consts_pick, 1, 0, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
 	// Reg -> Stack
-	rz_analysis_esil_set_op(esil, "NUM", sleigh_esil_reg_num, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "NAN", sleigh_esil_is_nan, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "NUM", sleigh_esil_reg_num, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "NAN", sleigh_esil_is_nan, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
 	// Stack -> Reg
-	rz_analysis_esil_set_op(esil, "=", sleigh_esil_eq, 0, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "I2F", sleigh_esil_int_to_float, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F2I", sleigh_esil_float_to_int, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F2F", sleigh_esil_float_to_float, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "=", sleigh_esil_eq, 0, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "I2F", sleigh_esil_int_to_float, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F2I", sleigh_esil_float_to_int, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F2F", sleigh_esil_float_to_float, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
 	// Stack -> Mem
-	rz_analysis_esil_set_op(esil, "=[4]", sleigh_esil_poke4, 0, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "=[8]", sleigh_esil_poke8, 0, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "=[4]", sleigh_esil_poke4, 0, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "=[8]", sleigh_esil_poke8, 0, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
 	// Mem -> Stack
-	rz_analysis_esil_set_op(esil, "[4]", sleigh_esil_peek4, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "[8]", sleigh_esil_peek8, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F==", sleigh_esil_float_cmp, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "==", sleigh_esil_cmp, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F!=", sleigh_esil_float_negcmp, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F<", sleigh_esil_float_less, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F<=", sleigh_esil_float_lesseq, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F+", sleigh_esil_float_add, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F-", sleigh_esil_float_sub, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F*", sleigh_esil_float_mul, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "F/", sleigh_esil_float_div, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "-F", sleigh_esil_float_neg, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "CEIL", sleigh_esil_float_ceil, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "FLOOR", sleigh_esil_float_floor, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "ROUND", sleigh_esil_float_round, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "SQRT", sleigh_esil_float_sqrt, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "SIGN", sleigh_esil_signext, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_analysis_esil_set_op(esil, "POPCOUNT", sleigh_esil_popcount, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "[4]", sleigh_esil_peek4, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "[8]", sleigh_esil_peek8, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F==", sleigh_esil_float_cmp, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "==", sleigh_esil_cmp, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F!=", sleigh_esil_float_negcmp, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F<", sleigh_esil_float_less, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F<=", sleigh_esil_float_lesseq, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F+", sleigh_esil_float_add, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F-", sleigh_esil_float_sub, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F*", sleigh_esil_float_mul, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F/", sleigh_esil_float_div, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "-F", sleigh_esil_float_neg, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "CEIL", sleigh_esil_float_ceil, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "FLOOR", sleigh_esil_float_floor, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "ROUND", sleigh_esil_float_round, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "SQRT", sleigh_esil_float_sqrt, 1, 1, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "SIGN", sleigh_esil_signext, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "POPCOUNT", sleigh_esil_popcount, 1, 2, RZ_ANALYSIS_ESIL_OP_TYPE_CUSTOM);
 
 	return true;
 }

@@ -170,7 +170,7 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalysisFunction *fcn) const
 	auto addrForVar = [&](RzAnalysisVar *var, bool warn_on_fail) {
 		switch(var->kind)
 		{
-			case RZ_ANAL_VAR_KIND_BPV:
+			case RZ_ANALYSIS_VAR_KIND_BPV:
 			{
 				uintb off;
 				int delta = var->delta + fcn->bp_off - extraPop; // not 100% sure if extraPop is correct here
@@ -180,7 +180,7 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalysisFunction *fcn) const
 					off = stackSpace->getHighest() + delta + 1;
 				return Address(stackSpace, off);
 			}
-			case RZ_ANAL_VAR_KIND_REG:
+			case RZ_ANALYSIS_VAR_KIND_REG:
 			{
 				RzRegItem *reg = rz_reg_index_get(core->analysis->reg, var->delta);
 				if(!reg)
@@ -196,7 +196,7 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalysisFunction *fcn) const
 
 				return ret;
 			}
-			case RZ_ANAL_VAR_KIND_SPV:
+			case RZ_ANALYSIS_VAR_KIND_SPV:
 				if(warn_on_fail)
 					arch->addWarning("Var " + to_string(var->name) + " is stack pointer based, which is not supported for decompilation.");
 				return Address();
@@ -335,7 +335,7 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalysisFunction *fcn) const
 			childAddr(mapsymElement, "addr", addr);
 
 			auto rangelist = child(mapsymElement, "rangelist");
-			if(var->isarg && var->kind == RZ_ANAL_VAR_KIND_REG)
+			if(var->isarg && var->kind == RZ_ANALYSIS_VAR_KIND_REG)
 				childRegRange(rangelist);
 		});
 
@@ -494,7 +494,7 @@ LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 {
 	RzCoreLock core(arch->getCore());
 
-	RzAnalysisFunction *fcn = rz_analysis_get_fcn_in(core->analysis, addr.getOffset(), RZ_ANAL_FCN_TYPE_NULL);
+	RzAnalysisFunction *fcn = rz_analysis_get_fcn_in(core->analysis, addr.getOffset(), RZ_ANALYSIS_FCN_TYPE_NULL);
 	if(!fcn)
 		return nullptr;
 

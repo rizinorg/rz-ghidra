@@ -7,11 +7,11 @@ RzAnalysisValueType SleighAnalValue::type_from_values(const SleighAnalValue &in0
 	RzAnalysisValueType res;
 
 	if(in0.is_mem() || in1.is_mem())
-		res = RZ_ANAL_VAL_MEM;
+		res = RZ_ANALYSIS_VAL_MEM;
 	else if(in0.is_reg() || in1.is_reg())
-		res = RZ_ANAL_VAL_REG;
+		res = RZ_ANALYSIS_VAL_REG;
 	else
-		res = RZ_ANAL_VAL_IMM;
+		res = RZ_ANALYSIS_VAL_IMM;
 	
 	return res;
 }
@@ -22,17 +22,17 @@ SleighAnalValue SleighAnalValue::resolve_arg(RzAnalysis *analysis, const PcodeOp
 
 	if(arg->is_const())
 	{
-		res.type = RZ_ANAL_VAL_IMM;
+		res.type = RZ_ANALYSIS_VAL_IMM;
 		res.imm = arg->number;
 	}
 	else if(arg->is_reg())
 	{
-		res.type = RZ_ANAL_VAL_REG;
+		res.type = RZ_ANALYSIS_VAL_REG;
 		res.reg = rz_reg_get(analysis->reg, arg->name.c_str(), RZ_REG_TYPE_ALL);
 	}
 	else if(arg->is_ram())
 	{
-		res.type = RZ_ANAL_VAL_MEM;
+		res.type = RZ_ANALYSIS_VAL_MEM;
 		res.base = arg->offset;
 		res.memref = arg->size;
 	}
@@ -73,7 +73,7 @@ SleighAnalValue SleighAnalValue::resolve_arg(RzAnalysis *analysis, const PcodeOp
 					res.base = res.imm;
 					res.imm = 0;
 				}
-				res.type = RZ_ANAL_VAL_MEM;
+				res.type = RZ_ANALYSIS_VAL_MEM;
 				res.memref = curr_op->output->size;
 				break;
 			}
@@ -200,19 +200,19 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnalysis *analysis,
 
 	if(arg->is_const())
 	{
-		tmp.type = RZ_ANAL_VAL_IMM;
+		tmp.type = RZ_ANALYSIS_VAL_IMM;
 		tmp.imm = arg->number;
 		res.push_back(tmp);
 	}
 	else if(arg->is_reg())
 	{
-		tmp.type = RZ_ANAL_VAL_REG;
+		tmp.type = RZ_ANALYSIS_VAL_REG;
 		tmp.reg = rz_reg_get(analysis->reg, arg->name.c_str(), RZ_REG_TYPE_ALL);
 		res.push_back(tmp);
 	}
 	else if(arg->is_ram())
 	{
-		tmp.type = RZ_ANAL_VAL_MEM;
+		tmp.type = RZ_ANALYSIS_VAL_MEM;
 		tmp.base = arg->offset;
 		tmp.memref = arg->size;
 		res.push_back(tmp);
@@ -241,7 +241,7 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnalysis *analysis,
 					if(iter->output && iter->output->is_reg())
 					{
 						tmp = SleighAnalValue();
-						tmp.type = RZ_ANAL_VAL_REG;
+						tmp.type = RZ_ANALYSIS_VAL_REG;
 						tmp.reg = rz_reg_get(analysis->reg, iter->output->name.c_str(), RZ_REG_TYPE_ALL);
 						res.push_back(tmp);
 					}
@@ -264,7 +264,7 @@ void SleighAnalValue::mem(uint4 size)
 		imm = 0;
 	}
 	memref = size;
-	type = RZ_ANAL_VAL_MEM;
+	type = RZ_ANALYSIS_VAL_MEM;
 }
 
 RzAnalysisValue *SleighAnalValue::dup() const

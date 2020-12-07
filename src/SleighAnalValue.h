@@ -23,9 +23,9 @@ public:
                                            const PcodeOperand *arg);
 
 	bool is_valid() const { return absolute != -1; }
-	bool is_imm() const { return type == RZ_ANAL_VAL_IMM; }
-	bool is_reg() const { return type == RZ_ANAL_VAL_REG; }
-	bool is_mem() const { return type == RZ_ANAL_VAL_MEM; }
+	bool is_imm() const { return type == RZ_ANALYSIS_VAL_IMM; }
+	bool is_reg() const { return type == RZ_ANALYSIS_VAL_REG; }
+	bool is_mem() const { return type == RZ_ANALYSIS_VAL_MEM; }
 
 	void invalid() { absolute = -1; }
 	void mem(uint4 size);

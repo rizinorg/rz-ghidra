@@ -136,7 +136,7 @@ static void ApplyPrintCConfig(RzConfig *cfg, PrintC *print_c)
 
 static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringstream &out_stream, RzAnnotatedCode **out_code)
 {
-	RzAnalysisFunction *function = rz_analysis_get_fcn_in(core->analysis, addr, RZ_ANAL_FCN_TYPE_NULL);
+	RzAnalysisFunction *function = rz_analysis_get_fcn_in(core->analysis, addr, RZ_ANALYSIS_FCN_TYPE_NULL);
 	if(!function)
 		throw LowlevelError("No function at this offset");
 	R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
