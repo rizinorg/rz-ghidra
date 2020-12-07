@@ -109,7 +109,7 @@ ContextDatabase *R2Architecture::getContextDatabase()
 void R2Architecture::postSpecFile()
 {
 	RzCoreLock core(getCore());
-	rz_list_foreach_cpp<RzAnalFunction>(core->anal->fcns, [&](RzAnalFunction *func) {
+	rz_list_foreach_cpp<RzAnalysisFunction>(core->analysis->fcns, [&](RzAnalysisFunction *func) {
 		if (func->is_noreturn)
 		{
 			// Configure noreturn functions

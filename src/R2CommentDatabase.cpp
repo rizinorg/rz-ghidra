@@ -17,21 +17,21 @@ void R2CommentDatabase::fillCache(const Address &fad) const
 {
 	RzCoreLock core(arch->getCore());
 
-	RzAnalFunction *fcn = rz_anal_get_function_at(core->anal, fad.getOffset());
+	RzAnalysisFunction *fcn = rz_analysis_get_function_at(core->analysis, fad.getOffset());
 	if(!fcn)
 	{
-		RzList *fcns = rz_anal_get_functions_in(core->anal, fad.getOffset());
+		RzList *fcns = rz_analysis_get_functions_in(core->analysis, fad.getOffset());
 		if(!rz_list_empty(fcns))
-			fcn = reinterpret_cast<RzAnalFunction *>(rz_list_first(fcns));
+			fcn = reinterpret_cast<RzAnalysisFunction *>(rz_list_first(fcns));
 		rz_list_free(fcns);
 	}
 	if(!fcn)
 		return;
 
-	rz_interval_tree_foreach_cpp<RzAnalMetaItem>(&core->anal->meta, [fad, fcn, this](RzIntervalNode *node, RzAnalMetaItem *meta) {
+	rz_interval_tree_foreach_cpp<RzAnalysisMetaItem>(&core->analysis->meta, [fad, fcn, this](RzIntervalNode *node, RzAnalysisMetaItem *meta) {
 		if(!meta || meta->type != RZ_META_TYPE_COMMENT || !meta->str)
 			return;
-		if(!rz_anal_function_contains(fcn, node->start))
+		if(!rz_analysis_function_contains(fcn, node->start))
 			return;
 		cache.addComment(Comment::user2, fad, Address(arch->getDefaultCodeSpace(), node->start), meta->str);
 	});

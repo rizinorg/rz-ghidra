@@ -2,9 +2,9 @@
 
 #include "SleighAnalValue.h"
 
-RzAnalValueType SleighAnalValue::type_from_values(const SleighAnalValue &in0, const SleighAnalValue &in1)
+RzAnalysisValueType SleighAnalValue::type_from_values(const SleighAnalValue &in0, const SleighAnalValue &in1)
 {
-	RzAnalValueType res;
+	RzAnalysisValueType res;
 
 	if(in0.is_mem() || in1.is_mem())
 		res = RZ_ANAL_VAL_MEM;
@@ -16,7 +16,7 @@ RzAnalValueType SleighAnalValue::type_from_values(const SleighAnalValue &in0, co
 	return res;
 }
 
-SleighAnalValue SleighAnalValue::resolve_arg(RzAnal *anal, const PcodeOperand *arg)
+SleighAnalValue SleighAnalValue::resolve_arg(RzAnalysis *analysis, const PcodeOperand *arg)
 {
 	SleighAnalValue res;
 
@@ -28,7 +28,7 @@ SleighAnalValue SleighAnalValue::resolve_arg(RzAnal *anal, const PcodeOperand *a
 	else if(arg->is_reg())
 	{
 		res.type = RZ_ANAL_VAL_REG;
-		res.reg = rz_reg_get(anal->reg, arg->name.c_str(), RZ_REG_TYPE_ALL);
+		res.reg = rz_reg_get(analysis->reg, arg->name.c_str(), RZ_REG_TYPE_ALL);
 	}
 	else if(arg->is_ram())
 	{
@@ -43,13 +43,13 @@ SleighAnalValue SleighAnalValue::resolve_arg(RzAnal *anal, const PcodeOperand *a
 
 		if(curr_op->input0)
 		{
-			in0 = resolve_arg(anal, curr_op->input0);
+			in0 = resolve_arg(analysis, curr_op->input0);
 			if(!in0.is_valid())
 				return in0;
 		}
 		if(curr_op->input1)
 		{
-			in1 = resolve_arg(anal, curr_op->input1);
+			in1 = resolve_arg(analysis, curr_op->input1);
 			if(!in1.is_valid())
 				return in1;
 		}
@@ -190,7 +190,7 @@ SleighAnalValue SleighAnalValue::resolve_arg(RzAnal *anal, const PcodeOperand *a
 	return res;
 }
 
-std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnal *anal,
+std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnalysis *analysis,
                                           std::vector<Pcodeop>::const_iterator curr_op,
                                           std::vector<Pcodeop>::const_iterator end_op,
                                           const PcodeOperand *arg)
@@ -207,7 +207,7 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnal *anal,
 	else if(arg->is_reg())
 	{
 		tmp.type = RZ_ANAL_VAL_REG;
-		tmp.reg = rz_reg_get(anal->reg, arg->name.c_str(), RZ_REG_TYPE_ALL);
+		tmp.reg = rz_reg_get(analysis->reg, arg->name.c_str(), RZ_REG_TYPE_ALL);
 		res.push_back(tmp);
 	}
 	else if(arg->is_ram())
@@ -225,7 +225,7 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnal *anal,
 			{
 				if(iter->output && *iter->output == *arg && iter->input1)
 				{
-					tmp = resolve_arg(anal, iter->input1);
+					tmp = resolve_arg(analysis, iter->input1);
 					if(tmp.is_valid())
 					{
 						tmp.mem(iter->output->size);
@@ -242,7 +242,7 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnal *anal,
 					{
 						tmp = SleighAnalValue();
 						tmp.type = RZ_ANAL_VAL_REG;
-						tmp.reg = rz_reg_get(anal->reg, iter->output->name.c_str(), RZ_REG_TYPE_ALL);
+						tmp.reg = rz_reg_get(analysis->reg, iter->output->name.c_str(), RZ_REG_TYPE_ALL);
 						res.push_back(tmp);
 					}
 				}
@@ -267,12 +267,12 @@ void SleighAnalValue::mem(uint4 size)
 	type = RZ_ANAL_VAL_MEM;
 }
 
-RzAnalValue *SleighAnalValue::dup() const
+RzAnalysisValue *SleighAnalValue::dup() const
 {
-	RzAnalValue *to = rz_anal_value_new();
+	RzAnalysisValue *to = rz_analysis_value_new();
 	if(!to)
 		return to;
 
-	*to = (RzAnalValue)*this;
+	*to = (RzAnalysisValue)*this;
 	return to;
 }

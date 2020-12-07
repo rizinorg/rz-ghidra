@@ -245,7 +245,7 @@ public:
 	int genOpcode(PcodeSlg &pcode_slg, Address &addr);
 	std::vector<R2Reg> getRegs(void);
 	static RzConfig *getConfig(RzAsm *a);
-	static RzConfig *getConfig(RzAnal *a);
+	static RzConfig *getConfig(RzAnalysis *a);
 	void check(ut64 offset, const ut8 *buf, int len);
 };
 

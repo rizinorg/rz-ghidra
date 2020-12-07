@@ -13,7 +13,7 @@
 #endif
 
 class R2Architecture;
-typedef struct rz_anal_function_t RzAnalFunction;
+typedef struct rz_analysis_function_t RzAnalysisFunction;
 typedef struct rz_flag_item_t RzFlagItem;
 
 class R2Scope : public Scope
@@ -22,7 +22,7 @@ class R2Scope : public Scope
 		R2Architecture *arch;
 		ScopeInternal *cache;
 
-		FunctionSymbol *registerFunction(RzAnalFunction *fcn) const;
+		FunctionSymbol *registerFunction(RzAnalysisFunction *fcn) const;
 		Symbol *registerFlag(RzFlagItem *flag) const;
 		Symbol *queryR2Absolute(ut64 addr, bool contain) const;
 		Symbol *queryR2(const Address &addr, bool contain) const;

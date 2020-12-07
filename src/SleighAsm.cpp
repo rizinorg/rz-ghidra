@@ -400,11 +400,11 @@ RzConfig *SleighAsm::getConfig(RzAsm *a)
 	return core->config;
 }
 
-RzConfig *SleighAsm::getConfig(RzAnal *a)
+RzConfig *SleighAsm::getConfig(RzAnalysis *a)
 {
 	RzCore *core = a ? (RzCore *)a->coreb.core : nullptr;
 	if(!core)
-		throw LowlevelError("Can't get RzCore from RzAnal's RzCoreBind");
+		throw LowlevelError("Can't get RzCore from RzAnalysis's RzCoreBind");
 	return core->config;
 }
 

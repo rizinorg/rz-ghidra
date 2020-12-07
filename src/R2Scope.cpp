@@ -7,7 +7,7 @@
 #include <funcdata.hh>
 
 #include <rz_version.h>
-#include <rz_anal.h>
+#include <rz_analysis.h>
 #include <rz_core.h>
 
 #include "R2Utils.h"
@@ -92,7 +92,7 @@ static std::string to_string(const char *str)
 	return std::string(str ? str : "(null)");
 }
 
-FunctionSymbol *R2Scope::registerFunction(RzAnalFunction *fcn) const
+FunctionSymbol *R2Scope::registerFunction(RzAnalysisFunction *fcn) const
 {
 	RzCoreLock core(arch->getCore());
 
@@ -164,10 +164,10 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalFunction *fcn) const
 		extraPop = arch->translate->getDefaultSize();
 
 	RangeList varRanges; // to check for overlaps
-	RzList *vars = rz_anal_var_all_list(core->anal, fcn);
+	RzList *vars = rz_analysis_var_all_list(core->analysis, fcn);
 	auto stackSpace = arch->getStackSpace();
 
-	auto addrForVar = [&](RzAnalVar *var, bool warn_on_fail) {
+	auto addrForVar = [&](RzAnalysisVar *var, bool warn_on_fail) {
 		switch(var->kind)
 		{
 			case RZ_ANAL_VAR_KIND_BPV:
@@ -182,7 +182,7 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalFunction *fcn) const
 			}
 			case RZ_ANAL_VAR_KIND_REG:
 			{
-				RzRegItem *reg = rz_reg_index_get(core->anal->reg, var->delta);
+				RzRegItem *reg = rz_reg_index_get(core->analysis->reg, var->delta);
 				if(!reg)
 				{
 					if(warn_on_fail)
@@ -207,19 +207,19 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalFunction *fcn) const
 		}
 	};
 
-	std::map<RzAnalVar *, Datatype *> var_types;
+	std::map<RzAnalysisVar *, Datatype *> var_types;
 
 	ParamActive params(false);
 
 	if(vars)
 	{
-		rz_list_foreach_cpp<RzAnalVar>(vars, [&](RzAnalVar *var) {
+		rz_list_foreach_cpp<RzAnalysisVar>(vars, [&](RzAnalysisVar *var) {
 			std::string typeError;
 			Datatype *type = var->type ? arch->getTypeFactory()->fromCString(var->type, &typeError) : nullptr;
 			if(!type)
 			{
 				arch->addWarning("Failed to match type " + to_string(var->type) + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
-				type = arch->types->getBase(core->anal->bits / 8, TYPE_UNKNOWN);
+				type = arch->types->getBase(core->analysis->bits / 8, TYPE_UNKNOWN);
 				if(!type)
 					return;
 			}
@@ -256,7 +256,7 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalFunction *fcn) const
 	{
 		std::vector<Element *> argsByIndex;
 
-		rz_list_foreach_cpp<RzAnalVar>(vars, [&](RzAnalVar *var) {
+		rz_list_foreach_cpp<RzAnalysisVar>(vars, [&](RzAnalysisVar *var) {
 			auto type_it = var_types.find(var);
 			if(type_it == var_types.end())
 				return;
@@ -449,14 +449,14 @@ Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
 {
 	RzCoreLock core(arch->getCore());
 
-	RzAnalFunction *fcn = rz_anal_get_function_at(core->anal, addr);
+	RzAnalysisFunction *fcn = rz_analysis_get_function_at(core->analysis, addr);
 #if 0
 	// This can cause functions to be registered twice (hello-arm test)
 	if(!fcn && contain)
 	{
-		RzList *fcns = rz_anal_get_functions_in(core->anal, addr);
+		RzList *fcns = rz_analysis_get_functions_in(core->analysis, addr);
 		if(!rz_list_empty(fcns))
-			fcn = reinterpret_cast<RzAnalFunction *>(rz_list_first(fcns));
+			fcn = reinterpret_cast<RzAnalysisFunction *>(rz_list_first(fcns));
 		rz_list_free(fcns);
 	}
 #endif
@@ -494,14 +494,14 @@ LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 {
 	RzCoreLock core(arch->getCore());
 
-	RzAnalFunction *fcn = rz_anal_get_fcn_in(core->anal, addr.getOffset(), RZ_ANAL_FCN_TYPE_NULL);
+	RzAnalysisFunction *fcn = rz_analysis_get_fcn_in(core->analysis, addr.getOffset(), RZ_ANAL_FCN_TYPE_NULL);
 	if(!fcn)
 		return nullptr;
 
 #if RZ_VERSION_MAJOR < 4 || RZ_VERSION_MINOR < 6
-	const char *label = rz_anal_fcn_label_at(core->anal, fcn, addr.getOffset());
+	const char *label = rz_analysis_fcn_label_at(core->analysis, fcn, addr.getOffset());
 #else
-	const char *label = rz_anal_function_get_label_at(fcn, addr.getOffset());
+	const char *label = rz_analysis_function_get_label_at(fcn, addr.getOffset());
 #endif
 	if(!label)
 		return nullptr;

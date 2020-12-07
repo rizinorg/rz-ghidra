@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include <rz_lib.h>
-#include <rz_anal.h>
+#include <rz_analysis.h>
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
@@ -11,24 +11,24 @@
 
 static SleighAsm sanal;
 
-static int archinfo(RzAnal *anal, int query)
+static int archinfo(RzAnalysis *analysis, int query)
 {
 	// This is to check if RzCore plugin set cpu properly.
-	if(!anal->cpu)
+	if(!analysis->cpu)
 		return -1;
 
-	ut64 length = strlen(anal->cpu), i = 0;
-	for(; i < length && anal->cpu[i] != ':'; ++i) {}
+	ut64 length = strlen(analysis->cpu), i = 0;
+	for(; i < length && analysis->cpu[i] != ':'; ++i) {}
 	if(i == length)
 		return -1;
 
 	try
 	{
-		sanal.init(anal->cpu, anal->bits, anal->big_endian, anal? anal->iob.io : nullptr, SleighAsm::getConfig(anal));
+		sanal.init(analysis->cpu, analysis->bits, analysis->big_endian, analysis ? analysis->iob.io : nullptr, SleighAsm::getConfig(analysis));
 	}
 	catch(const LowlevelError &e)
 	{
-		std::cerr << "SleightInit " << e.explain << std::endl;
+		std::cerr << "SleighInit " << e.explain << std::endl;
 		return -1;
 	}
 
@@ -82,7 +82,7 @@ static inline bool reg_set_has(const std::unordered_set<std::string> &reg_set,
  *     MEM   -> MEM (Key: LOAD & STORE) // Never happen as far as I know
  */
 
-static ut32 anal_type_MOV(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_MOV(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &reg_set)
 {
 	const ut32 this_type = RZ_ANAL_OP_TYPE_MOV;
@@ -97,7 +97,7 @@ static ut32 anal_type_MOV(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 		if(iter->type == key_pcode_copy)
 		{
 			if(iter->output)
-				outs = SleighAnalValue::resolve_out(anal, iter, raw_ops.cend(), iter->output);
+				outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 			auto p = outs.cbegin();
 			for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -106,13 +106,13 @@ static ut32 anal_type_MOV(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 				out = *p;
 
 				if(iter->input0)
-					in0 = SleighAnalValue::resolve_arg(anal, iter->input0);
+					in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
 
 				if(in0.is_valid() && (in0.is_imm() || reg_set_has(reg_set, in0)))
 				{
-					anal_op->type = this_type;
-					anal_op->src[0] = in0.dup();
-					anal_op->dst = out.dup();
+					analysis_op->type = this_type;
+					analysis_op->src[0] = in0.dup();
+					analysis_op->dst = out.dup();
 
 					return this_type;
 				}
@@ -122,18 +122,18 @@ static ut32 anal_type_MOV(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 		if(iter->type == key_pcode_store)
 		{
 			if(iter->output)
-				in0 = SleighAnalValue::resolve_arg(anal, iter->output);
+				in0 = SleighAnalValue::resolve_arg(analysis, iter->output);
 
 			if(iter->input1)
-				out = SleighAnalValue::resolve_arg(anal, iter->input1);
+				out = SleighAnalValue::resolve_arg(analysis, iter->input1);
 
 			if(in0.is_valid() && out.is_valid() && in0.is_imm())
 			{
 				out.mem(iter->output->size);
 
-				anal_op->type = this_type;
-				anal_op->src[0] = in0.dup();
-				anal_op->dst = out.dup();
+				analysis_op->type = this_type;
+				analysis_op->src[0] = in0.dup();
+				analysis_op->dst = out.dup();
 
 				return this_type;
 			}
@@ -143,7 +143,7 @@ static ut32 anal_type_MOV(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 	return 0;
 }
 
-static ut32 anal_type_LOAD(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_LOAD(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &reg_set)
 {
 	/*
@@ -163,7 +163,7 @@ static ut32 anal_type_LOAD(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pc
 		if(iter->type == key_pcode_load || iter->type == key_pcode_copy)
 		{
 			if(iter->output)
-				outs = SleighAnalValue::resolve_out(anal, iter, raw_ops.cend(), iter->output);
+				outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 			auto p = outs.cbegin();
 			for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -173,7 +173,7 @@ static ut32 anal_type_LOAD(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pc
 
 				if(iter->type == key_pcode_load? iter->input1: iter->input0)
 				{
-					in0 = SleighAnalValue::resolve_arg(anal,
+					in0 = SleighAnalValue::resolve_arg(analysis,
 					                  iter->type == key_pcode_load? iter->input1: iter->input0);
 
 					if(iter->type == key_pcode_load && in0.is_valid())
@@ -182,9 +182,9 @@ static ut32 anal_type_LOAD(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pc
 
 				if(in0.is_valid() && in0.is_mem())
 				{
-					anal_op->type = this_type;
-					anal_op->src[0] = in0.dup();
-					anal_op->dst = out.dup();
+					analysis_op->type = this_type;
+					analysis_op->src[0] = in0.dup();
+					analysis_op->dst = out.dup();
 
 					return this_type;
 				}
@@ -195,7 +195,7 @@ static ut32 anal_type_LOAD(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pc
 	return 0;
 }
 
-static ut32 anal_type_STORE(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_STORE(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                             const std::unordered_set<std::string> &reg_set)
 {
 	/*
@@ -217,20 +217,20 @@ static ut32 anal_type_STORE(RzAnal *anal, RzAnalOp *anal_op, const std::vector<P
 		if(iter->type == key_pcode_store)
 		{
 			if(iter->output && iter->input1)
-				in0 = SleighAnalValue::resolve_arg(anal, iter->output);
+				in0 = SleighAnalValue::resolve_arg(analysis, iter->output);
 
 			if(!in0.is_valid() || !(in0.is_imm() || reg_set_has(reg_set, in0)))
 				continue;
 
-			out = SleighAnalValue::resolve_arg(anal, iter->input1);
+			out = SleighAnalValue::resolve_arg(analysis, iter->input1);
 
 			if(out.is_valid())
 			{
 				out.mem(iter->output->size);
 
-				anal_op->type = this_type;
-				anal_op->src[0] = in0.dup();
-				anal_op->dst = out.dup();
+				analysis_op->type = this_type;
+				analysis_op->src[0] = in0.dup();
+				analysis_op->dst = out.dup();
 
 				return this_type;
 			}
@@ -239,12 +239,12 @@ static ut32 anal_type_STORE(RzAnal *anal, RzAnalOp *anal_op, const std::vector<P
 		if(iter->type == key_pcode_copy)
 		{
 			if(iter->input0 && iter->output)
-				in0 = SleighAnalValue::resolve_arg(anal, iter->input0);
+				in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
 
 			if(!in0.is_valid() || !(in0.is_imm() || reg_set_has(reg_set, in0)))
 				continue;
 
-			outs = SleighAnalValue::resolve_out(anal, iter, raw_ops.cend(), iter->output);
+			outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 			auto p = outs.cbegin();
 			for(; p != outs.cend(); ++p)
@@ -253,9 +253,9 @@ static ut32 anal_type_STORE(RzAnal *anal, RzAnalOp *anal_op, const std::vector<P
 
 				if(out.is_valid() && out.is_mem())
 				{
-					anal_op->type = this_type;
-					anal_op->src[0] = in0.dup();
-					anal_op->dst = out.dup();
+					analysis_op->type = this_type;
+					analysis_op->src[0] = in0.dup();
+					analysis_op->dst = out.dup();
 
 					return this_type;
 				}
@@ -266,7 +266,7 @@ static ut32 anal_type_STORE(RzAnal *anal, RzAnalOp *anal_op, const std::vector<P
 	return 0;
 }
 
-static ut32 anal_type_XSWI(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_XSWI(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &reg_set)
 {
 	// RZ_ANAL_OP_TYPE_CSWI
@@ -283,18 +283,18 @@ static ut32 anal_type_XSWI(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pc
 		if(iter->type == key_pcode_callother)
 		{
 			if(iter->input1)
-				anal_op->val = iter->input1->number;
+				analysis_op->val = iter->input1->number;
 
-			anal_op->type = has_cbranch? RZ_ANAL_OP_TYPE_CSWI: RZ_ANAL_OP_TYPE_SWI;
+			analysis_op->type = has_cbranch? RZ_ANAL_OP_TYPE_CSWI: RZ_ANAL_OP_TYPE_SWI;
 
-			return anal_op->type;
+			return analysis_op->type;
 		}
 	}
 
 	return 0;
 }
 
-static ut32 anal_type_XPUSH(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_XPUSH(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                             const std::unordered_set<std::string> &reg_set)
 {
 	// RZ_ANAL_OP_TYPE_UPUSH
@@ -309,7 +309,7 @@ static ut32 anal_type_XPUSH(RzAnal *anal, RzAnalOp *anal_op, const std::vector<P
 		if(iter->type == key_pcode)
 		{
 			if(iter->input1)
-				out = SleighAnalValue::resolve_arg(anal, iter->input1);
+				out = SleighAnalValue::resolve_arg(analysis, iter->input1);
 
 			if(!out.is_valid())
 				continue;
@@ -319,21 +319,21 @@ static ut32 anal_type_XPUSH(RzAnal *anal, RzAnalOp *anal_op, const std::vector<P
 			if((out.reg && sanal.reg_mapping[sanal.sp_name] == out.reg->name) ||
 			   (out.regdelta && sanal.reg_mapping[sanal.sp_name] == out.regdelta->name))
 			{
-				anal_op->type = RZ_ANAL_OP_TYPE_UPUSH;
-				anal_op->stackop = RZ_ANAL_STACK_INC;
+				analysis_op->type = RZ_ANAL_OP_TYPE_UPUSH;
+				analysis_op->stackop = RZ_ANAL_STACK_INC;
 
 				if(iter->output)
-					in = SleighAnalValue::resolve_arg(anal, iter->output);
+					in = SleighAnalValue::resolve_arg(analysis, iter->output);
 
 				if(!in.is_valid())
 					continue;
 
 				if(reg_set_has(reg_set, in))
-					anal_op->type = RZ_ANAL_OP_TYPE_RPUSH;
-				anal_op->src[0] = in.dup();
-				anal_op->dst = out.dup();
+					analysis_op->type = RZ_ANAL_OP_TYPE_RPUSH;
+				analysis_op->src[0] = in.dup();
+				analysis_op->dst = out.dup();
 
-				return anal_op->type;
+				return analysis_op->type;
 			}
 		}
 	}
@@ -341,7 +341,7 @@ static ut32 anal_type_XPUSH(RzAnal *anal, RzAnalOp *anal_op, const std::vector<P
 	return 0;
 }
 
-static ut32 anal_type_POP(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_POP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &reg_set)
 {
 	const ut32 this_type = RZ_ANAL_OP_TYPE_POP;
@@ -355,7 +355,7 @@ static ut32 anal_type_POP(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 		if(iter->type == key_pcode)
 		{
 			if(iter->input1)
-				in0 = SleighAnalValue::resolve_arg(anal, iter->input1);
+				in0 = SleighAnalValue::resolve_arg(analysis, iter->input1);
 
 			if(!in0.is_valid())
 				continue;
@@ -364,7 +364,7 @@ static ut32 anal_type_POP(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 			   (in0.regdelta && sanal.reg_mapping[sanal.sp_name] == in0.regdelta->name))
 			{
 				if(iter->output)
-					outs = SleighAnalValue::resolve_out(anal, iter, raw_ops.cend(), iter->output);
+					outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 				auto p = outs.cbegin();
 				for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -372,10 +372,10 @@ static ut32 anal_type_POP(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 					continue;
 				out = *p;
 
-				anal_op->type = this_type;
-				anal_op->stackop = RZ_ANAL_STACK_INC;
-				anal_op->dst = out.dup();
-				anal_op->src[0] = in0.dup();
+				analysis_op->type = this_type;
+				analysis_op->stackop = RZ_ANAL_STACK_INC;
+				analysis_op->dst = out.dup();
+				analysis_op->src[0] = in0.dup();
 
 				return this_type;
 			}
@@ -385,7 +385,7 @@ static ut32 anal_type_POP(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 	return 0;
 }
 
-static ut32 anal_type_XCMP(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_XCMP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &reg_set)
 {
 	// RZ_ANAL_OP_TYPE_CMP
@@ -404,10 +404,10 @@ static ut32 anal_type_XCMP(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pc
 		if(iter->type == key_pcode_sub || iter->type == key_pcode_and)
 		{
 			if(iter->input0)
-				in0 = SleighAnalValue::resolve_arg(anal, iter->input0);
+				in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
 
 			if(iter->input1)
-				in1 = SleighAnalValue::resolve_arg(anal, iter->input1);
+				in1 = SleighAnalValue::resolve_arg(analysis, iter->input1);
 
 			if((in0.is_valid() && reg_set_has(reg_set, in0)) || (in1.is_valid() && reg_set_has(reg_set, in1)))
 			{
@@ -437,20 +437,20 @@ static ut32 anal_type_XCMP(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pc
 			else
 				continue;
 
-			anal_op->type = key_pcode == key_pcode_sub? RZ_ANAL_OP_TYPE_CMP: RZ_ANAL_OP_TYPE_ACMP;
-			// anal_op->cond = RZ_ANAL_COND_EQ; Should I enable this? I think sub can judge equal and
+			analysis_op->type = key_pcode == key_pcode_sub? RZ_ANAL_OP_TYPE_CMP: RZ_ANAL_OP_TYPE_ACMP;
+			// analysis_op->cond = RZ_ANAL_COND_EQ; Should I enable this? I think sub can judge equal and
 			// less or more.
-			anal_op->src[0] = in0.dup();
-			anal_op->src[1] = in1.dup();
+			analysis_op->src[0] = in0.dup();
+			analysis_op->src[1] = in1.dup();
 
-			return anal_op->type;
+			return analysis_op->type;
 		}
 	}
 
 	return 0;
 }
 
-static ut32 anal_type_XXX(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_XXX(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                               const std::unordered_set<std::string> &reg_set)
 {
 	// RZ_ANAL_OP_TYPE_ADD
@@ -487,14 +487,14 @@ static ut32 anal_type_XXX(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 			{
 				if(iter->input0 && iter->input1)
 				{
-					in0 = SleighAnalValue::resolve_arg(anal, iter->input0);
-					in1 = SleighAnalValue::resolve_arg(anal, iter->input1);
+					in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
+					in1 = SleighAnalValue::resolve_arg(analysis, iter->input1);
 				}
 
 				if((in0.is_valid() && reg_set_has(reg_set, in0)) || (in1.is_valid() && reg_set_has(reg_set, in1)))
 				{
 					if(iter->output)
-						outs = SleighAnalValue::resolve_out(anal, iter, raw_ops.cend(), iter->output);
+						outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 					auto p = outs.cbegin();
 					for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -504,25 +504,25 @@ static ut32 anal_type_XXX(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 
 						switch(iter->type)
 						{
-							case CPUI_INT_ADD: anal_op->type = RZ_ANAL_OP_TYPE_ADD; break;
-							case CPUI_INT_SUB: anal_op->type = RZ_ANAL_OP_TYPE_SUB; break;
-							case CPUI_INT_MULT: anal_op->type = RZ_ANAL_OP_TYPE_MUL; break;
-							case CPUI_INT_DIV: anal_op->type = RZ_ANAL_OP_TYPE_DIV; break;
+							case CPUI_INT_ADD: analysis_op->type = RZ_ANAL_OP_TYPE_ADD; break;
+							case CPUI_INT_SUB: analysis_op->type = RZ_ANAL_OP_TYPE_SUB; break;
+							case CPUI_INT_MULT: analysis_op->type = RZ_ANAL_OP_TYPE_MUL; break;
+							case CPUI_INT_DIV: analysis_op->type = RZ_ANAL_OP_TYPE_DIV; break;
 							case CPUI_INT_REM:
-							case CPUI_INT_SREM: anal_op->type = RZ_ANAL_OP_TYPE_MOD; break;
-							case CPUI_INT_OR: anal_op->type = RZ_ANAL_OP_TYPE_OR; break;
-							case CPUI_INT_AND: anal_op->type = RZ_ANAL_OP_TYPE_AND; break;
-							case CPUI_INT_XOR: anal_op->type = RZ_ANAL_OP_TYPE_XOR; break;
-							case CPUI_INT_RIGHT: anal_op->type = RZ_ANAL_OP_TYPE_SHR; break;
-							case CPUI_INT_LEFT: anal_op->type = RZ_ANAL_OP_TYPE_SHL; break;
-							case CPUI_INT_SRIGHT: anal_op->type = RZ_ANAL_OP_TYPE_SAR; break;
+							case CPUI_INT_SREM: analysis_op->type = RZ_ANAL_OP_TYPE_MOD; break;
+							case CPUI_INT_OR: analysis_op->type = RZ_ANAL_OP_TYPE_OR; break;
+							case CPUI_INT_AND: analysis_op->type = RZ_ANAL_OP_TYPE_AND; break;
+							case CPUI_INT_XOR: analysis_op->type = RZ_ANAL_OP_TYPE_XOR; break;
+							case CPUI_INT_RIGHT: analysis_op->type = RZ_ANAL_OP_TYPE_SHR; break;
+							case CPUI_INT_LEFT: analysis_op->type = RZ_ANAL_OP_TYPE_SHL; break;
+							case CPUI_INT_SRIGHT: analysis_op->type = RZ_ANAL_OP_TYPE_SAR; break;
 							default: break;
 						}
-						anal_op->src[0] = in0.dup();
-						anal_op->src[1] = in1.dup();
-						anal_op->dst = out.dup();
+						analysis_op->src[0] = in0.dup();
+						analysis_op->src[1] = in1.dup();
+						analysis_op->dst = out.dup();
 
-						return anal_op->type;
+						return analysis_op->type;
 					}
 				}
 			}
@@ -535,7 +535,7 @@ static ut32 anal_type_XXX(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 	return 0;
 }
 
-static ut32 anal_type_NOR(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_NOR(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &reg_set)
 {
 	const ut32 this_type = RZ_ANAL_OP_TYPE_NOR;
@@ -552,8 +552,8 @@ static ut32 anal_type_NOR(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 		{
 			if(iter->input0 && iter->input1)
 			{
-				in0 = SleighAnalValue::resolve_arg(anal, iter->input0);
-				in1 = SleighAnalValue::resolve_arg(anal, iter->input1);
+				in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
+				in1 = SleighAnalValue::resolve_arg(analysis, iter->input1);
 			}
 
 			if((in0.is_valid() && reg_set_has(reg_set, in0)) || (in1.is_valid() && reg_set_has(reg_set, in1)))
@@ -570,7 +570,7 @@ static ut32 anal_type_NOR(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 			if(iter->input0 && iter->input0->is_unique() && iter->input0->offset == unique_off)
 			{
 				if(iter->output)
-					outs = SleighAnalValue::resolve_out(anal, iter, raw_ops.cend(), iter->output);
+					outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 				auto p = outs.cbegin();
 				for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -578,10 +578,10 @@ static ut32 anal_type_NOR(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 				{
 					out = *p;
 
-					anal_op->type = this_type;
-					anal_op->src[0] = in0.dup();
-					anal_op->src[1] = in1.dup();
-					anal_op->dst = out.dup();
+					analysis_op->type = this_type;
+					analysis_op->src[0] = in0.dup();
+					analysis_op->src[1] = in1.dup();
+					analysis_op->dst = out.dup();
 
 					return this_type;
 				}
@@ -592,7 +592,7 @@ static ut32 anal_type_NOR(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 	return 0;
 }
 
-static ut32 anal_type_NOT(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_NOT(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                           const std::unordered_set<std::string> &reg_set)
 {
 	const ut32 this_type = RZ_ANAL_OP_TYPE_NOT;
@@ -607,12 +607,12 @@ static ut32 anal_type_NOT(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 		if(iter->type == key_pcode)
 		{
 			if(iter->input0)
-				in0 = SleighAnalValue::resolve_arg(anal, iter->input0);
+				in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
 
 			if(in0.is_valid() && reg_set_has(reg_set, in0))
 			{
 				if(iter->output)
-					outs = SleighAnalValue::resolve_out(anal, iter, raw_ops.cend(), iter->output);
+					outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 				auto p = outs.cbegin();
 				for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -620,9 +620,9 @@ static ut32 anal_type_NOT(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 				{
 					out = *p;
 
-					anal_op->type = this_type;
-					anal_op->src[0] = in0.dup();
-					anal_op->dst = out.dup();
+					analysis_op->type = this_type;
+					analysis_op->src[0] = in0.dup();
+					analysis_op->dst = out.dup();
 
 					return this_type;
 				}
@@ -633,7 +633,7 @@ static ut32 anal_type_NOT(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pco
 	return 0;
 }
 
-static ut32 anal_type_XCHG(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_XCHG(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                            const std::unordered_set<std::string> &reg_set)
 {
 	const ut32 this_type = RZ_ANAL_OP_TYPE_XCHG;
@@ -655,9 +655,9 @@ static ut32 anal_type_XCHG(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pc
 		if(!(*copy_vec[1]->input0 == *copy_vec[2]->output))
 			goto fail;
 
-		anal_op->type = this_type;
-		anal_op->src[0] = SleighAnalValue::resolve_arg(anal, copy_vec[0]->input0).dup();
-		anal_op->dst = SleighAnalValue::resolve_arg(anal, copy_vec[2]->output).dup();
+		analysis_op->type = this_type;
+		analysis_op->src[0] = SleighAnalValue::resolve_arg(analysis, copy_vec[0]->input0).dup();
+		analysis_op->dst = SleighAnalValue::resolve_arg(analysis, copy_vec[2]->output).dup();
 
 		return this_type;
 	}
@@ -666,7 +666,7 @@ fail:
 	return 0;
 }
 
-static ut32 anal_type_SINGLE(RzAnal *anal, RzAnalOp *anal_op, const std::vector<Pcodeop> &raw_ops,
+static ut32 analysis_type_SINGLE(RzAnalysis *analysis, RzAnalysisOp *analysis_op, const std::vector<Pcodeop> &raw_ops,
                              const std::unordered_set<std::string> &reg_set)
 {
 	// RZ_ANAL_OP_TYPE_CAST
@@ -676,9 +676,9 @@ static ut32 anal_type_SINGLE(RzAnal *anal, RzAnalOp *anal_op, const std::vector<
 	{
 		switch(iter->type)
 		{
-			case CPUI_CAST: anal_op->type = RZ_ANAL_OP_TYPE_CAST; return anal_op->type;
-			case CPUI_NEW: anal_op->type = RZ_ANAL_OP_TYPE_NEW; return anal_op->type;
-			case CPUI_FLOAT_ABS: anal_op->type = RZ_ANAL_OP_TYPE_ABS; return anal_op->type;
+			case CPUI_CAST: analysis_op->type = RZ_ANAL_OP_TYPE_CAST; return analysis_op->type;
+			case CPUI_NEW: analysis_op->type = RZ_ANAL_OP_TYPE_NEW; return analysis_op->type;
+			case CPUI_FLOAT_ABS: analysis_op->type = RZ_ANAL_OP_TYPE_ABS; return analysis_op->type;
 			default: break;
 		}
 	}
@@ -686,7 +686,7 @@ static ut32 anal_type_SINGLE(RzAnal *anal, RzAnalOp *anal_op, const std::vector<
 	return 0;
 }
 
-static void anal_type(RzAnal *anal, RzAnalOp *anal_op, PcodeSlg &pcode_slg, AssemblySlg &assem)
+static void analysis_type(RzAnalysis *analysis, RzAnalysisOp *analysis_op, PcodeSlg &pcode_slg, AssemblySlg &assem)
 {
 	std::vector<std::string> args = string_split(assem.str);
 	std::unordered_set<std::string> reg_set;
@@ -744,31 +744,31 @@ static void anal_type(RzAnal *anal, RzAnalOp *anal_op, PcodeSlg &pcode_slg, Asse
 		}
 	}
 
-	anal_op->type = RZ_ANAL_OP_TYPE_UNK;
+	analysis_op->type = RZ_ANAL_OP_TYPE_UNK;
 
-	if(anal_type_XCHG(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_XCHG(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_SINGLE(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_SINGLE(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_XSWI(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_XSWI(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_XCMP(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_XCMP(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_NOR(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_NOR(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_XPUSH(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_XPUSH(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_POP(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_POP(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_STORE(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_STORE(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_LOAD(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_LOAD(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_XXX(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_XXX(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_NOT(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_NOT(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
-	if(anal_type_MOV(anal, anal_op, pcode_slg.pcodes, reg_set))
+	if(analysis_type_MOV(analysis, analysis_op, pcode_slg.pcodes, reg_set))
 		return;
 
 	return;
@@ -801,7 +801,7 @@ static int index_of_unique(const std::vector<PcodeOperand *> &esil_stack, const 
 	return -1;
 }
 
-static void sleigh_esil(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, int len,
+static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const ut8 *data, int len,
                         const std::vector<Pcodeop> &Pcodes)
 {
 	std::vector<PcodeOperand *> esil_stack;
@@ -1353,12 +1353,12 @@ static void sleigh_esil(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data
 
 	if(!esil_stack.empty())
 		ss << ",CLEAR";
-	// std::cerr << hex << anal_op->addr << " " << ss.str() << endl;
-	esilprintf(anal_op, ss.str()[0] == ','? ss.str().c_str() + 1: ss.str().c_str());
+	// std::cerr << hex << analysis_op->addr << " " << ss.str() << endl;
+	esilprintf(analysis_op, ss.str()[0] == ','? ss.str().c_str() + 1: ss.str().c_str());
 }
 
 /* Not in use for now.
-static bool anal_type_NOP(const std::vector<Pcodeop> &Pcodes)
+static bool analysis_type_NOP(const std::vector<Pcodeop> &Pcodes)
 { // All p-codes have no side affects.
 	for(auto iter = Pcodes.cbegin(); iter != Pcodes.cend(); ++iter)
 	{
@@ -1373,30 +1373,30 @@ static bool anal_type_NOP(const std::vector<Pcodeop> &Pcodes)
 }
 */
 
-static int sleigh_op(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, int len,
-                     RzAnalOpMask mask)
+static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const ut8 *data, int len,
+                     RzAnalysisOpMask mask)
 {
 	try
 	{
 		sanal.init(a->cpu, a->bits, a->big_endian, a? a->iob.io : nullptr, SleighAsm::getConfig(a));
 
-		anal_op->addr = addr;
-		anal_op->sign = true;
-		anal_op->type = RZ_ANAL_OP_TYPE_ILL;
+		analysis_op->addr = addr;
+		analysis_op->sign = true;
+		analysis_op->type = RZ_ANAL_OP_TYPE_ILL;
 
 		PcodeSlg pcode_slg(&sanal);
 		AssemblySlg assem(&sanal);
 		Address caddr(sanal.trans.getDefaultCodeSpace(), addr);
 		sanal.check(addr, data, len);
-		anal_op->size = sanal.genOpcode(pcode_slg, caddr);
-		if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, caddr) < 1))
-			return anal_op->size; // When current place has no available code, return ILL.
+		analysis_op->size = sanal.genOpcode(pcode_slg, caddr);
+		if((analysis_op->size < 1) || (sanal.trans.printAssembly(assem, caddr) < 1))
+			return analysis_op->size; // When current place has no available code, return ILL.
 
 		if(pcode_slg.pcodes.empty())
 		{ // NOP case
-			anal_op->type = RZ_ANAL_OP_TYPE_NOP;
-			esilprintf(anal_op, "");
-			return anal_op->size;
+			analysis_op->type = RZ_ANAL_OP_TYPE_NOP;
+			esilprintf(analysis_op, "");
+			return analysis_op->size;
 		}
 
 		SleighInstruction &ins = *sanal.trans.getInstruction(caddr);
@@ -1410,20 +1410,20 @@ static int sleigh_op(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, i
 			{
 				case FlowType::TERMINATOR:
 					// Stack info could be added
-					anal_op->type = RZ_ANAL_OP_TYPE_RET;
-					anal_op->eob = true;
+					analysis_op->type = RZ_ANAL_OP_TYPE_RET;
+					analysis_op->eob = true;
 					break;
 
 				case FlowType::CONDITIONAL_TERMINATOR:
-					anal_op->type = RZ_ANAL_OP_TYPE_CRET;
-					anal_op->fail = ins.getFallThrough().getOffset();
-					anal_op->eob = true;
+					analysis_op->type = RZ_ANAL_OP_TYPE_CRET;
+					analysis_op->fail = ins.getFallThrough().getOffset();
+					analysis_op->eob = true;
 					break;
 
-				case FlowType::JUMP_TERMINATOR: anal_op->eob = true;
+				case FlowType::JUMP_TERMINATOR: analysis_op->eob = true;
 				case FlowType::UNCONDITIONAL_JUMP:
-					anal_op->type = RZ_ANAL_OP_TYPE_JMP;
-					anal_op->jump = ins.getFlows().begin()->getOffset();
+					analysis_op->type = RZ_ANAL_OP_TYPE_JMP;
+					analysis_op->jump = ins.getFlows().begin()->getOffset();
 					break;
 
 				case FlowType::COMPUTED_JUMP:
@@ -1433,17 +1433,17 @@ static int sleigh_op(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, i
 					{
 						if(isRefed)
 						{
-							anal_op->type = RZ_ANAL_OP_TYPE_MJMP;
-							anal_op->ireg = reg;
+							analysis_op->type = RZ_ANAL_OP_TYPE_MJMP;
+							analysis_op->ireg = reg;
 						}
 						else
 						{
-							anal_op->type = RZ_ANAL_OP_TYPE_IRJMP;
-							anal_op->reg = reg;
+							analysis_op->type = RZ_ANAL_OP_TYPE_IRJMP;
+							analysis_op->reg = reg;
 						}
 					}
 					else
-						anal_op->type = RZ_ANAL_OP_TYPE_IJMP;
+						analysis_op->type = RZ_ANAL_OP_TYPE_IJMP;
 					break;
 				}
 
@@ -1454,32 +1454,32 @@ static int sleigh_op(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, i
 					{
 						if(isRefed)
 						{
-							anal_op->type = RZ_ANAL_OP_TYPE_MCJMP;
-							anal_op->ireg = reg;
+							analysis_op->type = RZ_ANAL_OP_TYPE_MCJMP;
+							analysis_op->ireg = reg;
 						}
 						else
 						{
-							anal_op->type = RZ_ANAL_OP_TYPE_RCJMP;
-							anal_op->reg = reg;
+							analysis_op->type = RZ_ANAL_OP_TYPE_RCJMP;
+							analysis_op->reg = reg;
 						}
 					}
 					else
-						anal_op->type = RZ_ANAL_OP_TYPE_UCJMP;
-					anal_op->fail = ins.getFallThrough().getOffset();
+						analysis_op->type = RZ_ANAL_OP_TYPE_UCJMP;
+					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 				}
 
 				case FlowType::CONDITIONAL_JUMP:
-					anal_op->type = RZ_ANAL_OP_TYPE_CJMP;
-					anal_op->jump = ins.getFlows().begin()->getOffset();
-					anal_op->fail = ins.getFallThrough().getOffset();
+					analysis_op->type = RZ_ANAL_OP_TYPE_CJMP;
+					analysis_op->jump = ins.getFlows().begin()->getOffset();
+					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 
-				case FlowType::CALL_TERMINATOR: anal_op->eob = true;
+				case FlowType::CALL_TERMINATOR: analysis_op->eob = true;
 				case FlowType::UNCONDITIONAL_CALL:
-					anal_op->type = RZ_ANAL_OP_TYPE_CALL;
-					anal_op->jump = ins.getFlows().begin()->getOffset();
-					anal_op->fail = ins.getFallThrough().getOffset();
+					analysis_op->type = RZ_ANAL_OP_TYPE_CALL;
+					analysis_op->jump = ins.getFlows().begin()->getOffset();
+					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 
 				case FlowType::CONDITIONAL_COMPUTED_CALL:
@@ -1487,22 +1487,22 @@ static int sleigh_op(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, i
 					char *reg = getIndirectReg(ins, isRefed);
 					if(reg)
 						if(isRefed)
-							anal_op->ireg = reg;
+							analysis_op->ireg = reg;
 						else
-							anal_op->reg = reg;
+							analysis_op->reg = reg;
 
-					anal_op->type = RZ_ANAL_OP_TYPE_UCCALL;
-					anal_op->fail = ins.getFallThrough().getOffset();
+					analysis_op->type = RZ_ANAL_OP_TYPE_UCCALL;
+					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 				}
 
 				case FlowType::CONDITIONAL_CALL:
-					anal_op->type |= RZ_ANAL_OP_TYPE_CCALL;
-					anal_op->jump = ins.getFlows().begin()->getOffset();
-					anal_op->fail = ins.getFallThrough().getOffset();
+					analysis_op->type |= RZ_ANAL_OP_TYPE_CCALL;
+					analysis_op->jump = ins.getFlows().begin()->getOffset();
+					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 
-				case FlowType::COMPUTED_CALL_TERMINATOR: anal_op->eob = true;
+				case FlowType::COMPUTED_CALL_TERMINATOR: analysis_op->eob = true;
 				case FlowType::COMPUTED_CALL:
 				{
 					char *reg = getIndirectReg(ins, isRefed);
@@ -1510,18 +1510,18 @@ static int sleigh_op(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, i
 					{
 						if(isRefed)
 						{
-							anal_op->type = RZ_ANAL_OP_TYPE_IRCALL;
-							anal_op->ireg = reg;
+							analysis_op->type = RZ_ANAL_OP_TYPE_IRCALL;
+							analysis_op->ireg = reg;
 						}
 						else
 						{
-							anal_op->type = RZ_ANAL_OP_TYPE_IRCALL;
-							anal_op->reg = reg;
+							analysis_op->type = RZ_ANAL_OP_TYPE_IRCALL;
+							analysis_op->reg = reg;
 						}
 					}
 					else
-						anal_op->type = RZ_ANAL_OP_TYPE_ICALL;
-					anal_op->fail = ins.getFallThrough().getOffset();
+						analysis_op->type = RZ_ANAL_OP_TYPE_ICALL;
+					analysis_op->fail = ins.getFallThrough().getOffset();
 					break;
 				}
 
@@ -1530,9 +1530,9 @@ static int sleigh_op(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, i
 		}
 		else
 		{
-			anal_type(a, anal_op, pcode_slg, assem);
+			analysis_type(a, analysis_op, pcode_slg, assem);
 #if 0
-			switch(anal_op->type)
+			switch(analysis_op->type)
 			{
 				case RZ_ANAL_OP_TYPE_IRCALL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_IRCALL"; break;
 				case RZ_ANAL_OP_TYPE_RET: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_RET"; break;
@@ -1575,28 +1575,28 @@ static int sleigh_op(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, i
 				case RZ_ANAL_OP_TYPE_ICALL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_ICALL"; break;
 				case RZ_ANAL_OP_TYPE_MUL: std::cerr << caddr << ": RZ_ANAL_OP_TYPE_MUL"; break;
 			}
-			if(anal_op->val && anal_op->val != -1)
-				std::cerr << " val: " << anal_op->val << std::endl;
+			if(analysis_op->val && analysis_op->val != -1)
+				std::cerr << " val: " << analysis_op->val << std::endl;
 			else
 			{
-				if(anal_op->dst)
+				if(analysis_op->dst)
 				{
 					std::cerr << " dst: ";
-					char *tmp = rz_anal_value_to_string(anal_op->dst);
+					char *tmp = rz_analysis_value_to_string(analysis_op->dst);
 					std::cerr << tmp;
 					rz_mem_free(tmp);
 				}
-				if(anal_op->src[0])
+				if(analysis_op->src[0])
 				{
 					std::cerr << " in0: ";
-					char *tmp = rz_anal_value_to_string(anal_op->src[0]);
+					char *tmp = rz_analysis_value_to_string(analysis_op->src[0]);
 					std::cerr << tmp;
 					rz_mem_free(tmp);
 				}
-				if(anal_op->src[1])
+				if(analysis_op->src[1])
 				{
 					std::cerr << " in1: ";
-					char *tmp = rz_anal_value_to_string(anal_op->src[1]);
+					char *tmp = rz_analysis_value_to_string(analysis_op->src[1]);
 					std::cerr << tmp;
 					rz_mem_free(tmp);
 				}
@@ -1606,9 +1606,9 @@ static int sleigh_op(RzAnal *a, RzAnalOp *anal_op, ut64 addr, const ut8 *data, i
 		}
 
 		if(mask & RZ_ANAL_OP_MASK_ESIL)
-			sleigh_esil(a, anal_op, addr, data, len, pcode_slg.pcodes);
+			sleigh_esil(a, analysis_op, addr, data, len, pcode_slg.pcodes);
 
-		return anal_op->size;
+		return analysis_op->size;
 	}
 	catch(const LowlevelError &e)
 	{
@@ -1778,19 +1778,19 @@ static void append_hardcoded_regs(std::stringstream &buf, const std::string &arc
 	}
 }
 
-static char *get_reg_profile(RzAnal *anal)
+static char *get_reg_profile(RzAnalysis *analysis)
 {
-	if(!anal->cpu)
+	if(!analysis->cpu)
 		return nullptr;
 
-	ut64 length = strlen(anal->cpu), z = 0;
-	for(; z < length && anal->cpu[z] != ':'; ++z) {}
+	ut64 length = strlen(analysis->cpu), z = 0;
+	for(; z < length && analysis->cpu[z] != ':'; ++z) {}
 	if(z == length)
 		return nullptr;
 
 	try
 	{
-		sanal.init(anal->cpu, anal->bits, anal->big_endian, anal? anal->iob.io: nullptr, SleighAsm::getConfig(anal));
+		sanal.init(analysis->cpu, analysis->bits, analysis->big_endian, analysis ? analysis->iob.io : nullptr, SleighAsm::getConfig(analysis));
 	}
 	catch(const LowlevelError &e)
 	{
@@ -1817,7 +1817,7 @@ static char *get_reg_profile(RzAnal *anal)
 			if(!rz_reg_type_arr[i])
 			{
 				fprintf(stderr,
-				        "anal_ghidra.cpp:get_reg_profile() -> Get unexpected Register group(%s) "
+				        "analysis_ghidra.cpp:get_reg_profile() -> Get unexpected Register group(%s) "
 				        "from SLEIGH, abort.",
 				        group.c_str());
 				return nullptr;
@@ -1868,14 +1868,14 @@ static char *get_reg_profile(RzAnal *anal)
 
 constexpr int ESIL_PARM_FLOAT = 127; // Avoid conflict
 
-static bool esil_pushnum_float(RzAnalEsil *esil, long double num)
+static bool esil_pushnum_float(RzAnalysisEsil *esil, long double num)
 {
 	char str[64];
 	snprintf(str, sizeof(str) - 1, "%.*LeF", DECIMAL_DIG, num);
-	return rz_anal_esil_push(esil, str);
+	return rz_analysis_esil_push(esil, str);
 }
 
-static int esil_get_parm_type_float(RzAnalEsil *esil, const char *str)
+static int esil_get_parm_type_float(RzAnalysisEsil *esil, const char *str)
 {
 	int len, i;
 
@@ -1971,7 +1971,7 @@ static bool esil_set_double(RzReg *reg, RzRegItem *item, long double value)
 	return false;
 }
 
-static int esil_get_parm_float(RzAnalEsil *esil, const char *str, long double *num)
+static int esil_get_parm_float(RzAnalysisEsil *esil, const char *str, long double *num)
 {
 	int ret = 0;
 	if(!str || !*str)
@@ -1996,10 +1996,10 @@ static int esil_get_parm_float(RzAnalEsil *esil, const char *str, long double *n
 			break;
 		case RZ_ANAL_ESIL_PARM_REG:
 		{
-			RzRegItem *reg = rz_reg_get(esil->anal->reg, str, get_reg_type(str));
+			RzRegItem *reg = rz_reg_get(esil->analysis->reg, str, get_reg_type(str));
 			if(reg)
 			{
-				*num = esil_get_double(esil->anal->reg, reg);
+				*num = esil_get_double(esil->analysis->reg, reg);
 				ret = 1;
 			}
 			break;
@@ -2013,21 +2013,21 @@ static int esil_get_parm_float(RzAnalEsil *esil, const char *str, long double *n
 	return ret;
 }
 
-static bool sleigh_esil_consts_pick(RzAnalEsil *esil)
+static bool sleigh_esil_consts_pick(RzAnalysisEsil *esil)
 {
 	if(!esil || !esil->stack)
 		return false;
 
-	char *idx = rz_anal_esil_pop(esil);
+	char *idx = rz_analysis_esil_pop(esil);
 	ut64 i;
 	int ret = false;
 
-	if(RZ_ANAL_ESIL_PARM_REG == rz_anal_esil_get_parm_type(esil, idx))
+	if(RZ_ANAL_ESIL_PARM_REG == rz_analysis_esil_get_parm_type(esil, idx))
 	{
 		ERR("sleigh_esil_consts_pick: argument is consts only.");
 		goto end;
 	}
-	if(!idx || !rz_anal_esil_get_parm(esil, idx, &i))
+	if(!idx || !rz_analysis_esil_get_parm(esil, idx, &i))
 	{
 		ERR("esil_pick: invalid index number.");
 		goto end;
@@ -2042,7 +2042,7 @@ static bool sleigh_esil_consts_pick(RzAnalEsil *esil)
 		ERR("esil_pick: undefined element.");
 		goto end;
 	}
-	if(!rz_anal_esil_push(esil, esil->stack[esil->stackptr - i]))
+	if(!rz_analysis_esil_push(esil, esil->stack[esil->stackptr - i]))
 	{
 		ERR("ESIL stack is full.");
 		esil->trap = 1;
@@ -2056,15 +2056,15 @@ end:
 	return ret;
 }
 
-static bool sleigh_esil_is_nan(RzAnalEsil *esil)
+static bool sleigh_esil_is_nan(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	if(src)
 	{
 		if(esil_get_parm_float(esil, src, &s))
-			ret = rz_anal_esil_pushnum(esil, isnan(s));
+			ret = rz_analysis_esil_pushnum(esil, isnan(s));
 		else
 			ERR("sleigh_esil_is_nan: invalid parameters.");
 
@@ -2076,14 +2076,14 @@ static bool sleigh_esil_is_nan(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_int_to_float(RzAnalEsil *esil)
+static bool sleigh_esil_int_to_float(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	st64 s;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	if(src)
 	{
-		if(rz_anal_esil_get_parm(esil, src, (ut64 *)&s))
+		if(rz_analysis_esil_get_parm(esil, src, (ut64 *)&s))
 			ret = esil_pushnum_float(esil, (long double)s * 1.0);
 		else
 			ERR("sleigh_esil_int_to_float: invalid parameters.");
@@ -2096,18 +2096,18 @@ static bool sleigh_esil_int_to_float(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_float_to_int(RzAnalEsil *esil)
+static bool sleigh_esil_float_to_int(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	if(src)
 	{
 		if(esil_get_parm_float(esil, src, &s))
 		{
 			if(isnan(s) || isinf(s))
 				ERR("sleigh_esil_float_to_int: nan or inf detected.");
-			ret = rz_anal_esil_pushnum(esil, (st64)(s));
+			ret = rz_analysis_esil_pushnum(esil, (st64)(s));
 		}
 		else
 			ERR("sleigh_esil_float_to_int: invalid parameters.");
@@ -2120,13 +2120,13 @@ static bool sleigh_esil_float_to_int(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_float_to_float(RzAnalEsil *esil)
+static bool sleigh_esil_float_to_float(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double d;
 	ut64 s = 0;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2139,7 +2139,7 @@ static bool sleigh_esil_float_to_float(RzAnalEsil *esil)
 		goto end2;
 	}
 
-	if(rz_anal_esil_get_parm(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
+	if(rz_analysis_esil_get_parm(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(d) || isinf(d))
 			ret = esil_pushnum_float(esil, d);
@@ -2164,12 +2164,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_float_cmp(RzAnalEsil *esil)
+static bool sleigh_esil_float_cmp(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s, d;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2185,9 +2185,9 @@ static bool sleigh_esil_float_cmp(RzAnalEsil *esil)
 	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s) || isnan(d))
-			ret = rz_anal_esil_pushnum(esil, 0);
+			ret = rz_analysis_esil_pushnum(esil, 0);
 		else
-			ret = rz_anal_esil_pushnum(esil, fabs(s - d) < std::numeric_limits<long double>::epsilon());
+			ret = rz_analysis_esil_pushnum(esil, fabs(s - d) < std::numeric_limits<long double>::epsilon());
 	}
 	else
 		ERR("sleigh_esil_float_cmp: invalid parameters.");
@@ -2199,12 +2199,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_cmp(RzAnalEsil *esil)
+static bool sleigh_esil_cmp(RzAnalysisEsil *esil)
 {
 	ut64 num, num2;
 	bool ret = false;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2217,13 +2217,13 @@ static bool sleigh_esil_cmp(RzAnalEsil *esil)
 		goto end2;
 	}
 
-	if(rz_anal_esil_get_parm(esil, dst, &num) && rz_anal_esil_get_parm(esil, src, &num2))
+	if(rz_analysis_esil_get_parm(esil, dst, &num) && rz_analysis_esil_get_parm(esil, src, &num2))
 	{
 		esil->old = num;
 		esil->cur = num - num2;
 		ret = true;
 		esil->lastsz = 64;
-		rz_anal_esil_pushnum(esil, num == num2);
+		rz_analysis_esil_pushnum(esil, num == num2);
 	}
 	else
 		ERR("sleigh_esil_cmp: invalid parameters.");
@@ -2235,12 +2235,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_float_negcmp(RzAnalEsil *esil)
+static bool sleigh_esil_float_negcmp(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s, d;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2256,9 +2256,9 @@ static bool sleigh_esil_float_negcmp(RzAnalEsil *esil)
 	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s) || isnan(d))
-			ret = rz_anal_esil_pushnum(esil, 0);
+			ret = rz_analysis_esil_pushnum(esil, 0);
 		else
-			ret = rz_anal_esil_pushnum(esil, fabs(s - d) >= std::numeric_limits<long double>::epsilon());
+			ret = rz_analysis_esil_pushnum(esil, fabs(s - d) >= std::numeric_limits<long double>::epsilon());
 	}
 	else
 		ERR("sleigh_esil_float_negcmp: invalid parameters.");
@@ -2270,12 +2270,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_float_less(RzAnalEsil *esil)
+static bool sleigh_esil_float_less(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s, d;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2291,9 +2291,9 @@ static bool sleigh_esil_float_less(RzAnalEsil *esil)
 	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s) || isnan(d))
-			ret = rz_anal_esil_pushnum(esil, 0);
+			ret = rz_analysis_esil_pushnum(esil, 0);
 		else
-			ret = rz_anal_esil_pushnum(esil, s < d);
+			ret = rz_analysis_esil_pushnum(esil, s < d);
 	}
 	else
 		ERR("sleigh_esil_float_less: invalid parameters.");
@@ -2305,12 +2305,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_float_lesseq(RzAnalEsil *esil)
+static bool sleigh_esil_float_lesseq(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s, d;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2326,9 +2326,9 @@ static bool sleigh_esil_float_lesseq(RzAnalEsil *esil)
 	if(esil_get_parm_float(esil, src, &s) && esil_get_parm_float(esil, dst, &d))
 	{
 		if(isnan(s) || isnan(d))
-			ret = rz_anal_esil_pushnum(esil, 0);
+			ret = rz_analysis_esil_pushnum(esil, 0);
 		else
-			ret = rz_anal_esil_pushnum(esil, s <= d);
+			ret = rz_analysis_esil_pushnum(esil, s <= d);
 	}
 	else
 		ERR("sleigh_esil_float_lesseq: invalid parameters.");
@@ -2341,12 +2341,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_float_add(RzAnalEsil *esil)
+static bool sleigh_esil_float_add(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s, d;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2386,12 +2386,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_float_sub(RzAnalEsil *esil)
+static bool sleigh_esil_float_sub(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s, d;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2431,12 +2431,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_float_mul(RzAnalEsil *esil)
+static bool sleigh_esil_float_mul(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s, d;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2476,12 +2476,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_float_div(RzAnalEsil *esil)
+static bool sleigh_esil_float_div(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s, d;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(!src)
 	{
@@ -2521,11 +2521,11 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_float_neg(RzAnalEsil *esil)
+static bool sleigh_esil_float_neg(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(src)
 	{
@@ -2542,11 +2542,11 @@ static bool sleigh_esil_float_neg(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_float_ceil(RzAnalEsil *esil)
+static bool sleigh_esil_float_ceil(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(src)
 	{
@@ -2568,11 +2568,11 @@ static bool sleigh_esil_float_ceil(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_float_floor(RzAnalEsil *esil)
+static bool sleigh_esil_float_floor(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(src)
 	{
@@ -2594,11 +2594,11 @@ static bool sleigh_esil_float_floor(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_float_round(RzAnalEsil *esil)
+static bool sleigh_esil_float_round(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(src)
 	{
@@ -2620,11 +2620,11 @@ static bool sleigh_esil_float_round(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_float_sqrt(RzAnalEsil *esil)
+static bool sleigh_esil_float_sqrt(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	long double s;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(src)
 	{
@@ -2646,22 +2646,22 @@ static bool sleigh_esil_float_sqrt(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_popcount(RzAnalEsil *esil)
+static bool sleigh_esil_popcount(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	ut64 s, res = 0;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 
 	if(src)
 	{
-		if(src && rz_anal_esil_get_parm(esil, src, &s))
+		if(src && rz_analysis_esil_get_parm(esil, src, &s))
 		{
 			while(s)
 			{
 				s &= s - 1;
 				++res;
 			}
-			ret = rz_anal_esil_pushnum(esil, res);
+			ret = rz_analysis_esil_pushnum(esil, res);
 		}
 		else
 			ERR("sleigh_esil_popcount: invalid parameters.");
@@ -2674,16 +2674,16 @@ static bool sleigh_esil_popcount(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_signext(RzAnalEsil *esil)
+static bool sleigh_esil_signext(RzAnalysisEsil *esil)
 {
 	// From https://github.com/rizinorg/rizin/pull/17436/
 	ut64 src, dst;
 
-	char *p_src = rz_anal_esil_pop(esil);
+	char *p_src = rz_analysis_esil_pop(esil);
 	if(!p_src)
 		return false;
 
-	if(!rz_anal_esil_get_parm(esil, p_src, &src))
+	if(!rz_analysis_esil_get_parm(esil, p_src, &src))
 	{
 		ERR("sleigh_esil_signext: invalid parameters.");
 		rz_mem_free(p_src);
@@ -2692,11 +2692,11 @@ static bool sleigh_esil_signext(RzAnalEsil *esil)
 	else
 		rz_mem_free(p_src);
 
-	char *p_dst = rz_anal_esil_pop(esil);
+	char *p_dst = rz_analysis_esil_pop(esil);
 	if(!p_dst)
 		return false;
 
-	if(!rz_anal_esil_get_parm(esil, p_dst, &dst))
+	if(!rz_analysis_esil_get_parm(esil, p_dst, &dst))
 	{
 		ERR("sleigh_esil_signext: invalid parameters.");
 		rz_mem_free(p_dst);
@@ -2710,7 +2710,7 @@ static bool sleigh_esil_signext(RzAnalEsil *esil)
 		m = 1ULL << (dst - 1);
 
 	// dst = (dst & ((1U << src_bit) - 1)); // clear upper bits
-	return rz_anal_esil_pushnum(esil, ((src ^ m) - m));
+	return rz_analysis_esil_pushnum(esil, ((src ^ m) - m));
 }
 
 static void sleigh_reg_set_float(RzReg *reg, const char *name, int type, bool F)
@@ -2727,7 +2727,7 @@ static bool sleigh_reg_get_float(RzReg *reg, const char *name, int type)
 }
 
 // All register's value will be resolved immediately thanks to NUM.
-static bool sleigh_esil_reg_num(RzAnalEsil *esil)
+static bool sleigh_esil_reg_num(RzAnalysisEsil *esil)
 {
 	// When register name is just a single char,
 	// ESIL vm will only replace it with its value
@@ -2740,31 +2740,31 @@ static bool sleigh_esil_reg_num(RzAnalEsil *esil)
 	bool ret = false;
 	if(!esil || !esil->stack)
 		return false;
-	if(!esil->anal || !esil->anal->reg)
+	if(!esil->analysis || !esil->analysis->reg)
 		return false;
 
-	char *name = rz_anal_esil_pop(esil);
+	char *name = rz_analysis_esil_pop(esil);
 	ut64 i;
 
 	if(name)
 	{
-		if(RZ_ANAL_ESIL_PARM_REG != rz_anal_esil_get_parm_type(esil, name))
+		if(RZ_ANAL_ESIL_PARM_REG != rz_analysis_esil_get_parm_type(esil, name))
 			ERR("sleigh_esil_reg_num: stack top isn't register.");
 
-		is_float = sleigh_reg_get_float(esil->anal->reg, name, get_reg_type(name));
+		is_float = sleigh_reg_get_float(esil->analysis->reg, name, get_reg_type(name));
 		if(is_float)
 		{
-			RzRegItem *ri = rz_reg_get(esil->anal->reg, name, get_reg_type(name));
+			RzRegItem *ri = rz_reg_get(esil->analysis->reg, name, get_reg_type(name));
 			if (ri)
 			{
-				long double res = esil_get_double(esil->anal->reg, ri);
+				long double res = esil_get_double(esil->analysis->reg, ri);
 				ret = esil_pushnum_float(esil, res);
 			}
 		}
 		else
 		{
-			rz_anal_esil_get_parm(esil, name, &i);
-			ret = rz_anal_esil_pushnum(esil, i);
+			rz_analysis_esil_get_parm(esil, name, &i);
+			ret = rz_analysis_esil_pushnum(esil, i);
 		}
 
 		rz_mem_free(name);
@@ -2775,7 +2775,7 @@ static bool sleigh_esil_reg_num(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool isnum(RzAnalEsil *esil, const char *str, ut64 *num)
+static bool isnum(RzAnalysisEsil *esil, const char *str, ut64 *num)
 {
 	if(!esil || !str)
 	{
@@ -2796,15 +2796,15 @@ static bool isnum(RzAnalEsil *esil, const char *str, ut64 *num)
 	return false;
 }
 
-static bool ispackedreg(RzAnalEsil *esil, const char *str)
+static bool ispackedreg(RzAnalysisEsil *esil, const char *str)
 {
-	RzRegItem *ri = rz_reg_get(esil->anal->reg, str, -1);
+	RzRegItem *ri = rz_reg_get(esil->analysis->reg, str, -1);
 	return ri? ri->packed_size > 0: false;
 }
 
-static bool isregornum(RzAnalEsil *esil, const char *str, ut64 *num)
+static bool isregornum(RzAnalysisEsil *esil, const char *str, ut64 *num)
 {
-	if(!rz_anal_esil_reg_read(esil, str, num, NULL))
+	if(!rz_analysis_esil_reg_read(esil, str, num, NULL))
 	{
 		if(!isnum(esil, str, num))
 		{
@@ -2828,31 +2828,31 @@ static inline ut64 genmask(int bits)
 	return m;
 }
 
-static ut8 esil_internal_sizeof_reg(RzAnalEsil *esil, const char *r)
+static ut8 esil_internal_sizeof_reg(RzAnalysisEsil *esil, const char *r)
 {
-	rz_return_val_if_fail(esil && esil->anal && esil->anal->reg && r, 0);
-	RzRegItem *ri = rz_reg_get(esil->anal->reg, r, -1);
+	rz_return_val_if_fail(esil && esil->analysis && esil->analysis->reg && r, 0);
+	RzRegItem *ri = rz_reg_get(esil->analysis->reg, r, -1);
 	return ri? ri->size: 0;
 }
 
-static int rz_anal_esil_reg_read_nocallback(RzAnalEsil *esil, const char *regname, ut64 *num,
+static int rz_analysis_esil_reg_read_nocallback(RzAnalysisEsil *esil, const char *regname, ut64 *num,
                                            int *size)
 {
 	int ret;
-	int (*old_hook_reg_read)(rz_anal_esil_t *, const char *, long long unsigned int *, int *) =
+	int (*old_hook_reg_read)(rz_analysis_esil_t *, const char *, long long unsigned int *, int *) =
 	    esil->cb.hook_reg_read;
 	esil->cb.hook_reg_read = NULL;
-	ret = rz_anal_esil_reg_read(esil, regname, num, size);
+	ret = rz_analysis_esil_reg_read(esil, regname, num, size);
 	esil->cb.hook_reg_read = old_hook_reg_read;
 	return ret;
 }
 
-static bool esil_eq(RzAnalEsil *esil)
+static bool esil_eq(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	ut64 num, num2;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	if(!src || !dst)
 	{
 		ERR("esil_eq: Missing elements in esil stack.");
@@ -2860,21 +2860,21 @@ static bool esil_eq(RzAnalEsil *esil)
 	}
 	if(ispackedreg(esil, dst))
 	{
-		char *src2 = rz_anal_esil_pop(esil);
+		char *src2 = rz_analysis_esil_pop(esil);
 		char *newreg = rz_str_newf("%sl", dst);
-		if(rz_anal_esil_get_parm(esil, src2, &num2))
-			ret = rz_anal_esil_reg_write(esil, newreg, num2);
+		if(rz_analysis_esil_get_parm(esil, src2, &num2))
+			ret = rz_analysis_esil_reg_write(esil, newreg, num2);
 
 		rz_mem_free(newreg);
 		rz_mem_free(src2);
 		goto beach;
 	}
 
-	if(rz_anal_esil_reg_read_nocallback(esil, dst, &num, NULL))
+	if(rz_analysis_esil_reg_read_nocallback(esil, dst, &num, NULL))
 	{
-		if(rz_anal_esil_get_parm(esil, src, &num2))
+		if(rz_analysis_esil_get_parm(esil, src, &num2))
 		{
-			ret = rz_anal_esil_reg_write(esil, dst, num2);
+			ret = rz_analysis_esil_reg_write(esil, dst, num2);
 			esil->cur = num2;
 			esil->old = num;
 			esil->lastsz = esil_internal_sizeof_reg(esil, dst);
@@ -2891,7 +2891,7 @@ beach:
 	return ret;
 }
 
-static bool esil_peek_n(RzAnalEsil *esil, int bits)
+static bool esil_peek_n(RzAnalysisEsil *esil, int bits)
 {
 	if(bits & 7)
 		return false;
@@ -2900,7 +2900,7 @@ static bool esil_peek_n(RzAnalEsil *esil, int bits)
 	char res[32];
 	ut64 addr;
 	ut32 bytes = bits / 8;
-	char *dst = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
 	if(!dst)
 	{
 		ERR("esil_peek_n: Can't peek memory without an address.");
@@ -2912,39 +2912,39 @@ static bool esil_peek_n(RzAnalEsil *esil, int bits)
 		if(bits == 128)
 		{
 			ut8 a[sizeof(ut64) * 2] = {0};
-			ret = rz_anal_esil_mem_read(esil, addr, a, bytes);
-			ut64 b = rz_read_ble64(&a, 0);    // esil->anal->big_endian);
-			ut64 c = rz_read_ble64(&a[8], 0); // esil->anal->big_endian);
+			ret = rz_analysis_esil_mem_read(esil, addr, a, bytes);
+			ut64 b = rz_read_ble64(&a, 0);    // esil->analysis->big_endian);
+			ut64 c = rz_read_ble64(&a[8], 0); // esil->analysis->big_endian);
 			snprintf(res, sizeof(res), "0x%" PFMT64x, b);
-			rz_anal_esil_push(esil, res);
+			rz_analysis_esil_push(esil, res);
 			snprintf(res, sizeof(res), "0x%" PFMT64x, c);
-			rz_anal_esil_push(esil, res);
+			rz_analysis_esil_push(esil, res);
 			rz_mem_free(dst);
 			return ret;
 		}
 		ut64 bitmask = genmask(bits - 1);
 		ut8 a[sizeof(ut64)] = {0};
-		ret = !!rz_anal_esil_mem_read(esil, addr, a, bytes);
-		ut64 b = rz_read_ble64(a, 0); // esil->anal->big_endian);
-		if(esil->anal->big_endian)
+		ret = !!rz_analysis_esil_mem_read(esil, addr, a, bytes);
+		ut64 b = rz_read_ble64(a, 0); // esil->analysis->big_endian);
+		if(esil->analysis->big_endian)
 			rz_mem_swapendian((ut8 *)&b, (const ut8 *)&b, bytes);
 
 		snprintf(res, sizeof(res), "0x%" PFMT64x, b & bitmask);
-		rz_anal_esil_push(esil, res);
+		rz_analysis_esil_push(esil, res);
 		esil->lastsz = bits;
 	}
 	rz_mem_free(dst);
 	return ret;
 }
 
-static bool esil_poke_n(RzAnalEsil *esil, int bits)
+static bool esil_poke_n(RzAnalysisEsil *esil, int bits)
 {
 	ut64 bitmask = genmask(bits - 1);
 	ut64 num, num2, addr;
 	ut8 b[8] = {0};
 	ut64 n;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	int bytes = RZ_MIN(sizeof(b), bits / 8);
 	if(bits % 8)
 	{
@@ -2955,21 +2955,21 @@ static bool esil_poke_n(RzAnalEsil *esil, int bits)
 	bool ret = false;
 	// eprintf ("GONA POKE %d src:%s dst:%s\n", bits, src, dst);
 	char *src2 = NULL;
-	if(src && rz_anal_esil_get_parm(esil, src, &num))
+	if(src && rz_analysis_esil_get_parm(esil, src, &num))
 	{
-		if(dst && rz_anal_esil_get_parm(esil, dst, &addr))
+		if(dst && rz_analysis_esil_get_parm(esil, dst, &addr))
 		{
 			if(bits == 128)
 			{
-				src2 = rz_anal_esil_pop(esil);
-				if(src2 && rz_anal_esil_get_parm(esil, src2, &num2))
+				src2 = rz_analysis_esil_pop(esil);
+				if(src2 && rz_analysis_esil_get_parm(esil, src2, &num2))
 				{
-					rz_write_ble(b, num, esil->anal->big_endian, 64);
-					ret = rz_anal_esil_mem_write(esil, addr, b, bytes);
+					rz_write_ble(b, num, esil->analysis->big_endian, 64);
+					ret = rz_analysis_esil_mem_write(esil, addr, b, bytes);
 					if(ret == 0)
 					{
-						rz_write_ble(b, num2, esil->anal->big_endian, 64);
-						ret = rz_anal_esil_mem_write(esil, addr + 8, b, bytes);
+						rz_write_ble(b, num2, esil->analysis->big_endian, 64);
+						ret = rz_analysis_esil_mem_write(esil, addr + 8, b, bytes);
 					}
 					goto out;
 				}
@@ -2978,18 +2978,18 @@ static bool esil_poke_n(RzAnalEsil *esil, int bits)
 			}
 			// this is a internal peek performed before a poke
 			// we disable hooks to avoid run hooks on internal peeks
-			int (*oldhook)(rz_anal_esil_t *, long long unsigned int, unsigned char *, int) =
+			int (*oldhook)(rz_analysis_esil_t *, long long unsigned int, unsigned char *, int) =
 			    esil->cb.hook_mem_read;
 			esil->cb.hook_mem_read = NULL;
-			rz_anal_esil_mem_read(esil, addr, b, bytes);
+			rz_analysis_esil_mem_read(esil, addr, b, bytes);
 			esil->cb.hook_mem_read = oldhook;
-			n = rz_read_ble64(b, esil->anal->big_endian);
+			n = rz_read_ble64(b, esil->analysis->big_endian);
 			esil->old = n;
 			esil->cur = num;
 			esil->lastsz = bits;
 			num = num & bitmask;
-			rz_write_ble(b, num, esil->anal->big_endian, bits);
-			ret = rz_anal_esil_mem_write(esil, addr, b, bytes);
+			rz_write_ble(b, num, esil->analysis->big_endian, bits);
+			ret = rz_analysis_esil_mem_write(esil, addr, b, bytes);
 		}
 	}
 out:
@@ -2999,11 +2999,11 @@ out:
 	return ret;
 }
 
-static bool sleigh_esil_eq(RzAnalEsil *esil)
+static bool sleigh_esil_eq(RzAnalysisEsil *esil)
 {
 	bool ret = false;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	long double tmp;
 
 	if(!src)
@@ -3020,20 +3020,20 @@ static bool sleigh_esil_eq(RzAnalEsil *esil)
 
 	if(ESIL_PARM_FLOAT == esil_get_parm_type_float(esil, src))
 	{
-		RzRegItem *ri = rz_reg_get(esil->anal->reg, dst, get_reg_type(dst));
+		RzRegItem *ri = rz_reg_get(esil->analysis->reg, dst, get_reg_type(dst));
 		if(ri)
 		{
 			esil_get_parm_float(esil, src, &tmp);
-			ret = esil_set_double(esil->anal->reg, ri, tmp);
-			sleigh_reg_set_float(esil->anal->reg, dst, get_reg_type(dst), true);
+			ret = esil_set_double(esil->analysis->reg, ri, tmp);
+			sleigh_reg_set_float(esil->analysis->reg, dst, get_reg_type(dst), true);
 		}
 	}
 	else
 	{
-		rz_anal_esil_push(esil, src);
-		rz_anal_esil_push(esil, dst);
+		rz_analysis_esil_push(esil, src);
+		rz_analysis_esil_push(esil, dst);
 		ret = esil_eq(esil);
-		sleigh_reg_set_float(esil->anal->reg, dst, get_reg_type(dst), false);
+		sleigh_reg_set_float(esil->analysis->reg, dst, get_reg_type(dst), false);
 	}
 
 	rz_mem_free(dst);
@@ -3044,10 +3044,10 @@ static bool sleigh_esil_eq(RzAnalEsil *esil)
 
 static unordered_set<uintm> float_mem;
 
-static bool sleigh_esil_peek4(RzAnalEsil *esil) // Read out
+static bool sleigh_esil_peek4(RzAnalysisEsil *esil) // Read out
 {
 	ut64 addr;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	bool ret = false;
 	char str[64];
 
@@ -3067,14 +3067,14 @@ static bool sleigh_esil_peek4(RzAnalEsil *esil) // Read out
 	if(float_mem.find(addr) != float_mem.end())
 	{
 		float a;
-		ret = !!rz_anal_esil_mem_read(esil, addr, (ut8 *)&a, 4);
+		ret = !!rz_analysis_esil_mem_read(esil, addr, (ut8 *)&a, 4);
 		snprintf(str, sizeof(str) - 1, "%.*LeF", DECIMAL_DIG, (long double)a);
-		rz_anal_esil_push(esil, str);
+		rz_analysis_esil_push(esil, str);
 		esil->lastsz = 32;
 	}
 	else
 	{
-		rz_anal_esil_push(esil, src);
+		rz_analysis_esil_push(esil, src);
 		ret = esil_peek_n(esil, 32);
 	}
 
@@ -3082,10 +3082,10 @@ static bool sleigh_esil_peek4(RzAnalEsil *esil) // Read out
 	return ret;
 }
 
-static bool sleigh_esil_peek8(RzAnalEsil *esil)
+static bool sleigh_esil_peek8(RzAnalysisEsil *esil)
 {
 	ut64 addr;
-	char *src = rz_anal_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	bool ret = false;
 	char str[64];
 
@@ -3105,14 +3105,14 @@ static bool sleigh_esil_peek8(RzAnalEsil *esil)
 	if(float_mem.find(addr) != float_mem.end())
 	{
 		double a;
-		ret = !!rz_anal_esil_mem_read(esil, addr, (ut8 *)&a, 8);
+		ret = !!rz_analysis_esil_mem_read(esil, addr, (ut8 *)&a, 8);
 		snprintf(str, sizeof(str) - 1, "%.*LeF", DECIMAL_DIG, (long double)a);
-		rz_anal_esil_push(esil, str);
+		rz_analysis_esil_push(esil, str);
 		esil->lastsz = 64;
 	}
 	else
 	{
-		rz_anal_esil_push(esil, src);
+		rz_analysis_esil_push(esil, src);
 		ret = esil_peek_n(esil, 64);
 	}
 
@@ -3120,12 +3120,12 @@ static bool sleigh_esil_peek8(RzAnalEsil *esil)
 	return ret;
 }
 
-static bool sleigh_esil_poke4(RzAnalEsil *esil)
+static bool sleigh_esil_poke4(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	ut64 addr;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	long double tmp;
 
 	if(!src)
@@ -3149,13 +3149,13 @@ static bool sleigh_esil_poke4(RzAnalEsil *esil)
 		esil_get_parm_float(esil, src, &tmp);
 		float res = tmp;
 		esil->lastsz = 32;
-		ret = rz_anal_esil_mem_write(esil, addr, (ut8 *)&res, 4);
+		ret = rz_analysis_esil_mem_write(esil, addr, (ut8 *)&res, 4);
 		float_mem.insert(addr);
 	}
 	else
 	{
-		rz_anal_esil_push(esil, src);
-		rz_anal_esil_push(esil, dst);
+		rz_analysis_esil_push(esil, src);
+		rz_analysis_esil_push(esil, dst);
 		ret = esil_poke_n(esil, 32);
 		auto iter = float_mem.find(addr);
 		if(iter != float_mem.end())
@@ -3170,12 +3170,12 @@ end1:
 	return ret;
 }
 
-static bool sleigh_esil_poke8(RzAnalEsil *esil)
+static bool sleigh_esil_poke8(RzAnalysisEsil *esil)
 {
 	bool ret = false;
 	ut64 addr;
-	char *dst = rz_anal_esil_pop(esil);
-	char *src = rz_anal_esil_pop(esil);
+	char *dst = rz_analysis_esil_pop(esil);
+	char *src = rz_analysis_esil_pop(esil);
 	long double tmp;
 
 	if(!src)
@@ -3199,13 +3199,13 @@ static bool sleigh_esil_poke8(RzAnalEsil *esil)
 		esil_get_parm_float(esil, src, &tmp);
 		double res = tmp;
 		esil->lastsz = 64;
-		ret = rz_anal_esil_mem_write(esil, addr, (ut8 *)&res, 8);
+		ret = rz_analysis_esil_mem_write(esil, addr, (ut8 *)&res, 8);
 		float_mem.insert(addr);
 	}
 	else
 	{
-		rz_anal_esil_push(esil, src);
-		rz_anal_esil_push(esil, dst);
+		rz_analysis_esil_push(esil, src);
+		rz_analysis_esil_push(esil, dst);
 		ret = esil_poke_n(esil, 64);
 		auto iter = float_mem.find(addr);
 		if(iter != float_mem.end())
@@ -3220,7 +3220,7 @@ end1:
 	return ret;
 }
 
-static int esil_sleigh_init(RzAnalEsil *esil)
+static int esil_sleigh_init(RzAnalysisEsil *esil)
 {
 	if(!esil)
 		return false;
@@ -3228,48 +3228,48 @@ static int esil_sleigh_init(RzAnalEsil *esil)
 	float_mem.clear();
 
 	// Only consts-only version PICK will meet my demand
-	rz_anal_esil_set_op(esil, "PICK", sleigh_esil_consts_pick, 1, 0, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "PICK", sleigh_esil_consts_pick, 1, 0, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
 	// Reg -> Stack
-	rz_anal_esil_set_op(esil, "NUM", sleigh_esil_reg_num, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "NAN", sleigh_esil_is_nan, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "NUM", sleigh_esil_reg_num, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "NAN", sleigh_esil_is_nan, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
 	// Stack -> Reg
-	rz_anal_esil_set_op(esil, "=", sleigh_esil_eq, 0, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "I2F", sleigh_esil_int_to_float, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F2I", sleigh_esil_float_to_int, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F2F", sleigh_esil_float_to_float, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "=", sleigh_esil_eq, 0, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "I2F", sleigh_esil_int_to_float, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F2I", sleigh_esil_float_to_int, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F2F", sleigh_esil_float_to_float, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
 	// Stack -> Mem
-	rz_anal_esil_set_op(esil, "=[4]", sleigh_esil_poke4, 0, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "=[8]", sleigh_esil_poke8, 0, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "=[4]", sleigh_esil_poke4, 0, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "=[8]", sleigh_esil_poke8, 0, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
 	// Mem -> Stack
-	rz_anal_esil_set_op(esil, "[4]", sleigh_esil_peek4, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "[8]", sleigh_esil_peek8, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F==", sleigh_esil_float_cmp, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "==", sleigh_esil_cmp, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F!=", sleigh_esil_float_negcmp, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F<", sleigh_esil_float_less, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F<=", sleigh_esil_float_lesseq, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F+", sleigh_esil_float_add, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F-", sleigh_esil_float_sub, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F*", sleigh_esil_float_mul, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "F/", sleigh_esil_float_div, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "-F", sleigh_esil_float_neg, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "CEIL", sleigh_esil_float_ceil, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "FLOOR", sleigh_esil_float_floor, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "ROUND", sleigh_esil_float_round, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "SQRT", sleigh_esil_float_sqrt, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "SIGN", sleigh_esil_signext, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
-	rz_anal_esil_set_op(esil, "POPCOUNT", sleigh_esil_popcount, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "[4]", sleigh_esil_peek4, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "[8]", sleigh_esil_peek8, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F==", sleigh_esil_float_cmp, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "==", sleigh_esil_cmp, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F!=", sleigh_esil_float_negcmp, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F<", sleigh_esil_float_less, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F<=", sleigh_esil_float_lesseq, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F+", sleigh_esil_float_add, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F-", sleigh_esil_float_sub, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F*", sleigh_esil_float_mul, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "F/", sleigh_esil_float_div, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "-F", sleigh_esil_float_neg, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "CEIL", sleigh_esil_float_ceil, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "FLOOR", sleigh_esil_float_floor, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "ROUND", sleigh_esil_float_round, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "SQRT", sleigh_esil_float_sqrt, 1, 1, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "SIGN", sleigh_esil_signext, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
+	rz_analysis_esil_set_op(esil, "POPCOUNT", sleigh_esil_popcount, 1, 2, RZ_ANAL_ESIL_OP_TYPE_CUSTOM);
 
 	return true;
 }
 
-static int esil_sleigh_fini(RzAnalEsil *esil)
+static int esil_sleigh_fini(RzAnalysisEsil *esil)
 {
 	float_mem.clear();
 	return true;
 }
 
-RzAnalPlugin rz_anal_plugin_ghidra = {
+RzAnalysisPlugin rz_analysis_plugin_ghidra = {
 	/* .name = */ "ghidra",
 	/* .desc = */ "SLEIGH Disassembler from Ghidra",
 	/* .license = */ "GPL3",
@@ -3282,7 +3282,7 @@ RzAnalPlugin rz_anal_plugin_ghidra = {
 	/* .init = */ nullptr,
 	/* .fini = */ nullptr,
 	/* .archinfo = */ &archinfo,
-	/* .anal_mask = */ nullptr,
+	/* .analysis_mask = */ nullptr,
 	/* .preludes = */ nullptr,
 	/* .op = */ &sleigh_op,
 	/* .cmd_ext = */ nullptr,
@@ -3305,7 +3305,7 @@ extern "C"
 #endif
 RZ_API RzLibStruct rizin_plugin = {
 	/* .type = */ RZ_LIB_TYPE_ANAL,
-	/* .data = */ &rz_anal_plugin_ghidra,
+	/* .data = */ &rz_analysis_plugin_ghidra,
 	/* .version = */ RZ_VERSION,
 	/* .free = */ nullptr
 #if RZ_VERSION_MAJOR >= 4 && RZ_VERSION_MINOR >= 2

@@ -37,7 +37,7 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n, std::set<std::string> &s
 {
 	RzCoreLock core(arch->getCore());
 
-	Sdb *sdb = core->anal->sdb_types;
+	Sdb *sdb = core->analysis->sdb_types;
 
 	// TODO: We REALLY need an API for this in r2
 
@@ -94,7 +94,7 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n, std::set<std::string> &s
 Datatype *R2TypeFactory::queryR2Enum(const string &n)
 {
 	RzCoreLock core(arch->getCore());
-	RzList *members = rz_type_get_enum(core->anal->sdb_types, n.c_str());
+	RzList *members = rz_type_get_enum(core->analysis->sdb_types, n.c_str());
 	if(!members)
 		return nullptr;
 
@@ -123,7 +123,7 @@ Datatype *R2TypeFactory::queryR2Enum(const string &n)
 Datatype *R2TypeFactory::queryR2Typedef(const string &n, std::set<std::string> &stackTypes)
 {
 	RzCoreLock core(arch->getCore());
-	Sdb *sdb = core->anal->sdb_types;
+	Sdb *sdb = core->analysis->sdb_types;
 	const char *target = sdb_const_get(sdb, ("typedef." + n).c_str(), nullptr);
 	if(!target)
 		return nullptr;
@@ -148,7 +148,7 @@ Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTy
 	stackTypes.insert(n);
 
 	RzCoreLock core(arch->getCore());
-	int kind = rz_type_kind(core->anal->sdb_types, n.c_str());
+	int kind = rz_type_kind(core->analysis->sdb_types, n.c_str());
 	switch(kind)
 	{
 		case RZ_TYPE_STRUCT:

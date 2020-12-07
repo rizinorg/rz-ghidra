@@ -5,19 +5,19 @@
 
 #include "SleighAsm.h"
 
-struct SleighAnalValue: public RzAnalValue
+struct SleighAnalValue: public RzAnalysisValue
 {
 public:
 	SleighAnalValue()
 	{
-		access = RzAnalValueAccess(0);
+		access = RzAnalysisValueAccess(0);
 		absolute = memref = base = delta = imm = mul = 0;
 		seg = reg = regdelta = nullptr;
 	}
 
-	static SleighAnalValue resolve_arg(RzAnal *anal, const PcodeOperand *arg);
+	static SleighAnalValue resolve_arg(RzAnalysis *analysis, const PcodeOperand *arg);
 
-	static std::vector<SleighAnalValue> resolve_out(RzAnal *anal,
+	static std::vector<SleighAnalValue> resolve_out(RzAnalysis *analysis,
                                            std::vector<Pcodeop>::const_iterator curr_op,
                                            std::vector<Pcodeop>::const_iterator end_op,
                                            const PcodeOperand *arg);
@@ -29,10 +29,10 @@ public:
 
 	void invalid() { absolute = -1; }
 	void mem(uint4 size);
-	RzAnalValue *dup() const;
+	RzAnalysisValue *dup() const;
 
 private:
-	static RzAnalValueType type_from_values(const SleighAnalValue &in0, const SleighAnalValue &in1);
+	static RzAnalysisValueType type_from_values(const SleighAnalValue &in0, const SleighAnalValue &in1);
 
 	template<typename T>
 	static inline T inner_max(T foo, T bar)
