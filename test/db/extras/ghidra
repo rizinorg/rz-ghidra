@@ -408,922 +408,922 @@ EXPECT=<<EOF
     },
     {
       "start": 68,
-      "end": 78,
+      "end": 79,
       "type": "offset",
       "offset": 4198782
     },
     {
       "start": 68,
-      "end": 78,
+      "end": 79,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 79,
-      "end": 85,
+      "start": 80,
+      "end": 86,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 79,
-      "end": 85,
+      "start": 80,
+      "end": 86,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 86,
-      "end": 88,
+      "start": 87,
+      "end": 89,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 86,
-      "end": 88,
+      "start": 87,
+      "end": 89,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 89,
-      "end": 94,
+      "start": 90,
+      "end": 95,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 89,
-      "end": 94,
+      "start": 90,
+      "end": 95,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 95,
-      "end": 99,
+      "start": 96,
+      "end": 100,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 95,
-      "end": 99,
+      "start": 96,
+      "end": 100,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 100,
-      "end": 103,
+      "start": 101,
+      "end": 104,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 100,
-      "end": 103,
+      "start": 101,
+      "end": 104,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 104,
-      "end": 107,
+      "start": 105,
+      "end": 108,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 104,
-      "end": 107,
+      "start": 105,
+      "end": 108,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 108,
-      "end": 116,
+      "start": 109,
+      "end": 117,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 108,
-      "end": 116,
+      "start": 109,
+      "end": 117,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 117,
-      "end": 121,
+      "start": 118,
+      "end": 122,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 117,
-      "end": 121,
+      "start": 118,
+      "end": 122,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 122,
-      "end": 124,
+      "start": 123,
+      "end": 125,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 122,
-      "end": 124,
+      "start": 123,
+      "end": 125,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 125,
-      "end": 135,
+      "start": 126,
+      "end": 136,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 125,
-      "end": 135,
+      "start": 126,
+      "end": 136,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 136,
-      "end": 141,
+      "start": 137,
+      "end": 142,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 136,
-      "end": 141,
+      "start": 137,
+      "end": 142,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 142,
-      "end": 149,
+      "start": 143,
+      "end": 150,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 142,
-      "end": 149,
+      "start": 143,
+      "end": 150,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 150,
-      "end": 154,
+      "start": 151,
+      "end": 155,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 150,
-      "end": 154,
+      "start": 151,
+      "end": 155,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 155,
-      "end": 165,
+      "start": 156,
+      "end": 166,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 155,
-      "end": 165,
+      "start": 156,
+      "end": 166,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 166,
-      "end": 169,
+      "start": 167,
+      "end": 170,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 166,
-      "end": 169,
+      "start": 167,
+      "end": 170,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 170,
-      "end": 173,
+      "start": 171,
+      "end": 174,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 170,
-      "end": 173,
+      "start": 171,
+      "end": 174,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 173,
-      "end": 181,
+      "start": 174,
+      "end": 182,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 173,
-      "end": 181,
+      "start": 174,
+      "end": 182,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 182,
-      "end": 192,
+      "start": 183,
+      "end": 194,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 182,
-      "end": 192,
+      "start": 183,
+      "end": 194,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 193,
-      "end": 201,
+      "start": 195,
+      "end": 203,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 193,
-      "end": 201,
+      "start": 195,
+      "end": 203,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 202,
-      "end": 209,
+      "start": 204,
+      "end": 211,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 202,
-      "end": 209,
+      "start": 204,
+      "end": 211,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 210,
-      "end": 213,
+      "start": 212,
+      "end": 215,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 210,
-      "end": 213,
+      "start": 212,
+      "end": 215,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 214,
-      "end": 222,
+      "start": 216,
+      "end": 224,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 214,
-      "end": 222,
+      "start": 216,
+      "end": 224,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 223,
-      "end": 230,
+      "start": 225,
+      "end": 232,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 223,
-      "end": 230,
+      "start": 225,
+      "end": 232,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 231,
-      "end": 234,
+      "start": 233,
+      "end": 236,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 231,
-      "end": 234,
+      "start": 233,
+      "end": 236,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 234,
-      "end": 242,
+      "start": 236,
+      "end": 244,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 234,
-      "end": 242,
+      "start": 236,
+      "end": 244,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 243,
-      "end": 253,
+      "start": 245,
+      "end": 256,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 243,
-      "end": 253,
+      "start": 245,
+      "end": 256,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 254,
-      "end": 262,
+      "start": 257,
+      "end": 265,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 254,
-      "end": 262,
+      "start": 257,
+      "end": 265,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 263,
-      "end": 270,
+      "start": 266,
+      "end": 273,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 263,
-      "end": 270,
+      "start": 266,
+      "end": 273,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 271,
-      "end": 274,
+      "start": 274,
+      "end": 277,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 271,
-      "end": 274,
+      "start": 274,
+      "end": 277,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 275,
-      "end": 283,
+      "start": 278,
+      "end": 286,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 275,
-      "end": 283,
+      "start": 278,
+      "end": 286,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 284,
-      "end": 290,
+      "start": 287,
+      "end": 293,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 284,
-      "end": 290,
+      "start": 287,
+      "end": 293,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 292,
-      "end": 302,
+      "start": 295,
+      "end": 305,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 303,
-      "end": 307,
+      "start": 306,
+      "end": 310,
       "type": "function_name",
       "name": "main",
       "offset": 4198782
     },
     {
-      "start": 303,
-      "end": 307,
+      "start": 306,
+      "end": 310,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 303,
-      "end": 307,
+      "start": 306,
+      "end": 310,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 308,
-      "end": 318,
+      "start": 311,
+      "end": 321,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 319,
-      "end": 323,
+      "start": 322,
+      "end": 326,
       "type": "function_parameter",
       "name": "argc"
     },
     {
-      "start": 319,
-      "end": 323,
+      "start": 322,
+      "end": 326,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 325,
-      "end": 329,
+      "start": 328,
+      "end": 332,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 332,
-      "end": 336,
+      "start": 335,
+      "end": 339,
       "type": "function_parameter",
       "name": "argv"
     },
     {
-      "start": 332,
-      "end": 336,
+      "start": 335,
+      "end": 339,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 344,
-      "end": 354,
+      "start": 347,
+      "end": 357,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 355,
-      "end": 360,
+      "start": 358,
+      "end": 363,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 355,
-      "end": 360,
+      "start": 358,
+      "end": 363,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 366,
-      "end": 373,
+      "start": 369,
+      "end": 376,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 374,
-      "end": 386,
+      "start": 377,
+      "end": 389,
       "type": "local_variable",
       "name": "in_FS_OFFSET"
     },
     {
-      "start": 374,
-      "end": 386,
+      "start": 377,
+      "end": 389,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 392,
-      "end": 399,
+      "start": 395,
+      "end": 402,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 400,
-      "end": 407,
+      "start": 403,
+      "end": 410,
       "type": "local_variable",
       "name": "var_30h"
     },
     {
-      "start": 400,
-      "end": 407,
+      "start": 403,
+      "end": 410,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 413,
-      "end": 420,
+      "start": 416,
+      "end": 423,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 421,
-      "end": 428,
+      "start": 424,
+      "end": 431,
       "type": "local_variable",
       "name": "var_24h"
     },
     {
-      "start": 421,
-      "end": 428,
+      "start": 424,
+      "end": 431,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 434,
-      "end": 441,
+      "start": 437,
+      "end": 444,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 442,
-      "end": 448,
+      "start": 445,
+      "end": 451,
       "type": "local_variable",
       "name": "var_8h"
     },
     {
-      "start": 442,
-      "end": 448,
+      "start": 445,
+      "end": 451,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 459,
-      "end": 465,
+      "start": 462,
+      "end": 468,
       "type": "local_variable",
       "name": "var_8h"
     },
     {
-      "start": 459,
-      "end": 465,
+      "start": 462,
+      "end": 468,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 466,
-      "end": 467,
+      "start": 469,
+      "end": 470,
       "type": "offset",
       "offset": 4198797
     },
     {
-      "start": 468,
-      "end": 469,
+      "start": 471,
+      "end": 472,
       "type": "offset",
       "offset": 4198797
     },
     {
-      "start": 470,
-      "end": 477,
+      "start": 473,
+      "end": 480,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 481,
-      "end": 493,
+      "start": 484,
+      "end": 496,
       "type": "local_variable",
       "name": "in_FS_OFFSET"
     },
     {
-      "start": 481,
-      "end": 493,
+      "start": 484,
+      "end": 496,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 494,
-      "end": 495,
+      "start": 497,
+      "end": 498,
       "type": "offset",
       "offset": 4198797
     },
     {
-      "start": 496,
-      "end": 500,
+      "start": 499,
+      "end": 503,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 459,
-      "end": 501,
+      "start": 462,
+      "end": 504,
       "type": "offset",
       "offset": 4198797
     },
     {
-      "start": 507,
-      "end": 514,
+      "start": 510,
+      "end": 517,
       "type": "local_variable",
       "name": "var_24h"
     },
     {
-      "start": 507,
-      "end": 514,
+      "start": 510,
+      "end": 517,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 514,
-      "end": 515,
-      "type": "offset",
-      "offset": 4198828
-    },
-    {
-      "start": 521,
-      "end": 522,
+      "start": 517,
+      "end": 518,
       "type": "offset",
       "offset": 4198828
     },
     {
       "start": 524,
-      "end": 534,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 535,
-      "end": 539,
-      "type": "function_parameter",
-      "name": "argc"
-    },
-    {
-      "start": 535,
-      "end": 539,
-      "type": "syntax_highlight",
-      "syntax_highlight": "function_parameter"
-    },
-    {
-      "start": 507,
-      "end": 539,
+      "end": 525,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 545,
-      "end": 558,
+      "start": 527,
+      "end": 537,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 538,
+      "end": 542,
+      "type": "function_parameter",
+      "name": "argc"
+    },
+    {
+      "start": 538,
+      "end": 542,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_parameter"
+    },
+    {
+      "start": 510,
+      "end": 542,
+      "type": "offset",
+      "offset": 4198828
+    },
+    {
+      "start": 548,
+      "end": 561,
       "type": "function_name",
       "name": "sym.Aeropause",
       "offset": 4199038
     },
     {
-      "start": 545,
-      "end": 558,
+      "start": 548,
+      "end": 561,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 560,
-      "end": 567,
+      "start": 563,
+      "end": 570,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 568,
-      "end": 569,
+      "start": 571,
+      "end": 572,
       "type": "offset",
       "offset": 4198819
     },
     {
-      "start": 569,
-      "end": 576,
+      "start": 572,
+      "end": 579,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 577,
-      "end": 578,
+      "start": 580,
+      "end": 581,
       "type": "offset",
       "offset": 4198819
     },
     {
-      "start": 579,
-      "end": 580,
+      "start": 582,
+      "end": 583,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 580,
-      "end": 582,
+      "start": 583,
+      "end": 585,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 583,
-      "end": 593,
+      "start": 586,
+      "end": 596,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 594,
-      "end": 598,
+      "start": 597,
+      "end": 601,
       "type": "function_parameter",
       "name": "argc"
     },
     {
-      "start": 594,
-      "end": 598,
+      "start": 597,
+      "end": 601,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 598,
-      "end": 600,
+      "start": 601,
+      "end": 603,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 600,
-      "end": 604,
+      "start": 603,
+      "end": 607,
       "type": "function_parameter",
       "name": "argv"
     },
     {
-      "start": 600,
-      "end": 604,
+      "start": 603,
+      "end": 607,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 604,
-      "end": 606,
+      "start": 607,
+      "end": 609,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 607,
-      "end": 617,
+      "start": 610,
+      "end": 620,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 618,
-      "end": 622,
+      "start": 621,
+      "end": 625,
       "type": "function_parameter",
       "name": "argc"
     },
     {
-      "start": 618,
-      "end": 622,
+      "start": 621,
+      "end": 625,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 545,
-      "end": 623,
+      "start": 548,
+      "end": 626,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 629,
-      "end": 634,
+      "start": 632,
+      "end": 637,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 629,
-      "end": 634,
+      "start": 632,
+      "end": 637,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 635,
-      "end": 636,
+      "start": 638,
+      "end": 639,
       "type": "offset",
       "offset": 4198833
     },
     {
-      "start": 637,
-      "end": 638,
+      "start": 640,
+      "end": 641,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 629,
-      "end": 638,
+      "start": 632,
+      "end": 641,
       "type": "offset",
       "offset": 4198833
     },
     {
-      "start": 644,
-      "end": 646,
+      "start": 647,
+      "end": 649,
       "type": "offset",
       "offset": 4198851
     },
     {
-      "start": 644,
-      "end": 646,
+      "start": 647,
+      "end": 649,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 648,
-      "end": 654,
+      "start": 651,
+      "end": 657,
       "type": "local_variable",
       "name": "var_8h"
     },
     {
-      "start": 648,
-      "end": 654,
+      "start": 651,
+      "end": 657,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 655,
-      "end": 657,
-      "type": "offset",
-      "offset": 4198842
-    },
-    {
       "start": 658,
-      "end": 659,
+      "end": 660,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 660,
-      "end": 667,
+      "start": 661,
+      "end": 662,
+      "type": "offset",
+      "offset": 4198842
+    },
+    {
+      "start": 663,
+      "end": 670,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 671,
-      "end": 683,
+      "start": 674,
+      "end": 686,
       "type": "local_variable",
       "name": "in_FS_OFFSET"
     },
     {
-      "start": 671,
-      "end": 683,
+      "start": 674,
+      "end": 686,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 684,
-      "end": 685,
+      "start": 687,
+      "end": 688,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 686,
-      "end": 690,
+      "start": 689,
+      "end": 693,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 703,
-      "end": 708,
+      "start": 706,
+      "end": 711,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 703,
-      "end": 708,
+      "start": 706,
+      "end": 711,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 709,
-      "end": 710,
+      "start": 712,
+      "end": 713,
       "type": "offset",
       "offset": 4198853
     },
     {
-      "start": 711,
-      "end": 735,
+      "start": 714,
+      "end": 738,
       "type": "function_name",
       "name": "sym.imp.__stack_chk_fail",
       "offset": 4198464
     },
     {
-      "start": 711,
-      "end": 735,
+      "start": 714,
+      "end": 738,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 703,
-      "end": 737,
+      "start": 706,
+      "end": 740,
       "type": "offset",
       "offset": 4198853
     },
     {
-      "start": 749,
-      "end": 755,
+      "start": 752,
+      "end": 758,
       "type": "offset",
       "offset": 4198859
     },
     {
-      "start": 749,
-      "end": 755,
+      "start": 752,
+      "end": 758,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 756,
-      "end": 761,
+      "start": 759,
+      "end": 764,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 756,
-      "end": 761,
+      "start": 759,
+      "end": 764,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 749,
-      "end": 761,
+      "start": 752,
+      "end": 764,
       "type": "offset",
       "offset": 4198859
     }
