@@ -1,4 +1,4 @@
-<!--<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="rz-ghidra-dec logo" src="https://raw.githubusercontent.com/rizinorg/rz-ghidra-dec/master/assets/logo.png">-->
+<img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="rz-ghidra logo" src="https://raw.githubusercontent.com/rizinorg/rz-ghidra/master/assets/logo.svg">
 
 # rz-ghidra
 
