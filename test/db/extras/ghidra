@@ -23,7 +23,7 @@ EOF
 RUN
 
 NAME=x86_32
-FILE=r2-testbins/elf/crackme0x05
+FILE=rizin-testbins/elf/crackme0x05
 EXPECT=<<EOF
 ghidra
 x86:LE:32:default:gcc
@@ -2114,8 +2114,8 @@ afvr rsi s2 const char * @ sym.imp.strcmp
 
 to bins/types.h
 # TODO: remove when parsed struct from r2 is correct
-k anal/types/struct.Bright.ambassador=enum Ambassador,16,0
-k anal/types/struct.Bright.window=struct Window,8,0
+k analysis/types/struct.Bright.ambassador=enum Ambassador,16,0
+k analysis/types/struct.Bright.window=struct Window,8,0
 
 s sym.Aeropause
 afvr rdi bright Bright *

@@ -3304,7 +3304,7 @@ RzAnalysisPlugin rz_analysis_plugin_ghidra = {
 extern "C"
 #endif
 RZ_API RzLibStruct rizin_plugin = {
-	/* .type = */ RZ_LIB_TYPE_ANAL,
+	/* .type = */ RZ_LIB_TYPE_ANALYSIS,
 	/* .data = */ &rz_analysis_plugin_ghidra,
 	/* .version = */ RZ_VERSION,
 	/* .free = */ nullptr

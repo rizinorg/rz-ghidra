@@ -218,8 +218,8 @@ e asm.cpu=v850
 e asm.bits=32
 e asm.arch=ghidra
 pdga
-e anal.arch
-e anal.cpu
+e analysis.arch
+e analysis.cpu
 wx e731
 ao 1
 EOF
@@ -253,8 +253,8 @@ e asm.cpu=v850
 e asm.bits=32
 e asm.arch=ghidra
 pdga
-e anal.arch
-e anal.cpu
+e analysis.arch
+e analysis.cpu
 wx 3d5f0500
 ao 1
 EOF
