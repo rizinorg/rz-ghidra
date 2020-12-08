@@ -7,7 +7,7 @@
 This is an integration of the Ghidra decompiler and Sleigh Disassembler for [rizin](https://github.com/rizinorg/rizin).
 It is solely based on the decompiler part of Ghidra, which is written entirely in
 C++, so Ghidra itself is not required at all and the plugin can be built self-contained.
-This project was presented, initially for rizin, at r2con 2019 as part of the Cutter talk: [https://youtu.be/eHtMiezr7l8?t=950](https://youtu.be/eHtMiezr7l8?t=950)
+This project was presented, initially for radare2, at r2con 2019 as part of the Cutter talk: [https://youtu.be/eHtMiezr7l8?t=950](https://youtu.be/eHtMiezr7l8?t=950)
 
 ## Installing
 
