@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "R2LoadImage.h"
-#include "R2Scope.h"
-#include "R2Architecture.h"
-#include "R2TypeFactory.h"
-#include "R2CommentDatabase.h"
-#include "R2Utils.h"
+#include "RizinLoadImage.h"
+#include "RizinScope.h"
+#include "RizinArchitecture.h"
+#include "RizinTypeFactory.h"
+#include "RizinCommentDatabase.h"
+#include "RizinUtils.h"
 #include "ArchMap.h"
 
 #include <funcdata.hh>
@@ -35,13 +35,13 @@ std::string FilenameFromCore(RzCore *core)
 	return std::string();
 }
 
-R2Architecture::R2Architecture(RzCore *core, const std::string &sleigh_id)
+RizinArchitecture::RizinArchitecture(RzCore *core, const std::string &sleigh_id)
 	: SleighArchitecture(FilenameFromCore(core), sleigh_id.empty() ? SleighIdFromCore(core) : sleigh_id, &cout),
 	coreMutex(core)
 {
 }
 
-ProtoModel *R2Architecture::protoModelFromR2CC(const char *cc)
+ProtoModel *RizinArchitecture::protoModelFromRizinCC(const char *cc)
 {
 	auto it = cc_map.find(cc);
 	if(it == cc_map.end())
@@ -65,7 +65,7 @@ static std::string lowercase(std::string str)
 	return str;
 }
 
-void R2Architecture::loadRegisters(const Translate *translate)
+void RizinArchitecture::loadRegisters(const Translate *translate)
 {
 	registers = {};
 	if(!translate)
@@ -83,7 +83,7 @@ void R2Architecture::loadRegisters(const Translate *translate)
 	}
 }
 
-Address R2Architecture::registerAddressFromR2Reg(const char *regname)
+Address RizinArchitecture::registerAddressFromRizinReg(const char *regname)
 {
 	loadRegisters(translate);
 	auto it = registers.find(regname);
@@ -94,19 +94,19 @@ Address R2Architecture::registerAddressFromR2Reg(const char *regname)
 	return it->second.getAddr();
 }
 
-Translate *R2Architecture::buildTranslator(DocumentStorage &store)
+Translate *RizinArchitecture::buildTranslator(DocumentStorage &store)
 {
 	Translate *ret = SleighArchitecture::buildTranslator(store);
 	loadRegisters(ret);
 	return ret;
 }
 
-ContextDatabase *R2Architecture::getContextDatabase()
+ContextDatabase *RizinArchitecture::getContextDatabase()
 {
 	return context;
 }
 
-void R2Architecture::postSpecFile()
+void RizinArchitecture::postSpecFile()
 {
 	RzCoreLock core(getCore());
 	rz_list_foreach_cpp<RzAnalysisFunction>(core->analysis->fcns, [&](RzAnalysisFunction *func) {
@@ -121,7 +121,7 @@ void R2Architecture::postSpecFile()
 	});
 }
 
-void R2Architecture::buildAction(DocumentStorage &store)
+void RizinArchitecture::buildAction(DocumentStorage &store)
 {
 	parseExtraRules(store);	// Look for any additional rules
 	allacts.universalAction(this);
@@ -134,27 +134,27 @@ void R2Architecture::buildAction(DocumentStorage &store)
 	}
 }
 
-void R2Architecture::buildLoader(DocumentStorage &store)
+void RizinArchitecture::buildLoader(DocumentStorage &store)
 {
 	RzCoreLock core(getCore());
 	collectSpecFiles(*errorstream);
-	loader = new R2LoadImage(getCore());
+	loader = new RizinLoadImage(getCore());
 }
 
-Scope *R2Architecture::buildGlobalScope()
+Scope *RizinArchitecture::buildGlobalScope()
 {
 	Scope *globalscope = symboltab->getGlobalScope();
 	if(globalscope)
 		return globalscope;
 
-	globalscope = new R2Scope(this);
+	globalscope = new RizinScope(this);
 	symboltab->attachScope(globalscope, nullptr);
 	return globalscope;
 }
 
-void R2Architecture::buildTypegrp(DocumentStorage &store)
+void RizinArchitecture::buildTypegrp(DocumentStorage &store)
 {
-	types = r2TypeFactory = new R2TypeFactory(this);
+	types = r2TypeFactory = new RizinTypeFactory(this);
 
 	// TODO: load from r2?
 	types->setCoreType("void", 1, TYPE_VOID, false);
@@ -180,7 +180,7 @@ void R2Architecture::buildTypegrp(DocumentStorage &store)
 	types->cacheCoreTypes();
 }
 
-void R2Architecture::buildCommentDB(DocumentStorage &store)
+void RizinArchitecture::buildCommentDB(DocumentStorage &store)
 {
-	commentdb = new R2CommentDatabase(this);
+	commentdb = new RizinCommentDatabase(this);
 }

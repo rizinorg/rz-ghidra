@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef RZ_GHIDRA_R2LOADIMAGE_H
-#define RZ_GHIDRA_R2LOADIMAGE_H
+#ifndef RZ_GHIDRA_RizinLOADIMAGE_H
+#define RZ_GHIDRA_RizinLOADIMAGE_H
 
 #include "loadimage.hh"
 
@@ -14,17 +14,17 @@
 
 class RzCoreMutex;
 
-class R2LoadImage : public LoadImage
+class RizinLoadImage : public LoadImage
 {
 	private:
 		RzCoreMutex *const coreMutex;
 
 	public:
-		explicit R2LoadImage(RzCoreMutex *coreMutex);
+		explicit RizinLoadImage(RzCoreMutex *coreMutex);
 
 		void loadFill(uint1 *ptr, int4 size, const Address &addr) override;
 		string getArchType() const override;
 		void adjustVma(long adjust) override;
 };
 
-#endif //RZ_GHIDRA_R2LOADIMAGE_H
+#endif //RZ_GHIDRA_RizinLOADIMAGE_H

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "R2Scope.h"
-#include "R2Architecture.h"
-#include "R2TypeFactory.h"
+#include "RizinScope.h"
+#include "RizinArchitecture.h"
+#include "RizinTypeFactory.h"
 
 #include <funcdata.hh>
 
@@ -10,21 +10,21 @@
 #include <rz_analysis.h>
 #include <rz_core.h>
 
-#include "R2Utils.h"
+#include "RizinUtils.h"
 
-R2Scope::R2Scope(R2Architecture *arch)
+RizinScope::RizinScope(RizinArchitecture *arch)
 		: Scope("", arch, this),
 		  arch(arch),
 		  cache(new ScopeInternal("rizin-internal", arch, this))
 {
 }
 
-R2Scope::~R2Scope()
+RizinScope::~RizinScope()
 {
 	delete cache;
 }
 
-Scope *R2Scope::buildSubScope(const string &nm)
+Scope *RizinScope::buildSubScope(const string &nm)
 {
 	return new ScopeInternal(nm, arch);
 }
@@ -92,7 +92,7 @@ static std::string to_string(const char *str)
 	return std::string(str ? str : "(null)");
 }
 
-FunctionSymbol *R2Scope::registerFunction(RzAnalysisFunction *fcn) const
+FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 {
 	RzCoreLock core(arch->getCore());
 
@@ -150,7 +150,7 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalysisFunction *fcn) const
 
 	auto symbollistElement = child(scopeElement, "symbollist");
 
-	ProtoModel *proto = fcn->cc ? arch->protoModelFromR2CC(fcn->cc) : nullptr;
+	ProtoModel *proto = fcn->cc ? arch->protoModelFromRizinCC(fcn->cc) : nullptr;
 	if(!proto)
 	{
 		if(fcn->cc)
@@ -190,7 +190,7 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalysisFunction *fcn) const
 					return Address();
 				}
 
-				auto ret = arch->registerAddressFromR2Reg(reg->name);
+				auto ret = arch->registerAddressFromRizinReg(reg->name);
 				if(ret.isInvalid() && warn_on_fail)
 					arch->addWarning("Failed to match register " + to_string(var->name) + " for arg " + to_string(var->name));
 
@@ -413,7 +413,7 @@ FunctionSymbol *R2Scope::registerFunction(RzAnalysisFunction *fcn) const
 	return dynamic_cast<FunctionSymbol *>(sym);
 }
 
-Symbol *R2Scope::registerFlag(RzFlagItem *flag) const
+Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 {
 	RzCoreLock core(arch->getCore());
 
@@ -445,7 +445,7 @@ Symbol *R2Scope::registerFlag(RzFlagItem *flag) const
 	return symbol;
 }
 
-Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
+Symbol *RizinScope::queryRizinAbsolute(ut64 addr, bool contain) const
 {
 	RzCoreLock core(arch->getCore());
 
@@ -483,14 +483,14 @@ Symbol *R2Scope::queryR2Absolute(ut64 addr, bool contain) const
 }
 
 
-Symbol *R2Scope::queryR2(const Address &addr, bool contain) const
+Symbol *RizinScope::queryR2(const Address &addr, bool contain) const
 {
 	if(addr.getSpace() == arch->getDefaultCodeSpace() || addr.getSpace() == arch->getDefaultDataSpace())
-		return queryR2Absolute(addr.getOffset(), contain);
+		return queryRizinAbsolute(addr.getOffset(), contain);
 	return nullptr;
 }
 
-LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
+LabSymbol *RizinScope::queryRizinFunctionLabel(const Address &addr) const
 {
 	RzCoreLock core(arch->getCore());
 
@@ -505,7 +505,7 @@ LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 	return cache->addCodeLabel(addr, label);
 }
 
-SymbolEntry *R2Scope::findAddr(const Address &addr, const Address &usepoint) const
+SymbolEntry *RizinScope::findAddr(const Address &addr, const Address &usepoint) const
 {
 	SymbolEntry *entry = cache->findAddr(addr,usepoint);
 	if(entry)
@@ -521,7 +521,7 @@ SymbolEntry *R2Scope::findAddr(const Address &addr, const Address &usepoint) con
 	return (entry && entry->getAddr() == addr) ? entry : nullptr;
 }
 
-SymbolEntry *R2Scope::findContainer(const Address &addr, int4 size, const Address &usepoint) const
+SymbolEntry *RizinScope::findContainer(const Address &addr, int4 size, const Address &usepoint) const
 {
 	SymbolEntry *entry = cache->findClosestFit(addr, size, usepoint);
 
@@ -542,7 +542,7 @@ SymbolEntry *R2Scope::findContainer(const Address &addr, int4 size, const Addres
 	return entry;
 }
 
-Funcdata *R2Scope::findFunction(const Address &addr) const
+Funcdata *RizinScope::findFunction(const Address &addr) const
 {
 	Funcdata *fd = cache->findFunction(addr);
 	if(fd)
@@ -561,7 +561,7 @@ Funcdata *R2Scope::findFunction(const Address &addr) const
 	return nullptr;
 }
 
-ExternRefSymbol *R2Scope::findExternalRef(const Address &addr) const
+ExternRefSymbol *RizinScope::findExternalRef(const Address &addr) const
 {
 	ExternRefSymbol *sym = cache->findExternalRef(addr);
 	if(sym)
@@ -575,7 +575,7 @@ ExternRefSymbol *R2Scope::findExternalRef(const Address &addr) const
 	return dynamic_cast<ExternRefSymbol *>(queryR2(addr, false));
 }
 
-LabSymbol *R2Scope::findCodeLabel(const Address &addr) const
+LabSymbol *RizinScope::findCodeLabel(const Address &addr) const
 {
 	LabSymbol *sym = cache->findCodeLabel(addr);
 	if(sym)
@@ -587,10 +587,10 @@ LabSymbol *R2Scope::findCodeLabel(const Address &addr) const
 	if(entry)
 		return nullptr;
 
-	return queryR2FunctionLabel(addr);
+	return queryRizinFunctionLabel(addr);
 }
 
-Funcdata *R2Scope::resolveExternalRefFunction(ExternRefSymbol *sym) const
+Funcdata *RizinScope::resolveExternalRefFunction(ExternRefSymbol *sym) const
 {
 	return queryFunction(sym->getRefAddr());
 }

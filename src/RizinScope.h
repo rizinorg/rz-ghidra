@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef RZ_GHIDRA_R2SCOPE_H
-#define RZ_GHIDRA_R2SCOPE_H
+#ifndef RZ_GHIDRA_RizinSCOPE_H
+#define RZ_GHIDRA_RizinSCOPE_H
 
 #include <database.hh>
 
@@ -12,21 +12,21 @@
 #undef LoadImage
 #endif
 
-class R2Architecture;
+class RizinArchitecture;
 typedef struct rz_analysis_function_t RzAnalysisFunction;
 typedef struct rz_flag_item_t RzFlagItem;
 
-class R2Scope : public Scope
+class RizinScope : public Scope
 {
 	private:
-		R2Architecture *arch;
+		RizinArchitecture *arch;
 		ScopeInternal *cache;
 
 		FunctionSymbol *registerFunction(RzAnalysisFunction *fcn) const;
 		Symbol *registerFlag(RzFlagItem *flag) const;
-		Symbol *queryR2Absolute(ut64 addr, bool contain) const;
+		Symbol *queryRizinAbsolute(ut64 addr, bool contain) const;
 		Symbol *queryR2(const Address &addr, bool contain) const;
-		LabSymbol *queryR2FunctionLabel(const Address &addr) const;
+		LabSymbol *queryRizinFunctionLabel(const Address &addr) const;
 
 	protected:
 		// TODO? void addRange(AddrSpace *spc,uintb first,uintb last) override;
@@ -36,8 +36,8 @@ class R2Scope : public Scope
 		SymbolEntry *addDynamicMapInternal(Symbol *sym, uint4 exfl, uint8 hash, int4 off, int4 sz, const RangeList &uselim) override { throw LowlevelError("addMap unimplemented"); }
 
 	public:
-		explicit R2Scope(R2Architecture *arch);
-		~R2Scope() override;
+		explicit RizinScope(RizinArchitecture *arch);
+		~RizinScope() override;
 
 		Scope *buildSubScope(const string &nm) override;
 		void clear(void) override										{ cache->clear(); }
@@ -84,4 +84,4 @@ class R2Scope : public Scope
 		void setCategory(Symbol *sym,int4 cat,int4 ind) override		{ throw LowlevelError("setCategory unimplemented"); }
 };
 
-#endif //RZ_GHIDRA_R2SCOPE_H
+#endif //RZ_GHIDRA_RizinSCOPE_H

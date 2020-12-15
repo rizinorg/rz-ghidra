@@ -279,7 +279,7 @@ public:
 
 class SleighInstruction;
 class SleighInstructionPrototype;
-class R2Sleigh : public Sleigh
+class RizinSleigh : public Sleigh
 {
 	// To export protected member functions to SleighInstructionPrototype
 	friend SleighInstructionPrototype;
@@ -293,8 +293,8 @@ private:
 	void generatePointer(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker);
 
 public:
-	R2Sleigh(LoadImage *ld, ContextDatabase *c_db): R2loader(ld), Sleigh(ld, c_db) {}
-	~R2Sleigh() { clearCache(); }
+	RizinSleigh(LoadImage *ld, ContextDatabase *c_db): R2loader(ld), Sleigh(ld, c_db) {}
+	~RizinSleigh() { clearCache(); }
 	
 	void reset(LoadImage *ld,ContextDatabase *c_db) { R2loader = ld; Sleigh::reset(ld, c_db); }
 	void reconstructContext(ParserContext &protoContext);
@@ -374,7 +374,7 @@ private:
 	bool hasCrossBuilds = false;
 	std::vector<FlowRecord *> flowStateList;
 	std::vector<std::vector<FlowRecord *>> flowStateListNamed;
-	R2Sleigh *sleigh = nullptr;
+	RizinSleigh *sleigh = nullptr;
 
 	FlowFlags gatherFlags(FlowFlags curflags, SleighInstruction *inst, int secnum);
 	void gatherFlows(std::vector<Address> &res, SleighInstruction *inst, int secnum);
@@ -402,7 +402,7 @@ public:
 	void cacheTreeInfo(); // It could be renamed to parse(), but keep original name to ease update
 	VarnodeData getIndirectInvar(SleighInstruction *ins);
 
-	SleighInstructionPrototype(R2Sleigh *s, SleighInstruction *i): sleigh(s), inst(i)
+	SleighInstructionPrototype(RizinSleigh *s, SleighInstruction *i): sleigh(s), inst(i)
 	{
 		if(sleigh == nullptr)
 			throw LowlevelError("Null pointer in SleighInstructionPrototype ctor");

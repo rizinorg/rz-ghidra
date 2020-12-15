@@ -29,22 +29,22 @@ add_subdirectory(third-party)
 
 set(CORE_SOURCE
 		src/core_ghidra.cpp
-		src/R2Architecture.cpp
-		src/R2Architecture.h
-		src/R2LoadImage.cpp
-		src/R2LoadImage.h
-		src/R2Scope.cpp
-		src/R2Scope.h
-		src/R2TypeFactory.cpp
-		src/R2TypeFactory.h
-		src/R2CommentDatabase.cpp
-		src/R2CommentDatabase.h
+		src/RizinArchitecture.cpp
+		src/RizinArchitecture.h
+		src/RizinLoadImage.cpp
+		src/RizinLoadImage.h
+		src/RizinScope.cpp
+		src/RizinScope.h
+		src/RizinTypeFactory.cpp
+		src/RizinTypeFactory.h
+		src/RizinCommentDatabase.cpp
+		src/RizinCommentDatabase.h
 		src/CodeXMLParse.h
 		src/CodeXMLParse.cpp
 		src/ArchMap.h
 		src/ArchMap.cpp
-		src/R2PrintC.h
-		src/R2PrintC.cpp
+		src/RizinPrintC.h
+		src/RizinPrintC.cpp
 		src/RzCoreMutex.h
 		src/RzCoreMutex.cpp
 		src/rz_ghidra.h)

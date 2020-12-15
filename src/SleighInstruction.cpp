@@ -2,7 +2,7 @@
 
 #include "SleighInstruction.h"
 
-SleighInstructionPrototype *R2Sleigh::getPrototype(SleighInstruction *context)
+SleighInstructionPrototype *RizinSleigh::getPrototype(SleighInstruction *context)
 {
 	SleighInstructionPrototype *new_proto = new SleighInstructionPrototype(this, context);
 	uint4 hash = new_proto->hashCode;
@@ -21,7 +21,7 @@ SleighInstructionPrototype *R2Sleigh::getPrototype(SleighInstruction *context)
 	return new_proto;
 }
 
-SleighInstruction *R2Sleigh::getInstruction(Address &addr)
+SleighInstruction *RizinSleigh::getInstruction(Address &addr)
 {
 	SleighInstruction *inst = nullptr;
 	/*
@@ -46,7 +46,7 @@ void SleighParserContext::setPrototype(SleighInstructionPrototype *p)
 	*getBaseState() = &prototype->rootState;
 }
 
-void R2Sleigh::reconstructContext(ParserContext &protoContext)
+void RizinSleigh::reconstructContext(ParserContext &protoContext)
 {
 	R2loader->loadFill(protoContext.getBuffer(), 16, protoContext.getAddr());
 	ParserWalkerChange walker(&protoContext);
@@ -80,7 +80,7 @@ void R2Sleigh::reconstructContext(ParserContext &protoContext)
 	protoContext.setParserState(ParserContext::disassembly);
 }
 
-SleighParserContext *R2Sleigh::getParserContext(Address &addr, SleighInstructionPrototype *proto)
+SleighParserContext *RizinSleigh::getParserContext(Address &addr, SleighInstructionPrototype *proto)
 {
 	SleighParserContext *pos = newSleighParserContext(addr, proto);
 	reconstructContext(*pos);
@@ -89,7 +89,7 @@ SleighParserContext *R2Sleigh::getParserContext(Address &addr, SleighInstruction
 	return pos;
 }
 
-SleighParserContext *R2Sleigh::newSleighParserContext(Address &addr, SleighInstructionPrototype *proto)
+SleighParserContext *RizinSleigh::newSleighParserContext(Address &addr, SleighInstructionPrototype *proto)
 {
 	SleighParserContext *pos = new SleighParserContext(getContextCache());
 	pos->initialize(1, 0, getConstantSpace());
@@ -100,7 +100,7 @@ SleighParserContext *R2Sleigh::newSleighParserContext(Address &addr, SleighInstr
 	return pos;
 }
 
-void R2Sleigh::resolve(SleighParserContext &pos) const
+void RizinSleigh::resolve(SleighParserContext &pos) const
 {				// Resolve ALL the constructors involved in the
 				// instruction at this address
 	R2loader->loadFill(pos.getBuffer(), 16, pos.getAddr());
@@ -157,7 +157,7 @@ void R2Sleigh::resolve(SleighParserContext &pos) const
 	pos.setParserState(ParserContext::disassembly);
 }
 
-void R2Sleigh::generateLocation(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker)
+void RizinSleigh::generateLocation(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker)
 {
 	vn.space = vntpl->getSpace().fixSpace(walker);
 	vn.size = vntpl->getSize().fix(walker);
@@ -172,7 +172,7 @@ void R2Sleigh::generateLocation(const VarnodeTpl *vntpl, VarnodeData &vn, Parser
 		vn.offset = vn.space->wrapOffset(vntpl->getOffset().fix(walker));
 }
 
-void R2Sleigh::generatePointer(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker)
+void RizinSleigh::generatePointer(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker)
 {
 	const FixedHandle &hand(walker.getFixedHandle(vntpl->getOffset().getHandleIndex()));
 	vn.space = hand.offset_space;
@@ -185,7 +185,7 @@ void R2Sleigh::generatePointer(const VarnodeTpl *vntpl, VarnodeData &vn, ParserW
 		vn.offset = vn.space->wrapOffset(hand.offset_offset);
 }
 
-VarnodeData R2Sleigh::dumpInvar(OpTpl *op, Address &addr)
+VarnodeData RizinSleigh::dumpInvar(OpTpl *op, Address &addr)
 {
 	ParserContext *pos = obtainContext(addr, ParserContext::pcode);
 	pos->applyCommits();
@@ -608,7 +608,7 @@ int SleighInstructionPrototype::getFallThroughOffset(SleighInstruction *inst)
 	return offset;
 }
 
-void R2Sleigh::clearCache()
+void RizinSleigh::clearCache()
 {
 	ins_cache.clear();
 	for(auto p = proto_cache.begin(); p != proto_cache.end(); ++p)

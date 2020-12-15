@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "R2PrintC.h"
+#include "RizinPrintC.h"
 
 #include <varnode.hh>
 #include <architecture.hh>
 
 // Constructing this registers the capability
-R2PrintCCapability R2PrintCCapability::inst;
+RizinPrintCCapability RizinPrintCCapability::inst;
 
-R2PrintCCapability::R2PrintCCapability(void)
+RizinPrintCCapability::RizinPrintCCapability(void)
 {
 	name = "r2-c-language";
 	isdefault = false;
 }
 
-PrintLanguage *R2PrintCCapability::buildLanguage(Architecture *glb)
+PrintLanguage *RizinPrintCCapability::buildLanguage(Architecture *glb)
 {
-	return new R2PrintC(glb, name);
+	return new RizinPrintC(glb, name);
 }
 
-R2PrintC::R2PrintC(Architecture *g, const string &nm)
+RizinPrintC::RizinPrintC(Architecture *g, const string &nm)
 	: PrintC(g, nm)
 {
 }
 
-void R2PrintC::pushUnnamedLocation(const Address &addr, const Varnode *vn, const PcodeOp *op)
+void RizinPrintC::pushUnnamedLocation(const Address &addr, const Varnode *vn, const PcodeOp *op)
 {
 	// print (*(type *)0x0000...) instead of ram00000...
 	AddrSpace *space = addr.getSpace();

@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef RZ_GHIDRA_R2ARCHITECTURE_H
-#define RZ_GHIDRA_R2ARCHITECTURE_H
+#ifndef RZ_GHIDRA_RizinARCHITECTURE_H
+#define RZ_GHIDRA_RizinARCHITECTURE_H
 
 #include "architecture.hh"
 #include "sleigh_arch.hh"
 
 #include "RzCoreMutex.h"
 
-class R2TypeFactory;
+class RizinTypeFactory;
 typedef struct rz_core_t RzCore;
 
-class R2Architecture : public SleighArchitecture
+class RizinArchitecture : public SleighArchitecture
 {
 	private:
 		RzCoreMutex coreMutex;
 
-		R2TypeFactory *r2TypeFactory = nullptr;
+		RizinTypeFactory *r2TypeFactory = nullptr;
 		std::map<std::string, VarnodeData> registers;
 		std::vector<std::string> warnings;
 
@@ -25,14 +25,14 @@ class R2Architecture : public SleighArchitecture
 		void loadRegisters(const Translate *translate);
 
 	public:
-		explicit R2Architecture(RzCore *core, const std::string &sleigh_id);
+		explicit RizinArchitecture(RzCore *core, const std::string &sleigh_id);
 
 		RzCoreMutex *getCore() { return &coreMutex; }
 
-		R2TypeFactory *getTypeFactory() const { return r2TypeFactory; }
+		RizinTypeFactory *getTypeFactory() const { return r2TypeFactory; }
 
-		ProtoModel *protoModelFromR2CC(const char *cc);
-		Address registerAddressFromR2Reg(const char *regname);
+		ProtoModel *protoModelFromRizinCC(const char *cc);
+		Address registerAddressFromRizinReg(const char *regname);
 
 		void addWarning(const std::string &warning)	{ warnings.push_back(warning); }
 		const std::vector<std::string> getWarnings() const { return warnings; }
@@ -51,4 +51,4 @@ class R2Architecture : public SleighArchitecture
 };
 
 
-#endif //RZ_GHIDRA_R2ARCHITECTURE_H
+#endif //RZ_GHIDRA_RizinARCHITECTURE_H

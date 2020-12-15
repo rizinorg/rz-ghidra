@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef R2GHIDRA_R2GHIDRADECOMPILER_H
-#define R2GHIDRA_R2GHIDRADECOMPILER_H
+#ifndef RZ_GHIDRA_RZ_GHIDRADECOMPILER_H
+#define RZ_GHIDRA_RZ_GHIDRADECOMPILER_H
 
 #include "Decompiler.h"
-#include "R2Task.h"
+#include "RizinTask.h"
 
 class RzGhidraDecompiler: public Decompiler
 {
@@ -18,4 +18,4 @@ class RzGhidraDecompiler: public Decompiler
 		bool isRunning() override				{ return task == DecompilerRunning; }
 };
 
-#endif //R2GHIDRA_R2GHIDRADECOMPILER_H
+#endif //RZ_GHIDRA_RZ_GHIDRADECOMPILER_H

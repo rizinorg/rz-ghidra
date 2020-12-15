@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "R2Architecture.h"
+#include "RizinArchitecture.h"
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
 #include "rz_ghidra.h"
@@ -139,7 +139,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	RzAnalysisFunction *function = rz_analysis_get_fcn_in(core->analysis, addr, RZ_ANALYSIS_FCN_TYPE_NULL);
 	if(!function)
 		throw LowlevelError("No function at this offset");
-	R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
+	RizinArchitecture arch(core, cfg_var_sleighid.GetString(core->config));
 	DocumentStorage store;
 	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 	arch.init(store);
@@ -420,7 +420,7 @@ static void Disassemble(RzCore *core, ut64 ops)
 	if(!ops)
 		ops = 10; // random default value
 
-	R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
+	RizinArchitecture arch(core, cfg_var_sleighid.GetString(core->config));
 	DocumentStorage store;
 	arch.init(store);
 
