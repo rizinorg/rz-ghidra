@@ -498,11 +498,7 @@ LabSymbol *R2Scope::queryR2FunctionLabel(const Address &addr) const
 	if(!fcn)
 		return nullptr;
 
-#if RZ_VERSION_MAJOR < 4 || RZ_VERSION_MINOR < 6
-	const char *label = rz_analysis_fcn_label_at(core->analysis, fcn, addr.getOffset());
-#else
 	const char *label = rz_analysis_function_get_label_at(fcn, addr.getOffset());
-#endif
 	if(!label)
 		return nullptr;
 

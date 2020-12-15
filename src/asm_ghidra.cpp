@@ -89,9 +89,7 @@ RZ_API RzLibStruct rizin_plugin = {
 	/* .type = */ RZ_LIB_TYPE_ASM,
 	/* .data = */ &rz_asm_plugin_ghidra,
 	/* .version = */ RZ_VERSION,
-	/* .free = */ nullptr
-#if RZ_VERSION_MAJOR >= 4 && RZ_VERSION_MINOR >= 2
-	, "rz-ghidra"
-#endif
+	/* .free = */ nullptr,
+	/* .pkgname = */ "rz-ghidra"
 };
 #endif
