@@ -7,3 +7,4 @@ ghidra/flex/
 .vscode
 .ccls-cache
 .gdb_history
+.cache/
