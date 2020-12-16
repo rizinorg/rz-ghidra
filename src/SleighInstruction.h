@@ -285,7 +285,7 @@ class RizinSleigh : public Sleigh
 	friend SleighInstructionPrototype;
 
 private:
-	LoadImage *R2loader = nullptr;
+	LoadImage *rizin_loader = nullptr;
 	mutable LRUCache<uintm, SleighInstruction *> ins_cache;
 	mutable unordered_map<uint4, SleighInstructionPrototype *> proto_cache;
 
@@ -293,10 +293,10 @@ private:
 	void generatePointer(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker);
 
 public:
-	RizinSleigh(LoadImage *ld, ContextDatabase *c_db): R2loader(ld), Sleigh(ld, c_db) {}
+	RizinSleigh(LoadImage *ld, ContextDatabase *c_db): rizin_loader(ld), Sleigh(ld, c_db) {}
 	~RizinSleigh() { clearCache(); }
-	
-	void reset(LoadImage *ld,ContextDatabase *c_db) { R2loader = ld; Sleigh::reset(ld, c_db); }
+
+	void reset(LoadImage *ld,ContextDatabase *c_db) { rizin_loader = ld; Sleigh::reset(ld, c_db); }
 	void reconstructContext(ParserContext &protoContext);
 	SleighParserContext *newSleighParserContext(Address &addr, SleighInstructionPrototype *proto);
 	SleighParserContext *getParserContext(Address &addr, SleighInstructionPrototype *proto);

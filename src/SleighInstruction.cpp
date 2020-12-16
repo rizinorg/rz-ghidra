@@ -48,7 +48,7 @@ void SleighParserContext::setPrototype(SleighInstructionPrototype *p)
 
 void RizinSleigh::reconstructContext(ParserContext &protoContext)
 {
-	R2loader->loadFill(protoContext.getBuffer(), 16, protoContext.getAddr());
+	rizin_loader->loadFill(protoContext.getBuffer(), 16, protoContext.getAddr());
 	ParserWalkerChange walker(&protoContext);
 	protoContext.deallocateState(walker);	// Clear the previous resolve and initialize the walker
 	protoContext.setDelaySlot(0);
@@ -103,7 +103,7 @@ SleighParserContext *RizinSleigh::newSleighParserContext(Address &addr, SleighIn
 void RizinSleigh::resolve(SleighParserContext &pos) const
 {				// Resolve ALL the constructors involved in the
 				// instruction at this address
-	R2loader->loadFill(pos.getBuffer(), 16, pos.getAddr());
+	rizin_loader->loadFill(pos.getBuffer(), 16, pos.getAddr());
 	SleighParserWalker walker(&pos);
 	pos.deallocateState(walker);	// Clear the previous resolve and initialize the walker
 	Constructor *ct, *subct;

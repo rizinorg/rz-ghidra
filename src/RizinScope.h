@@ -25,7 +25,7 @@ class RizinScope : public Scope
 		FunctionSymbol *registerFunction(RzAnalysisFunction *fcn) const;
 		Symbol *registerFlag(RzFlagItem *flag) const;
 		Symbol *queryRizinAbsolute(ut64 addr, bool contain) const;
-		Symbol *queryR2(const Address &addr, bool contain) const;
+		Symbol *queryRizin(const Address &addr, bool contain) const;
 		LabSymbol *queryRizinFunctionLabel(const Address &addr) const;
 
 	protected:
