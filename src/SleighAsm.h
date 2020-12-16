@@ -198,14 +198,14 @@ public:
 	}
 };
 
-struct R2Reg
+struct RzReg
 {
 	std::string name;
 	ut64 size;
 	ut64 offset;
 };
 
-class R2Sleigh;
+class RzSleigh;
 
 class SleighAsm
 {
@@ -229,7 +229,7 @@ private:
 	void loadLanguageDescription(const string &specfile);
 
 public:
-	R2Sleigh trans;
+	RzSleigh trans;
 	std::string sleigh_id;
 	int alignment = 1;
 	std::string pc_name;
@@ -243,7 +243,7 @@ public:
 	void init(const char *cpu, int bits, bool bigendian, RzIO *io, RzConfig *cfg);
 	int disassemble(RzAsmOp *op, unsigned long long offset);
 	int genOpcode(PcodeSlg &pcode_slg, Address &addr);
-	std::vector<R2Reg> getRegs(void);
+	std::vector<RzReg> getRegs(void);
 	static RzConfig *getConfig(RzAsm *a);
 	static RzConfig *getConfig(RzAnalysis *a);
 	void check(ut64 offset, const ut8 *buf, int len);

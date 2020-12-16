@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef RZ_GHIDRA_R2COMMENTDATABASE_H
-#define RZ_GHIDRA_R2COMMENTDATABASE_H
+#ifndef RZ_GHIDRA_RZCOMMENTDATABASE_H
+#define RZ_GHIDRA_RZCOMMENTDATABASE_H
 
 #include <comment.hh>
 
-class R2Architecture;
+class RzArchitecture;
 
-class R2CommentDatabase : public CommentDatabase
+class RzCommentDatabase : public CommentDatabase
 {
-		R2Architecture *arch;
+		RzArchitecture *arch;
 		mutable CommentDatabaseInternal cache;
 		mutable bool cache_filled;
 		void fillCache(const Address &fad) const;
 
 	public:
-		R2CommentDatabase(R2Architecture *arch);
+		RzCommentDatabase(RzArchitecture *arch);
 
 		void clear() override;
 		void clearType(const Address &fad, uint4 tp) override;
@@ -32,4 +32,4 @@ class R2CommentDatabase : public CommentDatabase
 		void restoreXml(const Element *el, const AddrSpaceManager *trans) override { throw LowlevelError("commentdb::restoreXml unimplemented"); }
 };
 
-#endif //RZ_GHIDRA_R2COMMENTDATABASE_H
+#endif //RZ_GHIDRA_RZCOMMENTDATABASE_H

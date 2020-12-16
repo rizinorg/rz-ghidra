@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "R2CommentDatabase.h"
-#include "R2Architecture.h"
+#include "RzCommentDatabase.h"
+#include "RzArchitecture.h"
 
 #include <rz_core.h>
 
-#include "R2Utils.h"
+#include "RzUtils.h"
 
-R2CommentDatabase::R2CommentDatabase(R2Architecture *arch)
+RzCommentDatabase::RzCommentDatabase(RzArchitecture *arch)
 	: arch(arch),
 	cache_filled(false)
 {
 }
 
-void R2CommentDatabase::fillCache(const Address &fad) const
+void RzCommentDatabase::fillCache(const Address &fad) const
 {
 	RzCoreLock core(arch->getCore());
 
@@ -39,34 +39,34 @@ void R2CommentDatabase::fillCache(const Address &fad) const
 	cache_filled = true;
 }
 
-void R2CommentDatabase::clear()
+void RzCommentDatabase::clear()
 {
 	cache.clear();
 	cache_filled = false;
 }
 
-void R2CommentDatabase::clearType(const Address &fad, uint4 tp)
+void RzCommentDatabase::clearType(const Address &fad, uint4 tp)
 {
 	cache.clearType(fad, tp);
 }
 
-void R2CommentDatabase::addComment(uint4 tp, const Address &fad, const Address &ad, const string &txt)
+void RzCommentDatabase::addComment(uint4 tp, const Address &fad, const Address &ad, const string &txt)
 {
 	cache.addComment(tp, fad, ad, txt);
 }
 
-bool R2CommentDatabase::addCommentNoDuplicate(uint4 tp, const Address &fad, const Address &ad, const string &txt)
+bool RzCommentDatabase::addCommentNoDuplicate(uint4 tp, const Address &fad, const Address &ad, const string &txt)
 {
 	return cache.addCommentNoDuplicate(tp, fad, ad, txt);
 }
 
-CommentSet::const_iterator R2CommentDatabase::beginComment(const Address &fad) const
+CommentSet::const_iterator RzCommentDatabase::beginComment(const Address &fad) const
 {
 	fillCache(fad);
 	return cache.beginComment(fad);
 }
 
-CommentSet::const_iterator R2CommentDatabase::endComment(const Address &fad) const
+CommentSet::const_iterator RzCommentDatabase::endComment(const Address &fad) const
 {
 	return cache.endComment(fad);
 }

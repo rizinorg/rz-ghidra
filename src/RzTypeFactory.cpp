@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "R2TypeFactory.h"
-#include "R2Architecture.h"
+#include "RzTypeFactory.h"
+#include "RzArchitecture.h"
 
 #include <rz_parse.h>
 #include <rz_core.h>
 
-#include "R2Utils.h"
+#include "RzUtils.h"
 
-R2TypeFactory::R2TypeFactory(R2Architecture *arch)
+RzTypeFactory::RzTypeFactory(RzArchitecture *arch)
 	: TypeFactory(arch),
 	arch(arch)
 {
@@ -17,7 +17,7 @@ R2TypeFactory::R2TypeFactory(R2Architecture *arch)
 		throw LowlevelError("Failed to create RParseCType");
 }
 
-R2TypeFactory::~R2TypeFactory()
+RzTypeFactory::~RzTypeFactory()
 {
 	rz_parse_ctype_free(ctype);
 }
@@ -33,13 +33,13 @@ std::vector<std::string> splitSdbArray(const std::string& str)
 	return r;
 }
 
-Datatype *R2TypeFactory::queryR2Struct(const string &n, std::set<std::string> &stackTypes)
+Datatype *RzTypeFactory::queryRizinStruct(const string &n, std::set<std::string> &stackTypes)
 {
 	RzCoreLock core(arch->getCore());
 
 	Sdb *sdb = core->analysis->sdb_types;
 
-	// TODO: We REALLY need an API for this in r2
+	// TODO: We REALLY need an API for this in rizin
 
 	const char *members = sdb_const_get(sdb, ("struct." + n).c_str(), nullptr);
 	if(!members)
@@ -91,7 +91,7 @@ Datatype *R2TypeFactory::queryR2Struct(const string &n, std::set<std::string> &s
 	}
 }
 
-Datatype *R2TypeFactory::queryR2Enum(const string &n)
+Datatype *RzTypeFactory::queryRizinEnum(const string &n)
 {
 	RzCoreLock core(arch->getCore());
 	RzList *members = rz_type_get_enum(core->analysis->sdb_types, n.c_str());
@@ -108,7 +108,7 @@ Datatype *R2TypeFactory::queryR2Enum(const string &n)
 		uintb val = std::stoull(member->val, nullptr, 0);
 		namelist.push_back(member->name);
 		vallist.push_back(val);
-		assignlist.push_back(true); // all enum values from r2 have explicit values
+		assignlist.push_back(true); // all enum values from rizin have explicit values
 	});
 	rz_list_free (members);
 
@@ -120,7 +120,7 @@ Datatype *R2TypeFactory::queryR2Enum(const string &n)
 	return enumType;
 }
 
-Datatype *R2TypeFactory::queryR2Typedef(const string &n, std::set<std::string> &stackTypes)
+Datatype *RzTypeFactory::queryRzTypedef(const string &n, std::set<std::string> &stackTypes)
 {
 	RzCoreLock core(arch->getCore());
 	Sdb *sdb = core->analysis->sdb_types;
@@ -138,7 +138,7 @@ Datatype *R2TypeFactory::queryR2Typedef(const string &n, std::set<std::string> &
 	return typedefd;
 }
 
-Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTypes)
+Datatype *RzTypeFactory::queryRizin(const string &n, std::set<std::string> &stackTypes)
 {
 	if(stackTypes.find(n) != stackTypes.end())
 	{
@@ -152,31 +152,31 @@ Datatype *R2TypeFactory::queryR2(const string &n, std::set<std::string> &stackTy
 	switch(kind)
 	{
 		case RZ_TYPE_STRUCT:
-			return queryR2Struct(n, stackTypes);
+			return queryRizinStruct(n, stackTypes);
 		case RZ_TYPE_ENUM:
-			return queryR2Enum(n);
+			return queryRizinEnum(n);
 		case RZ_TYPE_TYPEDEF:
-			return queryR2Typedef(n, stackTypes);
+			return queryRzTypedef(n, stackTypes);
 		default:
 			return nullptr;
 	}
 }
 
-Datatype *R2TypeFactory::findById(const string &n, uint8 id, std::set<std::string> &stackTypes)
+Datatype *RzTypeFactory::findById(const string &n, uint8 id, std::set<std::string> &stackTypes)
 {
 	Datatype *r = TypeFactory::findById(n, id);
 	if(r)
 		return r;
-	return queryR2(n, stackTypes);
+	return queryRizin(n, stackTypes);
 }
 
-Datatype *R2TypeFactory::findById(const string &n, uint8 id)
+Datatype *RzTypeFactory::findById(const string &n, uint8 id)
 {
 	std::set<std::string> stackTypes; // to detect recursion
 	return findById(n, id, stackTypes);
 }
 
-Datatype *R2TypeFactory::fromCString(const string &str, string *error, std::set<std::string> *stackTypes)
+Datatype *RzTypeFactory::fromCString(const string &str, string *error, std::set<std::string> *stackTypes)
 {
 	char *error_cstr = nullptr;
 	RParseCTypeType *type = rz_parse_ctype_parse(ctype, str.c_str(), &error_cstr);
@@ -190,7 +190,7 @@ Datatype *R2TypeFactory::fromCString(const string &str, string *error, std::set<
 	return r;
 }
 
-Datatype *R2TypeFactory::fromCType(const RParseCTypeType *ctype, string *error, std::set<std::string> *stackTypes)
+Datatype *RzTypeFactory::fromCType(const RParseCTypeType *ctype, string *error, std::set<std::string> *stackTypes)
 {
 	switch(ctype->kind)
 	{

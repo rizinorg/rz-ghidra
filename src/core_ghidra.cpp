@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "R2Architecture.h"
+#include "RzArchitecture.h"
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
 #include "rz_ghidra.h"
@@ -101,7 +101,7 @@ static void PrintUsage(const RzCore *const core)
 		CMD_PREFIX"ss", "", "# Display automatically matched Sleigh Language ID",
 		CMD_PREFIX"sd", " N", "# Disassemble N instructions with Sleigh and print pcode",
 		CMD_PREFIX"a", "", "# Switch to RzAsm and RzAnalysis plugins driven by SLEIGH from Ghidra",
-		CMD_PREFIX"*",  "", "# Decompiled code is returned to r2 as comment",
+		CMD_PREFIX"*",  "", "# Decompiled code is returned to rizin as comment",
 		"Environment:", "", "",
 		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
 		NULL
@@ -139,13 +139,13 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	RzAnalysisFunction *function = rz_analysis_get_fcn_in(core->analysis, addr, RZ_ANALYSIS_FCN_TYPE_NULL);
 	if(!function)
 		throw LowlevelError("No function at this offset");
-	R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
+	RzArchitecture arch(core, cfg_var_sleighid.GetString(core->config));
 	DocumentStorage store;
 	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 	arch.init(store);
 	Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
 	arch.print->setOutputStream(&out_stream);
-	arch.setPrintLanguage("r2-c-language");
+	arch.setPrintLanguage("rizin-c-language");
 	ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
 	if(!func)
 		throw LowlevelError("No function in Scope");
@@ -420,7 +420,7 @@ static void Disassemble(RzCore *core, ut64 ops)
 	if(!ops)
 		ops = 10; // random default value
 
-	R2Architecture arch(core, cfg_var_sleighid.GetString(core->config));
+	RzArchitecture arch(core, cfg_var_sleighid.GetString(core->config));
 	DocumentStorage store;
 	arch.init(store);
 
@@ -577,7 +577,7 @@ static void SetInitialSleighHome(RzConfig *cfg)
 	}
 #endif
 
-	// r2pm-installed ghidra
+	// rz-pm-installed ghidra
 	char *homepath = rz_str_home(".local/share/rizin/rz-pm/git/ghidra");
 	if(homepath && rz_file_is_directory(homepath))
 	{

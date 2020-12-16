@@ -1,25 +1,25 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef RZ_GHIDRA_R2TYPEFACTORY_H
-#define RZ_GHIDRA_R2TYPEFACTORY_H
+#ifndef RZ_GHIDRA_RZTYPEFACTORY_H
+#define RZ_GHIDRA_RZTYPEFACTORY_H
 
 #include <type.hh>
 
 typedef struct rz_parse_ctype_t RParseCType;
 typedef struct rz_parse_ctype_type_t RParseCTypeType;
 
-class R2Architecture;
+class RzArchitecture;
 
-class R2TypeFactory : public TypeFactory
+class RzTypeFactory : public TypeFactory
 {
 	private:
-		R2Architecture *arch;
+		RzArchitecture *arch;
 		RParseCType *ctype;
 
-		Datatype *queryR2Struct(const string &n, std::set<std::string> &stackTypes);
-		Datatype *queryR2Enum(const string &n);
-		Datatype *queryR2Typedef(const string &n, std::set<std::string> &stackTypes);
-		Datatype *queryR2(const string &n, std::set<std::string> &stackTypes);
+		Datatype *queryRizinStruct(const string &n, std::set<std::string> &stackTypes);
+		Datatype *queryRizinEnum(const string &n);
+		Datatype *queryRzTypedef(const string &n, std::set<std::string> &stackTypes);
+		Datatype *queryRizin(const string &n, std::set<std::string> &stackTypes);
 
 	protected:
 		Datatype *findById(const string &n, uint8 id) override;
@@ -28,11 +28,11 @@ class R2TypeFactory : public TypeFactory
 		Datatype *findByName(const string &n, std::set<std::string> &stackTypes) { return findById(n, 0, stackTypes); }
 
 	public:
-		R2TypeFactory(R2Architecture *arch);
-		~R2TypeFactory() override;
+		RzTypeFactory(RzArchitecture *arch);
+		~RzTypeFactory() override;
 
 		Datatype *fromCString(const string &str, string *error = nullptr, std::set<std::string> *stackTypes = nullptr);
 		Datatype *fromCType(const RParseCTypeType *ctype, string *error = nullptr, std::set<std::string> *stackTypes = nullptr);
 };
 
-#endif //RZ_GHIDRA_R2TYPEFACTORY_H
+#endif //RZ_GHIDRA_RZTYPEFACTORY_H

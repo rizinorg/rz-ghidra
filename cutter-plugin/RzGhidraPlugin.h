@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef R2GHIDRAPLUGIN_H
-#define R2GHIDRAPLUGIN_H
+#ifndef RZGHIDRAPLUGIN_H
+#define RZGHIDRAPLUGIN_H
 
 #include <QObject>
 #include <QtPlugin>

@@ -6,7 +6,7 @@
 typedef struct rz_core_t RzCore;
 
 /**
- * Maintains sleep/awake state of the current r2 task like a recursive mutex
+ * Maintains sleep/awake state of the current rizin task like a recursive mutex
  * Use with RzCoreLock for RAII behavior
  */
 class RzCoreMutex

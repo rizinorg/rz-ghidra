@@ -439,7 +439,7 @@ std::string SleighAsm::getSleighHome(RzConfig *cfg)
 	}
 #endif
 
-	path = rz_str_home(".local/share/rizin/r2pm/git/ghidra");
+	path = rz_str_home(".local/share/rizin/rzpm/git/ghidra");
 	if(rz_file_is_directory(path))
 	{
 		if(cfg)
@@ -524,10 +524,10 @@ void SleighAsm::initRegMapping(void)
 	}
 }
 
-std::vector<R2Reg> SleighAsm::getRegs(void)
+std::vector<RzReg> SleighAsm::getRegs(void)
 {
 	std::map<VarnodeData, std::string> reglist;
-	std::vector<R2Reg> r2_reglist;
+	std::vector<RzReg> rz_reglist;
 	trans.getAllRegisters(reglist);
 
 	size_t offset = 0, offset_last = reglist.begin()->first.size;
@@ -543,11 +543,11 @@ std::vector<R2Reg> SleighAsm::getRegs(void)
 			sleigh_offset = p->first.offset;
 			sleigh_last = sleigh_offset + p->first.size;
 		}
-		r2_reglist.push_back(
-		    R2Reg{p->second, p->first.size, p->first.offset - sleigh_offset + offset});
+		rz_reglist.push_back(
+		    RzReg{p->second, p->first.size, p->first.offset - sleigh_offset + offset});
 	}
 
-	return r2_reglist;
+	return rz_reglist;
 }
 
 ostream &operator<<(ostream &s, const PcodeOperand &arg)

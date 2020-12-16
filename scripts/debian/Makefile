@@ -6,7 +6,7 @@ PWD=$(shell pwd)
 PACKAGE_DIR?=${PWD}
 
 DOCKCROSS=$(PWD)/../dockcross
-R2PLUGDIR=/usr/lib/radare2/$(VERSION)
+RZPLUGDIR=/usr/lib/rizin/$(VERSION)
 
 all: root
 	sudo rm -rf control data
@@ -23,8 +23,8 @@ root:
 		&& mkdir -p build \
 		&& cd build \
 		&& cmake .. \
-			-DRADARE2_INSTALL_PLUGDIR=$(shell r2 -HR2_LIBR_PLUGINS) \
-			-DCMAKE_INSTALL_PREFIX=$(shell r2 -HR2_PREFIX) \
+			-DRIZIN_INSTALL_PLUGDIR=$(shell rizn -HRZ_LIBR_PLUGINS) \
+			-DCMAKE_INSTALL_PREFIX=$(shell rizin -HRZ_PREFIX) \
 		&& make -j4 \
 		&& make install DESTDIR=/work/dist/debian/root'
 

@@ -1,7 +1,7 @@
-PACKAGE=r2ghidra-dec
-VERSION=$(shell r2 -qv)
+PACKAGE=rz-ghidra
+VERSION=$(shell rizin -qv)
 ARCH=amd64
-DEPENDS=radare2
+DEPENDS=rizin
 SECTION=user/shell
 PRIORITY=optional
-MAINTAINER=pancake <pancake@nopcode.org>
+MAINTAINER=Rizin Team <team@rizin.re>

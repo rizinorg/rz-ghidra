@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "R2LoadImage.h"
-#include "R2Architecture.h"
+#include "RzLoadImage.h"
+#include "RzArchitecture.h"
 
-R2LoadImage::R2LoadImage(RzCoreMutex *coreMutex)
+RzLoadImage::RzLoadImage(RzCoreMutex *coreMutex)
 	: LoadImage("rizin_program"),
 	coreMutex(coreMutex)
 {
 }
 
-void R2LoadImage::loadFill(uint1 *ptr, int4 size, const Address &addr)
+void RzLoadImage::loadFill(uint1 *ptr, int4 size, const Address &addr)
 {
 	RzCoreLock core(coreMutex);
 	rz_io_read_at(core->io, addr.getOffset(), ptr, size);
 }
 
-string R2LoadImage::getArchType() const
+string RzLoadImage::getArchType() const
 {
 	return "rizin";
 }
 
-void R2LoadImage::adjustVma(long adjust)
+void RzLoadImage::adjustVma(long adjust)
 {
 	throw LowlevelError("Cannot adjust rizin virtual memory");
 }
