@@ -410,7 +410,7 @@ RzConfig *SleighAsm::getConfig(RzAnalysis *a)
 
 std::string SleighAsm::getSleighHome(RzConfig *cfg)
 {
-	const char varname[] = "rz-ghidra.sleighhome";
+	const char varname[] = "ghidra.sleighhome";
 	const char *path = nullptr;
 
 	// user-set, for example from .rizinrc
