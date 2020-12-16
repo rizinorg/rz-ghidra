@@ -1,4 +1,4 @@
-name: Jessie
+name: CI
 on:
   push:
     branches:
@@ -7,8 +7,10 @@ on:
 
 jobs:
   build:
-    if: false
-    name: Jessie
+    strategy:
+      matrix:
+        image: [buster, arch]
+    name: ${{ matrix.image }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -17,7 +19,7 @@ jobs:
             git submodule init
             git submodule update
       - name: Docker Build
-        run: cd scripts && docker build -t rz-ghidra-jessie . -f Dockerfile.jessie && cd ..
+        run: cd scripts && docker build -t rz-ghidra . -f Dockerfile.${{ matrix.image }} && cd ..
       - name: Build and Test
-        run: docker run --rm -v "`pwd`:/build" -t rz-ghidra-jessie /bin/bash -c "cd /build && scripts/ci-script"
+        run: docker run --rm -v "`pwd`:/build" -t rz-ghidra /bin/bash -c "cd /build && scripts/ci-script"
 
