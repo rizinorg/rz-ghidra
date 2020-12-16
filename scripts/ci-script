@@ -3,7 +3,14 @@
 set -e
 set -x
 
-cmake -Bbuild -GNinja -DBUILD_SLEIGH_PLUGIN=ON -DCMAKE_INSTALL_PREFIX=$HOME/.local "$@"
+git clone --depth 1 https://github.com/rizinorg/cutter
+
+cmake -Bbuild -GNinja \
+	"-DCUTTER_SOURCE_DIR=$(pwd)/cutter" \
+	-DBUILD_CUTTER_PLUGIN=ON \
+	-DBUILD_SLEIGH_PLUGIN=ON \
+	-DCMAKE_INSTALL_PREFIX=$HOME/.local \
+	"$@"
 ninja -C build
 ninja -C build install
 
