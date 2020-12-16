@@ -2,7 +2,7 @@
 FROM archlinux:latest
 
 RUN pacman --noconfirm -Syu
-RUN pacman --noconfirm -S git gcc cmake pkg-config flex bison meson ninja
+RUN pacman --noconfirm -S git gcc make cmake pkg-config flex bison meson ninja
 
 RUN cd /root && \
 	git clone --recurse-submodules --depth 1 https://github.com/rizinorg/rizin && \
