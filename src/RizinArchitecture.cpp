@@ -154,9 +154,9 @@ Scope *RizinArchitecture::buildGlobalScope()
 
 void RizinArchitecture::buildTypegrp(DocumentStorage &store)
 {
-	types = r2TypeFactory = new RizinTypeFactory(this);
+	types = rizinTypeFactory = new RizinTypeFactory(this);
 
-	// TODO: load from r2?
+	// TODO: load from rizin?
 	types->setCoreType("void", 1, TYPE_VOID, false);
 	types->setCoreType("bool", 1, TYPE_BOOL, false);
 	types->setCoreType("uint8_t", 1, TYPE_UINT, false);

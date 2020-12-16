@@ -101,7 +101,7 @@ static void PrintUsage(const RzCore *const core)
 		CMD_PREFIX"ss", "", "# Display automatically matched Sleigh Language ID",
 		CMD_PREFIX"sd", " N", "# Disassemble N instructions with Sleigh and print pcode",
 		CMD_PREFIX"a", "", "# Switch to RzAsm and RzAnalysis plugins driven by SLEIGH from Ghidra",
-		CMD_PREFIX"*",  "", "# Decompiled code is returned to r2 as comment",
+		CMD_PREFIX"*",  "", "# Decompiled code is returned to rizin as comment",
 		"Environment:", "", "",
 		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
 		NULL
@@ -145,7 +145,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	arch.init(store);
 	Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
 	arch.print->setOutputStream(&out_stream);
-	arch.setPrintLanguage("r2-c-language");
+	arch.setPrintLanguage("rizin-c-language");
 	ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
 	if(!func)
 		throw LowlevelError("No function in Scope");

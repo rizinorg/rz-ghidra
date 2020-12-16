@@ -10,7 +10,7 @@ RizinPrintCCapability RizinPrintCCapability::inst;
 
 RizinPrintCCapability::RizinPrintCCapability(void)
 {
-	name = "r2-c-language";
+	name = "rizin-c-language";
 	isdefault = false;
 }
 

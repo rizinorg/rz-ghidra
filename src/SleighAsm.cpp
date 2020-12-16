@@ -527,7 +527,7 @@ void SleighAsm::initRegMapping(void)
 std::vector<RizinReg> SleighAsm::getRegs(void)
 {
 	std::map<VarnodeData, std::string> reglist;
-	std::vector<RizinReg> r2_reglist;
+	std::vector<RizinReg> rizin_reglist;
 	trans.getAllRegisters(reglist);
 
 	size_t offset = 0, offset_last = reglist.begin()->first.size;
@@ -543,11 +543,11 @@ std::vector<RizinReg> SleighAsm::getRegs(void)
 			sleigh_offset = p->first.offset;
 			sleigh_last = sleigh_offset + p->first.size;
 		}
-		r2_reglist.push_back(
+		rizin_reglist.push_back(
 		    RizinReg{p->second, p->first.size, p->first.offset - sleigh_offset + offset});
 	}
 
-	return r2_reglist;
+	return rizin_reglist;
 }
 
 ostream &operator<<(ostream &s, const PcodeOperand &arg)
