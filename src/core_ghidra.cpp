@@ -577,7 +577,7 @@ static void SetInitialSleighHome(RzConfig *cfg)
 	}
 #endif
 
-	// r2pm-installed ghidra
+	// rz-pm-installed ghidra
 	char *homepath = rz_str_home(".local/share/rizin/rz-pm/git/ghidra");
 	if(homepath && rz_file_is_directory(homepath))
 	{

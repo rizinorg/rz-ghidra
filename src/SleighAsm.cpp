@@ -439,7 +439,7 @@ std::string SleighAsm::getSleighHome(RzConfig *cfg)
 	}
 #endif
 
-	path = rz_str_home(".local/share/rizin/r2pm/git/ghidra");
+	path = rz_str_home(".local/share/rizin/rz-pm/git/ghidra");
 	if(rz_file_is_directory(path))
 	{
 		if(cfg)
