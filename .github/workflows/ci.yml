@@ -1,4 +1,4 @@
-name: Jessie
+name: CI
 on:
   push:
     branches:
@@ -9,7 +9,7 @@ jobs:
   build:
     strategy:
       matrix:
-        image: [buster]
+        image: [buster, arch]
     name: ${{ matrix.image }}
     runs-on: ubuntu-latest
     steps:
