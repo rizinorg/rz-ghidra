@@ -96,7 +96,7 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 {
 	RzCoreLock core(arch->getCore());
 
-	const std::string r2Arch(rz_config_get(core->config, "asm.arch"));
+	const std::string rizinArch(rz_config_get(core->config, "asm.arch"));
 
 	// We use xml here, because the public interface for Functions
 	// doesn't let us set up the scope parenting as we need it :-(
@@ -104,7 +104,7 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 	Document doc;
 	doc.setName("mapsym");
 
-	if (fcn->bits == 16 && !r2Arch.compare("arm")) {
+	if (fcn->bits == 16 && !rizinArch.compare("arm")) {
 		ContextDatabase * cdb = arch->getContextDatabase();
 		cdb->setVariable("TMode", Address(arch->getDefaultCodeSpace(), fcn->addr), 1);
 	}
@@ -393,7 +393,7 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		//if(!returnFound)
 		//	arch->addWarning("Failed to find return address in ProtoModel");
 	}
-	// TODO: should we try to get the return address from r2's cc?
+	// TODO: should we try to get the return address from rizin's cc?
 
 	auto returnsymElement = child(prototypeElement, "returnsym");
 	childAddr(returnsymElement, "addr", returnAddr);
@@ -483,7 +483,7 @@ Symbol *RizinScope::queryRizinAbsolute(ut64 addr, bool contain) const
 }
 
 
-Symbol *RizinScope::queryR2(const Address &addr, bool contain) const
+Symbol *RizinScope::queryRizin(const Address &addr, bool contain) const
 {
 	if(addr.getSpace() == arch->getDefaultCodeSpace() || addr.getSpace() == arch->getDefaultDataSpace())
 		return queryRizinAbsolute(addr.getOffset(), contain);
@@ -515,7 +515,7 @@ SymbolEntry *RizinScope::findAddr(const Address &addr, const Address &usepoint) 
 	if(entry) // Address is already queried, but symbol doesn't start at our address
 		return nullptr;
 
-	Symbol *sym = queryR2(addr, false);
+	Symbol *sym = queryRizin(addr, false);
 	entry = sym ? sym->getMapEntry(addr) : nullptr;
 
 	return (entry && entry->getAddr() == addr) ? entry : nullptr;
@@ -527,7 +527,7 @@ SymbolEntry *RizinScope::findContainer(const Address &addr, int4 size, const Add
 
 	if(!entry)
 	{
-		Symbol *sym = queryR2(addr, true);
+		Symbol *sym = queryRizin(addr, true);
 		entry = sym ? sym->getMapEntry(addr) : nullptr;
 	}
 
@@ -554,7 +554,7 @@ Funcdata *RizinScope::findFunction(const Address &addr) const
 		return nullptr;
 
 	FunctionSymbol *sym;
-	sym = dynamic_cast<FunctionSymbol *>(queryR2(addr, false));
+	sym = dynamic_cast<FunctionSymbol *>(queryRizin(addr, false));
 	if(sym)
 		return sym->getFunction();
 
@@ -572,7 +572,7 @@ ExternRefSymbol *RizinScope::findExternalRef(const Address &addr) const
 	if(cache->findContainer(addr, 1, Address()))
 		return nullptr;
 
-	return dynamic_cast<ExternRefSymbol *>(queryR2(addr, false));
+	return dynamic_cast<ExternRefSymbol *>(queryRizin(addr, false));
 }
 
 LabSymbol *RizinScope::findCodeLabel(const Address &addr) const

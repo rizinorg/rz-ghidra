@@ -16,7 +16,7 @@ class RizinArchitecture : public SleighArchitecture
 	private:
 		RzCoreMutex coreMutex;
 
-		RizinTypeFactory *r2TypeFactory = nullptr;
+		RizinTypeFactory *rizinTypeFactory = nullptr;
 		std::map<std::string, VarnodeData> registers;
 		std::vector<std::string> warnings;
 
@@ -29,7 +29,7 @@ class RizinArchitecture : public SleighArchitecture
 
 		RzCoreMutex *getCore() { return &coreMutex; }
 
-		RizinTypeFactory *getTypeFactory() const { return r2TypeFactory; }
+		RizinTypeFactory *getTypeFactory() const { return rizinTypeFactory; }
 
 		ProtoModel *protoModelFromRizinCC(const char *cc);
 		Address registerAddressFromRizinReg(const char *regname);

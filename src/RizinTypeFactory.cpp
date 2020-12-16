@@ -39,7 +39,7 @@ Datatype *RizinTypeFactory::queryRizinStruct(const string &n, std::set<std::stri
 
 	Sdb *sdb = core->analysis->sdb_types;
 
-	// TODO: We REALLY need an API for this in r2
+	// TODO: We REALLY need an API for this in rizin
 
 	const char *members = sdb_const_get(sdb, ("struct." + n).c_str(), nullptr);
 	if(!members)
@@ -108,7 +108,7 @@ Datatype *RizinTypeFactory::queryRizinEnum(const string &n)
 		uintb val = std::stoull(member->val, nullptr, 0);
 		namelist.push_back(member->name);
 		vallist.push_back(val);
-		assignlist.push_back(true); // all enum values from r2 have explicit values
+		assignlist.push_back(true); // all enum values from rizin have explicit values
 	});
 	rz_list_free (members);
 
@@ -138,7 +138,7 @@ Datatype *RizinTypeFactory::queryRizinTypedef(const string &n, std::set<std::str
 	return typedefd;
 }
 
-Datatype *RizinTypeFactory::queryR2(const string &n, std::set<std::string> &stackTypes)
+Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &stackTypes)
 {
 	if(stackTypes.find(n) != stackTypes.end())
 	{
@@ -167,7 +167,7 @@ Datatype *RizinTypeFactory::findById(const string &n, uint8 id, std::set<std::st
 	Datatype *r = TypeFactory::findById(n, id);
 	if(r)
 		return r;
-	return queryR2(n, stackTypes);
+	return queryRizin(n, stackTypes);
 }
 
 Datatype *RizinTypeFactory::findById(const string &n, uint8 id)
