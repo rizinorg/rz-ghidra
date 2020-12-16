@@ -3,10 +3,9 @@
 set -e
 set -x
 
-mkdir build && cd build
-cmake .. -DBUILD_SLEIGH_PLUGIN=ON -DCMAKE_INSTALL_PREFIX=$HOME/.local "$@"
-make -j8
-make install
+cmake -Bbuild -GNinja -DBUILD_SLEIGH_PLUGIN=ON -DCMAKE_INSTALL_PREFIX=$HOME/.local "$@"
+ninja -C build
+ninja -C build install
 
-cd ../test
+cd test
 make
