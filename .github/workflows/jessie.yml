@@ -7,7 +7,6 @@ on:
 
 jobs:
   build:
-    if: false
     name: Jessie
     runs-on: ubuntu-latest
     steps:
