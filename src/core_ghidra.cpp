@@ -629,9 +629,7 @@ RzCorePlugin rz_core_plugin_ghidra = {
 };
 
 #ifndef CORELIB
-#ifdef __cplusplus
-extern "C"
-#endif
+extern "C" {
 RZ_API RzLibStruct rizin_plugin = {
 	/* .type = */ RZ_LIB_TYPE_CORE,
 	/* .data = */ &rz_core_plugin_ghidra,
@@ -639,4 +637,5 @@ RZ_API RzLibStruct rizin_plugin = {
 	/* .free = */ nullptr,
 	/* .pkgname = */ "rz-ghidra"
 };
+}
 #endif
