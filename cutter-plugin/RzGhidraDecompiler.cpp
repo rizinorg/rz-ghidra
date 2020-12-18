@@ -12,13 +12,20 @@
 RzGhidraDecompiler::RzGhidraDecompiler(QObject *parent)
 	: Decompiler("rz-ghidra", "Ghidra", parent)
 {
-	task = DecompilerFinished;
+	task = nullptr;
 }
 
 void RzGhidraDecompiler::decompileAt(ut64 addr)
 {
-	task = DecompilerRunning;
-	RzAnnotatedCode *code = rz_ghidra_decompile_annotated_code(Core()->core(), addr);
-	emit finished(code); //Here, we emit RzAnnotatedCode *code or by value
-	task = DecompilerFinished;
+	if(task)
+		return;
+	task = new RizinFunctionTask([addr](RzCore *core) {
+		return rz_ghidra_decompile_annotated_code(core, addr);
+	});
+	connect(task, &RizinFunctionTask::finished, this, [this]() {
+		auto res = reinterpret_cast<RzAnnotatedCode *>(task->getResult());
+		task = nullptr;
+		emit finished(res);
+	});
+	task->startTask();
 }
