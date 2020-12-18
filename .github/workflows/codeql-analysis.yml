@@ -1,0 +1,72 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '0 16 * * 0'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['cpp']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        # We must fetch at least the immediate parents so that if this is
+        # a pull request then we can checkout the head.
+        fetch-depth: 2
+
+    - name: Checkout submodules
+      run: |
+          git submodule init
+          git submodule update
+
+    # If this run was triggered by a pull request event, then checkout
+    # the head of the pull request instead of the merge commit.
+    - run: git checkout HEAD^2
+      if: ${{ github.event_name == 'pull_request' }}
+
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8.x
+
+    - name: apt dependencies
+      run: |
+          sudo apt-get --assume-yes update
+          sudo apt-get --assume-yes install ninja-build libgraphviz-dev bison flex qt5-default
+
+    - name: py dependencies
+      run: |
+        pip install meson
+    - name: Prepare Rizin and Cutter
+      run: |
+         git clone --recursive --depth 1 https://github.com/rizinorg/rizin
+         cd rizin
+         meson build
+         ninja -C build
+         sudo ninja -C build install
+         cd ..
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: ${{ matrix.language }}
+
+    - name: Build with CodeQL
+      run: |
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_CUTTER_PLUGIN=OFF -DBUILD_SLEIGH_PLUGIN=ON ..
+        make
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
