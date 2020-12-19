@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  INSTALL_PREFIX: ${{ github.workspace }}/radare2-prefix
+  INSTALL_PREFIX: ${{ github.workspace }}/rizin-prefix
   CUTTER_PATH: ${{ github.workspace }}/cutter
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [3.7.x]   
+        python-version: [3.7.x]
         # Prevent one job from pausing the rest
         fail-fast: [false]
     steps:
@@ -34,17 +34,16 @@ jobs:
     - name: repo dependencies
       shell: bash
       run: |
-        git clone --depth 1 https://github.com/radareorg/radare2
-        git clone --depth 1 https://github.com/radareorg/cutter
-    - name: Radare2 build
+        git clone --depth 1 https://github.com/rizinorg/rizin
+        git clone --depth 1 https://github.com/rizinorg/cutter
+    - name: Rizin build
       shell: cmd
       run: |
-        cd radare2 
+        cd rizin
         mkdir build
-        cd build
-        meson --prefix="${{ env.INSTALL_PREFIX }}" ..
-        ninja
-        ninja install
+        meson --prefix="${{ env.INSTALL_PREFIX }}" build
+        ninja -C build
+        ninja -C build install
         cd ../..
     - name: msys dependencies
       shell: cmd
