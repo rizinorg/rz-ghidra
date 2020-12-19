@@ -63,7 +63,7 @@ jobs:
         cd build
         cmake .. -G Ninja ^
           -DCMAKE_BUILD_TYPE=Release ^
-          -DCMAKE_PREFIX_PATH="${{ env.INSTALL_PREFIX }}";"${{ env.INSTALL_PREFIX }}/include/librz";"${{ env.INSTALL_PREFIX }}/include/librz/sdb" ^
+          "-DCMAKE_PREFIX_PATH=${{ env.INSTALL_PREFIX }};${{ env.INSTALL_PREFIX }}\include\librz;${{ env.INSTALL_PREFIX }}\include\librz\sdb" ^
           -DCMAKE_INSTALL_PREFIX=${{ env.ARTIFACT_PATH }} ^
           -DBUILD_CUTTER_PLUGIN=ON ^
           -DBUILD_SLEIGH_PLUGIN=OFF ^
