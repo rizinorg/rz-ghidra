@@ -31,11 +31,6 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: windows dependencies
-      shell: bash
-      run: |
-        ${{ env.CUTTER_PATH }}\scripts\fetch_deps.sh
-        choco install winflexbison3
     - name: py dependencies
       run: |
         pip install meson ninja
@@ -44,6 +39,11 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/rizinorg/rizin
         git clone --depth 1 https://github.com/rizinorg/cutter
+    - name: windows dependencies
+      shell: bash
+      run: |
+        cutter/scripts/fetch_deps.sh
+        choco install winflexbison3
     - name: rizin build
       shell: cmd
       run: |
