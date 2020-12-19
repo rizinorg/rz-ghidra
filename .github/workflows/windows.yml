@@ -4,11 +4,13 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
-  workflow_dispatch:
 
 env:
-  INSTALL_PREFIX: ${{ github.workspace }}/rizin-prefix
+  ARTIFACT_NAME: rz-ghidra-git-x64.Windows
+  ARTIFACT_PATH: ${{ github.workspace }}/${{ env.ARTIFACT_NAME }}
+  RIZIN_INSTALL_PREFIX: ${{ github.workspace }}/rizin-prefix
+  RIZIN_PLUGIN_PATH: ${{ env.ARTIFACT_PATH }}/rizin/lib/plugins
+  CUTTER_PLUGIN_PATH: ${{ env.ARTIFACT_PATH }}/cutter/plugins/native"
   CUTTER_PATH: ${{ github.workspace }}/cutter
 
 jobs:
@@ -28,6 +30,12 @@ jobs:
     - uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: windows dependencies
+      shell: bash
+      run: |
+        pip install ninja
+        scripts/fetch_deps.sh
+        choco install winflexbison3
     - name: py dependencies
       run: |
         pip install meson ninja
@@ -36,21 +44,33 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/rizinorg/rizin
         git clone --depth 1 https://github.com/rizinorg/cutter
-    - name: Rizin build
+    - name: rizin build
       shell: cmd
       run: |
         cd rizin
         git submodule update --init || exit 1
         mkdir build
-        meson --prefix="${{ env.INSTALL_PREFIX }}" build || exit 1
+        meson --prefix="${{ env.RIZIN_INSTALL_PREFIX }}" build || exit 1
         ninja -C build || exit 1
         ninja -C build install || exit 1
         cd ../..
-    - name: msys dependencies
+    - name: rzghidra build
       shell: cmd
       run: |
-        C:\msys64\usr\bin\bash -lc "pacman -Sy --noconfirm bison flex"
-    - name: cmake msys
-      shell: cmd
-      run: |
-        C:\msys64\usr\bin\bash -lc "export PATH=\"/c/msys64/usr/bin:$PATH:`CYGPATH -u -p \"%PATH%\"`\" && cd \"${{ github.workspace }}\" && export INSTALL_PREFIX=\"${{ env.INSTALL_PREFIX }}\" && export CUTTER_PATH=\"${{ env.CUTTER_PATH }}\" && ./scripts/msys_build.sh"
+        mkdir -p ${{ env.RIZIN_PLUGIN_PATH }}
+        mkdir -p ${{ env.CUTTER_PLUGIN_PATH }}
+        mkdir build
+        cd build
+        cmake .. -G Ninja ^
+          -DCMAKE_BUILD_TYPE=Release ^
+          -DCMAKE_PREFIX_PATH="${{ env.INSTALL_PREFIX }}";"${{ env.INSTALL_PREFIX }}/include/librz";"${{ env.INSTALL_PREFIX }}/include/librz/sdb" ^
+          -DCMAKE_INSTALL_PREFIX=${{ env.ARTIFACT_PATH }} ^
+          -DBUILD_CUTTER_PLUGIN=ON ^
+          -DBUILD_SLEIGH_PLUGIN=OFF ^
+          -DRIZIN_INSTALL_PLUGDIR=${{ env.RIZIN_PLUGIN_PATH }} ^
+          -DCUTTER_INSTALL_PLUGDIR=${{ env.CUTTER_PLUGIN_PATH }} ^
+          -DCUTTER_SOURCE_DIR=${{ env.CUTTER_PATH }}
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.ARTIFACT_NAME }}
+        path: ${{ env.ARTIFACT_PATH }}
