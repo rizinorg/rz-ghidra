@@ -34,8 +34,6 @@ jobs:
     - name: windows dependencies
       shell: bash
       run: |
-        pip install ninja
-        scripts/fetch_deps.sh
         choco install winflexbison3
     - name: py dependencies
       run: |
