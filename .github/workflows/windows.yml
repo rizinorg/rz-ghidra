@@ -9,10 +9,9 @@ on:
 
 env:
   ARTIFACT_NAME: rz-ghidra-git-x64.Windows
-  ARTIFACT_PATH: ${{ github.workspace }}/${{ env.ARTIFACT_NAME }}
   RIZIN_INSTALL_PREFIX: ${{ github.workspace }}/rizin-prefix
-  RIZIN_PLUGIN_PATH: ${{ env.ARTIFACT_PATH }}/rizin/lib/plugins
-  CUTTER_PLUGIN_PATH: ${{ env.ARTIFACT_PATH }}/cutter/plugins/native"
+  RIZIN_PLUGIN_PATH: /rizin/lib/plugins
+  CUTTER_PLUGIN_PATH: /cutter/plugins/native
   CUTTER_PATH: ${{ github.workspace }}/cutter
 
 jobs:
@@ -59,8 +58,9 @@ jobs:
     - name: rzghidra build
       shell: cmd
       run: |
-        mkdir -p ${{ env.RIZIN_PLUGIN_PATH }}
-        mkdir -p ${{ env.CUTTER_PLUGIN_PATH }}
+        set ARTIFACT_PATH=${{ github.workspace }}/${{ env.ARTIFACT_NAME }}
+        mkdir -p ${{ env.ARTIFACT_PATH }}/${{ env.RIZIN_PLUGIN_PATH }}
+        mkdir -p ${{ env.ARTIFACT_PATH }}/${{ env.CUTTER_PLUGIN_PATH }}
         mkdir build
         cd build
         cmake .. -G Ninja ^
