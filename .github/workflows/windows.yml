@@ -40,10 +40,11 @@ jobs:
       shell: cmd
       run: |
         cd rizin
+        git submodule update --init || exit 1
         mkdir build
-        meson --prefix="${{ env.INSTALL_PREFIX }}" build
-        ninja -C build
-        ninja -C build install
+        meson --prefix="${{ env.INSTALL_PREFIX }}" build || exit 1
+        ninja -C build || exit 1
+        ninja -C build install || exit 1
         cd ../..
     - name: msys dependencies
       shell: cmd
