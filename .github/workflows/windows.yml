@@ -73,7 +73,9 @@ jobs:
           -DRIZIN_INSTALL_PLUGDIR=${{ env.RIZIN_PLUGIN_PATH }} ^
           -DCUTTER_INSTALL_PLUGDIR=${{ env.CUTTER_PLUGIN_PATH }} ^
           -DCUTTER_SOURCE_DIR=${{ env.CUTTER_PATH }}
+        cmake --build . --config Release
+        cmake --build . --config Release --target install
     - uses: actions/upload-artifact@v2
       with:
         name: ${{ env.ARTIFACT_NAME }}
-        path: ${{ env.ARTIFACT_PATH }}
+        path: ${{ github.workspace }}/${{ env.ARTIFACT_NAME }}
