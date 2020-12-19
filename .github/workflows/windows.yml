@@ -34,6 +34,7 @@ jobs:
     - name: windows dependencies
       shell: bash
       run: |
+        ${{ env.CUTTER_PATH }}\scripts\fetch_deps.sh
         choco install winflexbison3
     - name: py dependencies
       run: |
@@ -56,6 +57,8 @@ jobs:
     - name: rzghidra build
       shell: cmd
       run: |
+        set CUTTER_DEPS=${{ env.CUTTER_PATH }}\cutter-deps
+        set PATH=${{ env.CUTTER_PATH }}\cutter-deps\qt\bin;%PATH%
         set ARTIFACT_PATH=${{ github.workspace }}/${{ env.ARTIFACT_NAME }}
         mkdir -p ${{ env.ARTIFACT_PATH }}/${{ env.RIZIN_PLUGIN_PATH }}
         mkdir -p ${{ env.ARTIFACT_PATH }}/${{ env.CUTTER_PLUGIN_PATH }}
