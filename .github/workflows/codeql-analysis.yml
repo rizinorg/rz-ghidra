@@ -30,11 +30,6 @@ jobs:
           git submodule init
           git submodule update
 
-    # If this run was triggered by a pull request event, then checkout
-    # the head of the pull request instead of the merge commit.
-    - run: git checkout HEAD^2
-      if: ${{ github.event_name == 'pull_request' }}
-
     - uses: actions/setup-python@v1
       with:
         python-version: 3.8.x
