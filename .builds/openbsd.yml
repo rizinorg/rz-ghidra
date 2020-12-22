@@ -31,7 +31,7 @@ tasks:
         export PATH=${HOME}/bin:${PATH}
         export LD_LIBRARY_PATH=${HOME}/lib:${HOME}/lib64:${LD_LIBRARY_PATH}
         export PKG_CONFIG_PATH=${HOME}/lib/pkgconfig:${PKG_CONFIG_PATH}
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${HOME} -DBUILD_CUTTER_PLUGIN=OFF -DBUILD_SLEIGH_PLUGIN=ON ..
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${HOME} -DBUILD_CUTTER_PLUGIN=OFF -DBUILD_SLEIGH_PLUGIN=OFF .. # sleigh plugin triggers cmake linking issue on OpenBSD
         ninja
     - install: |
         cd rz-ghidra/build
