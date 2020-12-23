@@ -1,0 +1,54 @@
+image: openbsd/latest
+packages:
+    - devel/meson
+    - devel/cmake
+    - devel/pkgconf
+    - devel/gmake
+    - devel/llvm
+    - devel/bison
+    - lang/python
+environment:
+    CXX: clang++
+    CC: clang
+sources:
+    - https://github.com/rizinorg/rizin
+    - https://github.com/rizinorg/rz-ghidra
+    - https://github.com/rizinorg/rizin-testbins
+tasks:
+    - rizinbuild: |
+        cd rizin
+        meson --prefix=${HOME} build
+        ninja -C build
+    - rizininstall: |
+        cd rizin
+        export PATH=${HOME}/bin:${PATH}
+        export LD_LIBRARY_PATH=${HOME}/lib:${HOME}/lib64:${LD_LIBRARY_PATH}
+        export PKG_CONFIG_PATH=${HOME}/lib/pkgconfig:${PKG_CONFIG_PATH}
+        ninja -C build install
+    - build: |
+        cd rz-ghidra
+        mkdir build && cd build
+        export PATH=${HOME}/bin:${PATH}
+        export LD_LIBRARY_PATH=${HOME}/lib:${HOME}/lib64:${LD_LIBRARY_PATH}
+        export PKG_CONFIG_PATH=${HOME}/lib/pkgconfig:${PKG_CONFIG_PATH}
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${HOME} -DBUILD_CUTTER_PLUGIN=OFF -DBUILD_SLEIGH_PLUGIN=OFF .. # sleigh plugin triggers cmake linking issue on OpenBSD
+        ninja
+    - install: |
+        cd rz-ghidra/build
+        export PATH=${HOME}/bin:${PATH}
+        export LD_LIBRARY_PATH=${HOME}/lib:${HOME}/lib64:${LD_LIBRARY_PATH}
+        export PKG_CONFIG_PATH=${HOME}/lib/pkgconfig:${PKG_CONFIG_PATH}
+        ninja install
+        # Disabled for now due to be broken
+        #- test: |
+        #cd rz-ghidra
+        #export PATH=${HOME}/bin:${PATH}
+        #export LD_LIBRARY_PATH=${HOME}/lib:${HOME}/lib64:${LD_LIBRARY_PATH}
+        #export PKG_CONFIG_PATH=${HOME}/lib/pkgconfig:${PKG_CONFIG_PATH}
+        #export RZ_LIBR_PLUGINS=${HOME}/share/rizin/plugins
+        # Workaround until the feature request is solved
+        # https://todo.sr.ht/~sircmpwn/builds.sr.ht/274
+        #ln -s ${HOME}/rizin-testbins test/rizin-testbins
+        # Running the test suite
+        #cd test
+        #rz-test -L db/extras
