@@ -7,9 +7,9 @@
 #include <cmath>
 #include <cfenv>
 #include "SleighAsm.h"
-#include "SleighAnalValue.h"
+#include "SleighAnalysisValue.h"
 
-static SleighAsm sanal;
+static SleighAsm sanalysis;
 
 static int archinfo(RzAnalysis *analysis, int query)
 {
@@ -24,7 +24,7 @@ static int archinfo(RzAnalysis *analysis, int query)
 
 	try
 	{
-		sanal.init(analysis->cpu, analysis->bits, analysis->big_endian, analysis ? analysis->iob.io : nullptr, SleighAsm::getConfig(analysis));
+		sanalysis.init(analysis->cpu, analysis->bits, analysis->big_endian, analysis ? analysis->iob.io : nullptr, SleighAsm::getConfig(analysis));
 	}
 	catch(const LowlevelError &e)
 	{
@@ -33,7 +33,7 @@ static int archinfo(RzAnalysis *analysis, int query)
 	}
 
 	if(query == RZ_ANALYSIS_ARCHINFO_ALIGN)
-		return sanal.alignment;
+		return sanalysis.alignment;
 	else
 		return -1;
 }
@@ -54,7 +54,7 @@ static std::vector<std::string> string_split(const std::string &s)
 }
 
 static inline bool reg_set_has(const std::unordered_set<std::string> &reg_set,
-                               const SleighAnalValue &value)
+                               const SleighAnalysisValue &value)
 {
 	if(!value.is_reg())
 		return false;
@@ -88,16 +88,16 @@ static ut32 analysis_type_MOV(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_MOV;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
 	const PcodeOpType key_pcode_store = CPUI_STORE;
-	SleighAnalValue in0, out;
+	SleighAnalysisValue in0, out;
 	in0.invalid(); out.invalid();
-	std::vector<SleighAnalValue> outs;
+	std::vector<SleighAnalysisValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
 		if(iter->type == key_pcode_copy)
 		{
 			if(iter->output)
-				outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
+				outs = SleighAnalysisValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 			auto p = outs.cbegin();
 			for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -106,7 +106,7 @@ static ut32 analysis_type_MOV(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 				out = *p;
 
 				if(iter->input0)
-					in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
+					in0 = SleighAnalysisValue::resolve_arg(analysis, iter->input0);
 
 				if(in0.is_valid() && (in0.is_imm() || reg_set_has(reg_set, in0)))
 				{
@@ -122,10 +122,10 @@ static ut32 analysis_type_MOV(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 		if(iter->type == key_pcode_store)
 		{
 			if(iter->output)
-				in0 = SleighAnalValue::resolve_arg(analysis, iter->output);
+				in0 = SleighAnalysisValue::resolve_arg(analysis, iter->output);
 
 			if(iter->input1)
-				out = SleighAnalValue::resolve_arg(analysis, iter->input1);
+				out = SleighAnalysisValue::resolve_arg(analysis, iter->input1);
 
 			if(in0.is_valid() && out.is_valid() && in0.is_imm())
 			{
@@ -154,16 +154,16 @@ static ut32 analysis_type_LOAD(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_LOAD;
 	const PcodeOpType key_pcode_load = CPUI_LOAD;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
-	SleighAnalValue in0, out;
+	SleighAnalysisValue in0, out;
 	in0.invalid(); out.invalid();
-	std::vector<SleighAnalValue> outs;
+	std::vector<SleighAnalysisValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
 		if(iter->type == key_pcode_load || iter->type == key_pcode_copy)
 		{
 			if(iter->output)
-				outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
+				outs = SleighAnalysisValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 			auto p = outs.cbegin();
 			for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -173,7 +173,7 @@ static ut32 analysis_type_LOAD(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 
 				if(iter->type == key_pcode_load? iter->input1: iter->input0)
 				{
-					in0 = SleighAnalValue::resolve_arg(analysis,
+					in0 = SleighAnalysisValue::resolve_arg(analysis,
 					                  iter->type == key_pcode_load? iter->input1: iter->input0);
 
 					if(iter->type == key_pcode_load && in0.is_valid())
@@ -208,21 +208,21 @@ static ut32 analysis_type_STORE(RzAnalysis *analysis, RzAnalysisOp *analysis_op,
 	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_STORE;
 	const PcodeOpType key_pcode_store = CPUI_STORE;
 	const PcodeOpType key_pcode_copy = CPUI_COPY;
-	SleighAnalValue in0, out;
+	SleighAnalysisValue in0, out;
 	in0.invalid(); out.invalid();
-	std::vector<SleighAnalValue> outs;
+	std::vector<SleighAnalysisValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
 		if(iter->type == key_pcode_store)
 		{
 			if(iter->output && iter->input1)
-				in0 = SleighAnalValue::resolve_arg(analysis, iter->output);
+				in0 = SleighAnalysisValue::resolve_arg(analysis, iter->output);
 
 			if(!in0.is_valid() || !(in0.is_imm() || reg_set_has(reg_set, in0)))
 				continue;
 
-			out = SleighAnalValue::resolve_arg(analysis, iter->input1);
+			out = SleighAnalysisValue::resolve_arg(analysis, iter->input1);
 
 			if(out.is_valid())
 			{
@@ -239,12 +239,12 @@ static ut32 analysis_type_STORE(RzAnalysis *analysis, RzAnalysisOp *analysis_op,
 		if(iter->type == key_pcode_copy)
 		{
 			if(iter->input0 && iter->output)
-				in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
+				in0 = SleighAnalysisValue::resolve_arg(analysis, iter->input0);
 
 			if(!in0.is_valid() || !(in0.is_imm() || reg_set_has(reg_set, in0)))
 				continue;
 
-			outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
+			outs = SleighAnalysisValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 			auto p = outs.cbegin();
 			for(; p != outs.cend(); ++p)
@@ -301,7 +301,7 @@ static ut32 analysis_type_XPUSH(RzAnalysis *analysis, RzAnalysisOp *analysis_op,
 	// RZ_ANALYSIS_OP_TYPE_RPUSH
 	// RZ_ANALYSIS_OP_TYPE_PUSH
 	const PcodeOpType key_pcode = CPUI_STORE;
-	SleighAnalValue out, in;
+	SleighAnalysisValue out, in;
 	out.invalid(); in.invalid();
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -309,21 +309,21 @@ static ut32 analysis_type_XPUSH(RzAnalysis *analysis, RzAnalysisOp *analysis_op,
 		if(iter->type == key_pcode)
 		{
 			if(iter->input1)
-				out = SleighAnalValue::resolve_arg(analysis, iter->input1);
+				out = SleighAnalysisValue::resolve_arg(analysis, iter->input1);
 
 			if(!out.is_valid())
 				continue;
 
 			out.mem(iter->output->size);
 
-			if((out.reg && sanal.reg_mapping[sanal.sp_name] == out.reg->name) ||
-			   (out.regdelta && sanal.reg_mapping[sanal.sp_name] == out.regdelta->name))
+			if((out.reg && sanalysis.reg_mapping[sanalysis.sp_name] == out.reg->name) ||
+			   (out.regdelta && sanalysis.reg_mapping[sanalysis.sp_name] == out.regdelta->name))
 			{
 				analysis_op->type = RZ_ANALYSIS_OP_TYPE_UPUSH;
 				analysis_op->stackop = RZ_ANALYSIS_STACK_INC;
 
 				if(iter->output)
-					in = SleighAnalValue::resolve_arg(analysis, iter->output);
+					in = SleighAnalysisValue::resolve_arg(analysis, iter->output);
 
 				if(!in.is_valid())
 					continue;
@@ -346,25 +346,25 @@ static ut32 analysis_type_POP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 {
 	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_POP;
 	const PcodeOpType key_pcode = CPUI_LOAD;
-	SleighAnalValue in0, out;
+	SleighAnalysisValue in0, out;
 	in0.invalid(); out.invalid();
-	std::vector<SleighAnalValue> outs;
+	std::vector<SleighAnalysisValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
 		if(iter->type == key_pcode)
 		{
 			if(iter->input1)
-				in0 = SleighAnalValue::resolve_arg(analysis, iter->input1);
+				in0 = SleighAnalysisValue::resolve_arg(analysis, iter->input1);
 
 			if(!in0.is_valid())
 				continue;
 
-			if((in0.reg && sanal.reg_mapping[sanal.sp_name] == in0.reg->name) ||
-			   (in0.regdelta && sanal.reg_mapping[sanal.sp_name] == in0.regdelta->name))
+			if((in0.reg && sanalysis.reg_mapping[sanalysis.sp_name] == in0.reg->name) ||
+			   (in0.regdelta && sanalysis.reg_mapping[sanalysis.sp_name] == in0.regdelta->name))
 			{
 				if(iter->output)
-					outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
+					outs = SleighAnalysisValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 				auto p = outs.cbegin();
 				for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -393,7 +393,7 @@ static ut32 analysis_type_XCMP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 	const PcodeOpType key_pcode_sub = CPUI_INT_SUB;
 	const PcodeOpType key_pcode_and = CPUI_INT_AND;
 	const PcodeOpType key_pcode_equal = CPUI_INT_EQUAL;
-	SleighAnalValue in0, in1;
+	SleighAnalysisValue in0, in1;
 	in0.invalid(); in1.invalid();
 	uintb unique_off = 0;
 	PcodeOpType key_pcode = CPUI_MAX;
@@ -404,10 +404,10 @@ static ut32 analysis_type_XCMP(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 		if(iter->type == key_pcode_sub || iter->type == key_pcode_and)
 		{
 			if(iter->input0)
-				in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
+				in0 = SleighAnalysisValue::resolve_arg(analysis, iter->input0);
 
 			if(iter->input1)
-				in1 = SleighAnalValue::resolve_arg(analysis, iter->input1);
+				in1 = SleighAnalysisValue::resolve_arg(analysis, iter->input1);
 
 			if((in0.is_valid() && reg_set_has(reg_set, in0)) || (in1.is_valid() && reg_set_has(reg_set, in1)))
 			{
@@ -464,9 +464,9 @@ static ut32 analysis_type_XXX(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 	// RZ_ANALYSIS_OP_TYPE_SHR
 	// RZ_ANALYSIS_OP_TYPE_SHL
 	// RZ_ANALYSIS_OP_TYPE_SAR
-	SleighAnalValue in0, in1, out;
+	SleighAnalysisValue in0, in1, out;
 	in0.invalid(); in1.invalid(); out.invalid();
-	std::vector<SleighAnalValue> outs;
+	std::vector<SleighAnalysisValue> outs;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
 	{
@@ -487,14 +487,14 @@ static ut32 analysis_type_XXX(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 			{
 				if(iter->input0 && iter->input1)
 				{
-					in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
-					in1 = SleighAnalValue::resolve_arg(analysis, iter->input1);
+					in0 = SleighAnalysisValue::resolve_arg(analysis, iter->input0);
+					in1 = SleighAnalysisValue::resolve_arg(analysis, iter->input1);
 				}
 
 				if((in0.is_valid() && reg_set_has(reg_set, in0)) || (in1.is_valid() && reg_set_has(reg_set, in1)))
 				{
 					if(iter->output)
-						outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
+						outs = SleighAnalysisValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 					auto p = outs.cbegin();
 					for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -541,9 +541,9 @@ static ut32 analysis_type_NOR(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_NOR;
 	const PcodeOpType key_pcode_or = CPUI_INT_OR;
 	const PcodeOpType key_pcode_negate = CPUI_INT_NEGATE;
-	SleighAnalValue in0, in1, out;
+	SleighAnalysisValue in0, in1, out;
 	in0.invalid(); in1.invalid(); out.invalid();
-	std::vector<SleighAnalValue> outs;
+	std::vector<SleighAnalysisValue> outs;
 	uintb unique_off = 0;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -552,8 +552,8 @@ static ut32 analysis_type_NOR(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 		{
 			if(iter->input0 && iter->input1)
 			{
-				in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
-				in1 = SleighAnalValue::resolve_arg(analysis, iter->input1);
+				in0 = SleighAnalysisValue::resolve_arg(analysis, iter->input0);
+				in1 = SleighAnalysisValue::resolve_arg(analysis, iter->input1);
 			}
 
 			if((in0.is_valid() && reg_set_has(reg_set, in0)) || (in1.is_valid() && reg_set_has(reg_set, in1)))
@@ -570,7 +570,7 @@ static ut32 analysis_type_NOR(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 			if(iter->input0 && iter->input0->is_unique() && iter->input0->offset == unique_off)
 			{
 				if(iter->output)
-					outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
+					outs = SleighAnalysisValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 				auto p = outs.cbegin();
 				for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -597,9 +597,9 @@ static ut32 analysis_type_NOT(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 {
 	const ut32 this_type = RZ_ANALYSIS_OP_TYPE_NOT;
 	const PcodeOpType key_pcode = CPUI_INT_NEGATE;
-	SleighAnalValue in0, out;
+	SleighAnalysisValue in0, out;
 	in0.invalid(); out.invalid();
-	std::vector<SleighAnalValue> outs;
+	std::vector<SleighAnalysisValue> outs;
 	uintb unique_off = 0;
 
 	for(auto iter = raw_ops.cbegin(); iter != raw_ops.cend(); ++iter)
@@ -607,12 +607,12 @@ static ut32 analysis_type_NOT(RzAnalysis *analysis, RzAnalysisOp *analysis_op, c
 		if(iter->type == key_pcode)
 		{
 			if(iter->input0)
-				in0 = SleighAnalValue::resolve_arg(analysis, iter->input0);
+				in0 = SleighAnalysisValue::resolve_arg(analysis, iter->input0);
 
 			if(in0.is_valid() && reg_set_has(reg_set, in0))
 			{
 				if(iter->output)
-					outs = SleighAnalValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
+					outs = SleighAnalysisValue::resolve_out(analysis, iter, raw_ops.cend(), iter->output);
 
 				auto p = outs.cbegin();
 				for(; p != outs.cend() && !reg_set_has(reg_set, *p); ++p) {}
@@ -656,8 +656,8 @@ static ut32 analysis_type_XCHG(RzAnalysis *analysis, RzAnalysisOp *analysis_op, 
 			goto fail;
 
 		analysis_op->type = this_type;
-		analysis_op->src[0] = SleighAnalValue::resolve_arg(analysis, copy_vec[0]->input0).dup();
-		analysis_op->dst = SleighAnalValue::resolve_arg(analysis, copy_vec[2]->output).dup();
+		analysis_op->src[0] = SleighAnalysisValue::resolve_arg(analysis, copy_vec[0]->input0).dup();
+		analysis_op->dst = SleighAnalysisValue::resolve_arg(analysis, copy_vec[2]->output).dup();
 
 		return this_type;
 	}
@@ -691,12 +691,12 @@ static void analysis_type(RzAnalysis *analysis, RzAnalysisOp *analysis_op, Pcode
 	std::vector<std::string> args = string_split(assem.str);
 	std::unordered_set<std::string> reg_set;
 	std::map<VarnodeData, std::string> reglist;
-	sanal.trans.getAllRegisters(reglist);
+	sanalysis.trans.getAllRegisters(reglist);
 	for(auto iter = args.cbegin(); iter != args.cend(); ++iter)
 	{
 		for(auto p = reglist.cbegin(); p != reglist.cend(); ++p)
 		{
-			if(sanal.reg_mapping[p->second] == *iter)
+			if(sanalysis.reg_mapping[p->second] == *iter)
 			{
 				reg_set.insert(*iter);
 				break;
@@ -784,7 +784,7 @@ static char *getIndirectReg(SleighInstruction &ins, bool &isRefed)
 	AddrSpace *space = data.space;
 	if(space->getName() == "register")
 		return strdup(
-		    sanal
+		    sanalysis
 		        .reg_mapping[space->getTrans()->getRegisterName(data.space, data.offset, data.size)]
 		        .c_str());
 	else
@@ -966,7 +966,7 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
 					ss << ",";
 					if(!print_if_unique(iter->input0))
 						ss << *iter->input0 << (iter->input0->is_reg()? ",NUM": "");
-					ss << "," << sanal.reg_mapping[sanal.pc_name] << ",=";
+					ss << "," << sanalysis.reg_mapping[sanalysis.pc_name] << ",=";
 				}
 				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
@@ -989,7 +989,7 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
 					ss << ",";
 					if(!print_if_unique(iter->input0))
 						ss << *iter->input0 << (iter->input0->is_reg()? ",NUM": "");
-					ss << "," << sanal.reg_mapping[sanal.pc_name] << ",=,}";
+					ss << "," << sanalysis.reg_mapping[sanalysis.pc_name] << ",=,}";
 				}
 				else
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
@@ -1378,18 +1378,18 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 {
 	try
 	{
-		sanal.init(a->cpu, a->bits, a->big_endian, a? a->iob.io : nullptr, SleighAsm::getConfig(a));
+		sanalysis.init(a->cpu, a->bits, a->big_endian, a? a->iob.io : nullptr, SleighAsm::getConfig(a));
 
 		analysis_op->addr = addr;
 		analysis_op->sign = true;
 		analysis_op->type = RZ_ANALYSIS_OP_TYPE_ILL;
 
-		PcodeSlg pcode_slg(&sanal);
-		AssemblySlg assem(&sanal);
-		Address caddr(sanal.trans.getDefaultCodeSpace(), addr);
-		sanal.check(addr, data, len);
-		analysis_op->size = sanal.genOpcode(pcode_slg, caddr);
-		if((analysis_op->size < 1) || (sanal.trans.printAssembly(assem, caddr) < 1))
+		PcodeSlg pcode_slg(&sanalysis);
+		AssemblySlg assem(&sanalysis);
+		Address caddr(sanalysis.trans.getDefaultCodeSpace(), addr);
+		sanalysis.check(addr, data, len);
+		analysis_op->size = sanalysis.genOpcode(pcode_slg, caddr);
+		if((analysis_op->size < 1) || (sanalysis.trans.printAssembly(assem, caddr) < 1))
 			return analysis_op->size; // When current place has no available code, return ILL.
 
 		if(pcode_slg.pcodes.empty())
@@ -1399,7 +1399,7 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 			return analysis_op->size;
 		}
 
-		SleighInstruction &ins = *sanal.trans.getInstruction(caddr);
+		SleighInstruction &ins = *sanalysis.trans.getInstruction(caddr);
 		FlowType ftype = ins.getFlowType();
 		bool isRefed = false;
 
@@ -1637,12 +1637,12 @@ static const char *rz_reg_string_arr[] = {"gpr", "gpr", "gpr", "gpr", "gpr", "gp
 
 static int get_reg_type(const std::string &name)
 {
-	auto p = sanal.reg_mapping.cbegin();
-	for(; p != sanal.reg_mapping.cend() && p->second != name; ++p) {}
-	if(p == sanal.reg_mapping.cend())
+	auto p = sanalysis.reg_mapping.cbegin();
+	for(; p != sanalysis.reg_mapping.cend() && p->second != name; ++p) {}
+	if(p == sanalysis.reg_mapping.cend())
 		throw LowlevelError("get_reg_type: reg doesn't exist.");
 
-	const std::string &group = sanal.reg_group[p->first];
+	const std::string &group = sanalysis.reg_group[p->first];
 
 	if(group.empty())
 		return RZ_REG_TYPE_GPR;
@@ -1790,7 +1790,7 @@ static char *get_reg_profile(RzAnalysis *analysis)
 
 	try
 	{
-		sanal.init(analysis->cpu, analysis->bits, analysis->big_endian, analysis ? analysis->iob.io : nullptr, SleighAsm::getConfig(analysis));
+		sanalysis.init(analysis->cpu, analysis->bits, analysis->big_endian, analysis ? analysis->iob.io : nullptr, SleighAsm::getConfig(analysis));
 	}
 	catch(const LowlevelError &e)
 	{
@@ -1798,15 +1798,15 @@ static char *get_reg_profile(RzAnalysis *analysis)
 		return nullptr;
 	}
 
-	auto reg_list = sanal.getRegs();
+	auto reg_list = sanalysis.getRegs();
 	std::stringstream buf;
 
 	for(auto p = reg_list.begin(); p != reg_list.end(); p++)
 	{
-		const std::string &group = sanal.reg_group[p->name];
+		const std::string &group = sanalysis.reg_group[p->name];
 		if(group.empty())
 		{
-			buf << "gpr\t" << sanal.reg_mapping[p->name] << "\t." << p->size * 8 << "\t"
+			buf << "gpr\t" << sanalysis.reg_mapping[p->name] << "\t." << p->size * 8 << "\t"
 			    << p->offset << "\t"
 			    << "0\n";
 			continue;
@@ -1830,28 +1830,28 @@ static char *get_reg_profile(RzAnalysis *analysis)
 			}
 		}
 
-		buf << sanal.reg_mapping[p->name] << "\t." << p->size * 8 << "\t" << p->offset << "\t"
+		buf << sanalysis.reg_mapping[p->name] << "\t." << p->size * 8 << "\t" << p->offset << "\t"
 		    << "0\n";
 	}
 
-	if(!sanal.pc_name.empty())
-		buf << "=PC\t" << sanal.reg_mapping[sanal.pc_name] << '\n';
-	if(!sanal.sp_name.empty())
-		buf << "=SP\t" << sanal.reg_mapping[sanal.sp_name] << '\n';
+	if(!sanalysis.pc_name.empty())
+		buf << "=PC\t" << sanalysis.reg_mapping[sanalysis.pc_name] << '\n';
+	if(!sanalysis.sp_name.empty())
+		buf << "=SP\t" << sanalysis.reg_mapping[sanalysis.sp_name] << '\n';
 
-	for(unsigned i = 0; i != sanal.arg_names.size() && i <= 9; ++i)
-		buf << "=A" << i << '\t' << sanal.reg_mapping[sanal.arg_names[i]] << '\n';
+	for(unsigned i = 0; i != sanalysis.arg_names.size() && i <= 9; ++i)
+		buf << "=A" << i << '\t' << sanalysis.reg_mapping[sanalysis.arg_names[i]] << '\n';
 
-	for(unsigned i = 0; i != sanal.ret_names.size() && i <= 3; ++i)
-		buf << "=R" << i << '\t' << sanal.reg_mapping[sanal.ret_names[i]] << '\n';
+	for(unsigned i = 0; i != sanalysis.ret_names.size() && i <= 3; ++i)
+		buf << "=R" << i << '\t' << sanalysis.reg_mapping[sanalysis.ret_names[i]] << '\n';
 
 	ut64 pp = 0;
-	string arch = sanal.sleigh_id.substr(pp, sanal.sleigh_id.find(':', pp) - pp);
-	pp = sanal.sleigh_id.find(':', pp) + 1;
-	bool little = sanal.sleigh_id.substr(pp, sanal.sleigh_id.find(':', pp) - pp) == "LE";
-	pp = sanal.sleigh_id.find(':', pp) + 1;
-	int bits = std::stoi(sanal.sleigh_id.substr(pp, sanal.sleigh_id.find(':', pp) - pp));
-	pp = sanal.sleigh_id.find(':', pp) + 1;
+	string arch = sanalysis.sleigh_id.substr(pp, sanalysis.sleigh_id.find(':', pp) - pp);
+	pp = sanalysis.sleigh_id.find(':', pp) + 1;
+	bool little = sanalysis.sleigh_id.substr(pp, sanalysis.sleigh_id.find(':', pp) - pp) == "LE";
+	pp = sanalysis.sleigh_id.find(':', pp) + 1;
+	int bits = std::stoi(sanalysis.sleigh_id.substr(pp, sanalysis.sleigh_id.find(':', pp) - pp));
+	pp = sanalysis.sleigh_id.find(':', pp) + 1;
 
 	append_hardcoded_regs(buf, arch, little, bits);
 

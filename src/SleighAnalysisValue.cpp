@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#include "SleighAnalValue.h"
+#include "SleighAnalysisValue.h"
 
-RzAnalysisValueType SleighAnalValue::type_from_values(const SleighAnalValue &in0, const SleighAnalValue &in1)
+RzAnalysisValueType SleighAnalysisValue::type_from_values(const SleighAnalysisValue &in0, const SleighAnalysisValue &in1)
 {
 	RzAnalysisValueType res;
 
@@ -16,9 +16,9 @@ RzAnalysisValueType SleighAnalValue::type_from_values(const SleighAnalValue &in0
 	return res;
 }
 
-SleighAnalValue SleighAnalValue::resolve_arg(RzAnalysis *analysis, const PcodeOperand *arg)
+SleighAnalysisValue SleighAnalysisValue::resolve_arg(RzAnalysis *analysis, const PcodeOperand *arg)
 {
-	SleighAnalValue res;
+	SleighAnalysisValue res;
 
 	if(arg->is_const())
 	{
@@ -39,7 +39,7 @@ SleighAnalValue SleighAnalValue::resolve_arg(RzAnalysis *analysis, const PcodeOp
 	else
 	{ // PcodeOperand::UNIQUE
 		const Pcodeop *curr_op = ((UniquePcodeOperand *)arg)->def;
-		SleighAnalValue in0, in1;
+		SleighAnalysisValue in0, in1;
 
 		if(curr_op->input0)
 		{
@@ -190,13 +190,13 @@ SleighAnalValue SleighAnalValue::resolve_arg(RzAnalysis *analysis, const PcodeOp
 	return res;
 }
 
-std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnalysis *analysis,
+std::vector<SleighAnalysisValue> SleighAnalysisValue::resolve_out(RzAnalysis *analysis,
                                           std::vector<Pcodeop>::const_iterator curr_op,
                                           std::vector<Pcodeop>::const_iterator end_op,
                                           const PcodeOperand *arg)
 {
-	std::vector<SleighAnalValue> res;
-	SleighAnalValue tmp;
+	std::vector<SleighAnalysisValue> res;
+	SleighAnalysisValue tmp;
 
 	if(arg->is_const())
 	{
@@ -240,7 +240,7 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnalysis *analysis,
 				{
 					if(iter->output && iter->output->is_reg())
 					{
-						tmp = SleighAnalValue();
+						tmp = SleighAnalysisValue();
 						tmp.type = RZ_ANALYSIS_VAL_REG;
 						tmp.reg = rz_reg_get(analysis->reg, iter->output->name.c_str(), RZ_REG_TYPE_ALL);
 						res.push_back(tmp);
@@ -253,7 +253,7 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RzAnalysis *analysis,
 	return res;
 }
 
-void SleighAnalValue::mem(uint4 size)
+void SleighAnalysisValue::mem(uint4 size)
 {
 	if(is_mem())
 		return;
@@ -267,7 +267,7 @@ void SleighAnalValue::mem(uint4 size)
 	type = RZ_ANALYSIS_VAL_MEM;
 }
 
-RzAnalysisValue *SleighAnalValue::dup() const
+RzAnalysisValue *SleighAnalysisValue::dup() const
 {
 	RzAnalysisValue *to = rz_analysis_value_new();
 	if(!to)
