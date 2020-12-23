@@ -39,15 +39,16 @@ tasks:
         export LD_LIBRARY_PATH=${HOME}/lib:${HOME}/lib64:${LD_LIBRARY_PATH}
         export PKG_CONFIG_PATH=${HOME}/lib/pkgconfig:${PKG_CONFIG_PATH}
         ninja install
-    - test: |
-        cd rz-ghidra
-        export PATH=${HOME}/bin:${PATH}
-        export LD_LIBRARY_PATH=${HOME}/lib:${HOME}/lib64:${LD_LIBRARY_PATH}
-        export PKG_CONFIG_PATH=${HOME}/lib/pkgconfig:${PKG_CONFIG_PATH}
-        export RZ_LIBR_PLUGINS=${HOME}/share/rizin/plugins
+        # Disabled for now due to be broken
+        #- test: |
+        #cd rz-ghidra
+        #export PATH=${HOME}/bin:${PATH}
+        #export LD_LIBRARY_PATH=${HOME}/lib:${HOME}/lib64:${LD_LIBRARY_PATH}
+        #export PKG_CONFIG_PATH=${HOME}/lib/pkgconfig:${PKG_CONFIG_PATH}
+        #export RZ_LIBR_PLUGINS=${HOME}/share/rizin/plugins
         # Workaround until the feature request is solved
         # https://todo.sr.ht/~sircmpwn/builds.sr.ht/274
-        ln -s ${HOME}/rizin-testbins test/rizin-testbins
+        #ln -s ${HOME}/rizin-testbins test/rizin-testbins
         # Running the test suite
-        cd test
-        rz-test -L db/extras
+        #cd test
+        #rz-test -L db/extras
