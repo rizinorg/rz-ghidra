@@ -156,14 +156,14 @@ struct UniquePcodeOperand: public PcodeOperand
 class PcodeSlg : public PcodeEmit
 {
 private:
-	SleighAsm *sanal = nullptr;
+	SleighAsm *sanalysis = nullptr;
 
 	PcodeOperand *parse_vardata(VarnodeData &data);
 
 public:
 	std::vector<Pcodeop> pcodes;
 
-	PcodeSlg(SleighAsm *s): sanal(s) {}
+	PcodeSlg(SleighAsm *s): sanalysis(s) {}
 
 	void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars,
 	          int4 isize) override

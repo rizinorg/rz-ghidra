@@ -603,7 +603,7 @@ PcodeOperand *PcodeSlg::parse_vardata(VarnodeData &data)
 	PcodeOperand *operand = nullptr;
 	if(space->getName() == "register" || space->getName() == "mem")
 	{
-		operand = new PcodeOperand(sanal->reg_mapping[space->getTrans()->getRegisterName(
+		operand = new PcodeOperand(sanalysis->reg_mapping[space->getTrans()->getRegisterName(
 		                               data.space, data.offset, data.size)],
 		                           data.size);
 		operand->type = PcodeOperand::REGISTER;

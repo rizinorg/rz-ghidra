@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef RZ_GHIDRA_SLEIGHANALVALUE_H
-#define RZ_GHIDRA_SLEIGHANALVALUE_H
+#ifndef RZ_GHIDRA_SLEIGHANALYSISVALUE_H
+#define RZ_GHIDRA_SLEIGHANALYSISVALUE_H
 
 #include "SleighAsm.h"
 
-struct SleighAnalValue: public RzAnalysisValue
+struct SleighAnalysisValue: public RzAnalysisValue
 {
 public:
-	SleighAnalValue()
+	SleighAnalysisValue()
 	{
 		access = RzAnalysisValueAccess(0);
 		absolute = memref = base = delta = imm = mul = 0;
 		seg = reg = regdelta = nullptr;
 	}
 
-	static SleighAnalValue resolve_arg(RzAnalysis *analysis, const PcodeOperand *arg);
+	static SleighAnalysisValue resolve_arg(RzAnalysis *analysis, const PcodeOperand *arg);
 
-	static std::vector<SleighAnalValue> resolve_out(RzAnalysis *analysis,
+	static std::vector<SleighAnalysisValue> resolve_out(RzAnalysis *analysis,
                                            std::vector<Pcodeop>::const_iterator curr_op,
                                            std::vector<Pcodeop>::const_iterator end_op,
                                            const PcodeOperand *arg);
@@ -32,7 +32,7 @@ public:
 	RzAnalysisValue *dup() const;
 
 private:
-	static RzAnalysisValueType type_from_values(const SleighAnalValue &in0, const SleighAnalValue &in1);
+	static RzAnalysisValueType type_from_values(const SleighAnalysisValue &in0, const SleighAnalysisValue &in1);
 
 	template<typename T>
 	static inline T inner_max(T foo, T bar)
@@ -41,4 +41,4 @@ private:
 	}
 };
 
-#endif // RZ_GHIDRA_SLEIGHANALVALUE_H
+#endif // RZ_GHIDRA_SLEIGHANALYSISVALUE_H
