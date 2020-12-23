@@ -43,7 +43,7 @@ class RizinArchitecture : public SleighArchitecture
 	protected:
 		Translate *buildTranslator(DocumentStorage &store) override;
 		void buildLoader(DocumentStorage &store) override;
-		Scope *buildGlobalScope() override;
+		Scope *buildDatabase(DocumentStorage &store) override;
 		void buildTypegrp(DocumentStorage &store) override;
 		void buildCommentDB(DocumentStorage &store) override;
 		void postSpecFile() override;

@@ -2408,10 +2408,6 @@ CCu base64:Jg== @ 0x804858a
 --
 <result><function><function name="main" size="92">
 <localdb main="stack" lock="false">
-<scope name="main">
-<parent>
-<val></val>
-</parent>
 <rangelist>
 <range space="stack" first="0x4" last="0x1f7"/>
 <range space="stack" first="0xffffff68" last="0xfffffffb"/>
@@ -2488,19 +2484,12 @@ CCu base64:Jg== @ 0x804858a
 <property_changepoint space="register" offset="0x103c" val="0x20000000"/>
 <property_changepoint space="register" offset="0x1046" val="0x20000000"/>
 <property_changepoint space="register" offset="0x1050" val="0x0"/>
-<scope name="rizin-internal">
-<parent>
-</parent>
 <rangelist>
 </rangelist>
 <symbollist>
 <mapsym>
 <addr space="ram" offset="0x8048540"/>
 <localdb main="stack" lock="false">
-<scope name="main">
-<parent>
-<val></val>
-</parent>
 <rangelist>
 <range space="stack" first="0x4" last="0x1f7"/>
 <range space="stack" first="0xffffff68" last="0xfffffffb"/>
@@ -2531,10 +2520,6 @@ CCu base64:Jg== @ 0x804858a
 <mapsym>
 <addr space="ram" offset="0x80484c8"/>
 <localdb main="stack" lock="false">
-<scope name="sym.check">
-<parent>
-<val></val>
-</parent>
 <rangelist>
 <range space="stack" first="0x4" last="0x1f7"/>
 <range space="stack" first="0xfff0bdc0" last="0xffffffff"/>
@@ -2565,10 +2550,6 @@ CCu base64:Jg== @ 0x804858a
 <mapsym>
 <addr space="ram" offset="0x8048394"/>
 <localdb main="stack" lock="false">
-<scope name="sym.imp.printf">
-<parent>
-<val></val>
-</parent>
 <rangelist>
 <range space="stack" first="0x4" last="0x1f7"/>
 <range space="stack" first="0xfff0bdc0" last="0xffffffff"/>
@@ -2585,10 +2566,6 @@ CCu base64:Jg== @ 0x804858a
 <mapsym>
 <addr space="ram" offset="0x8048374"/>
 <localdb main="stack" lock="false">
-<scope name="sym.imp.scanf">
-<parent>
-<val></val>
-</parent>
 <rangelist>
 <range space="stack" first="0x4" last="0x1f7"/>
 <range space="stack" first="0xfff0bdc0" last="0xffffffff"/>
@@ -2811,6 +2788,7 @@ HCS08:BE:16:MC9S08GB60
 HCS08:BE:16:default
 HCS12:BE:24:default
 JVM:BE:32:default
+M8C:BE:16:default
 MCS96:LE:16:default
 MIPS:BE:32:R6
 MIPS:BE:32:default
@@ -2882,6 +2860,7 @@ Toy:BE:32:default
 Toy:BE:32:posStack
 Toy:BE:32:wordSize2
 Toy:BE:64:default
+Toy:BE:64:harvard
 Toy:LE:32:builder
 Toy:LE:32:builder.align2
 Toy:LE:32:default
@@ -2892,6 +2871,7 @@ avr32:BE:32:default
 avr8:LE:16:atmega256
 avr8:LE:16:default
 avr8:LE:16:extended
+avr8:LE:24:xmega
 dsPIC30F:LE:24:default
 dsPIC33C:LE:24:default
 dsPIC33E:LE:24:default
@@ -2978,25 +2958,25 @@ shr eax, 4
     (unique,0x1b40,1) = INT_AND (unique,0x1b30,1), 0x1
     PF = INT_EQUAL (unique,0x1b40,1), 0x0
 0x08048557: SHR EAX,0x4
-    (unique,0x82c0,4) = INT_AND 0x4, 0x1f
-    (unique,0x82d0,4) = COPY EAX
-    EAX = INT_RIGHT EAX, (unique,0x82c0,4)
-    (unique,0x21c0,1) = INT_NOTEQUAL (unique,0x82c0,4), 0x0
-    (unique,0x21d0,4) = INT_SUB (unique,0x82c0,4), 0x1
-    (unique,0x21e0,4) = INT_RIGHT (unique,0x82d0,4), (unique,0x21d0,4)
+    (unique,0x8230,4) = INT_AND 0x4, 0x1f
+    (unique,0x8240,4) = COPY EAX
+    EAX = INT_RIGHT EAX, (unique,0x8230,4)
+    (unique,0x21c0,1) = INT_NOTEQUAL (unique,0x8230,4), 0x0
+    (unique,0x21d0,4) = INT_SUB (unique,0x8230,4), 0x1
+    (unique,0x21e0,4) = INT_RIGHT (unique,0x8240,4), (unique,0x21d0,4)
     (unique,0x21f0,4) = INT_AND (unique,0x21e0,4), 0x1
     (unique,0x2210,1) = INT_NOTEQUAL (unique,0x21f0,4), 0x0
     (unique,0x2220,1) = BOOL_NEGATE (unique,0x21c0,1)
     (unique,0x2230,1) = INT_AND (unique,0x2220,1), CF
     (unique,0x2240,1) = INT_AND (unique,0x21c0,1), (unique,0x2210,1)
     CF = INT_OR (unique,0x2230,1), (unique,0x2240,1)
-    (unique,0x2270,1) = INT_EQUAL (unique,0x82c0,4), 0x1
-    (unique,0x2290,1) = INT_SLESS (unique,0x82d0,4), 0x0
+    (unique,0x2270,1) = INT_EQUAL (unique,0x8230,4), 0x1
+    (unique,0x2290,1) = INT_SLESS (unique,0x8240,4), 0x0
     (unique,0x22a0,1) = BOOL_NEGATE (unique,0x2270,1)
     (unique,0x22b0,1) = INT_AND (unique,0x22a0,1), OF
     (unique,0x22c0,1) = INT_AND (unique,0x2270,1), (unique,0x2290,1)
     OF = INT_OR (unique,0x22b0,1), (unique,0x22c0,1)
-    (unique,0x1b70,1) = INT_NOTEQUAL (unique,0x82c0,4), 0x0
+    (unique,0x1b70,1) = INT_NOTEQUAL (unique,0x8230,4), 0x0
     (unique,0x1b90,1) = INT_SLESS EAX, 0x0
     (unique,0x1ba0,1) = BOOL_NEGATE (unique,0x1b70,1)
     (unique,0x1bb0,1) = INT_AND (unique,0x1ba0,1), SF
