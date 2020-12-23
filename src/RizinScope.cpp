@@ -13,10 +13,12 @@
 #include "RizinUtils.h"
 
 RizinScope::RizinScope(RizinArchitecture *arch)
-		: Scope("", arch, this),
+		: Scope(0, "", arch, this),
 		  arch(arch),
-		  cache(new ScopeInternal("rizin-internal", arch, this))
+		  cache(new ScopeInternal(0, "rizin-internal", arch, this)),
+		  next_id(new uint8)
 {
+	*next_id = 1;
 }
 
 RizinScope::~RizinScope()
@@ -24,9 +26,9 @@ RizinScope::~RizinScope()
 	delete cache;
 }
 
-Scope *RizinScope::buildSubScope(const string &nm)
+Scope *RizinScope::buildSubScope(uint8 id, const string &nm)
 {
-	return new ScopeInternal(nm, arch);
+	return new ScopeInternal(id, nm, arch);
 }
 
 static std::string hex(ut64 v)
@@ -131,7 +133,8 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 
 	auto functionElement = child(&doc, "function", {
 			{ "name", fcn_name },
-			{ "size", "1" }
+			{ "size", "1" },
+			{ "id", hex(makeId()) }
 	});
 
 	childAddr(functionElement, "addr", Address(arch->getDefaultCodeSpace(), fcn->addr));
@@ -145,7 +148,10 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 			{ "name", fcn_name }
 	});
 
-	child(child(scopeElement, "parent"), "val");
+	auto parentElement = child(scopeElement, "parent", {
+			{"id", hex(uniqueId)}
+	});
+	child(parentElement, "val");
 	child(scopeElement, "rangelist");
 
 	auto symbollistElement = child(scopeElement, "symbollist");

@@ -141,13 +141,10 @@ void RizinArchitecture::buildLoader(DocumentStorage &store)
 	loader = new RizinLoadImage(getCore());
 }
 
-Scope *RizinArchitecture::buildGlobalScope()
+Scope *RizinArchitecture::buildDatabase(DocumentStorage &store)
 {
-	Scope *globalscope = symboltab->getGlobalScope();
-	if(globalscope)
-		return globalscope;
-
-	globalscope = new RizinScope(this);
+	symboltab = new Database(this, false);
+	Scope *globalscope = new RizinScope(this);
 	symboltab->attachScope(globalscope, nullptr);
 	return globalscope;
 }
