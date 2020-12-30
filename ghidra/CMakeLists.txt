@@ -144,40 +144,55 @@ prepend_src_dir(DECOMPILER_SOURCE_CONSOLE_CXX)
 prepend_src_dir(SLEIGH_COMPILER_SOURCE_CXX)
 set(SOURCE "${DECOMPILER_SOURCE_BASE_CXX}")
 
-find_package(BISON REQUIRED)
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bison")
-find_package(FLEX REQUIRED)
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/flex")
+if(GENERATE_PARSERS)
+	find_package(BISON REQUIRED)
+	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bison")
+	find_package(FLEX REQUIRED)
+	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/flex")
 
-# build yacc files and append the output files to OUT_VAR
-macro(build_bison OUT_VAR)
-	foreach(yacc_file ${ARGN})
-		get_filename_component(yacc_name "${yacc_file}" NAME_WE)
-		if("${yacc_name}" STREQUAL "slghparse")
-			set(yacc_prefix yy)
-		else()
-			set(yacc_prefix "${yacc_name}")
-		endif()
-		if(BISON_VERSION VERSION_LESS 2.6)
-			set(BISON_COMPILE_FLAGS "--name-prefix=${yacc_prefix}")
-		else()
-			set(BISON_COMPILE_FLAGS "-Dapi.prefix={${yacc_prefix}}")
-		endif()
-		BISON_TARGET(${yacc_name}
-				"${CMAKE_CURRENT_SOURCE_DIR}/${DECOMPILER_SOURCE_DIR}/${yacc_file}"
-				"${CMAKE_CURRENT_BINARY_DIR}/bison/${yacc_name}.cpp"
-				COMPILE_FLAGS ${BISON_COMPILE_FLAGS})
-		list(APPEND ${OUT_VAR} "${BISON_${yacc_name}_OUTPUTS}")
-	endforeach()
-endmacro()
+	# build yacc files and append the output files to OUT_VAR
+	macro(build_bison OUT_VAR)
+		foreach(yacc_file ${ARGN})
+			get_filename_component(yacc_name "${yacc_file}" NAME_WE)
+			if("${yacc_name}" STREQUAL "slghparse")
+				set(yacc_prefix yy)
+			else()
+				set(yacc_prefix "${yacc_name}")
+			endif()
+			if(BISON_VERSION VERSION_LESS 2.6)
+				set(BISON_COMPILE_FLAGS "--name-prefix=${yacc_prefix}")
+			else()
+				set(BISON_COMPILE_FLAGS "-Dapi.prefix={${yacc_prefix}}")
+			endif()
+			BISON_TARGET(${yacc_name}
+					"${CMAKE_CURRENT_SOURCE_DIR}/${DECOMPILER_SOURCE_DIR}/${yacc_file}"
+					"${CMAKE_CURRENT_BINARY_DIR}/bison/${yacc_name}.cpp"
+					COMPILE_FLAGS ${BISON_COMPILE_FLAGS})
+			list(APPEND ${OUT_VAR} "${BISON_${yacc_name}_OUTPUTS}")
+		endforeach()
+	endmacro()
 
-build_bison(SOURCE ${DECOMPILER_SOURCE_BASE_YACC})
-build_bison(DECOMPILER_SOURCE_SLEIGH_CXX ${DECOMPILER_SOURCE_SLEIGH_YACC})
-build_bison(SLEIGH_COMPILER_SOURCE_CXX ${SLEIGH_COMPILER_SOURCE_YACC})
+	build_bison(SOURCE ${DECOMPILER_SOURCE_BASE_YACC})
+	build_bison(DECOMPILER_SOURCE_SLEIGH_CXX ${DECOMPILER_SOURCE_SLEIGH_YACC})
+	build_bison(SLEIGH_COMPILER_SOURCE_CXX ${SLEIGH_COMPILER_SOURCE_YACC})
 
-FLEX_TARGET(slghscan "${DECOMPILER_SOURCE_DIR}/${SLEIGH_COMPILER_SOURCE_FLEX}" "${CMAKE_CURRENT_BINARY_DIR}/flex/slghscan.cpp")
-list(APPEND SLEIGH_COMPILER_SOURCE_CXX "${CMAKE_CURRENT_BINARY_DIR}/flex/slghscan.cpp")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/flex/slghparse.tab.hh" "#include \"../bison/slghparse.hpp\"")
+	FLEX_TARGET(slghscan "${DECOMPILER_SOURCE_DIR}/${SLEIGH_COMPILER_SOURCE_FLEX}" "${CMAKE_CURRENT_BINARY_DIR}/flex/slghscan.cpp")
+	list(APPEND SLEIGH_COMPILER_SOURCE_CXX "${CMAKE_CURRENT_BINARY_DIR}/flex/slghscan.cpp")
+	file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/flex/slghparse.tab.hh" "#include \"../bison/slghparse.hpp\"")
+else()
+	list(APPEND SOURCE
+		"${DECOMPILER_SOURCE_DIR}/xml.hh"
+		"${DECOMPILER_SOURCE_DIR}/xml.cc")
+	list(APPEND DECOMPILER_SOURCE_SLEIGH_CXX
+		"${DECOMPILER_SOURCE_DIR}/pcodeparse.hh"
+		"${DECOMPILER_SOURCE_DIR}/pcodeparse.cc"
+		"${DECOMPILER_SOURCE_DIR}/grammar.hh"
+		"${DECOMPILER_SOURCE_DIR}/grammar.cc")
+	list(APPEND SLEIGH_COMPILER_SOURCE_CXX
+		"${DECOMPILER_SOURCE_DIR}/slghparse.hh"
+		"${DECOMPILER_SOURCE_DIR}/slghparse.cc"
+		"${DECOMPILER_SOURCE_DIR}/slghscan.cc")
+endif()
 
 add_library(ghidra_decompiler_base STATIC ${SOURCE})
 target_include_directories(ghidra_decompiler_base PUBLIC "${DECOMPILER_SOURCE_DIR}")
