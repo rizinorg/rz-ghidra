@@ -9,8 +9,14 @@ jobs:
   build:
     strategy:
       matrix:
-        image: [buster, arch]
-    name: ${{ matrix.image }}
+        include:
+          - name: Buster / default
+            image: buster
+            args:
+          - name: Arch / GENERATE_PARSERS=ON
+            image: arch
+            args: -DGENERATE_PARSERS=ON
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -21,5 +27,4 @@ jobs:
       - name: Docker Build
         run: cd scripts && docker build -t rz-ghidra . -f Dockerfile.${{ matrix.image }} && cd ..
       - name: Build and Test
-        run: docker run --rm -v "`pwd`:/build" -t rz-ghidra /bin/bash -c "cd /build && scripts/ci-script"
-
+        run: docker run --rm -v "`pwd`:/build" -t rz-ghidra /bin/bash -c "cd /build && scripts/ci-script ${{ matrix.args }}"

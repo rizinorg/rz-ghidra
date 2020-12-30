@@ -13,6 +13,7 @@ option(BUILD_DECOMPILE_EXECUTABLE "Build \"decompile\" executable as used by Ghi
 option(BUILD_DECOMPILE_CLI_EXECUTABLE "Build REPL decompiler (not needed for rizin)" OFF)
 option(BUILD_SLASPECS "Build Sleigh specs for architectures from Ghidra" ON)
 option(BUILD_SLEIGH_PLUGIN "Build asm and analysis plugin to use sleigh as a disassembler in rizin" ON)
+option(GENERATE_PARSERS "Re-generate all parsers with Bison/Flex instead of using pre-generated ones" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -57,7 +58,7 @@ set(ASM_SOURCE
 		src/SleighInstruction.cpp
 		src/asm_ghidra.cpp)
 
-set(ANAL_SOURCE
+set(ANALYSIS_SOURCE
 		src/SleighAsm.h
 		src/SleighAsm.cpp
 		src/SleighInstruction.h
@@ -98,7 +99,7 @@ set_target_properties(asm_ghidra PROPERTIES
 		INSTALL_RPATH "${LD_RPATH_STR}"
 		PREFIX "")
 
-add_library(analysis_ghidra SHARED ${ANAL_SOURCE})
+add_library(analysis_ghidra SHARED ${ANALYSIS_SOURCE})
 target_link_libraries(analysis_ghidra core_ghidra)
 set_target_properties(analysis_ghidra PROPERTIES
 		OUTPUT_NAME analysis_ghidra
