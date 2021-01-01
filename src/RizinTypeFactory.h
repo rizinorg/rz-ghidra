@@ -7,6 +7,7 @@
 
 typedef struct rz_parse_ctype_t RParseCType;
 typedef struct rz_parse_ctype_type_t RParseCTypeType;
+typedef struct rz_analysis_base_type_t RzAnalysisBaseType;
 
 class RizinArchitecture;
 
@@ -16,10 +17,10 @@ class RizinTypeFactory : public TypeFactory
 		RizinArchitecture *arch;
 		RParseCType *ctype;
 
-		Datatype *queryRizinStruct(const string &n, std::set<std::string> &stackTypes);
-		Datatype *queryRizinEnum(const string &n);
-		Datatype *queryRizinTypedef(const string &n, std::set<std::string> &stackTypes);
-		Datatype *queryRizin(const string &n, std::set<std::string> &stackTypes);
+		Datatype *addRizinStruct(RzAnalysisBaseType *type, std::set<std::string> &stack_types);
+		Datatype *addRizinEnum(RzAnalysisBaseType *type);
+		Datatype *addRizinTypedef(RzAnalysisBaseType *type, std::set<std::string> &stack_types);
+		Datatype *queryRizin(const string &n, std::set<std::string> &stack_types);
 
 	protected:
 		Datatype *findById(const string &n, uint8 id) override;

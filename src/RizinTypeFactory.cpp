@@ -22,118 +22,76 @@ RizinTypeFactory::~RizinTypeFactory()
 	rz_parse_ctype_free(ctype);
 }
 
-
-std::vector<std::string> splitSdbArray(const std::string& str)
+Datatype *RizinTypeFactory::addRizinStruct(RzAnalysisBaseType *type, std::set<std::string> &stack_types)
 {
-	std::stringstream ss(str);
-	std::string token;
-	std::vector<std::string> r;
-	while(std::getline(ss, token, SDB_RS))
-		r.push_back(token);
-	return r;
-}
-
-Datatype *RizinTypeFactory::queryRizinStruct(const string &n, std::set<std::string> &stackTypes)
-{
-	RzCoreLock core(arch->getCore());
-
-	Sdb *sdb = core->analysis->sdb_types;
-
-	// TODO: We REALLY need an API for this in rizin
-
-	const char *members = sdb_const_get(sdb, ("struct." + n).c_str(), nullptr);
-	if(!members)
-		return nullptr;
+	assert(type->kind == RZ_ANALYSIS_BASE_TYPE_KIND_STRUCT);
 
 	std::vector<TypeField> fields;
 	try
 	{
-		TypeStruct *r = getTypeStruct(n);
-		std::stringstream membersStream(members);
-		std::string memberName;
-		while(std::getline(membersStream, memberName, SDB_RS))
-		{
-			const char *memberContents = sdb_const_get(sdb, ("struct." + n + "." + memberName).c_str(), nullptr);
-			if(!memberContents)
-				continue;
-			auto memberTokens = splitSdbArray(memberContents);
-			if(memberTokens.size() < 3)
-				continue;
-			auto memberTypeName = memberTokens[0];
-			for(size_t i=1; i<memberTokens.size() - 2; i++)
-				memberTypeName += "," + memberTokens[i];
-			int4 offset = std::stoi(memberTokens[memberTokens.size() - 2]);
-			int4 elements = std::stoi(memberTokens[memberTokens.size() - 1]);
-			Datatype *memberType = fromCString(memberTypeName, nullptr, &stackTypes);
-			if(!memberType)
+		TypeStruct *r = getTypeStruct(type->name);
+		void *it;
+		rz_vector_foreach_cpp<RzAnalysisStructMember>(&type->struct_data.members, [&](RzAnalysisStructMember *member) {
+			if(!member->type || !member->name)
+				return;
+			Datatype *member_type = fromCString(member->type, nullptr, &stack_types);
+			if(!member_type)
 			{
-				arch->addWarning("Failed to match type " + memberTypeName + " of member " + memberName + " in struct " + n);
-				continue;
+				arch->addWarning(std::string("Failed to match type ") + member->type + " of member " + member->name
+						+ " in struct " + type->name);
+				return;
 			}
 
-			if(elements > 0)
-				memberType = getTypeArray(elements, memberType);
+			// TODO: fix this super obsolete array stuff in struct sdb
+			// if(elements > 0)
+			// 	memberType = getTypeArray(elements, memberType);
 
 			fields.push_back({
-				offset,
-				memberName,
-				memberType
+				(int4)member->offset,
+				std::string(member->name),
+				member_type
 			});
-		}
-
+		});
 		setFields(fields, r, 0, 0);
 		return r;
 	}
 	catch(std::invalid_argument &e)
 	{
-		arch->addWarning("Failed to load struct " + n + " from sdb.");
+		arch->addWarning(std::string("Failed to load struct ") + type->name);
 		return nullptr;
 	}
 }
 
-Datatype *RizinTypeFactory::queryRizinEnum(const string &n)
+Datatype *RizinTypeFactory::addRizinEnum(RzAnalysisBaseType *type)
 {
-	RzCoreLock core(arch->getCore());
-	RzList *members = rz_type_get_enum(core->analysis->sdb_types, n.c_str());
-	if(!members)
-		return nullptr;
-
+	assert(type->kind == RZ_ANALYSIS_BASE_TYPE_KIND_ENUM);
 	std::vector<std::string> namelist;
 	std::vector<uintb> vallist;
 	std::vector<bool> assignlist;
-
-	rz_list_foreach_cpp<RTypeEnum>(members, [&](RTypeEnum *member) {
-		if(!member->name || !member->val)
+	rz_vector_foreach_cpp<RzAnalysisEnumCase>(&type->enum_data.cases, [&](RzAnalysisEnumCase *ceys) {
+		if(!ceys->name)
 			return;
-		uintb val = std::stoull(member->val, nullptr, 0);
-		namelist.push_back(member->name);
-		vallist.push_back(val);
+		namelist.push_back(ceys->name);
+		vallist.push_back(ceys->val);
 		assignlist.push_back(true); // all enum values from rizin have explicit values
 	});
-	rz_list_free (members);
-
 	if(namelist.empty())
 		return nullptr;
-
-	auto enumType = getTypeEnum(n);
+	auto enumType = getTypeEnum(type->name);
 	setEnumValues(namelist, vallist, assignlist, enumType);
 	return enumType;
 }
 
-Datatype *RizinTypeFactory::queryRizinTypedef(const string &n, std::set<std::string> &stackTypes)
+Datatype *RizinTypeFactory::addRizinTypedef(RzAnalysisBaseType *type, std::set<std::string> &stack_types)
 {
-	RzCoreLock core(arch->getCore());
-	Sdb *sdb = core->analysis->sdb_types;
-	const char *target = sdb_const_get(sdb, ("typedef." + n).c_str(), nullptr);
-	if(!target)
+	assert(type->kind == RZ_ANALYSIS_BASE_TYPE_KIND_TYPEDEF);
+	if(!type->type)
 		return nullptr;
-
-	Datatype *resolved = fromCString(target, nullptr, &stackTypes);
+	Datatype *resolved = fromCString(type->type, nullptr, &stack_types);
 	if(!resolved)
 		return nullptr;
-
 	Datatype *typedefd = resolved->clone();
-	setName(typedefd, n); // this removes the old name from the nametree
+	setName(typedefd, type->name); // this removes the old name from the nametree
 	setName(resolved, resolved->getName()); // add the old name back
 	return typedefd;
 }
@@ -146,20 +104,31 @@ Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &s
 		return nullptr;
 	}
 	stackTypes.insert(n);
-
 	RzCoreLock core(arch->getCore());
-	int kind = rz_type_kind(core->analysis->sdb_types, n.c_str());
-	switch(kind)
+	RzAnalysisBaseType *type = rz_analysis_get_base_type(core->analysis, n.c_str());
+	if(!type || !type->name)
 	{
-		case RZ_TYPE_STRUCT:
-			return queryRizinStruct(n, stackTypes);
-		case RZ_TYPE_ENUM:
-			return queryRizinEnum(n);
-		case RZ_TYPE_TYPEDEF:
-			return queryRizinTypedef(n, stackTypes);
-		default:
-			return nullptr;
+		rz_analysis_base_type_free(type);
+		return nullptr;
 	}
+	Datatype *r = nullptr;
+	switch(type->kind)
+	{
+		case RZ_ANALYSIS_BASE_TYPE_KIND_STRUCT:
+			r = addRizinStruct(type, stackTypes);
+			break;
+		case RZ_ANALYSIS_BASE_TYPE_KIND_ENUM:
+			r = addRizinEnum(type);
+			break;
+		case RZ_ANALYSIS_BASE_TYPE_KIND_TYPEDEF:
+			r = addRizinTypedef(type, stackTypes);
+			break;
+		// TODO: atomic too?
+		default:
+			break;
+	}
+	rz_analysis_base_type_free(type);
+	return r;
 }
 
 Datatype *RizinTypeFactory::findById(const string &n, uint8 id, std::set<std::string> &stackTypes)
