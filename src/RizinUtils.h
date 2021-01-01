@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef RZ_GHIDRA_RizinUTILS_H
-#define RZ_GHIDRA_RizinUTILS_H
+#ifndef RZ_GHIDRA_RIZINUTILS_H
+#define RZ_GHIDRA_RIZINUTILS_H
+
+#include <rz_vector.h>
 
 typedef struct rz_list_t RzList;
 typedef struct rz_list_iter_t RzListIter;
@@ -24,4 +26,13 @@ template<typename T, typename F> void rz_interval_tree_foreach_cpp(RzIntervalTre
 	}
 }
 
-#endif //RZ_GHIDRA_RizinUTILS_H
+template<typename T, typename F> void rz_vector_foreach_cpp(RzVector *vec, const F &func)
+{
+	void *it;
+	rz_vector_foreach(vec, it)
+	{
+		func(reinterpret_cast<T *>(it));
+	}
+}
+
+#endif //RZ_GHIDRA_RIZINUTILS_H
