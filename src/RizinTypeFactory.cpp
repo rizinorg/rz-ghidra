@@ -52,6 +52,11 @@ Datatype *RizinTypeFactory::addRizinStruct(RzAnalysisBaseType *type, std::set<st
 				member_type
 			});
 		});
+		if(fields.empty())
+		{
+			arch->addWarning(std::string("Struct ") + type->name + " has no members");
+			return nullptr;
+		}
 		setFields(fields, r, 0, 0);
 		return r;
 	}
@@ -77,9 +82,17 @@ Datatype *RizinTypeFactory::addRizinEnum(RzAnalysisBaseType *type)
 	});
 	if(namelist.empty())
 		return nullptr;
-	auto enumType = getTypeEnum(type->name);
-	setEnumValues(namelist, vallist, assignlist, enumType);
-	return enumType;
+	try
+	{
+		auto enumType = getTypeEnum(type->name);
+		setEnumValues(namelist, vallist, assignlist, enumType);
+		return enumType;
+	}
+	catch(LowlevelError &e)
+	{
+		arch->addWarning(std::string("Failed to load enum ") + type->name + ", " + e.explain);
+		return nullptr;
+	}
 }
 
 Datatype *RizinTypeFactory::addRizinTypedef(RzAnalysisBaseType *type, std::set<std::string> &stack_types)
@@ -96,38 +109,42 @@ Datatype *RizinTypeFactory::addRizinTypedef(RzAnalysisBaseType *type, std::set<s
 	return typedefd;
 }
 
-Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &stackTypes)
+Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &stack_types)
 {
-	if(stackTypes.find(n) != stackTypes.end())
+	if(stack_types.find(n) != stack_types.end())
 	{
 		arch->addWarning("Recursion detected while creating type " + n);
 		return nullptr;
 	}
-	stackTypes.insert(n);
+	stack_types.insert(n);
+	Datatype *r = nullptr;
+
 	RzCoreLock core(arch->getCore());
 	RzAnalysisBaseType *type = rz_analysis_get_base_type(core->analysis, n.c_str());
 	if(!type || !type->name)
 	{
-		rz_analysis_base_type_free(type);
-		return nullptr;
+		if(type)
+			rz_analysis_base_type_free(type);
+		goto beach;
 	}
-	Datatype *r = nullptr;
 	switch(type->kind)
 	{
 		case RZ_ANALYSIS_BASE_TYPE_KIND_STRUCT:
-			r = addRizinStruct(type, stackTypes);
+			r = addRizinStruct(type, stack_types);
 			break;
 		case RZ_ANALYSIS_BASE_TYPE_KIND_ENUM:
 			r = addRizinEnum(type);
 			break;
 		case RZ_ANALYSIS_BASE_TYPE_KIND_TYPEDEF:
-			r = addRizinTypedef(type, stackTypes);
+			r = addRizinTypedef(type, stack_types);
 			break;
 		// TODO: atomic too?
 		default:
 			break;
 	}
 	rz_analysis_base_type_free(type);
+beach:
+	stack_types.erase(n);
 	return r;
 }
 

@@ -229,6 +229,11 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 				if(!type)
 					return;
 			}
+			if(type->getSize() < 1)
+			{
+				arch->addWarning("Type " + type->getName() + " of variable " + to_string(var->name) + " has size 0");
+				return;
+			}
 			var_types[var] = type;
 
 			if(!var->isarg)
