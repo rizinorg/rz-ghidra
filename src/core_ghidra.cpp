@@ -62,6 +62,7 @@ static const ConfigVar cfg_var_nl_brace     ("nl.brace",    "false",    "Newline
 static const ConfigVar cfg_var_nl_else      ("nl.else",     "false",    "Newline before else");
 static const ConfigVar cfg_var_indent       ("indent",      "4",        "Indent increment");
 static const ConfigVar cfg_var_linelen      ("linelen",     "120",      "Max line length");
+static const ConfigVar cfg_var_maximplref   ("maximplref",  "2",        "Maximum number of references to an expression before showing an explicit variable.");
 static const ConfigVar cfg_var_rawptr       ("rawptr",      "true",     "Show unknown globals as raw addresses instead of variables");
 static const ConfigVar cfg_var_verbose      ("verbose",      "true",    "Show verbose warning messages while decompiling");
 
@@ -141,6 +142,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 		throw LowlevelError("No function at this offset");
 	RizinArchitecture arch(core, cfg_var_sleighid.GetString(core->config));
 	DocumentStorage store;
+	arch.max_implied_ref = cfg_var_maximplref.GetInt(core->config);
 	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 	arch.init(store);
 	Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
