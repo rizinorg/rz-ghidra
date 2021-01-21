@@ -3094,3 +3094,22 @@ void sym.KillList(LL arg1)
 }
 EOF
 RUN
+
+NAME=strings
+FILE=bins/strings
+CMDS=<<EOF
+aaa
+afvt arg1 char16_t * @ sym.use_utf16
+pdg @ main
+EOF
+EXPECT=<<EOF
+
+undefined8 main(void)
+{
+    sym.imp.puts("Hello this is a regular string\n");
+    sym.use_utf16(L"Henlo completely obsolete encoding\n");
+    sym.imp.fputws(L"This is a wiiiiiiiiiiiide string\n", _reloc.stdout);
+    return 0;
+}
+EOF
+RUN

@@ -448,11 +448,22 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 			}
 		}
 		Datatype *ptype;
-		if(str && str->type == RZ_STRING_TYPE_WIDE)
-			ptype = arch->types->findByName("wchar");
-		else
-			ptype = arch->types->findByName("char");
-		type = arch->types->getTypeArray(static_cast<int4>(flag->size), ptype);
+		const char *tn = "char";
+		if(str)
+		{
+			switch(str->type)
+			{
+				case RZ_STRING_TYPE_WIDE:
+					tn = "char16_t";
+					break;
+				case RZ_STRING_TYPE_WIDE32:
+					tn = "char32_t";
+					break;
+			}
+		}
+		ptype = arch->types->findByName(tn);
+		int4 sz = static_cast<int4>(flag->size) / ptype->getSize();
+		type = arch->types->getTypeArray(sz, ptype);
 		attr |= Varnode::readonly;
 	}
 

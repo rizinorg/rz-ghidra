@@ -1,5 +1,5 @@
 
-all: dectest32 dectest64 rec
+all:
 
 .PHONY: clean
 clean:
@@ -13,3 +13,6 @@ dectest64: dectest.c types.h
 
 rec: rec.c types_rec.h
 	gcc -m64 -fno-pic -no-pie -fno-omit-frame-pointer -o rec -O0 rec.c
+
+strings: strings.c
+	gcc -m64 -fno-pic -no-pie -fno-omit-frame-pointer -o strings -O0 strings.c
