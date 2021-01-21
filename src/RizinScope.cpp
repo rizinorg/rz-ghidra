@@ -432,7 +432,26 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 	Datatype *type = nullptr;
 	if(flag->space && !strcmp(flag->space->name, RZ_FLAGS_FS_STRINGS))
 	{
-		Datatype *ptype = arch->types->findByName("char");
+		RzBinString *str = nullptr;
+		RzListIter *iter;
+		void *pos;
+		rz_list_foreach(core->bin->binfiles, iter, pos)
+		{
+			auto bf = reinterpret_cast<RzBinFile *>(pos);
+			if(!bf->o)
+				continue;
+			void *s = ht_up_find(bf->o->strings_db, flag->offset, nullptr);
+			if(s)
+			{
+				str = reinterpret_cast<RzBinString *>(s);
+				break;
+			}
+		}
+		Datatype *ptype;
+		if(str && str->type == RZ_STRING_TYPE_WIDE)
+			ptype = arch->types->findByName("wchar");
+		else
+			ptype = arch->types->findByName("char");
 		type = arch->types->getTypeArray(static_cast<int4>(flag->size), ptype);
 		attr |= Varnode::readonly;
 	}
