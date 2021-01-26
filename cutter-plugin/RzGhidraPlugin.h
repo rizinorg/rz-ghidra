@@ -10,7 +10,7 @@
 class RzGhidraPlugin : public QObject, CutterPlugin
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.rizin.cutter.plugins.rz-ghidra")
+    Q_PLUGIN_METADATA(IID "re.rizin.cutter.plugins.rz-ghidra")
     Q_INTERFACES(CutterPlugin)
 
 public:
