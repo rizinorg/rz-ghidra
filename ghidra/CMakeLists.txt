@@ -237,7 +237,8 @@ if(BUILD_SLASPECS)
 		add_custom_command(OUTPUT "${sla_file}"
 				COMMAND sleighc "${slaspec}" "${sla_file}"
 				MAIN_DEPENDENCY "${slaspec}"
-				WORKING_DIRECTORY "${sleigh_dir}")
+				WORKING_DIRECTORY "${sleigh_dir}"
+				DEPENDS sleighc)
 		list(APPEND SLAFILES "${sla_file}")
 	endforeach()
 	add_custom_target(sla ALL DEPENDS ${SLAFILES})
