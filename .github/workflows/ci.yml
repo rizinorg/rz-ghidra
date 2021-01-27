@@ -8,14 +8,15 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: Buster / default
             image: buster
             args:
-          - name: Arch / GENERATE_PARSERS=ON
+          - name: Arch / GENERATE_PARSERS=ON + optional executables
             image: arch
-            args: -DGENERATE_PARSERS=ON
+            args: -DGENERATE_PARSERS=ON -DBUILD_DECOMPILE_EXECUTABLE=ON -DBUILD_DECOMPILE_CLI_EXECUTABLE=ON
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     steps:
