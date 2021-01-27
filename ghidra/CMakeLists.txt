@@ -10,7 +10,12 @@ set(DECOMPILER_SOURCE_BASE_CXX
 		pcoderaw.cc
 		translate.cc
 		opcodes.cc
-		globalcontext.cc
+		globalcontext.cc)
+
+set(DECOMPILER_SOURCE_BASE_YACC
+		xml.y)
+
+set(DECOMPILER_SOURCE_LIBDECOMP_CXX
 		capability.cc
 		architecture.cc
 		options.cc
@@ -68,12 +73,7 @@ set(DECOMPILER_SOURCE_BASE_CXX
 		# ifacedecomp.cc		// uncomment for debug
 		# ifaceterm.cc			// uncomment for debug
 		# interface.cc			// uncomment for debug
-		)
 
-set(DECOMPILER_SOURCE_BASE_YACC
-		xml.y)
-
-set(DECOMPILER_SOURCE_LIBDECOMP_CXX
 		libdecomp.cc)
 
 # Source specific to Ghidra
@@ -198,12 +198,14 @@ add_library(ghidra_decompiler_base STATIC ${SOURCE})
 target_include_directories(ghidra_decompiler_base PUBLIC "${DECOMPILER_SOURCE_DIR}")
 set_target_properties(ghidra_decompiler_base PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-add_library(ghidra_libdecomp STATIC ${DECOMPILER_SOURCE_LIBDECOMP_CXX})
-set_target_properties(ghidra_libdecomp PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
 add_library(ghidra_decompiler_sleigh STATIC ${DECOMPILER_SOURCE_SLEIGH_CXX})
+target_link_libraries(ghidra_decompiler_sleigh PUBLIC ghidra_decompiler_base)
 target_include_directories(ghidra_decompiler_sleigh PUBLIC "${DECOMPILER_SOURCE_DIR}")
 set_target_properties(ghidra_decompiler_sleigh PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+add_library(ghidra_libdecomp STATIC ${DECOMPILER_SOURCE_LIBDECOMP_CXX})
+target_link_libraries(ghidra_libdecomp PUBLIC ghidra_decompiler_sleigh)
+set_target_properties(ghidra_libdecomp PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # "decompile" executable as used by Ghidra
 if(BUILD_DECOMPILE_EXECUTABLE)
@@ -214,7 +216,7 @@ endif()
 
 if(BUILD_DECOMPILE_CLI_EXECUTABLE)
 	add_executable(ghidra_decompiler_cli ${DECOMPILER_SOURCE_CONSOLE_CXX})
-	target_link_libraries(ghidra_decompiler_cli ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
+	target_link_libraries(ghidra_decompiler_cli ghidra_libdecomp)
 	set_target_properties(ghidra_decompiler_cli PROPERTIES OUTPUT_NAME decompile_cli)
 endif()
 

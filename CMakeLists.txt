@@ -71,7 +71,7 @@ endif()
 find_package(Rizin REQUIRED)
 
 add_library(core_ghidra SHARED ${CORE_SOURCE})
-target_link_libraries(core_ghidra ghidra_decompiler_base ghidra_libdecomp ghidra_decompiler_sleigh)
+target_link_libraries(core_ghidra ghidra_libdecomp)
 target_link_libraries(core_ghidra pugixml)
 target_link_libraries(core_ghidra Rizin::librz)
 set_target_properties(core_ghidra PROPERTIES
