@@ -2475,6 +2475,10 @@ CCu base64:Jg== @ 0x804858a
 <typegrp intsize="4" structalign="4" enumsize="4" enumsigned="false">
 </typegrp>
 <db>
+<property_changepoint space="ram" offset="0x8048000" val="0x2000"/>
+<property_changepoint space="ram" offset="0x80486bc" val="0x0"/>
+<property_changepoint space="ram" offset="0x8049f0c" val="0x2000"/>
+<property_changepoint space="ram" offset="0x804a024" val="0x0"/>
 <property_changepoint space="register" offset="0x1000" val="0x20000000"/>
 <property_changepoint space="register" offset="0x100a" val="0x20000000"/>
 <property_changepoint space="register" offset="0x1014" val="0x20000000"/>

@@ -17,12 +17,14 @@ class RzCoreMutex;
 class RizinLoadImage : public LoadImage
 {
 	private:
-		RzCoreMutex *const coreMutex;
+		RzCoreMutex *const core_mutex;
+		AddrSpaceManager *addr_space_manager;
 
 	public:
-		explicit RizinLoadImage(RzCoreMutex *coreMutex);
+		explicit RizinLoadImage(RzCoreMutex *core_mutex, AddrSpaceManager *addr_space_manager);
 
 		void loadFill(uint1 *ptr, int4 size, const Address &addr) override;
+		void getReadonly(RangeList &list) const override;
 		string getArchType() const override;
 		void adjustVma(long adjust) override;
 };
