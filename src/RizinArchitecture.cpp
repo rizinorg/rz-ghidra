@@ -138,7 +138,7 @@ void RizinArchitecture::buildLoader(DocumentStorage &store)
 {
 	RzCoreLock core(getCore());
 	collectSpecFiles(*errorstream);
-	loader = new RizinLoadImage(getCore());
+	loader = new RizinLoadImage(getCore(), this);
 }
 
 Scope *RizinArchitecture::buildDatabase(DocumentStorage &store)
