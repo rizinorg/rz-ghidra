@@ -2028,9 +2028,9 @@ CMDS=<<EOF
 aaa
 to bins/types.h
 s sym.Aeropause
-afvb 8 bright Bright *
+afvb 8 bright "Bright *"
 afvb 12 argc int32_t
-afvb 16 argv const char **
+afvb 16 argv "const char **"
 pdg
 EOF
 RUN
@@ -2107,10 +2107,10 @@ CMDS=<<EOF
 aaa
 
 # TODO: remove these when r2 can do it automatically
-afvr rdi format const char * @ sym.imp.printf
+afvr rdi format "const char *" @ sym.imp.printf
 afvr rdi size size_t @ sym.imp.malloc
-afvr rdi s1 const char * @ sym.imp.strcmp
-afvr rsi s2 const char * @ sym.imp.strcmp
+afvr rdi s1 "const char *" @ sym.imp.strcmp
+afvr rsi s2 "const char *" @ sym.imp.strcmp
 
 to bins/types.h
 # TODO: remove when parsed struct from r2 is correct
@@ -2118,9 +2118,9 @@ k analysis/types/struct.Bright.ambassador=enum Ambassador,16,0
 k analysis/types/struct.Bright.window=struct Window,8,0
 
 s sym.Aeropause
-afvr rdi bright Bright *
+afvr rdi bright "Bright *"
 afvr rsi argc int32_t
-afvr rdx argv const char **
+afvr rdx argv "const char **"
 pdg
 EOF
 RUN
@@ -2313,13 +2313,13 @@ aaa
 to bins/types.h
 s sym.Aeropause
 afvb 8 bright BrightPtr
-afvb 12 argc Bright *
-afvb 16 argv const char **
+afvb 12 argc "Bright *"
+afvb 16 argv "const char **"
 pdg
 ?e --
-afvb 8 bright BrightTypedefd *
+afvb 8 bright "BrightTypedefd *"
 afvb 12 argc int32_t
-afvb 16 argv const char **
+afvb 16 argv "const char **"
 pdg
 ?e --
 afvb 8 bright BrightTypedefdPtr
@@ -3103,7 +3103,7 @@ NAME=strings
 FILE=bins/strings
 CMDS=<<EOF
 aaa
-afvt arg1 char16_t * @ sym.use_utf16
+afvt arg1 "char16_t *" @ sym.use_utf16
 pdg @ main
 EOF
 EXPECT=<<EOF
