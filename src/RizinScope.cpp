@@ -309,11 +309,22 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 				typelock = false;
 			}
 
-			if(var->isarg && proto && !proto->possibleInputParam(addr, type->getSize()))
+			int4 paramIndex = -1;
+			if(var->isarg)
 			{
-				// Prevent segfaults in the Decompiler
-				arch->addWarning("Removing arg " + to_string(var->name) + " because it doesn't fit into ProtoModel");
-				return;
+				if(proto && !proto->possibleInputParam(addr, type->getSize()))
+				{
+					// Prevent segfaults in the Decompiler
+					arch->addWarning("Removing arg " + to_string(var->name) + " because it doesn't fit into ProtoModel");
+					return;
+				}
+
+				paramIndex = params.whichTrial(addr, type->getSize());
+				if(paramIndex < 0)
+				{
+					arch->addWarning("Failed to determine arg index of " + to_string(var->name));
+					return;
+				}
 			}
 
 			varRanges.insertRange(addr.getSpace(), addr.getOffset(), last);
@@ -329,11 +340,6 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 
 			if(var->isarg)
 			{
-				int4 paramIndex = params.whichTrial(addr, type->getSize());
-
-				if(paramIndex < 0)
-					arch->addWarning("Failed to determine arg index of " + to_string(var->name));
-
 				if(argsByIndex.size() < paramIndex + 1)
 					argsByIndex.resize(paramIndex + 1, nullptr);
 
