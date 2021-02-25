@@ -1,6 +1,9 @@
 NAME=x86:LE:32:default:gcc
 FILE=malloc://2048
 EXPECT=<<EOF
+ghidra
+x86:LE:32:default:
+32
 0x00000000 MOV ecx,esp
 type: mov
 ----
@@ -71,9 +74,12 @@ type: xor
 type: xchg
 EOF
 CMDS=<<EOF
-e asm.cpu=x86
+e asm.arch=x86
 e asm.bits=32
 pdga
+e asm.arch
+e asm.cpu
+e asm.bits
 wx 89e1
 pdi 1
 ao | grep type
@@ -199,7 +205,7 @@ address: 0x0
 opcode: cmp r7, r6
 esilcost: 0
 disasm: cmp r7, r6
-pseudo: var = r7 - r6
+pseudo: r6 == r7
 mnemonic: cmp
 mask: ffff
 prefix: 0
@@ -214,9 +220,10 @@ esil: r7,NUM,r6,NUM,-,32,1,<<,1,SWAP,-,&,4294967287,psw,NUM,&,32,1,<<,1,SWAP,-,&
 family: cpu
 EOF
 CMDS=<<EOF
-e asm.cpu=v850
-e asm.bits=32
 e asm.arch=ghidra
+e asm.cpu=v850
+e asm.parser=v850.pseudo
+e asm.bits=32
 pdga
 e analysis.arch
 e analysis.cpu
@@ -249,9 +256,9 @@ esil: 4,r29,NUM,+,32,1,<<,1,SWAP,-,&,1,PICK,[4],r11,=,CLEAR
 family: cpu
 EOF
 CMDS=<<EOF
+e asm.arch=ghidra
 e asm.cpu=v850
 e asm.bits=32
-e asm.arch=ghidra
 pdga
 e analysis.arch
 e analysis.cpu
