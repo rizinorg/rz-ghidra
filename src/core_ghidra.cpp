@@ -89,28 +89,6 @@ class DecompilerLock
 		}
 };
 
-static void PrintUsage(const RzCore *const core)
-{
-	const char* help[] = {
-		"Usage: " CMD_PREFIX, "", "# Native Ghidra decompiler plugin",
-		CMD_PREFIX,     "", "# Decompile current function with the Ghidra decompiler",
-		CMD_PREFIX"d",  "", "# Dump the debug XML Dump",
-		CMD_PREFIX"x",  "", "# Dump the XML of the current decompiled function",
-		CMD_PREFIX"j",  "", "# Dump the current decompiled function as JSON",
-		CMD_PREFIX"o",  "", "# Decompile current function side by side with offsets",
-		CMD_PREFIX"s",  "", "# Display loaded Sleigh Languages",
-		CMD_PREFIX"ss", "", "# Display automatically matched Sleigh Language ID",
-		CMD_PREFIX"sd", " N", "# Disassemble N instructions with Sleigh and print pcode",
-		CMD_PREFIX"a", "", "# Switch to RzAsm and RzAnalysis plugins driven by SLEIGH from Ghidra",
-		CMD_PREFIX"*",  "", "# Decompiled code is returned to rizin as comment",
-		"Environment:", "", "",
-		"%SLEIGHHOME" , "", "# Path to ghidra build root directory",
-		NULL
-	};
-
-	rz_cons_cmd_help(help, core->print->flags & RZ_PRINT_FLAGS_COLOR);
-}
-
 enum class DecompileMode { DEFAULT, XML, DEBUG_XML, OFFSET, STATEMENTS, JSON };
 
 //#define DEBUG_EXCEPTIONS
@@ -490,62 +468,6 @@ static void EnablePlugin(RzCore *core)
 	rz_config_set(core->config, "asm.arch", "ghidra");
 }
 
-static void _cmd(RzCore *core, const char *input)
-{
-	switch(*input)
-	{
-		case 'd': // "pdgd"
-			DecompileCmd(core, DecompileMode::DEBUG_XML);
-			break;
-		case '\0': // "pdg"
-			DecompileCmd(core, DecompileMode::DEFAULT);
-			break;
-		case 'x': // "pdgx"
-			DecompileCmd(core, DecompileMode::XML);
-			break;
-		case 'j': // "pdgj"
-			DecompileCmd(core, DecompileMode::JSON);
-			break;
-		case 'o': // "pdgo"
-			DecompileCmd(core, DecompileMode::OFFSET);
-			break;
-		case '*': // "pdg*"
-			DecompileCmd(core, DecompileMode::STATEMENTS);
-			break;
-		case 's': // "pdgs"
-			switch(input[1])
-			{
-				case 's': // "pdgss"
-					PrintAutoSleighLang(core);
-					break;
-				case 'd': // "pdgsd"
-					Disassemble(core, (ut64)strtoull(input + 2, nullptr, 0));
-					break;
-				default:
-					ListSleighLangs();
-					break;
-			}
-			break;
-		case 'a': // "pdga"
-			EnablePlugin(core);
-			break;
-		default:
-			PrintUsage(core);
-			break;
-	}
-}
-
-static int rz_ghidra_cmd(void *user, const char *input)
-{
-	RzCore *core = (RzCore *) user;
-	if (!strncmp (input, CMD_PREFIX, strlen(CMD_PREFIX)))
-	{
-		_cmd (core, input + 3);
-		return true;
-	}
-	return false;
-}
-
 bool SleighHomeConfig(void */* user */, void *data)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
@@ -588,13 +510,147 @@ static void SetInitialSleighHome(RzConfig *cfg)
 	rz_mem_free (homepath);
 }
 
-static int rz_ghidra_init(void *user, const char *cmd)
+#define with(T, ...) ([]{ T ${}; __VA_ARGS__; return $; }())
+
+static const RzCmdDescArg args_none[] = {{}};
+
+static RzCmdDescDetailEntry root_details_env[] = {
+	with(RzCmdDescDetailEntry,
+		$.text = "$SLEIGHHOME";
+		$.comment = "Path to ghidra build root directory"
+	),
+	{}
+};
+
+static RzCmdDescDetail root_details[] = {
+	with(RzCmdDescDetail,
+		$.name = "Environment",
+		$.entries = root_details_env
+	),
+	{}
+};
+
+static const RzCmdDescHelp root_help = with(RzCmdDescHelp,
+	$.summary = "Native Ghidra decompiler and Sleigh Disassembler plugin";
+	$.args = args_none;
+	$.details = root_details
+);
+
+static const RzCmdDescHelp pdg_help = with(RzCmdDescHelp,
+	$.summary = "Decompile current function with the Ghidra decompiler";
+	$.args = args_none
+);
+
+static RzCmdStatus pdg_handler(RzCore *core, int argc, const char **argv) {
+	DecompileCmd(core, DecompileMode::DEFAULT);
+	return RZ_CMD_STATUS_OK;
+}
+
+static const RzCmdDescHelp pdgd_help = with(RzCmdDescHelp,
+	$.summary = "Dump the debug XML Dump";
+	$.args = args_none
+);
+
+static RzCmdStatus pdgd_handler(RzCore *core, int argc, const char **argv) {
+	DecompileCmd(core, DecompileMode::DEBUG_XML);
+	return RZ_CMD_STATUS_OK;
+}
+
+static const RzCmdDescHelp pdgx_help = with(RzCmdDescHelp,
+	$.summary = "Dump the XML of the current decompiled function";
+	$.args = args_none
+);
+
+static RzCmdStatus pdgx_handler(RzCore *core, int argc, const char **argv) {
+	DecompileCmd(core, DecompileMode::XML);
+	return RZ_CMD_STATUS_OK;
+}
+
+static const RzCmdDescHelp pdgj_help = with(RzCmdDescHelp,
+	$.summary = "Dump the current decompiled function as JSON";
+	$.args = args_none
+);
+
+static RzCmdStatus pdgj_handler(RzCore *core, int argc, const char **argv) {
+	DecompileCmd(core, DecompileMode::JSON);
+	return RZ_CMD_STATUS_OK;
+}
+
+static const RzCmdDescHelp pdgo_help = with(RzCmdDescHelp,
+	$.summary = "Decompile current function side by side with offsets";
+	$.args = args_none
+);
+
+static RzCmdStatus pdgo_handler(RzCore *core, int argc, const char **argv) {
+	DecompileCmd(core, DecompileMode::OFFSET);
+	return RZ_CMD_STATUS_OK;
+}
+
+static const RzCmdDescHelp pdgs_help = with(RzCmdDescHelp,
+	$.summary = "Display loaded Sleigh Languages";
+	$.args = args_none
+);
+
+static RzCmdStatus pdgs_handler(RzCore *core, int argc, const char **argv) {
+	ListSleighLangs();
+	return RZ_CMD_STATUS_OK;
+}
+
+static const RzCmdDescHelp pdgss_help = with(RzCmdDescHelp,
+	$.summary = "Display automatically matched Sleigh Language ID";
+	$.args = args_none
+);
+
+static RzCmdStatus pdgss_handler(RzCore *core, int argc, const char **argv) {
+	PrintAutoSleighLang(core);
+	return RZ_CMD_STATUS_OK;
+}
+
+static const RzCmdDescArg pdgsd_args[] = {
+	with(RzCmdDescArg,
+		$.name = "N";
+		$.optional = true;
+		$.type = RZ_CMD_ARG_TYPE_NUM;
+	),
+	{},
+};
+
+static const RzCmdDescHelp pdgsd_help = with(RzCmdDescHelp,
+	$.summary = "Disassemble N instructions with Sleigh and print pcode";
+	$.args = pdgsd_args;
+);
+
+static RzCmdStatus pdgsd_handler(RzCore *core, int argc, const char **argv) {
+	ut64 ops = argc > 1 ? (ut64)strtoull(argv[1], nullptr, 0) : 0;
+	Disassemble(core, ops);
+	return RZ_CMD_STATUS_OK;
+}
+
+static const RzCmdDescHelp pdga_help = with(RzCmdDescHelp,
+	$.summary = "Switch to RzAsm and RzAnalysis plugins driven by SLEIGH from Ghidra";
+	$.args = args_none
+);
+
+static RzCmdStatus pdga_handler(RzCore *core, int argc, const char **argv) {
+	EnablePlugin(core);
+	return RZ_CMD_STATUS_OK;
+}
+
+static const RzCmdDescHelp pdgstar_help = with(RzCmdDescHelp,
+	$.summary = "Decompiled code is returned to rizin as comment";
+	$.args = args_none
+);
+
+static RzCmdStatus pdgstar_handler(RzCore *core, int argc, const char **argv) {
+	DecompileCmd(core, DecompileMode::STATEMENTS);
+	return RZ_CMD_STATUS_OK;
+}
+
+static bool rz_ghidra_init(RzCore *core)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	startDecompilerLibrary(nullptr);
 
-	auto *rcmd = reinterpret_cast<RzCmd *>(user);
-	auto *core = reinterpret_cast<RzCore *>(rcmd->data);
 	RzConfig *cfg = core->config;
 	rz_config_lock (cfg, false);
 	for(const auto var : ConfigVar::GetAll())
@@ -608,11 +664,22 @@ static int rz_ghidra_init(void *user, const char *cmd)
 	}
 	rz_config_lock (cfg, true);
 
+	auto rzcmd = core->rcmd;
+	RzCmdDesc *root_cd = rz_cmd_desc_group_new(rzcmd, rz_cmd_get_root(rzcmd), "pdg", pdg_handler, &pdg_help, &root_help);
+	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgd", pdgd_handler, &pdgd_help);
+	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgx", pdgx_handler, &pdgx_help);
+	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgj", pdgj_handler, &pdgj_help);
+	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgo", pdgo_handler, &pdgo_help);
+	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgs", pdgs_handler, &pdgs_help);
+	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgss", pdgss_handler, &pdgss_help);
+	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgsd", pdgsd_handler, &pdgsd_help);
+	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdga", pdga_handler, &pdga_help);
+	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdg*", pdgstar_handler, &pdgstar_help);
 	SetInitialSleighHome(cfg);
 	return true;
 }
 
-static int rz_ghidra_fini(void *user, const char *cmd)
+static bool rz_ghidra_fini(RzCore *core)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	shutdownDecompilerLibrary();
@@ -622,10 +689,9 @@ static int rz_ghidra_fini(void *user, const char *cmd)
 RzCorePlugin rz_core_plugin_ghidra = {
 	/* .name = */ "ghidra",
 	/* .desc = */ "Ghidra integration",
-	/* .license = */ "GPL3",
+	/* .license = */ "LGPL3",
 	/* .author = */ "thestr4ng3r",
 	/* .version = */ nullptr,
-	/*.call = */ rz_ghidra_cmd,
 	/*.init = */ rz_ghidra_init,
 	/*.fini = */ rz_ghidra_fini
 };
