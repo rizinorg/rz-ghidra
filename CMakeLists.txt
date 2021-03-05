@@ -4,7 +4,7 @@ set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH True)
 project(rz-ghidra)
 
 set(RIZIN_INSTALL_PLUGDIR "share/rizin/plugins" CACHE STRING "Directory to install rizin plugin into")
-set(CUTTER_INSTALL_PLUGDIR "share/RizinOrg/Cutter/plugins/native" CACHE STRING "Directory to install Cutter plugin into")
+set(CUTTER_INSTALL_PLUGDIR "share/rizin/cutter/plugins/native" CACHE STRING "Directory to install Cutter plugin into")
 
 set(CUTTER_SOURCE_DIR CUTTER_SOURCE_DIR-NOTFOUND CACHE STRING "Root directory of Cutter source")
 
