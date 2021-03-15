@@ -25,7 +25,7 @@ if(WIN32)
         find_path(SDB_INCLUDE_DIR
                         NAMES sdb.h sdbht.h sdb_version.h
                         HINTS
-                        "$ENV{HOME}/bin/prefix/rizin/include/libr/sdb"
+                        "$ENV{HOME}/bin/prefix/rizin/include/librz/sdb"
                         /usr/local/include/librz/sdb
                         /usr/include/librz/sdb)
 
