@@ -3285,7 +3285,6 @@ RzAnalysisPlugin rz_analysis_plugin_ghidra = {
 	/* .analysis_mask = */ nullptr,
 	/* .preludes = */ nullptr,
 	/* .op = */ &sleigh_op,
-	/* .cmd_ext = */ nullptr,
 	/* .set_reg_profile = */ nullptr,
 	/* .get_reg_profile = */ &get_reg_profile,
 	/* .fingerprint_bb = */ nullptr,
