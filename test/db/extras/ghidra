@@ -3117,3 +3117,27 @@ undefined8 main(void)
 }
 EOF
 RUN
+
+
+NAME=show noreturn
+FILE=rizin-testbins/elf/ioli/crackme0x07
+CMDS=<<EOF
+aaa
+s sym.imp.exit
+pdg
+EOF
+EXPECT=<<EOF
+
+// WARNING: Switch with 1 destination removed at 0x080483e8
+// WARNING: [rz-ghidra] Failed to match type signed int for variable var_ch to Decompiler type: Unknown type identifier
+// signed
+// WARNING: [rz-ghidra] Detected overlap for variable var_dh
+
+void sym.imp.exit noreturn (void)
+{
+    // WARNING: Treating indirect jump as call
+    (**(code **)0x8049ffc)(0x30);
+    return;
+}
+EOF
+RUN
