@@ -1,22 +1,44 @@
-
 language: cpp
 
 branches:
   only:
     - master
 
-os: linux
-dist: bionic
+jobs:
+  fast_finish: true
+  include:
+    - os: linux
+      name: X86_64
+      dist: focal
+    - os: linux
+      name: S390X
+      arch: s390x
+      dist: focal
+    - os: linux
+      name: PPC64
+      arch: ppc64le
+      dist: focal
+    - os: linux
+      name: ARM64
+      arch: arm64
+      dist: focal
+  allow_failures:
+    - os: linux
+      name: S390X
+      arch: s390x
+      dist: focal
+    - os: linux
+      name: PPC64
+      arch: ppc64le
+      dist: focal
 
 addons:
   apt:
-    sources:
-      - sourceline: "ppa:beineri/opt-qt-5.12.0-bionic"
     packages:
        - python3-pip
        - python3-setuptools
        - ninja-build
-       - qt512base
+       - qtbase5-dev
        - libgl1-mesa-dev
 
 env:
@@ -30,23 +52,20 @@ install:
   - ninja
   - ninja install
   - cd ../..
-  - git clone --depth 1 https://github.com/rizinorg/cutter
 
 script:
   - mkdir build && cd build
   - cmake
       -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_PREFIX_PATH="$TRAVIS_BUILD_DIR/rizin-prefix;/opt/qt512"
+      -DCMAKE_PREFIX_PATH="$TRAVIS_BUILD_DIR/rizin-prefix"
       -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
-      -DBUILD_CUTTER_PLUGIN=ON
-      -DCUTTER_SOURCE_DIR="$TRAVIS_BUILD_DIR/cutter"
+      -DBUILD_CUTTER_PLUGIN=OFF
       -DBUILD_SLEIGH_PLUGIN=ON
       ..
   - make -j4
   - make install
   - export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:$INSTALL_PREFIX/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
   - export PATH="$INSTALL_PREFIX/bin:$PATH"
-  - export R2_LIBR_PLUGINS="$INSTALL_PREFIX/share/rizin/plugins"
+  - export RZ_LIBR_PLUGINS="$INSTALL_PREFIX/share/rizin/plugins"
   - cd ../test
   - make
-
