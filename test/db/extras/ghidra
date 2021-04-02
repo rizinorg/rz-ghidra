@@ -2090,8 +2090,8 @@ afvr rsi s2 "const char *" @ sym.imp.strcmp
 
 to bins/types.h
 # TODO: remove when parsed struct from r2 is correct
-k analysis/types/struct.Bright.ambassador=enum Ambassador,16,0
-k analysis/types/struct.Bright.window=struct Window,8,0
+tk struct.Bright.ambassador=enum Ambassador,16,0
+tk struct.Bright.window=struct Window,8,0
 
 s sym.Aeropause
 afvr rdi bright "Bright *"
