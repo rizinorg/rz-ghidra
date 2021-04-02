@@ -2,9 +2,6 @@ name: coverity-scan
 on:
   schedule:
     - cron: '0 9 * * 1,5' # Bi-weekly at 09:00 UTC on Monday and Thursday
-  pull_request:
-    branches:
-    - master
 
 jobs:
   latest:
