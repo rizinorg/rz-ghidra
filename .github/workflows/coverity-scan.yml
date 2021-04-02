@@ -2,6 +2,9 @@ name: coverity-scan
 on:
   schedule:
     - cron: '0 9 * * 1,5' # Bi-weekly at 09:00 UTC on Monday and Thursday
+  pull_request:
+    branches:
+    - master
 
 jobs:
   latest:
@@ -17,7 +20,7 @@ jobs:
 
       - name: Download Coverity Build Tool
         run: |
-          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=rizinorg%2Frz-ghidra-dec" -O cov-analysis-linux64.tar.gz
+          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=rizinorg%2Frz-ghidra" -O cov-analysis-linux64.tar.gz
           mkdir cov-analysis-linux64
           tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
         env:
@@ -71,7 +74,7 @@ jobs:
           cd build
           tar czvf rz-ghidra.tgz cov-int
           curl \
-            --form project=rizinorg-rz-ghidra \
+            --form project=“rizinorg%2Frz-ghidra” \
             --form token=$TOKEN \
             --form email=noreply@rizin.re \
             --form file=@rz-ghidra.tgz \
