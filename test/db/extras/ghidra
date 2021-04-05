@@ -70,8 +70,8 @@ void main(void)
     iVar2 = sym.imp.strlen(0x8da);
     iVar3 = sym.imp.malloc((int64_t)(iVar2 + iVar1 + 1));
     if (iVar3 != 0) {
-        sym.imp.strcpy(iVar3, 0x8d4, 0x8d4);
-        sym.imp.strcat(iVar3, 0x8da, 0x8da);
+        sym.imp.strcpy(iVar3, 0x8d4);
+        sym.imp.strcat(iVar3, 0x8da);
         sym.imp.puts(iVar3);
         sym.imp.free(iVar3);
     }
@@ -173,8 +173,8 @@ void main(void)
     iVar2 = sym.imp.strlen(0x8da);
     iVar3 = sym.imp.malloc((int64_t)(iVar2 + iVar1 + 1));
     if (iVar3 != 0) {
-        sym.imp.strcpy(iVar3, 0x8d4, 0x8d4);
-        sym.imp.strcat(iVar3, 0x8da, 0x8da);
+        sym.imp.strcpy(iVar3, 0x8d4);
+        sym.imp.strcat(iVar3, 0x8da);
         sym.imp.puts(iVar3);
         sym.imp.free(iVar3);
     }
@@ -284,7 +284,7 @@ NAME=function variable annotations
 FILE=bins/dectest64
 EXPECT=<<EOF
 {
-  "code": "\n// WARNING: Could not reconcile some variable overlaps\n// WARNING: [rz-ghidra] Failed to match type int for variable argc to Decompiler type: Unknown type identifier int\n// WARNING: [rz-ghidra] Detected overlap for variable var_20h\n// WARNING: [rz-ghidra] Detected overlap for variable var_ch\n\nundefined8 main(undefined8 argc, char **argv)\n{\n    undefined8 uVar1;\n    int64_t in_FS_OFFSET;\n    int64_t var_30h;\n    int64_t var_24h;\n    int64_t var_8h;\n    \n    var_8h = *(int64_t *)(in_FS_OFFSET + 0x28);\n    var_24h._0_4_ = (undefined4)argc;\n    sym.Aeropause((int64_t)&var_24h + 4, (undefined4)argc, argv, (undefined4)argc);\n    uVar1 = 0;\n    if (var_8h != *(int64_t *)(in_FS_OFFSET + 0x28)) {\n        uVar1 = sym.imp.__stack_chk_fail();\n    }\n    return uVar1;\n}\n",
+  "code": "\n// WARNING: Could not reconcile some variable overlaps\n// WARNING: [rz-ghidra] Failed to match type int for variable argc to Decompiler type: Unknown type identifier int\n// WARNING: [rz-ghidra] Detected overlap for variable var_20h\n// WARNING: [rz-ghidra] Detected overlap for variable var_ch\n\nundefined8 main(undefined8 argc, char **argv)\n{\n    undefined8 uVar1;\n    int64_t in_FS_OFFSET;\n    int64_t var_30h;\n    int64_t var_24h;\n    int64_t var_8h;\n    \n    var_8h = *(int64_t *)(in_FS_OFFSET + 0x28);\n    var_24h._0_4_ = (undefined4)argc;\n    sym.Aeropause((int64_t)&var_24h + 4, (undefined4)argc, argv);\n    uVar1 = 0;\n    if (var_8h != *(int64_t *)(in_FS_OFFSET + 0x28)) {\n        uVar1 = sym.imp.__stack_chk_fail();\n    }\n    return uVar1;\n}\n",
   "annotations": [
     {
       "start": 1,
@@ -1135,195 +1135,171 @@ EXPECT=<<EOF
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 607,
-      "end": 609,
-      "type": "offset",
-      "offset": 4198828
-    },
-    {
-      "start": 610,
-      "end": 620,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 621,
-      "end": 625,
-      "type": "function_parameter",
-      "name": "argc"
-    },
-    {
-      "start": 621,
-      "end": 625,
-      "type": "syntax_highlight",
-      "syntax_highlight": "function_parameter"
-    },
-    {
       "start": 548,
-      "end": 626,
+      "end": 608,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 632,
-      "end": 637,
+      "start": 614,
+      "end": 619,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 632,
-      "end": 637,
+      "start": 614,
+      "end": 619,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 638,
-      "end": 639,
+      "start": 620,
+      "end": 621,
       "type": "offset",
       "offset": 4198833
     },
     {
-      "start": 640,
-      "end": 641,
+      "start": 622,
+      "end": 623,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 632,
-      "end": 641,
+      "start": 614,
+      "end": 623,
       "type": "offset",
       "offset": 4198833
     },
     {
-      "start": 647,
-      "end": 649,
+      "start": 629,
+      "end": 631,
       "type": "offset",
       "offset": 4198851
     },
     {
-      "start": 647,
-      "end": 649,
+      "start": 629,
+      "end": 631,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 651,
-      "end": 657,
+      "start": 633,
+      "end": 639,
       "type": "local_variable",
       "name": "var_8h"
     },
     {
-      "start": 651,
-      "end": 657,
+      "start": 633,
+      "end": 639,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 658,
-      "end": 660,
+      "start": 640,
+      "end": 642,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 661,
-      "end": 662,
+      "start": 643,
+      "end": 644,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 663,
-      "end": 670,
+      "start": 645,
+      "end": 652,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 674,
-      "end": 686,
+      "start": 656,
+      "end": 668,
       "type": "local_variable",
       "name": "in_FS_OFFSET"
     },
     {
-      "start": 674,
-      "end": 686,
+      "start": 656,
+      "end": 668,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 687,
-      "end": 688,
+      "start": 669,
+      "end": 670,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 689,
-      "end": 693,
+      "start": 671,
+      "end": 675,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 706,
-      "end": 711,
+      "start": 688,
+      "end": 693,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 706,
-      "end": 711,
+      "start": 688,
+      "end": 693,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 712,
-      "end": 713,
+      "start": 694,
+      "end": 695,
       "type": "offset",
       "offset": 4198853
     },
     {
-      "start": 714,
-      "end": 738,
+      "start": 696,
+      "end": 720,
       "type": "function_name",
       "name": "sym.imp.__stack_chk_fail",
       "offset": 4198464
     },
     {
-      "start": 714,
-      "end": 738,
+      "start": 696,
+      "end": 720,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 706,
-      "end": 740,
+      "start": 688,
+      "end": 722,
       "type": "offset",
       "offset": 4198853
     },
     {
-      "start": 752,
-      "end": 758,
+      "start": 734,
+      "end": 740,
       "type": "offset",
       "offset": 4198859
     },
     {
-      "start": 752,
-      "end": 758,
+      "start": 734,
+      "end": 740,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 759,
-      "end": 764,
+      "start": 741,
+      "end": 746,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 759,
-      "end": 764,
+      "start": 741,
+      "end": 746,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 752,
-      "end": 764,
+      "start": 734,
+      "end": 746,
       "type": "offset",
       "offset": 4198859
     }
@@ -2725,8 +2701,8 @@ EXPECT=<<EOF
     0x10000000000007de    |    iVar2 = sym.imp.strlen(" r2-folks");
     0x10000000000007f6    |    iVar3 = sym.imp.malloc((int64_t)(iVar2 + iVar1 + 1));
     0x1000000000000804    |    if (iVar3 != 0) {
-    0x1000000000000814    |        sym.imp.strcpy(iVar3, "Hello", "Hello");
-    0x1000000000000827    |        sym.imp.strcat(iVar3, " r2-folks", " r2-folks");
+    0x1000000000000814    |        sym.imp.strcpy(iVar3, "Hello");
+    0x1000000000000827    |        sym.imp.strcat(iVar3, " r2-folks");
     0x1000000000000833    |        sym.imp.puts(iVar3);
     0x100000000000083f    |        sym.imp.free(iVar3);
                           |    }
