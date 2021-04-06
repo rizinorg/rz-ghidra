@@ -17,7 +17,7 @@
 
 if(WIN32)
         find_path(Rizin_INCLUDE_DIRS
-                        NAMES rz_core.h rz_bin.h rz_util.h
+                        NAMES rz_core.h rz_bin.h rz_util.h rz_type.h
                         HINTS
                         "$ENV{HOME}/bin/prefix/rizin/include/librz"
                         /usr/local/include/librz
@@ -53,6 +53,7 @@ if(WIN32)
 			syscall
 			socket
 			magic
+			type
 			crypto)
 
 	set(Rizin_LIBRARIES "")
