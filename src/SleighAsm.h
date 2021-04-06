@@ -7,6 +7,14 @@
 #include <vector>
 #include <rz_core.h>
 #include <unordered_map>
+
+#ifdef LoadImage
+#undef LoadImage
+#endif
+#ifdef CONST
+#undef CONST
+#endif
+
 #include "architecture.hh"
 #include "sleigh_arch.hh"
 #include "SleighInstruction.h"
