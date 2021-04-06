@@ -145,7 +145,7 @@ std::string CompilerFromCore(RzCore *core)
 	return comp_it->second;
 }
 
-std::string SleighIdFromCore(RzCore *core)
+RZ_API std::string SleighIdFromCore(RzCore *core)
 {
 	SleighArchitecture::collectSpecFiles(std::cerr);
 	auto langs = SleighArchitecture::getLanguageDescriptions();
@@ -164,7 +164,7 @@ std::string StrToLower(std::string s)
     return s;
 }
 
-std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian, const vector<LanguageDescription> &langs)
+RZ_API std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian, const vector<LanguageDescription> &langs)
 {
 	if(std::string(cpu).find(':') != string::npos) // complete id specified
 		return cpu;
