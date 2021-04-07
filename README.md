@@ -81,6 +81,21 @@ To also build the Cutter plugin, pass `-DBUILD_CUTTER_PLUGIN=ON -DCUTTER_SOURCE_
 /my/path/rz-ghidra/build> make && make install
 ```
 
+## Versioning and Rizin Compatibility
+
+Rizin has a quickly evolving C API so it is necessary to be explicit about which versions
+of rz-ghidra are compatible with which versions of Rizin:
+
+When using Rizin and rz-ghidra from git:
+* rz-ghidra branch `dev` follows along Rizin branch `dev`.
+* rz-ghidra branch `stable` follows along Rizin branch `stable`.
+
+Regarding releases, rz-ghidra is generally released simultaneously with Rizin and
+often uses the same version numbers (but not guaranteed, do not depend on these numbers!).
+Also, along with every Rizin release a tag like `rz-0.1.2` is created on rz-ghidra, which exactly
+points to an rz-ghidra release and indicates that this release is compatible with the specified Rizin version.
+These tags can be used by distribution maintainers to look up how to set up dependencies.
+
 ## License
 
 Please note that this plugin is available under the **LGPLv3**, which
