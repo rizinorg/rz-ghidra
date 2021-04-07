@@ -2,7 +2,8 @@ language: cpp
 
 branches:
   only:
-    - master
+    - dev
+    - stable
 
 jobs:
   fast_finish: true
