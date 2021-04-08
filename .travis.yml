@@ -47,7 +47,7 @@ env:
 
 install:
   - pip3 install meson
-  - git clone --depth 1 https://github.com/rizinorg/rizin
+  - git clone --depth 1 -b v0.3.0 https://github.com/rizinorg/rizin
   - cd rizin && mkdir build && cd build
   - meson --prefix="$INSTALL_PREFIX" ..
   - ninja

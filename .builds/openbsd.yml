@@ -11,7 +11,7 @@ environment:
     CXX: clang++
     CC: clang
 sources:
-    - https://github.com/rizinorg/rizin
+    - https://github.com/rizinorg/rizin#v0.3.0
     - https://github.com/rizinorg/rz-ghidra
     - https://github.com/rizinorg/rizin-testbins
 tasks:
