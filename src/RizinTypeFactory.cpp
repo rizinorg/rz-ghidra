@@ -12,14 +12,14 @@ RizinTypeFactory::RizinTypeFactory(RizinArchitecture *arch)
 	: TypeFactory(arch),
 	arch(arch)
 {
-	ctype = rz_type_ctype_new();
-	if(!ctype)
+	parser = rz_ast_parser_new();
+	if(!parser)
 		throw LowlevelError("Failed to create RParseCType");
 }
 
 RizinTypeFactory::~RizinTypeFactory()
 {
-	rz_type_ctype_free(ctype);
+	rz_ast_parser_free(parser);
 }
 
 Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, std::set<std::string> &stack_types)
@@ -165,22 +165,22 @@ Datatype *RizinTypeFactory::findById(const string &n, uint8 id)
 Datatype *RizinTypeFactory::fromCString(const string &str, string *error, std::set<std::string> *stackTypes)
 {
 	char *error_cstr = nullptr;
-	RTypeCTypeType *type = rz_type_ctype_parse(ctype, str.c_str(), &error_cstr);
+	RzType *type = rz_type_parse(parser, str.c_str(), &error_cstr);
 	if(error)
 		*error = error_cstr ? error_cstr : "";
 	if(!type)
 		return nullptr;
 
-	Datatype *r = fromCType(type, error, stackTypes);
-	rz_type_ctype_type_free(type);
+	Datatype *r = fromRzType(type, error, stackTypes);
+	rz_type_free(type);
 	return r;
 }
 
-Datatype *RizinTypeFactory::fromCType(const RTypeCTypeType *ctype, string *error, std::set<std::string> *stackTypes)
+Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::set<std::string> *stackTypes)
 {
 	switch(ctype->kind)
 	{
-		case RZ_TYPE_CTYPE_TYPE_KIND_IDENTIFIER:
+		case RZ_TYPE_KIND_IDENTIFIER:
 		{
 			if(ctype->identifier.kind == RZ_TYPE_CTYPE_IDENTIFIER_KIND_UNION)
 			{
@@ -210,17 +210,17 @@ Datatype *RizinTypeFactory::fromCType(const RTypeCTypeType *ctype, string *error
 			}
 			return r;
 		}
-		case RZ_TYPE_CTYPE_TYPE_KIND_POINTER:
+		case RZ_TYPE_KIND_POINTER:
 		{
-			Datatype *sub = fromCType(ctype->pointer.type, error, stackTypes);
+			Datatype *sub = fromRzType(ctype->pointer.type, error, stackTypes);
 			if(!sub)
 				return nullptr;
 			auto space = arch->getDefaultCodeSpace();
 			return this->getTypePointer(space->getAddrSize(), sub, space->getWordSize());
 		}
-		case RZ_TYPE_CTYPE_TYPE_KIND_ARRAY:
+		case RZ_TYPE_KIND_ARRAY:
 		{
-			Datatype *sub = fromCType(ctype->array.type, error, stackTypes);
+			Datatype *sub = fromRzType(ctype->array.type, error, stackTypes);
 			if(!sub)
 				return nullptr;
 			return this->getTypeArray(ctype->array.count, sub);
