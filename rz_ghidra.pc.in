@@ -1,0 +1,13 @@
+prefix="@CMAKE_INSTALL_PREFIX@"
+exec_prefix="${prefix}"
+includedir="${prefix}/include"
+
+Name: RzGhidra
+Description: RzGhidra Rizin plugin library
+URL: https://github.com/rizinorg/rz-ghidra
+Version: @PROJECT_VERSION@
+Requires: rz_core
+Requires.private: rz_core
+Cflags: -I"${includedir}"
+Libs: -L"${prefix}/@RIZIN_INSTALL_PLUGDIR@" -l:core_ghidra@CMAKE_SHARED_LIBRARY_SUFFIX@
+Libs.private: -L"${prefix}/@RIZIN_INSTALL_PLUGDIR@" -l:core_ghidra@CMAKE_SHARED_LIBRARY_SUFFIX@
