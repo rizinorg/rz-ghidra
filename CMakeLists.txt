@@ -28,6 +28,9 @@ endif()
 add_subdirectory(ghidra)
 add_subdirectory(third-party)
 
+set(PUBLIC_HEADERS
+		src/rz_ghidra.h)
+
 set(CORE_SOURCE
 		src/core_ghidra.cpp
 		src/RizinArchitecture.cpp
@@ -78,6 +81,10 @@ set_target_properties(core_ghidra PROPERTIES
 		OUTPUT_NAME core_ghidra
 		PREFIX "")
 
+configure_file(
+	${PROJECT_SOURCE_DIR}/rz_ghidra.pc.in
+	${PROJECT_BINARY_DIR}/rz_ghidra.pc
+	@ONLY)
 
 if(BUILD_CUTTER_PLUGIN)
 	add_subdirectory(cutter-plugin)
@@ -116,8 +123,14 @@ if(SLEIGHHOME_DEFAULT)
 	endif()
 endif()
 
+if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+	set(CMAKE_INSTALL_LIBDIR lib CACHE PATH "Output directory for libraries.")
+endif()
+
 install(TARGETS core_ghidra DESTINATION "${RIZIN_INSTALL_PLUGDIR}")
 if(BUILD_SLEIGH_PLUGIN)
 install(TARGETS asm_ghidra DESTINATION "${RIZIN_INSTALL_PLUGDIR}")
 install(TARGETS analysis_ghidra DESTINATION "${RIZIN_INSTALL_PLUGDIR}")
 endif()
+install(FILES ${PUBLIC_HEADERS} DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/rz_ghidra.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
