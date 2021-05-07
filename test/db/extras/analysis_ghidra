@@ -197,7 +197,7 @@ EOF
 RUN
 
 NAME=v850cmp
-FILE=-
+FILE==
 EXPECT=<<EOF
 ghidra
 V850:LE:32:default
@@ -233,7 +233,7 @@ EOF
 RUN
 
 NAME=v850load
-FILE=-
+FILE==
 EXPECT=<<EOF
 ghidra
 V850:LE:32:default

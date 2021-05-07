@@ -2717,7 +2717,7 @@ EOF
 RUN
 
 NAME=pdgs
-FILE=-
+FILE==
 EXPECT=<<EOF
 6502:BE:16:default
 6502:LE:16:default
