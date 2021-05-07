@@ -698,7 +698,7 @@ EOF
 RUN
 
 NAME=rz-asm
-FILE=-
+FILE==
 CMDS=<<EOF
 !rz-asm -a ghidra -c x86:LE:32:default:gcc -d 89e1909090909090909090909090
 EOF
@@ -720,7 +720,7 @@ EOF
 RUN
 
 NAME=asm.cpu short
-FILE=-
+FILE==
 CMDS=<<EOF
 e asm.arch=ghidra
 e asm.cpu=v850
@@ -745,7 +745,7 @@ EOF
 RUN
 
 NAME=rz-asm short
-FILE=-
+FILE==
 CMDS=<<EOF
 rz-asm -a ghidra -c v850 -b 32 -d 8100e009
 EOF
