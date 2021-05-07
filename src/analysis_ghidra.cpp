@@ -6,6 +6,7 @@
 #include <cfloat>
 #include <cmath>
 #include <cfenv>
+#include <limits>
 #include "SleighAsm.h"
 #include "SleighAnalysisValue.h"
 
