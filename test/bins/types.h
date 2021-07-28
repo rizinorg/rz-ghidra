@@ -29,4 +29,4 @@ struct Bright
 
 typedef struct Bright *BrightPtr;
 typedef struct Bright BrightTypedefd;
-typedef struct BrightTypedefd *BrightTypedefdPtr;
+typedef BrightTypedefd *BrightTypedefdPtr;

@@ -15,7 +15,6 @@ class RizinTypeFactory : public TypeFactory
 {
 	private:
 		RizinArchitecture *arch;
-		RzASTParser *parser;
 
 		Datatype *addRizinStruct(RzBaseType *type, std::set<std::string> &stack_types);
 		Datatype *addRizinEnum(RzBaseType *type);
@@ -32,7 +31,6 @@ class RizinTypeFactory : public TypeFactory
 		RizinTypeFactory(RizinArchitecture *arch);
 		~RizinTypeFactory() override;
 
-		Datatype *fromCString(const string &str, string *error = nullptr, std::set<std::string> *stackTypes = nullptr);
 		Datatype *fromRzType(const RzType *ctype, string *error = nullptr, std::set<std::string> *stackTypes = nullptr);
 };
 

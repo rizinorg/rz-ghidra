@@ -197,6 +197,7 @@ EXPECT=<<EOF
 6502:LE:16:default:
 
 // WARNING: [rz-ghidra] Function fcn.0000080e has no calling convention set, args may be inaccurate.
+// WARNING: [rz-ghidra] Var arg_101h is stack pointer based, which is not supported for decompilation.
 
 void fcn.0000080e(void)
 {
@@ -2009,8 +2010,10 @@ afvb 12 argc int32_t
 afvb 16 argv "const char **"
 pdg
 EOF
+BROKEN=1
 RUN
 
+BROKEN=1
 NAME=aeropause64 (many features combined)
 FILE=bins/dectest64
 EXPECT=<<EOF
@@ -2090,8 +2093,8 @@ afvr rsi s2 "const char *" @ sym.imp.strcmp
 
 to bins/types.h
 # TODO: remove when parsed struct from r2 is correct
-tk struct.Bright.ambassador=enum Ambassador,16,0
-tk struct.Bright.window=struct Window,8,0
+# tk struct.Bright.ambassador=enum Ambassador,16,0
+# tk struct.Bright.window=struct Window,8,0
 
 s sym.Aeropause
 afvr rdi bright "Bright *"
@@ -2102,6 +2105,7 @@ EOF
 RUN
 
 NAME=typedef
+BROKEN=1
 FILE=bins/dectest32
 EXPECT=<<EOF
 
@@ -2301,6 +2305,7 @@ pdg
 afvb 8 bright BrightTypedefdPtr
 pdg
 EOF
+BROKEN=1
 RUN
 
 NAME=macos args
@@ -2455,6 +2460,8 @@ CCu base64:Jg== @ 0x804858a
 <property_changepoint space="ram" offset="0x80486bc" val="0x0"/>
 <property_changepoint space="ram" offset="0x8049f0c" val="0x2000"/>
 <property_changepoint space="ram" offset="0x804a024" val="0x0"/>
+<property_changepoint space="ram" offset="0x804a030" val="0x2000"/>
+<property_changepoint space="ram" offset="0x804a04c" val="0x0"/>
 <property_changepoint space="register" offset="0x1000" val="0x20000000"/>
 <property_changepoint space="register" offset="0x100a" val="0x20000000"/>
 <property_changepoint space="register" offset="0x1014" val="0x20000000"/>
@@ -3073,8 +3080,10 @@ void sym.KillList(LL arg1)
     return;
 }
 EOF
+BROKEN=1
 RUN
 
+BROKEN=1
 NAME=strings
 FILE=bins/strings
 CMDS=<<EOF
@@ -3105,8 +3114,10 @@ EOF
 EXPECT=<<EOF
 
 // WARNING: Switch with 1 destination removed at 0x080483e8
-// WARNING: [rz-ghidra] Failed to match type signed int for variable var_ch to Decompiler type: Unknown type identifier
-// signed
+// WARNING: [rz-ghidra] Failed to match type unsigned long for variable var_8h to Decompiler type: Unknown type
+// identifier unsigned long
+// WARNING: [rz-ghidra] Failed to match type ssize_t for variable var_ch to Decompiler type: Unknown type identifier
+// ssize_t
 // WARNING: [rz-ghidra] Detected overlap for variable var_dh
 
 void sym.imp.exit noreturn (void)

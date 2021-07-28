@@ -12,14 +12,10 @@ RizinTypeFactory::RizinTypeFactory(RizinArchitecture *arch)
 	: TypeFactory(arch),
 	arch(arch)
 {
-	parser = rz_ast_parser_new();
-	if(!parser)
-		throw LowlevelError("Failed to create RParseCType");
 }
 
 RizinTypeFactory::~RizinTypeFactory()
 {
-	rz_ast_parser_free(parser);
 }
 
 Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, std::set<std::string> &stack_types)
@@ -34,11 +30,14 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, std::set<std::strin
 		rz_vector_foreach_cpp<RzTypeStructMember>(&type->struct_data.members, [&](RzTypeStructMember *member) {
 			if(!member->type || !member->name)
 				return;
-			Datatype *member_type = fromCString(member->type, nullptr, &stack_types);
+			Datatype *member_type = fromRzType(member->type, nullptr, &stack_types);
 			if(!member_type)
 			{
-				arch->addWarning(std::string("Failed to match type ") + member->type + " of member " + member->name
+				RzCoreLock core(arch->getCore());
+				char *tstr = rz_type_as_string(core->analysis->typedb, member->type);
+				arch->addWarning(std::string("Failed to match type ") + (tstr ? tstr : "?") + " of member " + member->name
 						+ " in struct " + type->name);
+				rz_mem_free(tstr);
 				return;
 			}
 
@@ -100,7 +99,7 @@ Datatype *RizinTypeFactory::addRizinTypedef(RzBaseType *type, std::set<std::stri
 	assert(type->kind == RZ_BASE_TYPE_KIND_TYPEDEF);
 	if(!type->type)
 		return nullptr;
-	Datatype *resolved = fromCString(type->type, nullptr, &stack_types);
+	Datatype *resolved = fromRzType(type->type, nullptr, &stack_types);
 	if(!resolved)
 		return nullptr;
 	Datatype *typedefd = resolved->clone();
@@ -122,11 +121,7 @@ Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &s
 	RzCoreLock core(arch->getCore());
 	RzBaseType *type = rz_type_db_get_base_type(core->analysis->typedb, n.c_str());
 	if(!type || !type->name)
-	{
-		if(type)
-			rz_type_base_type_free(type);
 		goto beach;
-	}
 	switch(type->kind)
 	{
 		case RZ_BASE_TYPE_KIND_STRUCT:
@@ -142,7 +137,6 @@ Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &s
 		default:
 			break;
 	}
-	rz_type_base_type_free(type);
 beach:
 	stack_types.erase(n);
 	return r;
@@ -162,27 +156,13 @@ Datatype *RizinTypeFactory::findById(const string &n, uint8 id)
 	return findById(n, id, stackTypes);
 }
 
-Datatype *RizinTypeFactory::fromCString(const string &str, string *error, std::set<std::string> *stackTypes)
-{
-	char *error_cstr = nullptr;
-	RzType *type = rz_type_parse(parser, str.c_str(), &error_cstr);
-	if(error)
-		*error = error_cstr ? error_cstr : "";
-	if(!type)
-		return nullptr;
-
-	Datatype *r = fromRzType(type, error, stackTypes);
-	rz_type_free(type);
-	return r;
-}
-
 Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::set<std::string> *stackTypes)
 {
 	switch(ctype->kind)
 	{
 		case RZ_TYPE_KIND_IDENTIFIER:
 		{
-			if(ctype->identifier.kind == RZ_TYPE_CTYPE_IDENTIFIER_KIND_UNION)
+			if(ctype->identifier.kind == RZ_TYPE_IDENTIFIER_KIND_UNION)
 			{
 				if(error)
 					*error = "Union types not supported in Decompiler";
@@ -196,13 +176,13 @@ Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::
 					*error = "Unknown type identifier " + std::string(ctype->identifier.name);
 				return nullptr;
 			}
-			if(ctype->identifier.kind == RZ_TYPE_CTYPE_IDENTIFIER_KIND_STRUCT && r->getMetatype() != TYPE_STRUCT)
+			if(ctype->identifier.kind == RZ_TYPE_IDENTIFIER_KIND_STRUCT && r->getMetatype() != TYPE_STRUCT)
 			{
 				if(error)
 					*error = "Type identifier " + std::string(ctype->identifier.name) + " is not the name of a struct";
 				return nullptr;
 			}
-			if(ctype->identifier.kind == RZ_TYPE_CTYPE_IDENTIFIER_KIND_ENUM && !r->isEnumType())
+			if(ctype->identifier.kind == RZ_TYPE_IDENTIFIER_KIND_ENUM && !r->isEnumType())
 			{
 				if(error)
 					*error = "Type identifier " + std::string(ctype->identifier.name) + " is not the name of an enum";
@@ -224,6 +204,10 @@ Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::
 			if(!sub)
 				return nullptr;
 			return this->getTypeArray(ctype->array.count, sub);
+		}
+		case RZ_TYPE_KIND_CALLABLE:
+		{
+			// TODO!
 		}
 	}
 	return nullptr;
