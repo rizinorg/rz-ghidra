@@ -221,10 +221,12 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 	{
 		rz_list_foreach_cpp<RzAnalysisVar>(vars, [&](RzAnalysisVar *var) {
 			std::string typeError;
-			Datatype *type = var->type ? arch->getTypeFactory()->fromCString(var->type, &typeError) : nullptr;
+			Datatype *type = var->type ? arch->getTypeFactory()->fromRzType(var->type, &typeError) : nullptr;
 			if(!type)
 			{
-				arch->addWarning("Failed to match type " + to_string(var->type) + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
+				char *tstr = rz_type_as_string(core->analysis->typedb, var->type);
+				arch->addWarning("Failed to match type " + to_string(tstr ? tstr : "?") + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
+				rz_mem_free(tstr);
 				type = arch->types->getBase(core->analysis->bits / 8, TYPE_UNKNOWN);
 				if(!type)
 					return;
