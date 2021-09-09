@@ -25,6 +25,8 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, std::set<std::strin
 	std::vector<TypeField> fields;
 	try
 	{
+		RzCoreLock core(arch->getCore());
+		ut64 offset = 0;
 		TypeStruct *r = getTypeStruct(type->name);
 		void *it;
 		rz_vector_foreach_cpp<RzTypeStructMember>(&type->struct_data.members, [&](RzTypeStructMember *member) {
@@ -33,7 +35,6 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, std::set<std::strin
 			Datatype *member_type = fromRzType(member->type, nullptr, &stack_types);
 			if(!member_type)
 			{
-				RzCoreLock core(arch->getCore());
 				char *tstr = rz_type_as_string(core->analysis->typedb, member->type);
 				arch->addWarning(std::string("Failed to match type ") + (tstr ? tstr : "?") + " of member " + member->name
 						+ " in struct " + type->name);
@@ -46,10 +47,15 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, std::set<std::strin
 			// 	memberType = getTypeArray(elements, memberType);
 
 			fields.push_back({
-				(int4)member->offset,
+				(int4)offset, // Currently, this is 0 most of the time: member->offset,
 				std::string(member->name),
 				member_type
 			});
+
+			// TODO: right now, we track member offset ourselves
+			// which means all structs are assumed to be packed.
+			// This should be changed if there is a clear notion of the offset in rizin at some point.
+			offset += rz_type_db_get_bitsize(core->analysis->typedb, member->type) / 8;
 		});
 		if(fields.empty())
 		{
