@@ -13,25 +13,30 @@ class RizinArchitecture;
 
 class RizinTypeFactory : public TypeFactory
 {
+	public:
+		using StackTypes = std::set<std::string>;
+
 	private:
 		RizinArchitecture *arch;
+		std::set<Datatype *> prototypes; // set of types that have not been created fully yet
 
-		Datatype *addRizinStruct(RzBaseType *type, std::set<std::string> &stack_types);
+		Datatype *addRizinStruct(RzBaseType *type, StackTypes &stack_types, bool prototype);
 		Datatype *addRizinEnum(RzBaseType *type);
-		Datatype *addRizinTypedef(RzBaseType *type, std::set<std::string> &stack_types);
-		Datatype *queryRizin(const string &n, std::set<std::string> &stack_types);
+		Datatype *addRizinTypedef(RzBaseType *type, StackTypes &stack_types);
+		Datatype *queryRizin(const string &n, StackTypes &stack_types, bool prototype);
 
 	protected:
 		Datatype *findById(const string &n, uint8 id, int4 sz) override;
-		Datatype *findById(const string &n, uint8 id, int4 sz, std::set<std::string> &stackTypes);
+		Datatype *findById(const string &n, uint8 id, int4 sz, StackTypes &stack_types, bool prototype);
 		using TypeFactory::findByName;
-		Datatype *findByName(const string &n, std::set<std::string> &stackTypes) { return findById(n, 0, 0, stackTypes); }
+		Datatype *findByName(const string &n, StackTypes &stack_types, bool prototype) { return findById(n, 0, 0, stack_types, prototype); }
+		Datatype *fromRzTypeInternal(const RzType *ctype, string *error, StackTypes *stack_types, bool prototype, bool refd);
 
 	public:
 		RizinTypeFactory(RizinArchitecture *arch);
 		~RizinTypeFactory() override;
 
-		Datatype *fromRzType(const RzType *ctype, string *error = nullptr, std::set<std::string> *stackTypes = nullptr);
+		Datatype *fromRzType(const RzType *ctype, string *error = nullptr, StackTypes *stack_types = nullptr);
 };
 
 #endif //RZ_GHIDRA_RizinTYPEFACTORY_H
