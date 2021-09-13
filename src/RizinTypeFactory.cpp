@@ -18,7 +18,7 @@ RizinTypeFactory::~RizinTypeFactory()
 {
 }
 
-Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, std::set<std::string> &stack_types)
+Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, StackTypes &stack_types, bool prototype)
 {
 	assert(type->kind == RZ_BASE_TYPE_KIND_STRUCT);
 
@@ -28,6 +28,12 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, std::set<std::strin
 		RzCoreLock core(arch->getCore());
 		ut64 offset = 0;
 		TypeStruct *r = getTypeStruct(type->name);
+		if (prototype) {
+			prototypes.insert(r);
+			return r;
+		} else {
+			prototypes.erase(r);
+		}
 		void *it;
 		rz_vector_foreach_cpp<RzTypeStructMember>(&type->struct_data.members, [&](RzTypeStructMember *member) {
 			if(!member->type || !member->name)
@@ -100,21 +106,22 @@ Datatype *RizinTypeFactory::addRizinEnum(RzBaseType *type)
 	}
 }
 
-Datatype *RizinTypeFactory::addRizinTypedef(RzBaseType *type, std::set<std::string> &stack_types)
+Datatype *RizinTypeFactory::addRizinTypedef(RzBaseType *type, StackTypes &stack_types)
 {
 	assert(type->kind == RZ_BASE_TYPE_KIND_TYPEDEF);
 	if(!type->type)
 		return nullptr;
-	Datatype *resolved = fromRzType(type->type, nullptr, &stack_types);
+	Datatype *resolved = fromRzTypeInternal(type->type, nullptr, &stack_types, true, false); // use prototype=true to avoid recursion
 	if(!resolved)
 		return nullptr;
 	Datatype *typedefd = resolved->clone();
 	setName(typedefd, type->name); // this removes the old name from the nametree
 	setName(resolved, resolved->getName()); // add the old name back
+	fromRzTypeInternal(type->type, nullptr, &stack_types, false, false); // fully create the type after querying with prototype=true before
 	return typedefd;
 }
 
-Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &stack_types)
+Datatype *RizinTypeFactory::queryRizin(const string &n, StackTypes &stack_types, bool prototype)
 {
 	if(stack_types.find(n) != stack_types.end())
 	{
@@ -131,7 +138,7 @@ Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &s
 	switch(type->kind)
 	{
 		case RZ_BASE_TYPE_KIND_STRUCT:
-			r = addRizinStruct(type, stack_types);
+			r = addRizinStruct(type, stack_types, prototype);
 			break;
 		case RZ_BASE_TYPE_KIND_ENUM:
 			r = addRizinEnum(type);
@@ -148,21 +155,24 @@ beach:
 	return r;
 }
 
-Datatype *RizinTypeFactory::findById(const string &n, uint8 id, int4 sz, std::set<std::string> &stackTypes)
+Datatype *RizinTypeFactory::findById(const string &n, uint8 id, int4 sz, StackTypes &stack_types, bool prototype)
 {
 	Datatype *r = TypeFactory::findById(n, id, sz);
-	if(r)
+	if(r && (prototype || prototypes.find(r) == prototypes.end()))
 		return r;
-	return queryRizin(n, stackTypes);
+	return queryRizin(n, stack_types, prototype);
 }
 
 Datatype *RizinTypeFactory::findById(const string &n, uint8 id, int4 sz)
 {
-	std::set<std::string> stackTypes; // to detect recursion
-	return findById(n, id, sz, stackTypes);
+	StackTypes stack_types; // to detect recursion
+	return findById(n, id, sz, stack_types, false);
 }
 
-Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::set<std::string> *stackTypes)
+// prototype means that the type does not have to be completed entirely yet (e.g. struct prototype for typedef)
+// refd means that this type is in a pointer of some kind, so we can actually use prototype
+// that's because our typedef-likes in ghidra are just clones of the original type, so we must not clone prototypes, only refs.
+Datatype *RizinTypeFactory::fromRzTypeInternal(const RzType *ctype, string *error, StackTypes *stack_types, bool prototype, bool refd)
 {
 	switch(ctype->kind)
 	{
@@ -175,7 +185,7 @@ Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::
 				return nullptr;
 			}
 
-			Datatype *r = stackTypes ? findByName(ctype->identifier.name, *stackTypes) : findByName(ctype->identifier.name);
+			Datatype *r = stack_types ? findByName(ctype->identifier.name, *stack_types, prototype && refd) : findByName(ctype->identifier.name);
 			if(!r)
 			{
 				if(error)
@@ -198,7 +208,7 @@ Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::
 		}
 		case RZ_TYPE_KIND_POINTER:
 		{
-			Datatype *sub = fromRzType(ctype->pointer.type, error, stackTypes);
+			Datatype *sub = fromRzTypeInternal(ctype->pointer.type, error, stack_types, prototype, true);
 			if(!sub)
 				return nullptr;
 			auto space = arch->getDefaultCodeSpace();
@@ -206,7 +216,7 @@ Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::
 		}
 		case RZ_TYPE_KIND_ARRAY:
 		{
-			Datatype *sub = fromRzType(ctype->array.type, error, stackTypes);
+			Datatype *sub = fromRzTypeInternal(ctype->array.type, error, stack_types, prototype, false);
 			if(!sub)
 				return nullptr;
 			return this->getTypeArray(ctype->array.count, sub);
@@ -217,4 +227,9 @@ Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::
 		}
 	}
 	return nullptr;
+}
+
+Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, StackTypes *stack_types)
+{
+	return fromRzTypeInternal(ctype, error, stack_types, false, false);
 }

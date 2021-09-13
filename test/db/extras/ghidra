@@ -3079,7 +3079,7 @@ EXPECT=<<EOF
 
 void sym.KillList(LL arg1)
 {
-    LinkedList *pLVar1;
+    LL pLVar1;
     LL ptr;
     int64_t var_8h;
     
@@ -3087,12 +3087,11 @@ void sym.KillList(LL arg1)
     while (ptr != (LL)0x0) {
         pLVar1 = ptr->next;
         sym.imp.free(ptr);
-        ptr = (LL)pLVar1;
+        ptr = pLVar1;
     }
     return;
 }
 EOF
-BROKEN=1
 RUN
 
 NAME=strings
