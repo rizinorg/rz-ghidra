@@ -118,6 +118,7 @@ set(SOURCE_CONSOLE_CXX
 		consolemain.cc
 		interface.cc
 		ifacedecomp.cc
+		testfunction.cc
 		ifaceterm.cc
 		callgraph.cc
 		raw_arch.cc)
