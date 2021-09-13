@@ -148,18 +148,18 @@ beach:
 	return r;
 }
 
-Datatype *RizinTypeFactory::findById(const string &n, uint8 id, std::set<std::string> &stackTypes)
+Datatype *RizinTypeFactory::findById(const string &n, uint8 id, int4 sz, std::set<std::string> &stackTypes)
 {
-	Datatype *r = TypeFactory::findById(n, id);
+	Datatype *r = TypeFactory::findById(n, id, sz);
 	if(r)
 		return r;
 	return queryRizin(n, stackTypes);
 }
 
-Datatype *RizinTypeFactory::findById(const string &n, uint8 id)
+Datatype *RizinTypeFactory::findById(const string &n, uint8 id, int4 sz)
 {
 	std::set<std::string> stackTypes; // to detect recursion
-	return findById(n, id, stackTypes);
+	return findById(n, id, sz, stackTypes);
 }
 
 Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, std::set<std::string> *stackTypes)

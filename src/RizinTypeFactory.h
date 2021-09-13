@@ -22,10 +22,10 @@ class RizinTypeFactory : public TypeFactory
 		Datatype *queryRizin(const string &n, std::set<std::string> &stack_types);
 
 	protected:
-		Datatype *findById(const string &n, uint8 id) override;
-		Datatype *findById(const string &n, uint8 id, std::set<std::string> &stackTypes);
+		Datatype *findById(const string &n, uint8 id, int4 sz) override;
+		Datatype *findById(const string &n, uint8 id, int4 sz, std::set<std::string> &stackTypes);
 		using TypeFactory::findByName;
-		Datatype *findByName(const string &n, std::set<std::string> &stackTypes) { return findById(n, 0, stackTypes); }
+		Datatype *findByName(const string &n, std::set<std::string> &stackTypes) { return findById(n, 0, 0, stackTypes); }
 
 	public:
 		RizinTypeFactory(RizinArchitecture *arch);

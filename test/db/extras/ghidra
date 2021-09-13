@@ -2396,6 +2396,7 @@ CCu base64:Jg== @ 0x804858a
 <localdb main="stack" lock="false">
 <rangelist>
 <range space="stack" first="0x4" last="0x1f7"/>
+<range space="stack" first="0xfff0bdc0" last="0xffffff5f"/>
 <range space="stack" first="0xffffff68" last="0xfffffffb"/>
 </rangelist>
 <symbollist>
@@ -2467,15 +2468,22 @@ CCu base64:Jg== @ 0x804858a
 <property_changepoint space="ram" offset="0x804a024" val="0x0"/>
 <property_changepoint space="ram" offset="0x804a030" val="0x2000"/>
 <property_changepoint space="ram" offset="0x804a04c" val="0x0"/>
-<property_changepoint space="register" offset="0x1000" val="0x20000000"/>
-<property_changepoint space="register" offset="0x100a" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1014" val="0x20000000"/>
-<property_changepoint space="register" offset="0x101e" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1028" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1032" val="0x20000000"/>
-<property_changepoint space="register" offset="0x103c" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1046" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1050" val="0x0"/>
+<property_changepoint space="register" offset="0x1106" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1110" val="0x0"/>
+<property_changepoint space="register" offset="0x1116" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1120" val="0x0"/>
+<property_changepoint space="register" offset="0x1126" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1130" val="0x0"/>
+<property_changepoint space="register" offset="0x1136" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1140" val="0x0"/>
+<property_changepoint space="register" offset="0x1146" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1150" val="0x0"/>
+<property_changepoint space="register" offset="0x1156" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1160" val="0x0"/>
+<property_changepoint space="register" offset="0x1166" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1170" val="0x0"/>
+<property_changepoint space="register" offset="0x1176" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1180" val="0x0"/>
 <rangelist>
 </rangelist>
 <symbollist>
@@ -2484,6 +2492,7 @@ CCu base64:Jg== @ 0x804858a
 <localdb main="stack" lock="false">
 <rangelist>
 <range space="stack" first="0x4" last="0x1f7"/>
+<range space="stack" first="0xfff0bdc0" last="0xffffff5f"/>
 <range space="stack" first="0xffffff68" last="0xfffffffb"/>
 </rangelist>
 <symbollist>
@@ -2581,7 +2590,6 @@ CCu base64:Jg== @ 0x804858a
   <set name="highseg" val="0x0"/>
   <set name="instrPhase" val="0x0"/>
   <set name="mandover" val="0x0"/>
-  <set name="opprefx" val="0x0"/>
   <set name="opsize" val="0x1"/>
   <set name="prefix_66" val="0x0"/>
   <set name="prefix_f2" val="0x0"/>
@@ -2607,7 +2615,6 @@ CCu base64:Jg== @ 0x804858a
   <set name="highseg" val="0x0"/>
   <set name="instrPhase" val="0x0"/>
   <set name="mandover" val="0x0"/>
-  <set name="opprefx" val="0x0"/>
   <set name="opsize" val="0x0"/>
   <set name="prefix_66" val="0x0"/>
   <set name="prefix_f2" val="0x0"/>
@@ -2731,8 +2738,8 @@ RUN
 NAME=pdgs
 FILE==
 EXPECT=<<EOF
-6502:BE:16:default
 6502:LE:16:default
+65C02:LE:16:default
 68000:BE:32:Coldfire
 68000:BE:32:MC68020
 68000:BE:32:MC68030
