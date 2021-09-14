@@ -63,11 +63,6 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, StackTypes &stack_t
 			// This should be changed if there is a clear notion of the offset in rizin at some point.
 			offset += rz_type_db_get_bitsize(core->analysis->typedb, member->type) / 8;
 		});
-		if(fields.empty())
-		{
-			arch->addWarning(std::string("Struct ") + type->name + " has no members");
-			return nullptr;
-		}
 		setFields(fields, r, 0, 0);
 		return r;
 	}
@@ -121,6 +116,39 @@ Datatype *RizinTypeFactory::addRizinTypedef(RzBaseType *type, StackTypes &stack_
 	return typedefd;
 }
 
+static type_metatype metatypeOfTypeclass(RzTypeTypeclass tc)
+{
+	switch(tc)
+	{
+		case RZ_TYPE_TYPECLASS_NUM:
+		case RZ_TYPE_TYPECLASS_INTEGRAL:
+		case RZ_TYPE_TYPECLASS_INTEGRAL_UNSIGNED:
+			return TYPE_UINT;
+		case RZ_TYPE_TYPECLASS_INTEGRAL_SIGNED:
+			return TYPE_INT;
+		case RZ_TYPE_TYPECLASS_FLOATING:
+			return TYPE_FLOAT;
+		case RZ_TYPE_TYPECLASS_NONE:
+			return TYPE_VOID;
+		default:
+			return TYPE_UNKNOWN;
+	}
+}
+
+Datatype *RizinTypeFactory::addRizinAtomicType(RzBaseType *type, StackTypes &stack_types)
+{
+	assert(type->kind == RZ_BASE_TYPE_KIND_ATOMIC);
+	if(!type->name || type->size < 8)
+	{
+		arch->addWarning(std::string("Invalid atomic type ") + (type->name ? type->name : "(null)"));
+		return nullptr;
+	}
+	RzCoreLock core(arch->getCore());
+	type_metatype mt = metatypeOfTypeclass(rz_base_type_typeclass(core->analysis->typedb, type));
+	// setCoreType(type->name, type->size / 8, mt, false); // TODO: conditionally enable chartp when supported in rizin
+	return getBase(type->size / 8, mt, type->name);
+}
+
 Datatype *RizinTypeFactory::queryRizin(const string &n, StackTypes &stack_types, bool prototype)
 {
 	if(stack_types.find(n) != stack_types.end())
@@ -146,7 +174,9 @@ Datatype *RizinTypeFactory::queryRizin(const string &n, StackTypes &stack_types,
 		case RZ_BASE_TYPE_KIND_TYPEDEF:
 			r = addRizinTypedef(type, stack_types);
 			break;
-		// TODO: atomic too?
+		case RZ_BASE_TYPE_KIND_ATOMIC:
+			r = addRizinAtomicType(type, stack_types);
+			break;
 		default:
 			break;
 	}
@@ -216,14 +246,51 @@ Datatype *RizinTypeFactory::fromRzTypeInternal(const RzType *ctype, string *erro
 		}
 		case RZ_TYPE_KIND_ARRAY:
 		{
-			Datatype *sub = fromRzTypeInternal(ctype->array.type, error, stack_types, prototype, false);
+			Datatype *sub = fromRzTypeInternal(ctype->array.type, error, stack_types, prototype, refd);
 			if(!sub)
 				return nullptr;
 			return this->getTypeArray(ctype->array.count, sub);
 		}
 		case RZ_TYPE_KIND_CALLABLE:
 		{
-			// TODO!
+			RzCallable *callable = ctype->callable;
+			ProtoModel *pm = callable->cc ? arch->protoModelFromRizinCC(callable->cc) : nullptr;
+			if(!pm)
+			{
+				RzCoreLock core(arch->getCore());
+				const char *cc = rz_analysis_cc_default(core->analysis);
+				if(cc)
+					pm = arch->protoModelFromRizinCC(cc);
+			}
+			if(!pm)
+			{
+				RzCoreLock core(arch->getCore());
+				char *tstr = rz_type_as_string(core->analysis->typedb, ctype);
+				*error = std::string("Failed to get any calling convention for callable ") + tstr;
+				rz_mem_free(tstr);
+				return nullptr;
+			}
+			Datatype *outtype = nullptr;
+			if(callable->ret)
+			{
+				outtype = fromRzTypeInternal(callable->ret, error, stack_types, prototype, refd);
+				if(!outtype)
+					return nullptr;
+			}
+			std::vector<Datatype *> intypes;
+			if(!rz_pvector_foreach_cpp<RzCallableArg>(callable->args, [&](RzCallableArg *arg) {
+				if(!arg->type)
+					return false;
+				Datatype *at = fromRzTypeInternal(arg->type, error, stack_types, prototype, refd);
+				if(!at)
+					return false;
+				intypes.push_back(at);
+				return true;
+			}))
+			{
+				return nullptr;
+			}
+			return this->getTypeCode(pm, outtype, intypes, false); // dotdotdot arg can be used when rizin supports vararg callables
 		}
 	}
 	return nullptr;
