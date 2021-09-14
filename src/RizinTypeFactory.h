@@ -23,6 +23,7 @@ class RizinTypeFactory : public TypeFactory
 		Datatype *addRizinStruct(RzBaseType *type, StackTypes &stack_types, bool prototype);
 		Datatype *addRizinEnum(RzBaseType *type);
 		Datatype *addRizinTypedef(RzBaseType *type, StackTypes &stack_types);
+		Datatype *addRizinAtomicType(RzBaseType *type, StackTypes &stack_types);
 		Datatype *queryRizin(const string &n, StackTypes &stack_types, bool prototype);
 
 	protected:
