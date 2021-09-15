@@ -281,6 +281,44 @@ pdg
 EOF
 RUN
 
+NAME=global variables
+FILE=bins/dectest32
+EXPECT=<<EOF
+
+undefined4 sym.get_global_var(void)
+{
+    return _obj.global_var;
+}
+--
+
+// WARNING: Globals starting with '_' overlap smaller symbols at the same address
+
+undefined4 sym.get_global_var(void)
+{
+    return _obj.global_var;
+}
+EOF
+CMDS=<<EOF
+avga global_var obj.global_var uint32_t
+avga global_array obj.global_array uint32_t[2]
+s sym.get_global_var
+af
+e ghidra.rawptr=1
+pdg
+?e --
+e ghidra.rawptr=0
+pdg
+?e --
+s sym.get_global_array_entry
+af
+e ghidra.rawptr=1
+pdg
+?e --
+e ghidra.rawptr=0
+pdg
+EOF
+RUN
+
 NAME=function variable annotations
 FILE=bins/dectest64
 EXPECT=<<EOF
