@@ -494,6 +494,27 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 	return symbol;
 }
 
+Symbol *RizinScope::registerGlobalVar(RzAnalysisVarGlobal *glob) const
+{
+	RzCoreLock core(arch->getCore());
+	uint4 attr = Varnode::namelock | Varnode::typelock;
+	if (!glob->type)
+		return nullptr;
+	std::string terr;
+	Datatype *type = arch->getTypeFactory()->fromRzType(glob->type, &terr);
+	if(!type)
+	{
+		arch->addWarning(std::string("Failed to create type for global variable ") + glob->name + ": " + terr);
+		return nullptr;
+	}
+	SymbolEntry *entry = cache->addSymbol(glob->name, type, Address(arch->getDefaultCodeSpace(), glob->addr), Address());
+	if(!entry)
+		return nullptr;
+	auto symbol = entry->getSymbol();
+	cache->setAttribute(symbol, attr);
+	return symbol;
+}
+
 Symbol *RizinScope::queryRizinAbsolute(ut64 addr, bool contain) const
 {
 	RzCoreLock core(arch->getCore());
@@ -511,6 +532,14 @@ Symbol *RizinScope::queryRizinAbsolute(ut64 addr, bool contain) const
 #endif
 	if(fcn)
 		return registerFunction(fcn);
+
+	RzAnalysisVarGlobal *glob;
+	if(contain)
+		glob = rz_analysis_var_global_get_byaddr_in(core->analysis, addr);
+	else
+		glob = rz_analysis_var_global_get_byaddr_at(core->analysis, addr);
+	if(glob)
+		return registerGlobalVar(glob);
 
 	// TODO: register more things
 
