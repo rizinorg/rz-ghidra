@@ -285,17 +285,27 @@ NAME=global variables
 FILE=bins/dectest32
 EXPECT=<<EOF
 
-undefined4 sym.get_global_var(void)
+uint32_t sym.get_global_var(void)
 {
-    return _obj.global_var;
+    return global_var;
 }
 --
 
-// WARNING: Globals starting with '_' overlap smaller symbols at the same address
-
-undefined4 sym.get_global_var(void)
+uint32_t sym.get_global_var(void)
 {
-    return _obj.global_var;
+    return global_var;
+}
+--
+
+uint32_t sym.get_global_array_entry(void)
+{
+    return global_array[1];
+}
+--
+
+uint32_t sym.get_global_array_entry(void)
+{
+    return global_array[1];
 }
 EOF
 CMDS=<<EOF
