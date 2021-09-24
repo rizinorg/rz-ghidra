@@ -197,6 +197,7 @@ EXPECT=<<EOF
 6502:LE:16:default:
 
 // WARNING: [rz-ghidra] Function fcn.0000080e has no calling convention set, args may be inaccurate.
+// WARNING: [rz-ghidra] Var arg_101h is stack pointer based, which is not supported for decompilation.
 
 void fcn.0000080e(void)
 {
@@ -280,11 +281,59 @@ pdg
 EOF
 RUN
 
+NAME=global variables
+FILE=bins/dectest32
+EXPECT=<<EOF
+
+uint32_t sym.get_global_var(void)
+{
+    return global_var;
+}
+--
+
+uint32_t sym.get_global_var(void)
+{
+    return global_var;
+}
+--
+
+uint32_t sym.get_global_array_entry(void)
+{
+    return global_array[1];
+}
+--
+
+uint32_t sym.get_global_array_entry(void)
+{
+    return global_array[1];
+}
+EOF
+CMDS=<<EOF
+avga global_var obj.global_var uint32_t
+avga global_array obj.global_array uint32_t[2]
+s sym.get_global_var
+af
+e ghidra.rawptr=1
+pdg
+?e --
+e ghidra.rawptr=0
+pdg
+?e --
+s sym.get_global_array_entry
+af
+e ghidra.rawptr=1
+pdg
+?e --
+e ghidra.rawptr=0
+pdg
+EOF
+RUN
+
 NAME=function variable annotations
 FILE=bins/dectest64
 EXPECT=<<EOF
 {
-  "code": "\n// WARNING: Could not reconcile some variable overlaps\n// WARNING: [rz-ghidra] Failed to match type int for variable argc to Decompiler type: Unknown type identifier int\n// WARNING: [rz-ghidra] Detected overlap for variable var_20h\n// WARNING: [rz-ghidra] Detected overlap for variable var_ch\n\nundefined8 main(undefined8 argc, char **argv)\n{\n    undefined8 uVar1;\n    int64_t in_FS_OFFSET;\n    int64_t var_30h;\n    int64_t var_24h;\n    int64_t var_8h;\n    \n    var_8h = *(int64_t *)(in_FS_OFFSET + 0x28);\n    var_24h._0_4_ = (undefined4)argc;\n    sym.Aeropause((int64_t)&var_24h + 4, (undefined4)argc, argv);\n    uVar1 = 0;\n    if (var_8h != *(int64_t *)(in_FS_OFFSET + 0x28)) {\n        uVar1 = sym.imp.__stack_chk_fail();\n    }\n    return uVar1;\n}\n",
+  "code": "\n// WARNING: Could not reconcile some variable overlaps\n// WARNING: [rz-ghidra] Detected overlap for variable var_20h\n// WARNING: [rz-ghidra] Detected overlap for variable var_ch\n\nundefined8 main(int argc, char **argv)\n{\n    undefined8 uVar1;\n    int64_t in_FS_OFFSET;\n    int64_t var_30h;\n    int64_t var_24h;\n    int64_t var_8h;\n    \n    var_8h = *(int64_t *)(in_FS_OFFSET + 0x28);\n    var_24h._0_4_ = argc;\n    sym.Aeropause((int64_t)&var_24h + 4, argc, argv);\n    uVar1 = 0;\n    if (var_8h != *(int64_t *)(in_FS_OFFSET + 0x28)) {\n        uVar1 = sym.imp.__stack_chk_fail();\n    }\n    return uVar1;\n}\n",
   "annotations": [
     {
       "start": 1,
@@ -420,886 +469,658 @@ EXPECT=<<EOF
     },
     {
       "start": 80,
-      "end": 86,
+      "end": 88,
       "type": "offset",
       "offset": 4198782
     },
     {
       "start": 80,
-      "end": 86,
+      "end": 88,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 87,
-      "end": 89,
+      "start": 89,
+      "end": 96,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 87,
-      "end": 89,
+      "start": 89,
+      "end": 96,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 90,
-      "end": 95,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 90,
-      "end": 95,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 96,
+      "start": 97,
       "end": 100,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 96,
+      "start": 97,
       "end": 100,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
       "start": 101,
-      "end": 104,
+      "end": 109,
       "type": "offset",
       "offset": 4198782
     },
     {
       "start": 101,
-      "end": 104,
+      "end": 109,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 105,
-      "end": 108,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 105,
-      "end": 108,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 109,
+      "start": 110,
       "end": 117,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 109,
+      "start": 110,
       "end": 117,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
       "start": 118,
-      "end": 122,
+      "end": 121,
       "type": "offset",
       "offset": 4198782
     },
     {
       "start": 118,
-      "end": 122,
+      "end": 121,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 123,
-      "end": 125,
+      "start": 121,
+      "end": 129,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 123,
-      "end": 125,
+      "start": 121,
+      "end": 129,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 126,
-      "end": 136,
+      "start": 130,
+      "end": 141,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 126,
-      "end": 136,
+      "start": 130,
+      "end": 141,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 137,
-      "end": 142,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 137,
-      "end": 142,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 143,
+      "start": 142,
       "end": 150,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 143,
+      "start": 142,
       "end": 150,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
       "start": 151,
-      "end": 155,
+      "end": 158,
       "type": "offset",
       "offset": 4198782
     },
     {
       "start": 151,
-      "end": 155,
+      "end": 158,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 156,
-      "end": 166,
+      "start": 159,
+      "end": 162,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 156,
-      "end": 166,
+      "start": 159,
+      "end": 162,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 167,
-      "end": 170,
+      "start": 163,
+      "end": 171,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 167,
-      "end": 170,
+      "start": 163,
+      "end": 171,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 171,
-      "end": 174,
+      "start": 172,
+      "end": 178,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 171,
-      "end": 174,
+      "start": 172,
+      "end": 178,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 174,
-      "end": 182,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 174,
-      "end": 182,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 183,
-      "end": 194,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 183,
-      "end": 194,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 195,
-      "end": 203,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 195,
-      "end": 203,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 204,
-      "end": 211,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 204,
-      "end": 211,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 212,
-      "end": 215,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 212,
-      "end": 215,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 216,
-      "end": 224,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 216,
-      "end": 224,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 225,
-      "end": 232,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 225,
-      "end": 232,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 233,
-      "end": 236,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 233,
-      "end": 236,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 236,
-      "end": 244,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 236,
-      "end": 244,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 245,
-      "end": 256,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 245,
-      "end": 256,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 257,
-      "end": 265,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 257,
-      "end": 265,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 266,
-      "end": 273,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 266,
-      "end": 273,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 274,
-      "end": 277,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 274,
-      "end": 277,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 278,
-      "end": 286,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 278,
-      "end": 286,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 287,
-      "end": 293,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 287,
-      "end": 293,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 295,
-      "end": 305,
+      "start": 180,
+      "end": 190,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 306,
-      "end": 310,
+      "start": 191,
+      "end": 195,
       "type": "function_name",
       "name": "main",
       "offset": 4198782
     },
     {
-      "start": 306,
-      "end": 310,
+      "start": 191,
+      "end": 195,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 306,
-      "end": 310,
+      "start": 191,
+      "end": 195,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 311,
-      "end": 321,
+      "start": 196,
+      "end": 199,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 322,
-      "end": 326,
+      "start": 200,
+      "end": 204,
       "type": "function_parameter",
       "name": "argc"
     },
     {
-      "start": 322,
-      "end": 326,
+      "start": 200,
+      "end": 204,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 328,
-      "end": 332,
+      "start": 206,
+      "end": 210,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 335,
-      "end": 339,
+      "start": 213,
+      "end": 217,
       "type": "function_parameter",
       "name": "argv"
     },
     {
-      "start": 335,
-      "end": 339,
+      "start": 213,
+      "end": 217,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 347,
-      "end": 357,
+      "start": 225,
+      "end": 235,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 358,
-      "end": 363,
+      "start": 236,
+      "end": 241,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 358,
-      "end": 363,
+      "start": 236,
+      "end": 241,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 369,
-      "end": 376,
+      "start": 247,
+      "end": 254,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 377,
-      "end": 389,
+      "start": 255,
+      "end": 267,
       "type": "local_variable",
       "name": "in_FS_OFFSET"
     },
     {
+      "start": 255,
+      "end": 267,
+      "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 273,
+      "end": 280,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 281,
+      "end": 288,
+      "type": "local_variable",
+      "name": "var_30h"
+    },
+    {
+      "start": 281,
+      "end": 288,
+      "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 294,
+      "end": 301,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 302,
+      "end": 309,
+      "type": "local_variable",
+      "name": "var_24h"
+    },
+    {
+      "start": 302,
+      "end": 309,
+      "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 315,
+      "end": 322,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 323,
+      "end": 329,
+      "type": "local_variable",
+      "name": "var_8h"
+    },
+    {
+      "start": 323,
+      "end": 329,
+      "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 340,
+      "end": 346,
+      "type": "local_variable",
+      "name": "var_8h"
+    },
+    {
+      "start": 340,
+      "end": 346,
+      "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 347,
+      "end": 348,
+      "type": "offset",
+      "offset": 4198797
+    },
+    {
+      "start": 349,
+      "end": 350,
+      "type": "offset",
+      "offset": 4198797
+    },
+    {
+      "start": 351,
+      "end": 358,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 362,
+      "end": 374,
+      "type": "local_variable",
+      "name": "in_FS_OFFSET"
+    },
+    {
+      "start": 362,
+      "end": 374,
+      "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 375,
+      "end": 376,
+      "type": "offset",
+      "offset": 4198797
+    },
+    {
       "start": 377,
-      "end": 389,
+      "end": 381,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 340,
+      "end": 382,
+      "type": "offset",
+      "offset": 4198797
+    },
+    {
+      "start": 388,
+      "end": 395,
+      "type": "local_variable",
+      "name": "var_24h"
+    },
+    {
+      "start": 388,
+      "end": 395,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
       "start": 395,
-      "end": 402,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 403,
-      "end": 410,
-      "type": "local_variable",
-      "name": "var_30h"
-    },
-    {
-      "start": 403,
-      "end": 410,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
-    },
-    {
-      "start": 416,
-      "end": 423,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 424,
-      "end": 431,
-      "type": "local_variable",
-      "name": "var_24h"
-    },
-    {
-      "start": 424,
-      "end": 431,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
-    },
-    {
-      "start": 437,
-      "end": 444,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 445,
-      "end": 451,
-      "type": "local_variable",
-      "name": "var_8h"
-    },
-    {
-      "start": 445,
-      "end": 451,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
-    },
-    {
-      "start": 462,
-      "end": 468,
-      "type": "local_variable",
-      "name": "var_8h"
-    },
-    {
-      "start": 462,
-      "end": 468,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
-    },
-    {
-      "start": 469,
-      "end": 470,
-      "type": "offset",
-      "offset": 4198797
-    },
-    {
-      "start": 471,
-      "end": 472,
-      "type": "offset",
-      "offset": 4198797
-    },
-    {
-      "start": 473,
-      "end": 480,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 484,
-      "end": 496,
-      "type": "local_variable",
-      "name": "in_FS_OFFSET"
-    },
-    {
-      "start": 484,
-      "end": 496,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
-    },
-    {
-      "start": 497,
-      "end": 498,
-      "type": "offset",
-      "offset": 4198797
-    },
-    {
-      "start": 499,
-      "end": 503,
-      "type": "syntax_highlight",
-      "syntax_highlight": "constant_variable"
-    },
-    {
-      "start": 462,
-      "end": 504,
-      "type": "offset",
-      "offset": 4198797
-    },
-    {
-      "start": 510,
-      "end": 517,
-      "type": "local_variable",
-      "name": "var_24h"
-    },
-    {
-      "start": 510,
-      "end": 517,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
-    },
-    {
-      "start": 517,
-      "end": 518,
+      "end": 396,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 524,
-      "end": 525,
+      "start": 402,
+      "end": 403,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 527,
-      "end": 537,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 538,
-      "end": 542,
+      "start": 404,
+      "end": 408,
       "type": "function_parameter",
       "name": "argc"
     },
     {
-      "start": 538,
-      "end": 542,
+      "start": 404,
+      "end": 408,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 510,
-      "end": 542,
+      "start": 388,
+      "end": 408,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 548,
-      "end": 561,
+      "start": 414,
+      "end": 427,
       "type": "function_name",
       "name": "sym.Aeropause",
       "offset": 4199038
     },
     {
-      "start": 548,
-      "end": 561,
+      "start": 414,
+      "end": 427,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 563,
-      "end": 570,
+      "start": 429,
+      "end": 436,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 571,
-      "end": 572,
+      "start": 437,
+      "end": 438,
       "type": "offset",
       "offset": 4198819
     },
     {
-      "start": 572,
-      "end": 579,
+      "start": 438,
+      "end": 445,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 580,
-      "end": 581,
+      "start": 446,
+      "end": 447,
       "type": "offset",
       "offset": 4198819
     },
     {
-      "start": 582,
-      "end": 583,
+      "start": 448,
+      "end": 449,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 583,
-      "end": 585,
+      "start": 449,
+      "end": 451,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 586,
-      "end": 596,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 597,
-      "end": 601,
+      "start": 451,
+      "end": 455,
       "type": "function_parameter",
       "name": "argc"
     },
     {
-      "start": 597,
-      "end": 601,
+      "start": 451,
+      "end": 455,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 601,
-      "end": 603,
+      "start": 455,
+      "end": 457,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 603,
-      "end": 607,
+      "start": 457,
+      "end": 461,
       "type": "function_parameter",
       "name": "argv"
     },
     {
-      "start": 603,
-      "end": 607,
+      "start": 457,
+      "end": 461,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 548,
-      "end": 608,
+      "start": 414,
+      "end": 462,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 614,
-      "end": 619,
+      "start": 468,
+      "end": 473,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 614,
-      "end": 619,
+      "start": 468,
+      "end": 473,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 620,
-      "end": 621,
+      "start": 474,
+      "end": 475,
       "type": "offset",
       "offset": 4198833
     },
     {
-      "start": 622,
-      "end": 623,
+      "start": 476,
+      "end": 477,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 614,
-      "end": 623,
+      "start": 468,
+      "end": 477,
       "type": "offset",
       "offset": 4198833
     },
     {
-      "start": 629,
-      "end": 631,
+      "start": 483,
+      "end": 485,
       "type": "offset",
       "offset": 4198851
     },
     {
-      "start": 629,
-      "end": 631,
+      "start": 483,
+      "end": 485,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 633,
-      "end": 639,
+      "start": 487,
+      "end": 493,
       "type": "local_variable",
       "name": "var_8h"
     },
     {
-      "start": 633,
-      "end": 639,
+      "start": 487,
+      "end": 493,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 640,
-      "end": 642,
+      "start": 494,
+      "end": 496,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 643,
-      "end": 644,
+      "start": 497,
+      "end": 498,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 645,
-      "end": 652,
+      "start": 499,
+      "end": 506,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 656,
-      "end": 668,
+      "start": 510,
+      "end": 522,
       "type": "local_variable",
       "name": "in_FS_OFFSET"
     },
     {
-      "start": 656,
-      "end": 668,
+      "start": 510,
+      "end": 522,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 669,
-      "end": 670,
+      "start": 523,
+      "end": 524,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 671,
-      "end": 675,
+      "start": 525,
+      "end": 529,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 688,
-      "end": 693,
+      "start": 542,
+      "end": 547,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 688,
-      "end": 693,
+      "start": 542,
+      "end": 547,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 694,
-      "end": 695,
+      "start": 548,
+      "end": 549,
       "type": "offset",
       "offset": 4198853
     },
     {
-      "start": 696,
-      "end": 720,
+      "start": 550,
+      "end": 574,
       "type": "function_name",
       "name": "sym.imp.__stack_chk_fail",
       "offset": 4198464
     },
     {
-      "start": 696,
-      "end": 720,
+      "start": 550,
+      "end": 574,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 688,
-      "end": 722,
+      "start": 542,
+      "end": 576,
       "type": "offset",
       "offset": 4198853
     },
     {
-      "start": 734,
-      "end": 740,
+      "start": 588,
+      "end": 594,
       "type": "offset",
       "offset": 4198859
     },
     {
-      "start": 734,
-      "end": 740,
+      "start": 588,
+      "end": 594,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 741,
-      "end": 746,
+      "start": 595,
+      "end": 600,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 741,
-      "end": 746,
+      "start": 595,
+      "end": 600,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 734,
-      "end": 746,
+      "start": 588,
+      "end": 600,
       "type": "offset",
       "offset": 4198859
     }
@@ -2016,7 +1837,6 @@ FILE=bins/dectest64
 EXPECT=<<EOF
 
 // WARNING: [rz-ghidra] Detected overlap for variable var_ch
-// WARNING: [rz-ghidra] Failed to match type size_t for variable size to Decompiler type: Unknown type identifier size_t
 
 void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
 {
@@ -2075,7 +1895,7 @@ void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
     case -0x452e541f:
         break;
     }
-    sym.PrintAmbassador(*(uint32_t *)&bright->ambassador);
+    sym.PrintAmbassador((uint64_t)*(uint32_t *)&bright->ambassador);
     return;
 }
 EOF
@@ -2089,9 +1909,6 @@ afvr rdi s1 "const char *" @ sym.imp.strcmp
 afvr rsi s2 "const char *" @ sym.imp.strcmp
 
 to bins/types.h
-# TODO: remove when parsed struct from r2 is correct
-k analysis/types/struct.Bright.ambassador=enum Ambassador,16,0
-k analysis/types/struct.Bright.window=struct Window,8,0
 
 s sym.Aeropause
 afvr rdi bright "Bright *"
@@ -2334,7 +2151,7 @@ EXPECT=<<EOF
 void entry0(void)
 {
     // [11] -r-x section size 200 named .text
-    sym.imp.__libc_init();
+    func_0x0000039c();
     // WARNING: Bad instruction - Truncating control flow here
     halt_baddata();
 }
@@ -2386,6 +2203,7 @@ CCu base64:Jg== @ 0x804858a
 <localdb main="stack" lock="false">
 <rangelist>
 <range space="stack" first="0x4" last="0x1f7"/>
+<range space="stack" first="0xfff0bdc0" last="0xffffff5f"/>
 <range space="stack" first="0xffffff68" last="0xfffffffb"/>
 </rangelist>
 <symbollist>
@@ -2455,15 +2273,24 @@ CCu base64:Jg== @ 0x804858a
 <property_changepoint space="ram" offset="0x80486bc" val="0x0"/>
 <property_changepoint space="ram" offset="0x8049f0c" val="0x2000"/>
 <property_changepoint space="ram" offset="0x804a024" val="0x0"/>
-<property_changepoint space="register" offset="0x1000" val="0x20000000"/>
-<property_changepoint space="register" offset="0x100a" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1014" val="0x20000000"/>
-<property_changepoint space="register" offset="0x101e" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1028" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1032" val="0x20000000"/>
-<property_changepoint space="register" offset="0x103c" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1046" val="0x20000000"/>
-<property_changepoint space="register" offset="0x1050" val="0x0"/>
+<property_changepoint space="ram" offset="0x804a030" val="0x2000"/>
+<property_changepoint space="ram" offset="0x804a04c" val="0x0"/>
+<property_changepoint space="register" offset="0x1106" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1110" val="0x0"/>
+<property_changepoint space="register" offset="0x1116" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1120" val="0x0"/>
+<property_changepoint space="register" offset="0x1126" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1130" val="0x0"/>
+<property_changepoint space="register" offset="0x1136" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1140" val="0x0"/>
+<property_changepoint space="register" offset="0x1146" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1150" val="0x0"/>
+<property_changepoint space="register" offset="0x1156" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1160" val="0x0"/>
+<property_changepoint space="register" offset="0x1166" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1170" val="0x0"/>
+<property_changepoint space="register" offset="0x1176" val="0x20000000"/>
+<property_changepoint space="register" offset="0x1180" val="0x0"/>
 <rangelist>
 </rangelist>
 <symbollist>
@@ -2472,6 +2299,7 @@ CCu base64:Jg== @ 0x804858a
 <localdb main="stack" lock="false">
 <rangelist>
 <range space="stack" first="0x4" last="0x1f7"/>
+<range space="stack" first="0xfff0bdc0" last="0xffffff5f"/>
 <range space="stack" first="0xffffff68" last="0xfffffffb"/>
 </rangelist>
 <symbollist>
@@ -2569,7 +2397,6 @@ CCu base64:Jg== @ 0x804858a
   <set name="highseg" val="0x0"/>
   <set name="instrPhase" val="0x0"/>
   <set name="mandover" val="0x0"/>
-  <set name="opprefx" val="0x0"/>
   <set name="opsize" val="0x1"/>
   <set name="prefix_66" val="0x0"/>
   <set name="prefix_f2" val="0x0"/>
@@ -2595,7 +2422,6 @@ CCu base64:Jg== @ 0x804858a
   <set name="highseg" val="0x0"/>
   <set name="instrPhase" val="0x0"/>
   <set name="mandover" val="0x0"/>
-  <set name="opprefx" val="0x0"/>
   <set name="opsize" val="0x0"/>
   <set name="prefix_66" val="0x0"/>
   <set name="prefix_f2" val="0x0"/>
@@ -2717,10 +2543,10 @@ EOF
 RUN
 
 NAME=pdgs
-FILE=-
+FILE==
 EXPECT=<<EOF
-6502:BE:16:default
 6502:LE:16:default
+65C02:LE:16:default
 68000:BE:32:Coldfire
 68000:BE:32:MC68020
 68000:BE:32:MC68030
@@ -3060,7 +2886,7 @@ EXPECT=<<EOF
 
 void sym.KillList(LL arg1)
 {
-    LinkedList *pLVar1;
+    LL pLVar1;
     LL ptr;
     int64_t var_8h;
     
@@ -3068,7 +2894,7 @@ void sym.KillList(LL arg1)
     while (ptr != (LL)0x0) {
         pLVar1 = ptr->next;
         sym.imp.free(ptr);
-        ptr = (LL)pLVar1;
+        ptr = pLVar1;
     }
     return;
 }
@@ -3105,8 +2931,6 @@ EOF
 EXPECT=<<EOF
 
 // WARNING: Switch with 1 destination removed at 0x080483e8
-// WARNING: [rz-ghidra] Failed to match type signed int for variable var_ch to Decompiler type: Unknown type identifier
-// signed
 // WARNING: [rz-ghidra] Detected overlap for variable var_dh
 
 void sym.imp.exit noreturn (void)
@@ -3114,6 +2938,39 @@ void sym.imp.exit noreturn (void)
     // WARNING: Treating indirect jump as call
     (**(code **)0x8049ffc)(0x30);
     return;
+}
+EOF
+RUN
+
+NAME=callables and atomic (jni)
+FILE=rizin-testbins/elf/jni/jniO0-arm64
+CMDS=<<EOF
+to bins/jni-simplified.h
+aaa
+s sym.Java_JNIFoo_nativeFoo
+afvr x0 env JNIEnv *
+afvr x1 obj jobject
+pdg
+EOF
+EXPECT=<<EOF
+
+jstring sym.Java_JNIFoo_nativeFoo(JNIEnv *env, jobject obj)
+{
+    int64_t iVar1;
+    jstring pvVar2;
+    void *var_18h;
+    void *ptr;
+    int64_t var_28h;
+    
+    iVar1 = sym.imp.malloc(0x1e);
+    if (iVar1 == 0) {
+        pvVar2 = (jstring)0x0;
+    } else {
+        sym.imp.memset(iVar1, 0, 0x1e);
+        pvVar2 = (*(*env)->NewStringUTF)(env, "foo: Test program of JNI.\\n");
+        sym.imp.free(0x650);
+    }
+    return pvVar2;
 }
 EOF
 RUN

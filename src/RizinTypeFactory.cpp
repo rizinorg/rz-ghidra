@@ -3,8 +3,8 @@
 #include "RizinTypeFactory.h"
 #include "RizinArchitecture.h"
 
-#include <rz_parse.h>
 #include <rz_core.h>
+#include <rz_type.h>
 
 #include "RizinUtils.h"
 
@@ -12,33 +12,39 @@ RizinTypeFactory::RizinTypeFactory(RizinArchitecture *arch)
 	: TypeFactory(arch),
 	arch(arch)
 {
-	ctype = rz_parse_ctype_new();
-	if(!ctype)
-		throw LowlevelError("Failed to create RParseCType");
 }
 
 RizinTypeFactory::~RizinTypeFactory()
 {
-	rz_parse_ctype_free(ctype);
 }
 
-Datatype *RizinTypeFactory::addRizinStruct(RzAnalysisBaseType *type, std::set<std::string> &stack_types)
+Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, StackTypes &stack_types, bool prototype)
 {
-	assert(type->kind == RZ_ANALYSIS_BASE_TYPE_KIND_STRUCT);
+	assert(type->kind == RZ_BASE_TYPE_KIND_STRUCT);
 
 	std::vector<TypeField> fields;
 	try
 	{
+		RzCoreLock core(arch->getCore());
+		ut64 offset = 0;
 		TypeStruct *r = getTypeStruct(type->name);
+		if (prototype) {
+			prototypes.insert(r);
+			return r;
+		} else {
+			prototypes.erase(r);
+		}
 		void *it;
-		rz_vector_foreach_cpp<RzAnalysisStructMember>(&type->struct_data.members, [&](RzAnalysisStructMember *member) {
+		rz_vector_foreach_cpp<RzTypeStructMember>(&type->struct_data.members, [&](RzTypeStructMember *member) {
 			if(!member->type || !member->name)
 				return;
-			Datatype *member_type = fromCString(member->type, nullptr, &stack_types);
+			Datatype *member_type = fromRzType(member->type, nullptr, &stack_types);
 			if(!member_type)
 			{
-				arch->addWarning(std::string("Failed to match type ") + member->type + " of member " + member->name
+				char *tstr = rz_type_as_string(core->analysis->typedb, member->type);
+				arch->addWarning(std::string("Failed to match type ") + (tstr ? tstr : "?") + " of member " + member->name
 						+ " in struct " + type->name);
+				rz_mem_free(tstr);
 				return;
 			}
 
@@ -47,16 +53,16 @@ Datatype *RizinTypeFactory::addRizinStruct(RzAnalysisBaseType *type, std::set<st
 			// 	memberType = getTypeArray(elements, memberType);
 
 			fields.push_back({
-				(int4)member->offset,
+				(int4)offset, // Currently, this is 0 most of the time: member->offset,
 				std::string(member->name),
 				member_type
 			});
+
+			// TODO: right now, we track member offset ourselves
+			// which means all structs are assumed to be packed.
+			// This should be changed if there is a clear notion of the offset in rizin at some point.
+			offset += rz_type_db_get_bitsize(core->analysis->typedb, member->type) / 8;
 		});
-		if(fields.empty())
-		{
-			arch->addWarning(std::string("Struct ") + type->name + " has no members");
-			return nullptr;
-		}
 		setFields(fields, r, 0, 0);
 		return r;
 	}
@@ -67,13 +73,13 @@ Datatype *RizinTypeFactory::addRizinStruct(RzAnalysisBaseType *type, std::set<st
 	}
 }
 
-Datatype *RizinTypeFactory::addRizinEnum(RzAnalysisBaseType *type)
+Datatype *RizinTypeFactory::addRizinEnum(RzBaseType *type)
 {
-	assert(type->kind == RZ_ANALYSIS_BASE_TYPE_KIND_ENUM);
+	assert(type->kind == RZ_BASE_TYPE_KIND_ENUM);
 	std::vector<std::string> namelist;
 	std::vector<uintb> vallist;
 	std::vector<bool> assignlist;
-	rz_vector_foreach_cpp<RzAnalysisEnumCase>(&type->enum_data.cases, [&](RzAnalysisEnumCase *ceys) {
+	rz_vector_foreach_cpp<RzTypeEnumCase>(&type->enum_data.cases, [&](RzTypeEnumCase *ceys) {
 		if(!ceys->name)
 			return;
 		namelist.push_back(ceys->name);
@@ -95,21 +101,55 @@ Datatype *RizinTypeFactory::addRizinEnum(RzAnalysisBaseType *type)
 	}
 }
 
-Datatype *RizinTypeFactory::addRizinTypedef(RzAnalysisBaseType *type, std::set<std::string> &stack_types)
+Datatype *RizinTypeFactory::addRizinTypedef(RzBaseType *type, StackTypes &stack_types)
 {
-	assert(type->kind == RZ_ANALYSIS_BASE_TYPE_KIND_TYPEDEF);
+	assert(type->kind == RZ_BASE_TYPE_KIND_TYPEDEF);
 	if(!type->type)
 		return nullptr;
-	Datatype *resolved = fromCString(type->type, nullptr, &stack_types);
+	Datatype *resolved = fromRzTypeInternal(type->type, nullptr, &stack_types, true, false); // use prototype=true to avoid recursion
 	if(!resolved)
 		return nullptr;
 	Datatype *typedefd = resolved->clone();
 	setName(typedefd, type->name); // this removes the old name from the nametree
 	setName(resolved, resolved->getName()); // add the old name back
+	fromRzTypeInternal(type->type, nullptr, &stack_types, false, false); // fully create the type after querying with prototype=true before
 	return typedefd;
 }
 
-Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &stack_types)
+static type_metatype metatypeOfTypeclass(RzTypeTypeclass tc)
+{
+	switch(tc)
+	{
+		case RZ_TYPE_TYPECLASS_NUM:
+		case RZ_TYPE_TYPECLASS_INTEGRAL:
+		case RZ_TYPE_TYPECLASS_INTEGRAL_UNSIGNED:
+			return TYPE_UINT;
+		case RZ_TYPE_TYPECLASS_INTEGRAL_SIGNED:
+			return TYPE_INT;
+		case RZ_TYPE_TYPECLASS_FLOATING:
+			return TYPE_FLOAT;
+		case RZ_TYPE_TYPECLASS_NONE:
+			return TYPE_VOID;
+		default:
+			return TYPE_UNKNOWN;
+	}
+}
+
+Datatype *RizinTypeFactory::addRizinAtomicType(RzBaseType *type, StackTypes &stack_types)
+{
+	assert(type->kind == RZ_BASE_TYPE_KIND_ATOMIC);
+	if(!type->name || type->size < 8)
+	{
+		arch->addWarning(std::string("Invalid atomic type ") + (type->name ? type->name : "(null)"));
+		return nullptr;
+	}
+	RzCoreLock core(arch->getCore());
+	type_metatype mt = metatypeOfTypeclass(rz_base_type_typeclass(core->analysis->typedb, type));
+	// setCoreType(type->name, type->size / 8, mt, false); // TODO: conditionally enable chartp when supported in rizin
+	return getBase(type->size / 8, mt, type->name);
+}
+
+Datatype *RizinTypeFactory::queryRizin(const string &n, StackTypes &stack_types, bool prototype)
 {
 	if(stack_types.find(n) != stack_types.end())
 	{
@@ -120,89 +160,75 @@ Datatype *RizinTypeFactory::queryRizin(const string &n, std::set<std::string> &s
 	Datatype *r = nullptr;
 
 	RzCoreLock core(arch->getCore());
-	RzAnalysisBaseType *type = rz_analysis_get_base_type(core->analysis, n.c_str());
+	RzBaseType *type = rz_type_db_get_base_type(core->analysis->typedb, n.c_str());
 	if(!type || !type->name)
-	{
-		if(type)
-			rz_analysis_base_type_free(type);
 		goto beach;
-	}
 	switch(type->kind)
 	{
-		case RZ_ANALYSIS_BASE_TYPE_KIND_STRUCT:
-			r = addRizinStruct(type, stack_types);
+		case RZ_BASE_TYPE_KIND_STRUCT:
+			r = addRizinStruct(type, stack_types, prototype);
 			break;
-		case RZ_ANALYSIS_BASE_TYPE_KIND_ENUM:
+		case RZ_BASE_TYPE_KIND_ENUM:
 			r = addRizinEnum(type);
 			break;
-		case RZ_ANALYSIS_BASE_TYPE_KIND_TYPEDEF:
+		case RZ_BASE_TYPE_KIND_TYPEDEF:
 			r = addRizinTypedef(type, stack_types);
 			break;
-		// TODO: atomic too?
+		case RZ_BASE_TYPE_KIND_ATOMIC:
+			r = addRizinAtomicType(type, stack_types);
+			break;
 		default:
 			break;
 	}
-	rz_analysis_base_type_free(type);
 beach:
 	stack_types.erase(n);
 	return r;
 }
 
-Datatype *RizinTypeFactory::findById(const string &n, uint8 id, std::set<std::string> &stackTypes)
+Datatype *RizinTypeFactory::findById(const string &n, uint8 id, int4 sz, StackTypes &stack_types, bool prototype)
 {
-	Datatype *r = TypeFactory::findById(n, id);
-	if(r)
+	Datatype *r = TypeFactory::findById(n, id, sz);
+	if(r && (prototype || prototypes.find(r) == prototypes.end()))
 		return r;
-	return queryRizin(n, stackTypes);
+	return queryRizin(n, stack_types, prototype);
 }
 
-Datatype *RizinTypeFactory::findById(const string &n, uint8 id)
+Datatype *RizinTypeFactory::findById(const string &n, uint8 id, int4 sz)
 {
-	std::set<std::string> stackTypes; // to detect recursion
-	return findById(n, id, stackTypes);
+	StackTypes stack_types; // to detect recursion
+	return findById(n, id, sz, stack_types, false);
 }
 
-Datatype *RizinTypeFactory::fromCString(const string &str, string *error, std::set<std::string> *stackTypes)
-{
-	char *error_cstr = nullptr;
-	RParseCTypeType *type = rz_parse_ctype_parse(ctype, str.c_str(), &error_cstr);
-	if(error)
-		*error = error_cstr ? error_cstr : "";
-	if(!type)
-		return nullptr;
-
-	Datatype *r = fromCType(type, error, stackTypes);
-	rz_parse_ctype_type_free(type);
-	return r;
-}
-
-Datatype *RizinTypeFactory::fromCType(const RParseCTypeType *ctype, string *error, std::set<std::string> *stackTypes)
+// prototype means that the type does not have to be completed entirely yet (e.g. struct prototype for typedef)
+// refd means that this type is in a pointer of some kind, so we can actually use prototype
+// that's because our typedef-likes in ghidra are just clones of the original type, so we must not clone prototypes, only refs.
+Datatype *RizinTypeFactory::fromRzTypeInternal(const RzType *ctype, string *error, StackTypes *stack_types, bool prototype, bool refd)
 {
 	switch(ctype->kind)
 	{
-		case RZ_PARSE_CTYPE_TYPE_KIND_IDENTIFIER:
+		case RZ_TYPE_KIND_IDENTIFIER:
 		{
-			if(ctype->identifier.kind == RZ_PARSE_CTYPE_IDENTIFIER_KIND_UNION)
+			if(ctype->identifier.kind == RZ_TYPE_IDENTIFIER_KIND_UNION)
 			{
 				if(error)
 					*error = "Union types not supported in Decompiler";
 				return nullptr;
 			}
 
-			Datatype *r = stackTypes ? findByName(ctype->identifier.name, *stackTypes) : findByName(ctype->identifier.name);
+			Datatype *r = stack_types ? findByName(ctype->identifier.name, *stack_types, prototype && refd) : findByName(ctype->identifier.name);
 			if(!r)
 			{
 				if(error)
 					*error = "Unknown type identifier " + std::string(ctype->identifier.name);
 				return nullptr;
 			}
-			if(ctype->identifier.kind == RZ_PARSE_CTYPE_IDENTIFIER_KIND_STRUCT && r->getMetatype() != TYPE_STRUCT)
+			if(ctype->identifier.kind == RZ_TYPE_IDENTIFIER_KIND_STRUCT && r->getMetatype() != TYPE_STRUCT)
 			{
 				if(error)
 					*error = "Type identifier " + std::string(ctype->identifier.name) + " is not the name of a struct";
 				return nullptr;
 			}
-			if(ctype->identifier.kind == RZ_PARSE_CTYPE_IDENTIFIER_KIND_ENUM && !r->isEnumType())
+			if(ctype->identifier.kind == RZ_TYPE_IDENTIFIER_KIND_ENUM && !r->isEnumType())
 			{
 				if(error)
 					*error = "Type identifier " + std::string(ctype->identifier.name) + " is not the name of an enum";
@@ -210,21 +236,67 @@ Datatype *RizinTypeFactory::fromCType(const RParseCTypeType *ctype, string *erro
 			}
 			return r;
 		}
-		case RZ_PARSE_CTYPE_TYPE_KIND_POINTER:
+		case RZ_TYPE_KIND_POINTER:
 		{
-			Datatype *sub = fromCType(ctype->pointer.type, error, stackTypes);
+			Datatype *sub = fromRzTypeInternal(ctype->pointer.type, error, stack_types, prototype, true);
 			if(!sub)
 				return nullptr;
 			auto space = arch->getDefaultCodeSpace();
 			return this->getTypePointer(space->getAddrSize(), sub, space->getWordSize());
 		}
-		case RZ_PARSE_CTYPE_TYPE_KIND_ARRAY:
+		case RZ_TYPE_KIND_ARRAY:
 		{
-			Datatype *sub = fromCType(ctype->array.type, error, stackTypes);
+			Datatype *sub = fromRzTypeInternal(ctype->array.type, error, stack_types, prototype, refd);
 			if(!sub)
 				return nullptr;
 			return this->getTypeArray(ctype->array.count, sub);
 		}
+		case RZ_TYPE_KIND_CALLABLE:
+		{
+			RzCallable *callable = ctype->callable;
+			ProtoModel *pm = callable->cc ? arch->protoModelFromRizinCC(callable->cc) : nullptr;
+			if(!pm)
+			{
+				RzCoreLock core(arch->getCore());
+				const char *cc = rz_analysis_cc_default(core->analysis);
+				if(cc)
+					pm = arch->protoModelFromRizinCC(cc);
+			}
+			if(!pm)
+			{
+				RzCoreLock core(arch->getCore());
+				char *tstr = rz_type_as_string(core->analysis->typedb, ctype);
+				*error = std::string("Failed to get any calling convention for callable ") + tstr;
+				rz_mem_free(tstr);
+				return nullptr;
+			}
+			Datatype *outtype = nullptr;
+			if(callable->ret)
+			{
+				outtype = fromRzTypeInternal(callable->ret, error, stack_types, prototype, refd);
+				if(!outtype)
+					return nullptr;
+			}
+			std::vector<Datatype *> intypes;
+			if(!rz_pvector_foreach_cpp<RzCallableArg>(callable->args, [&](RzCallableArg *arg) {
+				if(!arg->type)
+					return false;
+				Datatype *at = fromRzTypeInternal(arg->type, error, stack_types, prototype, refd);
+				if(!at)
+					return false;
+				intypes.push_back(at);
+				return true;
+			}))
+			{
+				return nullptr;
+			}
+			return this->getTypeCode(pm, outtype, intypes, false); // dotdotdot arg can be used when rizin supports vararg callables
+		}
 	}
 	return nullptr;
+}
+
+Datatype *RizinTypeFactory::fromRzType(const RzType *ctype, string *error, StackTypes *stack_types)
+{
+	return fromRzTypeInternal(ctype, error, stack_types, false, false);
 }

@@ -15,6 +15,7 @@
 class RizinArchitecture;
 typedef struct rz_analysis_function_t RzAnalysisFunction;
 typedef struct rz_flag_item_t RzFlagItem;
+typedef struct rz_analysis_var_global_t RzAnalysisVarGlobal;
 
 class RizinScope : public Scope
 {
@@ -27,6 +28,7 @@ class RizinScope : public Scope
 
 		FunctionSymbol *registerFunction(RzAnalysisFunction *fcn) const;
 		Symbol *registerFlag(RzFlagItem *flag) const;
+		Symbol *registerGlobalVar(RzAnalysisVarGlobal *glob) const;
 		Symbol *queryRizinAbsolute(ut64 addr, bool contain) const;
 		Symbol *queryRizin(const Address &addr, bool contain) const;
 		LabSymbol *queryRizinFunctionLabel(const Address &addr) const;
@@ -54,17 +56,17 @@ class RizinScope : public Scope
 		void adjustCaches(void) override { cache->adjustCaches(); }
 		SymbolEntry *findAddr(const Address &addr,const Address &usepoint) const override;
 		SymbolEntry *findContainer(const Address &addr,int4 size, const Address &usepoint) const override;
-		 SymbolEntry *findClosestFit(const Address &addr,int4 size, const Address &usepoint) const { throw LowlevelError("findClosestFit unimplemented"); }
+		 SymbolEntry *findClosestFit(const Address &addr,int4 size, const Address &usepoint) const override { throw LowlevelError("findClosestFit unimplemented"); }
 		Funcdata *findFunction(const Address &addr) const override;
 		ExternRefSymbol *findExternalRef(const Address &addr) const override;
 		LabSymbol *findCodeLabel(const Address &addr) const override;
 		bool isNameUsed(const string &name, const Scope *op2) const override { throw LowlevelError("isNameUsed unimplemented"); }
 		Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const override;
 
-		SymbolEntry *findOverlap(const Address &addr,int4 size) const	{ throw LowlevelError("findOverlap unimplemented"); }
+		SymbolEntry *findOverlap(const Address &addr,int4 size) const override	{ throw LowlevelError("findOverlap unimplemented"); }
 		SymbolEntry *findBefore(const Address &addr) const				{ throw LowlevelError("findBefore unimplemented"); }
 		SymbolEntry *findAfter(const Address &addr) const				{ throw LowlevelError("findAfter unimplemented"); }
-		void findByName(const string &name,vector<Symbol *> &res) const	{ throw LowlevelError("findByName unimplemented"); }
+		void findByName(const string &name,vector<Symbol *> &res) const override	{ throw LowlevelError("findByName unimplemented"); }
 		MapIterator begin() const override								{ throw LowlevelError("begin unimplemented"); }
 		MapIterator end() const override								{ throw LowlevelError("end unimplemented"); }
 		list<SymbolEntry>::const_iterator beginDynamic() const override	{ throw LowlevelError("beginDynamic unimplemented"); }

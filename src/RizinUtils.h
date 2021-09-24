@@ -35,4 +35,15 @@ template<typename T, typename F> void rz_vector_foreach_cpp(RzVector *vec, const
 	}
 }
 
+template<typename T, typename F> bool rz_pvector_foreach_cpp(RzPVector *vec, const F &func)
+{
+	void **it;
+	rz_pvector_foreach(vec, it)
+	{
+		if(!func(reinterpret_cast<T *>(*it)))
+			return false;
+	}
+	return true;
+}
+
 #endif //RZ_GHIDRA_RIZINUTILS_H
