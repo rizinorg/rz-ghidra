@@ -747,7 +747,7 @@ RUN
 NAME=rz-asm short
 FILE==
 CMDS=<<EOF
-rz-asm -a ghidra -c v850 -b 32 -d 8100e009
+!rz-asm -a ghidra -c v850 -b 32 -d 8100e009
 EOF
 EXPECT=<<EOF
 zxb r1
