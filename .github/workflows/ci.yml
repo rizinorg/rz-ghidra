@@ -64,7 +64,7 @@ jobs:
     - name: Build with meson + ninja
       shell: pwsh
       run: |
-        .github\vsdevenv.ps1 64
+        dist\windows\vsdevenv.ps1 64
         meson --buildtype=release --prefix="${{ env.RIZIN_INSTALL_PREFIX }}" build
         ninja -C build
         ninja -C build install
@@ -72,7 +72,7 @@ jobs:
     - name: Build Rz-Ghidra
       shell: pwsh
       run: |
-        .github\vsdevenv.ps1 64
+        rizin\dist\windows\vsdevenv.ps1 64
         $env:ARTIFACT_PATH = "${{ github.workspace }}\${{ env.ARTIFACT_NAME }}"
         $env:PATH = "$env:PATH;C:$env:HOMEPATH\AppData\Local\Programs\rizin\bin"
         $env:PKG_CONFIG_PATH = "C:$env:HOMEPATH\AppData\Local\Programs\rizin\lib\pkgconfig"
