@@ -74,6 +74,7 @@ static const std::map<std::string, ArchMapper> arch_map = {
 	{ "mips", { "MIPS" } },
 	{ "dalvik", { "Dalvik" } },
 	{ "6502", { "6502", "default", 16 } },
+	{ "8051", { "8051", "default", 16, true } },
 	{ "java", { "JVM", "default", bits_mapper_default, true } },
 	{ "hppa", { "pa-risc" } },
 	{ "ppc", { "PowerPC" } },
