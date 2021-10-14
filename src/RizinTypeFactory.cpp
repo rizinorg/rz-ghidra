@@ -109,9 +109,7 @@ Datatype *RizinTypeFactory::addRizinTypedef(RzBaseType *type, StackTypes &stack_
 	Datatype *resolved = fromRzTypeInternal(type->type, nullptr, &stack_types, true, false); // use prototype=true to avoid recursion
 	if(!resolved)
 		return nullptr;
-	Datatype *typedefd = resolved->clone();
-	setName(typedefd, type->name); // this removes the old name from the nametree
-	setName(resolved, resolved->getName()); // add the old name back
+	Datatype *typedefd = getTypedef(resolved, type->name, 0);
 	fromRzTypeInternal(type->type, nullptr, &stack_types, false, false); // fully create the type after querying with prototype=true before
 	return typedefd;
 }
