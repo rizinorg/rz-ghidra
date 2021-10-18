@@ -461,12 +461,12 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 		{
 			switch(str->type)
 			{
-				case RZ_STRING_TYPE_WIDE_LE:
-				case RZ_STRING_TYPE_WIDE_BE:
+				case RZ_BIN_STRING_ENC_WIDE_LE:
+				case RZ_BIN_STRING_ENC_WIDE_BE:
 					tn = "char16_t";
 					break;
-				case RZ_STRING_TYPE_WIDE32_LE:
-				case RZ_STRING_TYPE_WIDE32_BE:
+				case RZ_BIN_STRING_ENC_WIDE32_LE:
+				case RZ_BIN_STRING_ENC_WIDE32_BE:
 					tn = "char32_t";
 					break;
 			}
