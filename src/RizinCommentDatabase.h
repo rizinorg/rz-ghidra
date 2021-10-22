@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2019-2021 Florian Märkl <info@florianmaerkl.de>
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #ifndef RZ_GHIDRA_RizinCOMMENTDATABASE_H

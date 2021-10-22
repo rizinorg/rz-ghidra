@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2019-2021 Florian Märkl <info@florianmaerkl.de>
+// SPDX-FileCopyrightText: 2019 Ayman Khamouma <kamou.k@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #ifndef RZ_GHIDRA_ARCHMAP_H

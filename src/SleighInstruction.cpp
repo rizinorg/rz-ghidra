@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2020-2021 Florian Märkl <info@florianmaerkl.de>
+// SPDX-FileCopyrightText: 2020 FXTi <zjxiang1998@gmail.com>
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include "SleighInstruction.h"

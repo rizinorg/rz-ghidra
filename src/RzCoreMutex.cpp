@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2019-2021 Florian Märkl <info@florianmaerkl.de>
+// SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include "RzCoreMutex.h"
 #include <rz_cons.h>

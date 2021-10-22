@@ -1,7 +1,8 @@
+// SPDX-FileCopyrightText: 2019-2021 Florian Märkl <info@florianmaerkl.de>
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-#ifndef RZ_GHIDRA_RCOREMUTEX_H
-#define RZ_GHIDRA_RCOREMUTEX_H
+#ifndef RZ_GHIDRA_RZCOREMUTEX_H
+#define RZ_GHIDRA_RZCOREMUTEX_H
 
 typedef struct rz_core_t RzCore;
 
