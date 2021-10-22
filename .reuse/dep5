@@ -1,0 +1,72 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: RzGhidra
+Upstream-Contact: RizinOrg <info@rizin.re>
+Source: https://github.com/rizinorg/rz-ghidra
+
+Files: .github/**
+Copyright: 2021 RizinOrg <info@rizin.re>
+License: LGPL-3.0-or-later
+
+Files: .builds/*
+Copyright: 2021 RizinOrg <info@rizin.re>
+License: LGPL-3.0-or-later
+
+Files: .gitmodules
+Copyright: 2021 RizinOrg <info@rizin.re>
+License: LGPL-3.0-or-later
+
+Files: .gitignore
+Copyright: 2021 RizinOrg <info@rizin.re>
+License: LGPL-3.0-or-later
+
+Files: **/.gitignore
+Copyright: 2021 RizinOrg <info@rizin.re>
+License: LGPL-3.0-or-later
+
+Files: .travis.yml
+Copyright: 2021 RizinOrg <info@rizin.re>
+License: LGPL-3.0-or-later
+
+Files: scripts/*
+Copyright: 2021 RizinOrg <info@rizin.re>
+License: LGPL-3.0-or-later
+
+Files: rz_ghidra.pc.in
+Copyright: 2019-2021 Florian Märkl <info@florianmaerkl.de>
+License: LGPL-3.0-or-later
+
+Files: CMakeLists.txt
+Copyright: 2019-2021 Florian Märkl <info@florianmaerkl.de>
+License: LGPL-3.0-or-later
+
+Files: **/CMakeLists.txt
+Copyright: 2019-2021 Florian Märkl <info@florianmaerkl.de>
+License: LGPL-3.0-or-later
+
+Files: cmake/*
+Copyright: 2019-2021 Florian Märkl <info@florianmaerkl.de>
+License: LGPL-3.0-or-later
+
+Files: assets/*
+Copyright: 2019-2020 Florian Märkl <info@florianmaerkl.de>
+License: LGPL-3.0-or-later
+
+Files: *.md
+Copyright: 2021 RizinOrg <info@rizin.re>
+License: LGPL-3.0-or-later
+
+Files: test/Makefile
+Copyright: 2019-2021 Florian Märkl <info@florianmaerkl.de>
+License: LGPL-3.0-or-later
+
+Files: test/bins/*
+Copyright: 2020-2021 Florian Märkl <info@florianmaerkl.de>
+License: LGPL-3.0-or-later
+
+Files: test/db/*
+Copyright: 2020-2021 Florian Märkl <info@florianmaerkl.de>
+Copyright: 2020 Nirmal Manoj <nimmumanoj@gmail.com>
+Copyright: 2020 FXTi <zjxiang1998@gmail.com>
+License: LGPL-3.0-or-later
+
+
