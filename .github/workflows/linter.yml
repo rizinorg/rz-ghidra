@@ -1,0 +1,14 @@
+name: "Mixed linter and checks"
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  licenses:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: REUSE Compliance Check
+      uses: fsfe/reuse-action@v1.1
