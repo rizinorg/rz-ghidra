@@ -28,10 +28,6 @@ jobs:
       name: S390X
       arch: s390x
       dist: focal
-    - os: linux
-      name: PPC64
-      arch: ppc64le
-      dist: focal
 
 addons:
   apt:
