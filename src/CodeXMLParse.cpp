@@ -45,6 +45,16 @@ struct ParseCodeXMLContext
 #define ANNOTATOR_PARAMS pugi::xml_node node, ParseCodeXMLContext *ctx, std::vector<RzCodeAnnotation> *out
 #define ANNOTATOR [](ANNOTATOR_PARAMS) -> void
 
+static char *strdup_rz(const char *s)
+{
+	size_t sz = strlen(s);
+	char *r = reinterpret_cast<char *>(rz_malloc(sz + 1));
+	if(!r)
+		return NULL;
+	memcpy(r, s, sz + 1);
+	return r;
+}
+
 void AnnotateOpref(ANNOTATOR_PARAMS)
 {
 	pugi::xml_attribute attr = node.attribute("opref");
@@ -76,7 +86,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	{
 		if(ctx->func->getName() == func_name)
 		{
-			annotation.reference.name = strdup(ctx->func->getName().c_str());
+			annotation.reference.name = strdup_rz(ctx->func->getName().c_str());
 			annotation.reference.offset = ctx->func->getAddress().getOffset();
 			out->push_back(annotation);
 			// Code below makes an offset annotation for the function name(for the currently decompiled function)
@@ -101,7 +111,7 @@ void AnnotateFunctionName(ANNOTATOR_PARAMS)
 	FuncCallSpecs *call_func_spec = ctx->func->getCallSpecs(op);
 	if(call_func_spec)
 	{
-		annotation.reference.name = strdup(call_func_spec->getName().c_str());
+		annotation.reference.name = strdup_rz(call_func_spec->getName().c_str());
 		annotation.reference.offset = call_func_spec->getEntryAddress().getOffset();
 		out->push_back(annotation);
 	}
@@ -183,7 +193,7 @@ void AnnotateLocalVariable(Symbol *symbol, std::vector<RzCodeAnnotation> *out)
 	if(symbol == (Symbol *)0)
 		return;
 	RzCodeAnnotation annotation = {};
-	annotation.variable.name = strdup(symbol->getName().c_str());
+	annotation.variable.name = strdup_rz(symbol->getName().c_str());
 	if(symbol->getCategory() == 0)
 		annotation.type = RZ_CODE_ANNOTATION_TYPE_FUNCTION_PARAMETER;
 	else
