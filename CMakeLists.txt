@@ -3,7 +3,9 @@ set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH True)
 
 project(rz-ghidra)
 
-set(RIZIN_INSTALL_PLUGDIR "share/rizin/plugins" CACHE STRING "Directory to install rizin plugin into")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include(RizinPlugin) # defines RIZIN_INSTALL_PLUGDIR
 set(CUTTER_INSTALL_PLUGDIR "share/rizin/cutter/plugins/native" CACHE STRING "Directory to install Cutter plugin into")
 
 set(CUTTER_SOURCE_DIR CUTTER_SOURCE_DIR-NOTFOUND CACHE STRING "Root directory of Cutter source")
@@ -14,8 +16,6 @@ option(BUILD_DECOMPILE_CLI_EXECUTABLE "Build REPL decompiler (not needed for riz
 option(BUILD_SLASPECS "Build Sleigh specs for architectures from Ghidra" ON)
 option(BUILD_SLEIGH_PLUGIN "Build asm and analysis plugin to use sleigh as a disassembler in rizin" ON)
 option(GENERATE_PARSERS "Re-generate all parsers with Bison/Flex instead of using pre-generated ones" OFF)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 if(CMAKE_VERSION VERSION_LESS "3.1")
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
