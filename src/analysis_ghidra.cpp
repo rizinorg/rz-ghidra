@@ -3288,6 +3288,7 @@ RzAnalysisPlugin rz_analysis_plugin_ghidra = {
 	/* .archinfo = */ &archinfo,
 	/* .analysis_mask = */ nullptr,
 	/* .preludes = */ nullptr,
+	/* .address_bits = */ nullptr,
 	/* .op = */ &sleigh_op,
 	/* .set_reg_profile = */ nullptr,
 	/* .get_reg_profile = */ &get_reg_profile,
