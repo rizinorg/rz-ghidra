@@ -13,7 +13,7 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 add_library(rz_ghidra_cutter SHARED ${SOURCE})
 target_link_libraries(rz_ghidra_cutter Qt5::Widgets)
-target_link_libraries(rz_ghidra_cutter Rizin::librz)
+target_link_libraries(rz_ghidra_cutter Rizin::Core)
 
 find_package(Cutter REQUIRED)
 target_link_libraries(rz_ghidra_cutter Cutter::Cutter)
