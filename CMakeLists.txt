@@ -5,7 +5,9 @@ project(rz-ghidra)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-include(RizinPlugin) # defines RIZIN_INSTALL_PLUGDIR
+find_package(Rizin REQUIRED Core)
+
+set(RIZIN_INSTALL_PLUGDIR "${Rizin_PLUGINDIR}" CACHE STRING "Directory to install rizin plugins into")
 set(CUTTER_INSTALL_PLUGDIR "share/rizin/cutter/plugins/native" CACHE STRING "Directory to install Cutter plugin into")
 
 set(CUTTER_SOURCE_DIR CUTTER_SOURCE_DIR-NOTFOUND CACHE STRING "Root directory of Cutter source")
@@ -71,12 +73,10 @@ set(ANALYSIS_SOURCE
 		src/analysis_ghidra.cpp)
 endif()
 
-find_package(Rizin REQUIRED)
-
 add_library(core_ghidra SHARED ${CORE_SOURCE})
 target_link_libraries(core_ghidra ghidra_libdecomp)
 target_link_libraries(core_ghidra pugixml)
-target_link_libraries(core_ghidra Rizin::librz)
+target_link_libraries(core_ghidra Rizin::Core)
 set_target_properties(core_ghidra PROPERTIES
 		OUTPUT_NAME core_ghidra
 		PREFIX "")
