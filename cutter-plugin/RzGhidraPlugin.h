@@ -26,4 +26,4 @@ public:
 };
 
 
-#endif // CUTTERSAMPLEPLUGIN_H
+#endif // RZ_GHIDRAPLUGIN_H
