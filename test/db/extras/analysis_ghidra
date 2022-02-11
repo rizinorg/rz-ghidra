@@ -23,7 +23,7 @@ type: load
 type: load
 ----
 0x00000000 INT 0x80
-type: ucall
+type: icall
 ----
 0x00000000 PUSH ebp
 type: rpush
