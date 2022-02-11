@@ -5,11 +5,24 @@
 #include "SleighAsm.h"
 #include "ArchMap.h"
 
-void SleighAsm::init(const char *cpu, int bits, bool bigendian, RzIO *io, RzConfig *cfg)
+AsmLoadImage::AsmLoadImage()
+	: LoadImage("rizin_asm"), buf(rz_buf_new_sparse(0xff), rz_buf_free)
 {
-	if(!io)
-		throw LowlevelError("Can't get RzIO from RzBin");
+}
 
+void AsmLoadImage::loadFill(uint1 *ptr, int4 size, const Address &addr)
+{
+	rz_buf_read_at(buf.get(), addr.getOffset(), ptr, size);
+}
+
+void AsmLoadImage::resetBuffer(ut64 offset, const ut8 *data, size_t size)
+{
+	rz_buf_resize(buf.get(), 0); // clears the buffer
+	rz_buf_write_at(buf.get(), offset, data, size);
+}
+
+void SleighAsm::init(const char *cpu, int bits, bool bigendian, RzConfig *cfg)
+{
 	if(description.empty())
 	{
 		/* Initialize sleigh spec files */
@@ -22,13 +35,12 @@ void SleighAsm::init(const char *cpu, int bits, bool bigendian, RzIO *io, RzConf
 	if(!sleigh_id.empty() && sleigh_id == new_sleigh_id)
 		return;
 
-	initInner(io, new_sleigh_id);
+	initInner(new_sleigh_id);
 }
 
-void SleighAsm::initInner(RzIO *io, std::string sleigh_id)
+void SleighAsm::initInner(std::string sleigh_id)
 {
 	/* Initialize Sleigh */
-	loader = std::move(AsmLoadImage(io));
 	docstorage = std::move(DocumentStorage());
 	resolveArch(sleigh_id);
 	buildSpecfile(docstorage);
@@ -406,7 +418,7 @@ RzConfig *SleighAsm::getConfig(RzAnalysis *a)
 {
 	RzCore *core = a ? (RzCore *)a->coreb.core : nullptr;
 	if(!core)
-		throw LowlevelError("Can't get RzCore from RzAnalysis's RzCoreBind");
+		return nullptr;
 	return core->config;
 }
 
@@ -454,8 +466,9 @@ std::string SleighAsm::getSleighHome(RzConfig *cfg)
 		throw LowlevelError("No Sleigh Home found!");
 }
 
-int SleighAsm::disassemble(RzAsmOp *op, unsigned long long offset)
+int SleighAsm::disassemble(RzAsmOp *op, ut64 offset, const ut8 *buf, size_t size)
 {
+	resetBuffer(offset, buf, size);
 	AssemblySlg assem(this);
 	Address addr(trans.getDefaultCodeSpace(), offset);
 	int length = 0;
@@ -487,8 +500,9 @@ int SleighAsm::disassemble(RzAsmOp *op, unsigned long long offset)
 	return length;
 }
 
-int SleighAsm::genOpcode(PcodeSlg &pcode_slg, Address &addr)
+int SleighAsm::genOpcode(PcodeSlg &pcode_slg, Address &addr, const ut8 *buf, size_t size)
 {
+	resetBuffer(addr.getOffset(), buf, size);
 	int length = 0;
 	try
 	{
@@ -632,15 +646,17 @@ PcodeOperand *PcodeSlg::parse_vardata(VarnodeData &data)
 	return operand;
 }
 
-void SleighAsm::check(ut64 offset, const ut8 *buf, int len)
-{ // To refresh cache when file content is modified.
+void SleighAsm::resetBuffer(ut64 offset, const ut8 *buf, size_t size)
+{
+	loader.resetBuffer(offset, buf, size);
+	// To refresh cache when file content is modified.
 	ParserContext *ctx = trans.getContext(Address(trans.getDefaultCodeSpace(), offset), ParserContext::uninitialized);
 	if(ctx->getParserState() > ParserContext::uninitialized)
 	{
 		ut8 *cached = ctx->getBuffer();
-		int i = 0;
-		for(; i < len && cached[i] == buf[i]; ++i) {}
-		if(i != len)
+		size_t i = 0;
+		for(; i < size && cached[i] == buf[i]; ++i) {}
+		if(i != size)
 			ctx->setParserState(ParserContext::uninitialized);
 	}
 }

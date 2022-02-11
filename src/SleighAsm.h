@@ -24,19 +24,15 @@
 class AsmLoadImage : public LoadImage
 {
 private:
-	RzIO *io = nullptr;
+	std::unique_ptr<RzBuffer, decltype(&rz_buf_free)> buf;
 
 public:
-	AsmLoadImage(RzIO *io): LoadImage("rizin_program"), io(io) {}
-	virtual void loadFill(uint1 *ptr, int4 size, const Address &addr)
-	{
-		rz_io_read_at(io, addr.getOffset(), ptr, size);
-	}
-	virtual string getArchType(void) const { return "rizin"; }
-	virtual void adjustVma(long adjust)
-	{
-		throw LowlevelError("Cannot adjust rizin virtual memory");
-	}
+	AsmLoadImage();
+	void loadFill(uint1 *ptr, int4 size, const Address &addr) override;
+	string getArchType(void) const override { return "rizin"; }
+	void adjustVma(long adjust) override { throw LowlevelError("Cannot adjust rizin virtual memory"); }
+
+	void resetBuffer(ut64 offset, const ut8 *data, size_t size);
 };
 
 class SleighAsm;
@@ -227,7 +223,7 @@ private:
 	std::vector<LanguageDescription> description;
 	int languageindex;
 
-	void initInner(RzIO *io, std::string sleigh_id);
+	void initInner(std::string sleigh_id);
 	void initRegMapping(void);
 	std::string getSleighHome(RzConfig *cfg);
 	void collectSpecfiles(void);
@@ -237,6 +233,7 @@ private:
 	void parseProcConfig(DocumentStorage &store);
 	void parseCompConfig(DocumentStorage &store);
 	void loadLanguageDescription(const string &specfile);
+	void resetBuffer(ut64 offset, const ut8 *buf, size_t size);
 
 public:
 	RizinSleigh trans;
@@ -249,14 +246,13 @@ public:
 	std::unordered_map<std::string, std::string> reg_group;
 	// To satisfy rizin's rule: reg name has to be lowercase.
 	std::unordered_map<std::string, std::string> reg_mapping;
-	SleighAsm(): loader(nullptr), trans(nullptr, nullptr) {}
-	void init(const char *cpu, int bits, bool bigendian, RzIO *io, RzConfig *cfg);
-	int disassemble(RzAsmOp *op, unsigned long long offset);
-	int genOpcode(PcodeSlg &pcode_slg, Address &addr);
+	SleighAsm(): trans(nullptr, nullptr) {}
+	void init(const char *cpu, int bits, bool bigendian, RzConfig *cfg);
+	int disassemble(RzAsmOp *op, ut64 offset, const ut8 *buf, size_t size);
+	int genOpcode(PcodeSlg &pcode_slg, Address &addr, const ut8 *buf, size_t size);
 	std::vector<RizinReg> getRegs(void);
 	static RzConfig *getConfig(RzAsm *a);
 	static RzConfig *getConfig(RzAnalysis *a);
-	void check(ut64 offset, const ut8 *buf, int len);
 };
 
 #endif // RZ_GHIDRA_SLEIGHASM_H
