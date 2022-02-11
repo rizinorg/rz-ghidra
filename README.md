@@ -9,17 +9,6 @@ It is solely based on the decompiler part of Ghidra, which is written entirely i
 C++, so Ghidra itself is not required at all and the plugin can be built self-contained.
 This project was presented, initially for radare2, at r2con 2019 as part of the Cutter talk: [https://youtu.be/eHtMiezr7l8?t=950](https://youtu.be/eHtMiezr7l8?t=950)
 
-## Installing
-
-An rz-pm package is available that can easily be installed like:
-```
-rz-pm -i rz-ghidra
-```
-
-This package only installs the rizin part.
-To use rz-ghidra from cutter, either use a provided pre-built release starting with
-Cutter 1.9, which bundles rz-ghidra, or follow the build instructions below.
-
 ## Usage
 
 ```
