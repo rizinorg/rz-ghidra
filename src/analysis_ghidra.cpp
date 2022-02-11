@@ -28,7 +28,7 @@ static int archinfo(RzAnalysis *analysis, int query)
 
 	try
 	{
-		sanalysis.init(analysis->cpu, analysis->bits, analysis->big_endian, analysis ? analysis->iob.io : nullptr, SleighAsm::getConfig(analysis));
+		sanalysis.init(analysis->cpu, analysis->bits, analysis->big_endian, SleighAsm::getConfig(analysis));
 	}
 	catch(const LowlevelError &e)
 	{
@@ -1382,7 +1382,7 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 {
 	try
 	{
-		sanalysis.init(a->cpu, a->bits, a->big_endian, a? a->iob.io : nullptr, SleighAsm::getConfig(a));
+		sanalysis.init(a->cpu, a->bits, a->big_endian, SleighAsm::getConfig(a));
 
 		analysis_op->addr = addr;
 		analysis_op->sign = true;
@@ -1391,8 +1391,7 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 		PcodeSlg pcode_slg(&sanalysis);
 		AssemblySlg assem(&sanalysis);
 		Address caddr(sanalysis.trans.getDefaultCodeSpace(), addr);
-		sanalysis.check(addr, data, len);
-		analysis_op->size = sanalysis.genOpcode(pcode_slg, caddr);
+		analysis_op->size = sanalysis.genOpcode(pcode_slg, caddr, data, len);
 		if((analysis_op->size < 1) || (sanalysis.trans.printAssembly(assem, caddr) < 1))
 			return analysis_op->size; // When current place has no available code, return ILL.
 
@@ -1490,10 +1489,12 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 				{
 					char *reg = getIndirectReg(ins, isRefed);
 					if(reg)
+					{
 						if(isRefed)
 							analysis_op->ireg = reg;
 						else
 							analysis_op->reg = reg;
+					}
 
 					analysis_op->type = RZ_ANALYSIS_OP_TYPE_UCCALL;
 					analysis_op->fail = ins.getFallThrough().getOffset();
@@ -1794,7 +1795,7 @@ static char *get_reg_profile(RzAnalysis *analysis)
 
 	try
 	{
-		sanalysis.init(analysis->cpu, analysis->bits, analysis->big_endian, analysis ? analysis->iob.io : nullptr, SleighAsm::getConfig(analysis));
+		sanalysis.init(analysis->cpu, analysis->bits, analysis->big_endian, SleighAsm::getConfig(analysis));
 	}
 	catch(const LowlevelError &e)
 	{

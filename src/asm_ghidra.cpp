@@ -21,26 +21,8 @@ static int disassemble(RzAsm *a, RzAsmOp *op, const ut8 *buf, int len)
 	try
 	{
 #endif
-		RzBin *bin = a->binb.bin;
-
-		if(!bin)
-		{
-			if(!rio)
-			{
-				rio = rz_io_new();
-				sasm.sleigh_id.clear(); // For newly created RzIO, refresh SleighAsm.
-			}
-			else
-				rz_io_close_all(rio);
-
-			RzBuffer *tmp_buf = rz_buf_new_with_bytes(buf, len);
-			rz_io_open_buffer(rio, tmp_buf, RZ_PERM_RWX, 0);
-			rz_buf_free(tmp_buf);
-		}
-
-		sasm.init(a->cpu, a->bits, a->big_endian, bin? bin->iob.io : rio, SleighAsm::getConfig(a));
-		sasm.check(bin? a->pc : 0, buf, len);
-		r = sasm.disassemble(op, bin? a->pc : 0);
+		sasm.init(a->cpu, a->bits, a->big_endian, SleighAsm::getConfig(a));
+		r = sasm.disassemble(op, a->pc, buf, len);
 #ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &e)

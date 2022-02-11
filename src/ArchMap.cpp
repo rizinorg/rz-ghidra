@@ -169,6 +169,8 @@ std::string StrToLower(std::string s)
 
 RZ_API std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian, const vector<LanguageDescription> &langs)
 {
+	if(!cpu)
+		return std::string();
 	if(std::string(cpu).find(':') != string::npos) // complete id specified
 		return cpu;
 	// short form if possible
