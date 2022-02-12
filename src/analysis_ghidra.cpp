@@ -1402,7 +1402,8 @@ static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const 
 			return analysis_op->size;
 		}
 
-		SleighInstruction &ins = *sanalysis.trans.getInstruction(caddr);
+		std::unique_ptr<SleighInstruction> sinsn(sanalysis.trans.getInstruction(caddr));
+		SleighInstruction &ins = *sinsn;
 		FlowType ftype = ins.getFlowType();
 		bool isRefed = false;
 
