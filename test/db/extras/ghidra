@@ -2562,6 +2562,7 @@ EXPECT=<<EOF
 8051:BE:24:mx51
 8085:LE:16:default
 AARCH64:BE:64:v8A
+AARCH64:LE:64:AppleSilicon
 AARCH64:LE:64:v8A
 ARM:BE:32:Cortex
 ARM:BE:32:v4
@@ -2589,6 +2590,7 @@ DATA:BE:64:default
 DATA:LE:64:default
 Dalvik:LE:32:DEX_Android10
 Dalvik:LE:32:DEX_Android11
+Dalvik:LE:32:DEX_Android12
 Dalvik:LE:32:DEX_Base
 Dalvik:LE:32:DEX_KitKat
 Dalvik:LE:32:DEX_Lollipop
@@ -2598,6 +2600,7 @@ Dalvik:LE:32:DEX_Pie
 Dalvik:LE:32:Marshmallow
 Dalvik:LE:32:ODEX_KitKat
 Dalvik:LE:32:default
+H6309:BE:16:default
 HC05:BE:16:M68HC05TB
 HC05:BE:16:default
 HC08:BE:16:MC68HC908QY4
@@ -2776,25 +2779,25 @@ shr eax, 4
     (unique,0xda80,1) = INT_AND (unique,0xda00,1), 0x1
     PF = INT_EQUAL (unique,0xda80,1), 0x0
 0x08048557: SHR EAX,0x4
-    (unique,0x41200,4) = INT_AND 0x4, 0x1f
-    (unique,0x41280,4) = COPY EAX
-    EAX = INT_RIGHT EAX, (unique,0x41200,4)
-    (unique,0x10e80,1) = INT_NOTEQUAL (unique,0x41200,4), 0x0
-    (unique,0x10f00,4) = INT_SUB (unique,0x41200,4), 0x1
-    (unique,0x10f80,4) = INT_RIGHT (unique,0x41280,4), (unique,0x10f00,4)
+    (unique,0x41500,4) = INT_AND 0x4, 0x1f
+    (unique,0x41580,4) = COPY EAX
+    EAX = INT_RIGHT EAX, (unique,0x41500,4)
+    (unique,0x10e80,1) = INT_NOTEQUAL (unique,0x41500,4), 0x0
+    (unique,0x10f00,4) = INT_SUB (unique,0x41500,4), 0x1
+    (unique,0x10f80,4) = INT_RIGHT (unique,0x41580,4), (unique,0x10f00,4)
     (unique,0x11000,4) = INT_AND (unique,0x10f80,4), 0x1
     (unique,0x11100,1) = INT_NOTEQUAL (unique,0x11000,4), 0x0
     (unique,0x11180,1) = BOOL_NEGATE (unique,0x10e80,1)
     (unique,0x11200,1) = INT_AND (unique,0x11180,1), CF
     (unique,0x11280,1) = INT_AND (unique,0x10e80,1), (unique,0x11100,1)
     CF = INT_OR (unique,0x11200,1), (unique,0x11280,1)
-    (unique,0x11400,1) = INT_EQUAL (unique,0x41200,4), 0x1
-    (unique,0x11500,1) = INT_SLESS (unique,0x41280,4), 0x0
+    (unique,0x11400,1) = INT_EQUAL (unique,0x41500,4), 0x1
+    (unique,0x11500,1) = INT_SLESS (unique,0x41580,4), 0x0
     (unique,0x11580,1) = BOOL_NEGATE (unique,0x11400,1)
     (unique,0x11600,1) = INT_AND (unique,0x11580,1), OF
     (unique,0x11680,1) = INT_AND (unique,0x11400,1), (unique,0x11500,1)
     OF = INT_OR (unique,0x11600,1), (unique,0x11680,1)
-    (unique,0xdc00,1) = INT_NOTEQUAL (unique,0x41200,4), 0x0
+    (unique,0xdc00,1) = INT_NOTEQUAL (unique,0x41500,4), 0x0
     (unique,0xdd00,1) = INT_SLESS EAX, 0x0
     (unique,0xdd80,1) = BOOL_NEGATE (unique,0xdc00,1)
     (unique,0xde00,1) = INT_AND (unique,0xdd80,1), SF
