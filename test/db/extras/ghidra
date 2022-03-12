@@ -2988,3 +2988,65 @@ jstring sym.Java_JNIFoo_nativeFoo(JNIEnv *env, jobject obj)
 }
 EOF
 RUN
+
+NAME=readonlypropagate (objc)
+FILE=rizin-testbins/mach0/hello-macos-arm64
+CMDS=<<EOF
+aaa
+s main
+?e ------------ without propagation
+e ghidra.ropropagate=0
+pdg
+?e ------------ with propagation
+e ghidra.ropropagate=1
+pdg
+EOF
+EXPECT=<<EOF
+------------ without propagation
+
+// WARNING: [rz-ghidra] Detected overlap for variable var_1ch
+
+undefined8 entry0(int64_t arg1, int64_t arg2)
+{
+    undefined4 uVar1;
+    undefined8 uVar2;
+    undefined8 uVar3;
+    int64_t var_18h;
+    
+    uVar2 = fcn.100003d9c();
+    uVar1 = (**(code **)0x100008188)(sym._a);
+    section.1.__TEXT.__stubs("");
+    uVar3 = fcn.100003d84(*(undefined8 *)0x100008110);
+    fcn.100003da8(uVar3, *(undefined8 *)0x1000080f0);
+    fcn.100003da8(uVar3, *(undefined8 *)0x1000080f8, 0x7b);
+    fcn.100003da8(uVar3, *(undefined8 *)0x100008100, 0x539, uVar1);
+    fcn.100003da8(uVar3, *(undefined8 *)0x100008108);
+    section.1.__TEXT.__stubs("");
+    fcn.100003d90(uVar2);
+    return 0;
+}
+------------ with propagation
+
+// WARNING: [rz-ghidra] Detected overlap for variable var_1ch
+
+undefined8 entry0(int64_t arg1, int64_t arg2)
+{
+    undefined4 uVar1;
+    undefined8 uVar2;
+    undefined8 uVar3;
+    int64_t var_18h;
+    
+    uVar2 = fcn.100003d9c();
+    uVar1 = sym._something_else((int64_t)sym._a);
+    section.1.__TEXT.__stubs("");
+    uVar3 = fcn.100003d84(sym.class_Test);
+    fcn.100003da8(uVar3, "methodWithoutArgs");
+    fcn.100003da8(uVar3, "methodWithOneArg:", 0x7b);
+    fcn.100003da8(uVar3, "methodWithTwoArgs:secondArg:", 0x539, uVar1);
+    fcn.100003da8(uVar3, "methodWithReturn");
+    section.1.__TEXT.__stubs("");
+    fcn.100003d90(uVar2);
+    return 0;
+}
+EOF
+RUN

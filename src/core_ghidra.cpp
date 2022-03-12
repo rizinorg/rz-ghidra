@@ -68,6 +68,7 @@ static const ConfigVar cfg_var_indent       ("indent",      "4",        "Indent 
 static const ConfigVar cfg_var_linelen      ("linelen",     "120",      "Max line length");
 static const ConfigVar cfg_var_maximplref   ("maximplref",  "2",        "Maximum number of references to an expression before showing an explicit variable.");
 static const ConfigVar cfg_var_rawptr       ("rawptr",      "true",     "Show unknown globals as raw addresses instead of variables");
+static const ConfigVar cfg_var_ropropagate  ("ropropagate", "false",    "Propagate read-only memory locations as constants");
 static const ConfigVar cfg_var_verbose      ("verbose",      "true",    "Show verbose warning messages while decompiling");
 
 
@@ -125,6 +126,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	RizinArchitecture arch(core, cfg_var_sleighid.GetString(core->config));
 	DocumentStorage store;
 	arch.max_implied_ref = cfg_var_maximplref.GetInt(core->config);
+	arch.readonlypropagate = cfg_var_ropropagate.GetBool(core->config);
 	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 	arch.init(store);
 	Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
