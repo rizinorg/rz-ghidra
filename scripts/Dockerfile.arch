@@ -2,12 +2,19 @@
 FROM archlinux:latest
 
 RUN pacman --noconfirm -Syu
-RUN pacman --noconfirm -S git gcc make cmake pkg-config flex bison meson ninja qt5-base
+RUN pacman --noconfirm -S git gcc make cmake pkg-config flex bison meson ninja qt5-base qt5-svg qt5-tools
 
 RUN cd /root && \
-	git clone --recurse-submodules --depth 1 https://github.com/rizinorg/rizin && \
+	git clone --depth 1 https://github.com/rizinorg/rizin && \
 	cd rizin && \
 	meson build --prefix=/usr && \
+	ninja -C build && \
+	ninja -C build install
+
+RUN cd /root && \
+	git clone --recurse-submodules --depth 1 https://github.com/rizinorg/cutter && \
+	cd cutter && \
+	cmake -Bbuild -GNinja -DCUTTER_USE_BUNDLED_RIZIN=OFF -DCMAKE_INSTALL_PREFIX=/usr && \
 	ninja -C build && \
 	ninja -C build install
 

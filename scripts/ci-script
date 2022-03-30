@@ -3,10 +3,7 @@
 set -e
 set -x
 
-git clone --depth 1 https://github.com/rizinorg/cutter
-
 cmake -Bbuild -GNinja \
-	"-DCUTTER_SOURCE_DIR=$(pwd)/cutter" \
 	-DBUILD_CUTTER_PLUGIN=ON \
 	-DBUILD_SLEIGH_PLUGIN=ON \
 	-DCMAKE_INSTALL_PREFIX=$HOME/.local \

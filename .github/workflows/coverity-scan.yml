@@ -34,7 +34,7 @@ jobs:
         run: |
           pip install meson
 
-      - name: Prepare Radare2 and Cutter
+      - name: Prepare Rizin
         run: |
           export INSTALL_PREFIX=${GITHUB_WORKSPACE}/rizin-prefix
           git clone --depth 1 https://github.com/rizinorg/rizin
@@ -42,8 +42,6 @@ jobs:
           meson --prefix="${INSTALL_PREFIX}" ..
           ninja
           ninja install
-          cd ../..
-          git clone --depth 1 https://github.com/rizinorg/cutter
 
       - name: CMake
         run: |
@@ -54,8 +52,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$INSTALL_PREFIX;/opt/qt512" \
             -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" \
-            -DBUILD_CUTTER_PLUGIN=ON \
-            -DCUTTER_SOURCE_DIR="$GITHUB_WORKSPACE/cutter" \
+            -DBUILD_CUTTER_PLUGIN=OFF \
             -DBUILD_SLEIGH_PLUGIN=ON \
             ..
 

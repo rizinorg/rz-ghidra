@@ -19,10 +19,10 @@ public:
     void setupInterface(MainWindow *main) override;
     void registerDecompilers() override;
 
-    QString getName() const          { return "Ghidra Decompiler (rz-ghidra)"; }
-    QString getAuthor() const        { return "thestr4ng3r"; }
-    QString getDescription() const   { return "GUI Integration of rz-ghidra."; }
-    QString getVersion() const       { return "1.0"; }
+    QString getName() const override        { return "Ghidra Decompiler (rz-ghidra)"; }
+    QString getAuthor() const override      { return "thestr4ng3r"; }
+    QString getDescription() const override { return "GUI Integration of rz-ghidra."; }
+    QString getVersion() const override     { return "1.0"; }
 };
 
 
