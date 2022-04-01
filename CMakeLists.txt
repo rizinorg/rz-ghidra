@@ -8,9 +8,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(Rizin REQUIRED Core)
 
 set(RIZIN_INSTALL_PLUGDIR "${Rizin_PLUGINDIR}" CACHE STRING "Directory to install rizin plugins into")
-set(CUTTER_INSTALL_PLUGDIR "share/rizin/cutter/plugins/native" CACHE STRING "Directory to install Cutter plugin into")
-
-set(CUTTER_SOURCE_DIR CUTTER_SOURCE_DIR-NOTFOUND CACHE STRING "Root directory of Cutter source")
 
 option(BUILD_CUTTER_PLUGIN "Build rz-ghidra plugin for Cutter" OFF)
 option(BUILD_DECOMPILE_EXECUTABLE "Build \"decompile\" executable as used by Ghidra (not needed for rizin)" OFF)
@@ -18,6 +15,11 @@ option(BUILD_DECOMPILE_CLI_EXECUTABLE "Build REPL decompiler (not needed for riz
 option(BUILD_SLASPECS "Build Sleigh specs for architectures from Ghidra" ON)
 option(BUILD_SLEIGH_PLUGIN "Build asm and analysis plugin to use sleigh as a disassembler in rizin" ON)
 option(GENERATE_PARSERS "Re-generate all parsers with Bison/Flex instead of using pre-generated ones" OFF)
+
+if (BUILD_CUTTER_PLUGIN)
+	find_package(Cutter REQUIRED)
+	set(CUTTER_INSTALL_PLUGDIR "${Cutter_USER_PLUGINDIR}" CACHE STRING "Directory to install Cutter plugin into")
+endif()
 
 if(CMAKE_VERSION VERSION_LESS "3.1")
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

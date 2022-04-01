@@ -60,15 +60,16 @@ make install
 Here, set the `CMAKE_INSTALL_PREFIX` to a location where rizin can load the plugin from.
 The install step is necessary for the plugin to work because it includes installing the necessary Sleigh files.
 
-To also build the Cutter plugin, pass `-DBUILD_CUTTER_PLUGIN=ON -DCUTTER_SOURCE_DIR=/path/to/cutter/source` to cmake, for example like this:
+To also build the Cutter plugin, you must have Cutter installed from source under some prefix,
+which can be optionally specified with `-DCMAKE_PREFIX_PATH=<path>`, then pass `-DBUILD_CUTTER_PLUGIN=ON` to cmake
+to enable the plugin:
 ```
-/my/path> git clone https://github.com/rizinorg/cutter
-/my/path> # build Cutter, clone rz-ghidra, etc.
-...
 /my/path/rz-ghidra> mkdir build && cd build
-/my/path/rz-ghidra/build> cmake -DBUILD_CUTTER_PLUGIN=ON -DCUTTER_SOURCE_DIR=/my/path/cutter -DCMAKE_INSTALL_PREFIX=~/.local ..
+/my/path/rz-ghidra/build> cmake -DBUILD_CUTTER_PLUGIN=ON -DCMAKE_PREFIX_PATH=/path/to/cutter/prefix -DCMAKE_INSTALL_PREFIX=~/.local ..
 /my/path/rz-ghidra/build> make && make install
 ```
+By default, the Cutter plugin is installed in an automatically chosen path in the current user's home directory.
+This path can be overriden with `-DCUTTER_INSTALL_PLUGDIR`.
 
 ## Versioning and Rizin Compatibility
 
