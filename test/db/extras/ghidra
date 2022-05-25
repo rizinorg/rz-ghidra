@@ -2150,7 +2150,7 @@ EXPECT=<<EOF
 
 void entry0(void)
 {
-    // [11] -r-x section size 200 named .text
+    // [10] -r-x section size 200 named .text
     func_0x0000039c();
     // WARNING: Bad instruction - Truncating control flow here
     halt_baddata();
