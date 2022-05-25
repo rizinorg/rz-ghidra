@@ -269,8 +269,8 @@ FILE=rizin-testbins/dol/sqrxz4-gc.dol
 EXPECT=<<EOF
 0x80003100   section.text_0:
 0x80003100 b 0x80003120
-0x80003103   str.arg:
-0x80003103 0x80003109 invalid
+0x80003104 rlwnm. r1,r27,r14,0x9,0x13
+0x80003108 invalid
 0x8000310a invalid
 0x8000310c invalid
 0x8000310e invalid

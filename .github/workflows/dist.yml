@@ -21,11 +21,11 @@ jobs:
             shopt -s extglob
             mkdir rz-ghidra
             mv !(rz-ghidra) rz-ghidra
-            tar -czvf rz-ghidra-src.tar.xz rz-ghidra
+            tar -czvf rz-ghidra-src.tar.gz rz-ghidra
       - uses: actions/upload-artifact@v2
         with:
-          name: rz-ghidra-src.tar.xz
-          path: rz-ghidra-src.tar.xz
+          name: rz-ghidra-src.tar.gz
+          path: rz-ghidra-src.tar.gz
 
   create-release:
     name: Create draft release and upload artifacts
@@ -58,6 +58,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rz-ghidra-src.tar.xz/rz-ghidra-src.tar.xz
-          asset_name: rz-ghidra-src-${{ steps.extract_version.outputs.version }}.tar.xz
+          asset_path: ./rz-ghidra-src.tar.gz/rz-ghidra-src.tar.gz
+          asset_name: rz-ghidra-src-${{ steps.extract_version.outputs.version }}.tar.gz
           asset_content_type: application/zip
