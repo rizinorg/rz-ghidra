@@ -9,6 +9,7 @@
 #include <vector>
 #include <rz_core.h>
 #include <unordered_map>
+#include <memory>
 
 #ifdef LoadImage
 #undef LoadImage
