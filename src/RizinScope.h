@@ -8,6 +8,8 @@
 
 #include <rz_types.h>
 
+#include <memory>
+
 // Windows defines LoadImage to LoadImageA
 #ifdef LoadImage
 #undef LoadImage
