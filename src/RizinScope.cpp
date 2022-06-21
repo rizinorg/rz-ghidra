@@ -8,6 +8,7 @@
 #include <funcdata.hh>
 
 #include <rz_version.h>
+#include <rz_util/rz_str.h>
 #include <rz_analysis.h>
 #include <rz_core.h>
 
@@ -462,12 +463,12 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 		{
 			switch(str->type)
 			{
-				case RZ_BIN_STRING_ENC_WIDE_LE:
-				case RZ_BIN_STRING_ENC_WIDE_BE:
+				case RZ_STRING_ENC_UTF16LE:
+				case RZ_STRING_ENC_UTF16BE:
 					tn = "char16_t";
 					break;
-				case RZ_BIN_STRING_ENC_WIDE32_LE:
-				case RZ_BIN_STRING_ENC_WIDE32_BE:
+				case RZ_STRING_ENC_UTF32LE:
+				case RZ_STRING_ENC_UTF32BE:
 					tn = "char32_t";
 					break;
 			}
