@@ -450,12 +450,7 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 			auto bf = reinterpret_cast<RzBinFile *>(pos);
 			if(!bf->o)
 				continue;
-			void *s = ht_up_find(bf->o->strings_db, flag->offset, nullptr);
-			if(s)
-			{
-				str = reinterpret_cast<RzBinString *>(s);
-				break;
-			}
+			str = rz_bin_object_get_string_at(bf->o, flag->offset, true);
 		}
 		Datatype *ptype;
 		const char *tn = "char";
