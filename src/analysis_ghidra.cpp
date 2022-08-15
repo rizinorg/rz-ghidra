@@ -15,7 +15,7 @@
 
 static SleighAsm sanalysis;
 
-static int archinfo(RzAnalysis *analysis, int query)
+static int archinfo(RzAnalysis *analysis, RzAnalysisInfoType query)
 {
 	// This is to check if RzCore plugin set cpu properly.
 	if(!analysis->cpu)
@@ -36,7 +36,7 @@ static int archinfo(RzAnalysis *analysis, int query)
 		return -1;
 	}
 
-	if(query == RZ_ANALYSIS_ARCHINFO_ALIGN)
+	if(query == RZ_ANALYSIS_ARCHINFO_TEXT_ALIGN)
 		return sanalysis.alignment;
 	else
 		return -1;

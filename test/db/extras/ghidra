@@ -1775,7 +1775,7 @@ void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
         bright->ambassador = AMBASSADOR_PURE;
     } else {
         (bright->window).sunlight = bright->morning->saved_argv[1];
-        iVar2 = sym.imp.strcmp((bright->window).sunlight, 0x804a05c);
+        iVar2 = sym.imp.strcmp((bright->window).sunlight, data.0804a05c);
         if (iVar2 == 0) {
             bright->ambassador = AMBASSADOR_REASON;
         } else {
@@ -1935,7 +1935,7 @@ void sym.Aeropause(BrightPtr bright, Bright *argc, char **argv)
         bright->ambassador = AMBASSADOR_PURE;
     } else {
         (bright->window).sunlight = bright->morning->saved_argv[1];
-        iVar2 = sym.imp.strcmp((bright->window).sunlight, 0x804a05c);
+        iVar2 = sym.imp.strcmp((bright->window).sunlight, data.0804a05c);
         if (iVar2 == 0) {
             bright->ambassador = AMBASSADOR_REASON;
         } else {
@@ -1995,7 +1995,7 @@ void sym.Aeropause(BrightTypedefd *bright, int32_t argc, char **argv)
         bright->ambassador = AMBASSADOR_PURE;
     } else {
         (bright->window).sunlight = bright->morning->saved_argv[1];
-        iVar2 = sym.imp.strcmp((bright->window).sunlight, 0x804a05c);
+        iVar2 = sym.imp.strcmp((bright->window).sunlight, data.0804a05c);
         if (iVar2 == 0) {
             bright->ambassador = AMBASSADOR_REASON;
         } else {
@@ -2055,7 +2055,7 @@ void sym.Aeropause(BrightTypedefdPtr bright, int32_t argc, char **argv)
         bright->ambassador = AMBASSADOR_PURE;
     } else {
         (bright->window).sunlight = bright->morning->saved_argv[1];
-        iVar2 = sym.imp.strcmp((bright->window).sunlight, 0x804a05c);
+        iVar2 = sym.imp.strcmp((bright->window).sunlight, data.0804a05c);
         if (iVar2 == 0) {
             bright->ambassador = AMBASSADOR_REASON;
         } else {

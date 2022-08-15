@@ -30,7 +30,7 @@ EOF
 CMDS=<<EOF
 pdga
 s main
-pdi 24
+pdq 24
 EOF
 RUN
 
@@ -86,7 +86,7 @@ EOF
 CMDS=<<EOF
 pdga
 s main
-pdi 44
+pdq 44
 EOF
 RUN
 
@@ -115,7 +115,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 18
+pdq 18
 EOF
 RUN
 
@@ -177,7 +177,7 @@ EOF
 CMDS=<<EOF
 pdga
 s main
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -239,7 +239,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -262,7 +262,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 12
+pdq 12
 EOF
 RUN
 
@@ -323,7 +323,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -384,7 +384,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -448,7 +448,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -509,7 +509,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -570,7 +570,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -632,7 +632,7 @@ EOF
 CMDS=<<EOF
 pdga
 s main
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -693,7 +693,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -727,7 +727,7 @@ e asm.cpu=v850
 e asm.bits=32
 pdgss
 wx 8100e009ba154007b8a8042a400e000184ff88990c0a400faba80c0a400faca8
-pdi 10
+pdq 10
 EOF
 EXPECT=<<EOF
 V850:LE:32:default
