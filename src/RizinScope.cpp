@@ -7,9 +7,6 @@
 
 #include <funcdata.hh>
 
-#include <rz_build_version.h>
-#include <rz_util/rz_str.h>
-#include <rz_analysis.h>
 #include <rz_core.h>
 
 #include "RizinUtils.h"
