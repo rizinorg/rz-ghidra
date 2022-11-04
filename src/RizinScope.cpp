@@ -169,7 +169,6 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		extraPop = arch->translate->getDefaultSize();
 
 	RangeList varRanges; // to check for overlaps
-	RzList *vars = rz_analysis_var_all_list(core->analysis, fcn);
 	auto stackSpace = arch->getStackSpace();
 
 	auto addrForVar = [&](RzAnalysisVar *var, bool warn_on_fail) {
@@ -216,37 +215,35 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 
 	ParamActive params(false);
 
-	if(vars)
-	{
-		rz_list_foreach_cpp<RzAnalysisVar>(vars, [&](RzAnalysisVar *var) {
-			std::string typeError;
-			Datatype *type = var->type ? arch->getTypeFactory()->fromRzType(var->type, &typeError) : nullptr;
+	rz_pvector_foreach_cpp<RzAnalysisVar>(&fcn->vars, [&](RzAnalysisVar *var) {
+		std::string typeError;
+		Datatype *type = var->type ? arch->getTypeFactory()->fromRzType(var->type, &typeError) : nullptr;
+		if(!type)
+		{
+			char *tstr = rz_type_as_string(core->analysis->typedb, var->type);
+			arch->addWarning("Failed to match type " + to_string(tstr ? tstr : "?") + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
+			rz_mem_free(tstr);
+			type = arch->types->getBase(core->analysis->bits / 8, TYPE_UNKNOWN);
 			if(!type)
-			{
-				char *tstr = rz_type_as_string(core->analysis->typedb, var->type);
-				arch->addWarning("Failed to match type " + to_string(tstr ? tstr : "?") + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
-				rz_mem_free(tstr);
-				type = arch->types->getBase(core->analysis->bits / 8, TYPE_UNKNOWN);
-				if(!type)
-					return;
-			}
-			if(type->getSize() < 1)
-			{
-				arch->addWarning("Type " + type->getName() + " of variable " + to_string(var->name) + " has size 0");
-				return;
-			}
-			var_types[var] = type;
+				return true;
+		}
+		if(type->getSize() < 1)
+		{
+			arch->addWarning("Type " + type->getName() + " of variable " + to_string(var->name) + " has size 0");
+			return true;
+		}
+		var_types[var] = type;
 
-			if(!var->isarg)
-				return;
-			auto addr = addrForVar(var, true);
-			if(addr.isInvalid())
-				return;
-			params.registerTrial(addr, type->getSize());
-			int4 i = params.whichTrial(addr, type->getSize());
-			params.getTrial(i).markActive();
-		});
-	}
+		if(!var->isarg)
+			return true;
+		auto addr = addrForVar(var, true);
+		if(addr.isInvalid())
+			return true;
+		params.registerTrial(addr, type->getSize());
+		int4 i = params.whichTrial(addr, type->getSize());
+		params.getTrial(i).markActive();
+		return true;
+	});
 
 	if(proto)
 		proto->deriveInputMap(&params);
@@ -264,131 +261,127 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		});
 	};
 
-	if(vars)
-	{
-		std::vector<Element *> argsByIndex;
+	std::vector<Element *> argsByIndex;
 
-		rz_list_foreach_cpp<RzAnalysisVar>(vars, [&](RzAnalysisVar *var) {
-			auto type_it = var_types.find(var);
-			if(type_it == var_types.end())
-				return;
-			Datatype *type = type_it->second;
-			bool typelock = true;
+	rz_pvector_foreach_cpp<RzAnalysisVar>(&fcn->vars, [&](RzAnalysisVar *var) {
+		auto type_it = var_types.find(var);
+		if(type_it == var_types.end())
+			return true;
+		Datatype *type = type_it->second;
+		bool typelock = true;
 
-			auto addr = addrForVar(var, var->isarg /* Already emitted this warning before */);
-			if(addr.isInvalid())
-				return;
+		auto addr = addrForVar(var, var->isarg /* Already emitted this warning before */);
+		if(addr.isInvalid())
+			return true;
 
-			uintb last = addr.getOffset();
-			if(type->getSize() > 0)
-				last += type->getSize() - 1;
-			if(last < addr.getOffset())
+		uintb last = addr.getOffset();
+		if(type->getSize() > 0)
+			last += type->getSize() - 1;
+		if(last < addr.getOffset())
+		{
+			arch->addWarning("Variable " + to_string(var->name) + " extends beyond the stackframe. Try changing its type to something smaller.");
+			return true;
+		}
+		bool overlap = false;
+		for(const auto &range : varRanges)
+		{
+			if(range.getSpace() != addr.getSpace())
+				continue;
+			if(range.getFirst() > last)
+				continue;
+			if(range.getLast() < addr.getOffset())
+				continue;
+			overlap = true;
+			break;
+		}
+
+		if(overlap)
+		{
+			arch->addWarning("Detected overlap for variable " + to_string(var->name));
+
+			if(var->isarg) // Can't have args with typelock=false, otherwise we get segfaults in the Decompiler
+				return true;
+
+			typelock = false;
+		}
+
+		int4 paramIndex = -1;
+		if(var->isarg)
+		{
+			if(proto && !proto->possibleInputParam(addr, type->getSize()))
 			{
-				arch->addWarning("Variable " + to_string(var->name) + " extends beyond the stackframe. Try changing its type to something smaller.");
-				return;
-			}
-			bool overlap = false;
-			for(const auto &range : varRanges)
-			{
-				if(range.getSpace() != addr.getSpace())
-					continue;
-				if(range.getFirst() > last)
-					continue;
-				if(range.getLast() < addr.getOffset())
-					continue;
-				overlap = true;
-				break;
-			}
-
-			if(overlap)
-			{
-				arch->addWarning("Detected overlap for variable " + to_string(var->name));
-
-				if(var->isarg) // Can't have args with typelock=false, otherwise we get segfaults in the Decompiler
-					return;
-
-				typelock = false;
-			}
-
-			int4 paramIndex = -1;
-			if(var->isarg)
-			{
-				if(proto && !proto->possibleInputParam(addr, type->getSize()))
-				{
-					// Prevent segfaults in the Decompiler
-					arch->addWarning("Removing arg " + to_string(var->name) + " because it doesn't fit into ProtoModel");
-					return;
-				}
-
-				paramIndex = params.whichTrial(addr, type->getSize());
-				if(paramIndex < 0)
-				{
-					arch->addWarning("Failed to determine arg index of " + to_string(var->name));
-					return;
-				}
+				// Prevent segfaults in the Decompiler
+				arch->addWarning("Removing arg " + to_string(var->name) + " because it doesn't fit into ProtoModel");
+				return true;
 			}
 
-			varRanges.insertRange(addr.getSpace(), addr.getOffset(), last);
-
-			auto mapsymElement = child(symbollistElement, "mapsym");
-			auto symbolElement = child(mapsymElement, "symbol", {
-					{ "name", var->name },
-					{ "typelock", typelock ? "true" : "false" },
-					{ "namelock", "true" },
-					{ "readonly", "false" },
-					{ "cat", var->isarg ? "0" : "-1" }
-			});
-
-			if(var->isarg)
+			paramIndex = params.whichTrial(addr, type->getSize());
+			if(paramIndex < 0)
 			{
-				if(argsByIndex.size() < paramIndex + 1)
-					argsByIndex.resize(paramIndex + 1, nullptr);
-
-				argsByIndex[paramIndex] = symbolElement;
-
-				symbolElement->addAttribute("index", to_string(paramIndex < 0 ? 0 : paramIndex));
+				arch->addWarning("Failed to determine arg index of " + to_string(var->name));
+				return true;
 			}
+		}
 
-			childType(symbolElement, type);
-			childAddr(mapsymElement, "addr", addr);
+		varRanges.insertRange(addr.getSpace(), addr.getOffset(), last);
 
-			auto rangelist = child(mapsymElement, "rangelist");
-			if(var->isarg && var->kind == RZ_ANALYSIS_VAR_KIND_REG)
-				childRegRange(rangelist);
+		auto mapsymElement = child(symbollistElement, "mapsym");
+		auto symbolElement = child(mapsymElement, "symbol", {
+				{ "name", var->name },
+				{ "typelock", typelock ? "true" : "false" },
+				{ "namelock", "true" },
+				{ "readonly", "false" },
+				{ "cat", var->isarg ? "0" : "-1" }
 		});
 
-		// Add placeholder args in gaps
-		for(size_t i=0; i<argsByIndex.size(); i++)
+		if(var->isarg)
 		{
-			if(argsByIndex[i])
-				continue;
+			if(argsByIndex.size() < paramIndex + 1)
+				argsByIndex.resize(paramIndex + 1, nullptr);
 
-			auto trial = params.getTrial(i);
+			argsByIndex[paramIndex] = symbolElement;
 
-			Datatype *type = arch->types->getBase(trial.getSize(), TYPE_UNKNOWN);
-			if(!type)
-				continue;
-
-			auto mapsymElement = child(symbollistElement, "mapsym");
-			auto symbolElement = child(mapsymElement, "symbol", {
-					{ "name", "placeholder_" + to_string(i) },
-					{ "typelock", "true" },
-					{ "namelock", "true" },
-					{ "readonly", "false" },
-					{ "cat", "0" },
-					{ "index", to_string(i) }
-			});
-
-			childAddr(mapsymElement, "addr", trial.getAddress());
-			childType(symbolElement, type);
-
-			auto rangelist = child(mapsymElement, "rangelist");
-			if(trial.getAddress().getSpace() != arch->translate->getStackSpace())
-				childRegRange(rangelist);
+			symbolElement->addAttribute("index", to_string(paramIndex < 0 ? 0 : paramIndex));
 		}
-	}
 
-	rz_list_free(vars);
+		childType(symbolElement, type);
+		childAddr(mapsymElement, "addr", addr);
+
+		auto rangelist = child(mapsymElement, "rangelist");
+		if(var->isarg && var->kind == RZ_ANALYSIS_VAR_KIND_REG)
+			childRegRange(rangelist);
+		return true;
+	});
+
+	// Add placeholder args in gaps
+	for(size_t i=0; i<argsByIndex.size(); i++)
+	{
+		if(argsByIndex[i])
+			continue;
+
+		auto trial = params.getTrial(i);
+
+		Datatype *type = arch->types->getBase(trial.getSize(), TYPE_UNKNOWN);
+		if(!type)
+			continue;
+
+		auto mapsymElement = child(symbollistElement, "mapsym");
+		auto symbolElement = child(mapsymElement, "symbol", {
+				{ "name", "placeholder_" + to_string(i) },
+				{ "typelock", "true" },
+				{ "namelock", "true" },
+				{ "readonly", "false" },
+				{ "cat", "0" },
+				{ "index", to_string(i) }
+		});
+
+		childAddr(mapsymElement, "addr", trial.getAddress());
+		childType(symbolElement, type);
+
+		auto rangelist = child(mapsymElement, "rangelist");
+		if(trial.getAddress().getSpace() != arch->translate->getStackSpace())
+			childRegRange(rangelist);
+	}
 
 	auto prototypeElement = child(functionElement, "prototype", {
 			{ "extrapop", to_string(extraPop) },
