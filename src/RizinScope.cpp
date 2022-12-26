@@ -164,46 +164,29 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 			arch->addWarning("Function " + to_string(fcn_name) + " has no calling convention set, args may be inaccurate.");
 	}
 
-	int4 extraPop = proto ? proto->getExtraPop() : arch->translate->getDefaultSize();
-	if(extraPop == ProtoModel::extrapop_unknown)
-		extraPop = arch->translate->getDefaultSize();
-
 	RangeList varRanges; // to check for overlaps
 	auto stackSpace = arch->getStackSpace();
 
 	auto addrForVar = [&](RzAnalysisVar *var, bool warn_on_fail) {
-		switch(var->kind)
+		switch(var->storage.type)
 		{
-			case RZ_ANALYSIS_VAR_KIND_BPV:
+			case RZ_ANALYSIS_VAR_STORAGE_STACK:
 			{
 				uintb off;
-				int delta = var->delta + fcn->bp_off - extraPop; // not 100% sure if extraPop is correct here
+				st64 delta = var->storage.stack_off;
 				if(delta >= 0)
 					off = delta;
 				else
 					off = stackSpace->getHighest() + delta + 1;
 				return Address(stackSpace, off);
 			}
-			case RZ_ANALYSIS_VAR_KIND_REG:
+			case RZ_ANALYSIS_VAR_STORAGE_REG:
 			{
-				RzRegItem *reg = rz_reg_index_get(core->analysis->reg, var->delta);
-				if(!reg)
-				{
-					if(warn_on_fail)
-						arch->addWarning("Register for arg " + to_string(var->name) + " not found");
-					return Address();
-				}
-
-				auto ret = arch->registerAddressFromRizinReg(reg->name);
+				auto ret = arch->registerAddressFromRizinReg(var->storage.reg);
 				if(ret.isInvalid() && warn_on_fail)
 					arch->addWarning("Failed to match register " + to_string(var->name) + " for arg " + to_string(var->name));
-
 				return ret;
 			}
-			case RZ_ANALYSIS_VAR_KIND_SPV:
-				if(warn_on_fail)
-					arch->addWarning("Var " + to_string(var->name) + " is stack pointer based, which is not supported for decompilation.");
-				return Address();
 			default:
 				if(warn_on_fail)
 					arch->addWarning("Failed to get address for var " + to_string(var->name));
@@ -234,7 +217,7 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		}
 		var_types[var] = type;
 
-		if(!var->isarg)
+		if(!rz_analysis_var_is_arg(var))
 			return true;
 		auto addr = addrForVar(var, true);
 		if(addr.isInvalid())
@@ -270,7 +253,7 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		Datatype *type = type_it->second;
 		bool typelock = true;
 
-		auto addr = addrForVar(var, var->isarg /* Already emitted this warning before */);
+		auto addr = addrForVar(var, rz_analysis_var_is_arg(var) /* Already emitted this warning before */);
 		if(addr.isInvalid())
 			return true;
 
@@ -299,14 +282,14 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		{
 			arch->addWarning("Detected overlap for variable " + to_string(var->name));
 
-			if(var->isarg) // Can't have args with typelock=false, otherwise we get segfaults in the Decompiler
+			if(rz_analysis_var_is_arg(var)) // Can't have args with typelock=false, otherwise we get segfaults in the Decompiler
 				return true;
 
 			typelock = false;
 		}
 
 		int4 paramIndex = -1;
-		if(var->isarg)
+		if(rz_analysis_var_is_arg(var))
 		{
 			if(proto && !proto->possibleInputParam(addr, type->getSize()))
 			{
@@ -331,10 +314,10 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 				{ "typelock", typelock ? "true" : "false" },
 				{ "namelock", "true" },
 				{ "readonly", "false" },
-				{ "cat", var->isarg ? "0" : "-1" }
+				{ "cat", rz_analysis_var_is_arg(var) ? "0" : "-1" }
 		});
 
-		if(var->isarg)
+		if(rz_analysis_var_is_arg(var))
 		{
 			if(argsByIndex.size() < paramIndex + 1)
 				argsByIndex.resize(paramIndex + 1, nullptr);
@@ -348,7 +331,7 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		childAddr(mapsymElement, "addr", addr);
 
 		auto rangelist = child(mapsymElement, "rangelist");
-		if(var->isarg && var->kind == RZ_ANALYSIS_VAR_KIND_REG)
+		if(rz_analysis_var_is_arg(var) && var->storage.type == RZ_ANALYSIS_VAR_STORAGE_REG)
 			childRegRange(rangelist);
 		return true;
 	});
@@ -383,6 +366,9 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 			childRegRange(rangelist);
 	}
 
+	int4 extraPop = proto ? proto->getExtraPop() : arch->translate->getDefaultSize();
+	if(extraPop == ProtoModel::extrapop_unknown)
+		extraPop = arch->translate->getDefaultSize();
 	auto prototypeElement = child(functionElement, "prototype", {
 			{ "extrapop", to_string(extraPop) },
 			{ "model", proto ? proto->getName() : "unknown" }
