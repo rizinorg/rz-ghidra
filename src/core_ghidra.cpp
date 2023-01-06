@@ -671,7 +671,7 @@ static bool rz_ghidra_init(RzCore *core)
 	rz_config_lock (cfg, true);
 
 	auto rzcmd = core->rcmd;
-	RzCmdDesc *root_cd = rz_cmd_desc_group_new(rzcmd, rz_cmd_get_root(rzcmd), "pdg", pdg_handler, &pdg_help, &root_help);
+	RzCmdDesc *root_cd = rz_cmd_desc_group_new(rzcmd, rz_cmd_get_desc(rzcmd, "pd"), "pdg", pdg_handler, &pdg_help, &root_help);
 	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgd", pdgd_handler, &pdgd_help);
 	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgx", pdgx_handler, &pdgx_help);
 	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdgj", pdgj_handler, &pdgj_help);
