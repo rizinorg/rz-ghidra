@@ -689,6 +689,10 @@ static bool rz_ghidra_fini(RzCore *core)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	shutdownDecompilerLibrary();
+
+	auto rzcmd = core->rcmd;
+	RzCmdDesc *pdg_cd = rz_cmd_get_desc(rzcmd, "pdg");
+	rz_cmd_desc_remove(rzcmd, pdg_cd);
 	return true;
 }
 
