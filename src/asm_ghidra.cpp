@@ -70,7 +70,6 @@ RZ_API RzLibStruct rizin_plugin = {
 	/* .data = */ &rz_asm_plugin_ghidra,
 	/* .version = */ RZ_VERSION,
 	/* .free = */ nullptr,
-	/* .pkgname = */ "rz-ghidra"
 };
 }
 #endif
