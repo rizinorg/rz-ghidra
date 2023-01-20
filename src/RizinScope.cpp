@@ -410,6 +410,14 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 	return dynamic_cast<FunctionSymbol *>(sym);
 }
 
+FunctionSymbol *RizinScope::registerRelocTarget(RzBinReloc *reloc) const
+{
+	RzCoreLock core(arch->getCore());
+	if(!reloc->import || !reloc->import->name)
+		return nullptr;
+	return cache->addFunction(Address(arch->getDefaultCodeSpace(), reloc->target_vaddr), reloc->import->name);
+}
+
 Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 {
 	RzCoreLock core(arch->getCore());
@@ -515,6 +523,14 @@ Symbol *RizinScope::queryRizinAbsolute(ut64 addr, bool contain) const
 		glob = rz_analysis_var_global_get_byaddr_at(core->analysis, addr);
 	if(glob)
 		return registerGlobalVar(glob);
+
+	RzBinReloc *reloc = rz_core_get_reloc_to(core, addr);
+	if(reloc && reloc->import)
+	{
+		auto rsym = registerRelocTarget(reloc);
+		if(rsym)
+			return rsym;
+	}
 
 	// TODO: register more things
 
