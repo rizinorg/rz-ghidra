@@ -3262,3 +3262,22 @@ undefined8 entry0(int64_t arg1, int64_t arg2)
 }
 EOF
 RUN
+
+NAME=reloc target functions
+FILE=rizin-testbins/elf/linux-example-x86-32.ko
+CMDS=<<EOF
+s sym.ko_example_init
+af
+pdg
+EOF
+EXPECT=<<EOF
+
+undefined4 sym.ko_example_init(void)
+{
+    // [04] -r-x section size 22 named .init.text
+    __fentry__();
+    printk("Hello, Rizin!\n");
+    return 0;
+}
+EOF
+RUN

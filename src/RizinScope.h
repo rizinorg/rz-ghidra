@@ -19,6 +19,7 @@ class RizinArchitecture;
 typedef struct rz_analysis_function_t RzAnalysisFunction;
 typedef struct rz_flag_item_t RzFlagItem;
 typedef struct rz_analysis_var_global_t RzAnalysisVarGlobal;
+typedef struct rz_bin_reloc_t RzBinReloc;
 
 class RizinScope : public Scope
 {
@@ -30,6 +31,7 @@ class RizinScope : public Scope
 		uint8 makeId() const { return (*next_id)++; }
 
 		FunctionSymbol *registerFunction(RzAnalysisFunction *fcn) const;
+		FunctionSymbol *registerRelocTarget(RzBinReloc *reloc) const;
 		Symbol *registerFlag(RzFlagItem *flag) const;
 		Symbol *registerGlobalVar(RzAnalysisVarGlobal *glob) const;
 		Symbol *queryRizinAbsolute(ut64 addr, bool contain) const;
