@@ -450,10 +450,16 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 				case RZ_STRING_ENC_UTF32BE:
 					tn = "char32_t";
 					break;
+				default:
+					break;
 			}
 		}
 		ptype = arch->types->findByName(tn);
 		int4 sz = static_cast<int4>(flag->size) / ptype->getSize();
+		if(!sz && str) // Zero string length is an error
+			sz = str->length;
+		if(!sz)
+			sz = 1; // The decompiler will figure out the length to display
 		type = arch->types->getTypeArray(sz, ptype);
 		attr |= Varnode::readonly;
 	}
