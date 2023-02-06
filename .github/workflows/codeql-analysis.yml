@@ -11,7 +11,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -19,7 +19,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         # We must fetch at least the immediate parents so that if this is
         # a pull request then we can checkout the head.
@@ -30,14 +30,14 @@ jobs:
           git submodule init
           git submodule update
 
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v4
       with:
-        python-version: 3.8.x
+        python-version: 3.10.x
 
     - name: apt dependencies
       run: |
           sudo apt-get --assume-yes update
-          sudo apt-get --assume-yes install ninja-build libgraphviz-dev bison flex qt5-default
+          sudo apt-get --assume-yes install ninja-build libgraphviz-dev bison flex qtbase5-dev cmake
 
     - name: py dependencies
       run: |
@@ -53,7 +53,7 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
+      uses: github/codeql-action/init@v2
       with:
         languages: ${{ matrix.language }}
 
@@ -64,4 +64,4 @@ jobs:
         make
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2
