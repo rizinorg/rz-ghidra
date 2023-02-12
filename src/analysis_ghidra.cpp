@@ -809,7 +809,7 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
                         const std::vector<Pcodeop> &Pcodes)
 {
 	std::vector<PcodeOperand *> esil_stack;
-	stringstream ss;
+	std::stringstream ss;
 
 	auto print_if_unique = [&esil_stack, &ss](const PcodeOperand *arg, int offset = 0) -> bool {
 		if(arg->is_unique())
@@ -1095,6 +1095,7 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
 						case CPUI_INT_LESSEQUAL: ss << "<="; break;
 						case CPUI_INT_NOTEQUAL: ss << "==,!"; break;
 						case CPUI_INT_EQUAL: ss << "=="; break;
+						default: break;
 					}
 
 					if(iter->output->is_unique())
@@ -1154,6 +1155,7 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
 						case CPUI_INT_SRIGHT:
 							ss << iter->input0->size * 8 << ",SWAP,SIGN,>>";
 							break;
+						default: break;
 					}
 					ss << "," << iter->output->size * 8 << ",1,<<,1,SWAP,-,&";
 
@@ -1327,6 +1329,7 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
 						case CPUI_FLOAT_ABS: ss << ",0,I2F,F<=,!,?{,-F,}"; break;
 						case CPUI_FLOAT_NEG: ss << ",-F"; break;
 						case CPUI_FLOAT_FLOAT2FLOAT: /* same as below */ break;
+						default: break;
 					}
 					switch(iter->type)
 					{
@@ -1340,6 +1343,7 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
 						case CPUI_FLOAT_FLOAT2FLOAT:
 							ss << "," << iter->output->size * 8 << ",SWAP,F2F";
 							break;
+						default: break;
 					}
 
 					if(iter->output->is_unique())
@@ -1352,6 +1356,8 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
 					throw LowlevelError("sleigh_esil: arguments of Pcodes are not well inited.");
 				break;
 			}
+			default:
+				break;
 		}
 	}
 
@@ -3048,7 +3054,7 @@ static bool sleigh_esil_eq(RzAnalysisEsil *esil)
 	return ret;
 }
 
-static unordered_set<uintm> float_mem;
+static std::unordered_set<uintm> float_mem;
 
 static bool sleigh_esil_peek4(RzAnalysisEsil *esil) // Read out
 {

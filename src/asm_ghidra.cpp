@@ -4,6 +4,7 @@
 #include <rz_lib.h>
 #include <rz_asm.h>
 #include "SleighAsm.h"
+#include "rz_ghidra_internal.h"
 
 static SleighAsm sasm;
 static RzIO *rio = nullptr;
@@ -36,8 +37,15 @@ static int disassemble(RzAsm *a, RzAsmOp *op, const ut8 *buf, int len)
 	return r;
 }
 
+static bool init(void **user)
+{
+	rz_ghidra_lib_init();
+	return true;
+}
+
 static bool fini(void *p)
 {
+	rz_ghidra_lib_fini();
 	if(rio)
 		rz_io_free(rio);
 	rio = nullptr;
@@ -54,7 +62,7 @@ RzAsmPlugin rz_asm_plugin_ghidra = {
 	/* .license = */ "LGPL3",
 	/* .bits = */ 8 | 16 | 32 | 64,
 	/* .endian = */ 0,
-	/* .init = */ nullptr,
+	/* .init = */ &init,
 	/* .fini = */ &fini,
 	/* .disassemble = */ &disassemble,
 	/* .assemble = */ nullptr,

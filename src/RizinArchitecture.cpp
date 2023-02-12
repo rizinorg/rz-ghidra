@@ -37,7 +37,7 @@ std::string FilenameFromCore(RzCore *core)
 }
 
 RizinArchitecture::RizinArchitecture(RzCore *core, const std::string &sleigh_id)
-	: SleighArchitecture(FilenameFromCore(core), sleigh_id.empty() ? SleighIdFromCore(core) : sleigh_id, &cout),
+	: SleighArchitecture(FilenameFromCore(core), sleigh_id.empty() ? SleighIdFromCore(core) : sleigh_id, &std::cout),
 	coreMutex(core)
 {
 }

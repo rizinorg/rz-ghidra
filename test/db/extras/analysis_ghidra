@@ -52,13 +52,13 @@ type: mul
 0x00000000 DIV edx
 type: mod
 ----
-0x00000000 SHR eax,1
+0x00000000 SHR eax,0x1
 type: shr
 ----
-0x00000000 SHL eax,1
+0x00000000 SHL eax,0x1
 type: shl
 ----
-0x00000000 SAR eax,1
+0x00000000 SAR eax,0x1
 type: sar
 ----
 0x00000000 OR esp,dword ptr [0xfff0]

@@ -7,7 +7,9 @@
 #include "RizinArchitecture.h"
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
+#include "PrettyXmlEncode.h"
 #include "rz_ghidra.h"
+#include "rz_ghidra_internal.h"
 
 // Windows clash
 #ifdef restrict
@@ -74,6 +76,7 @@ static const ConfigVar cfg_var_verbose      ("verbose",     "true",     "Show ve
 
 
 static std::recursive_mutex decompiler_mutex;
+static int lib_init_refcount = 0; // protected by decompiler_mutex, refcounts rz_ghidra_lib_init initialization
 
 class DecompilerLock
 {
@@ -173,7 +176,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 		case DecompileMode::JSON:
 		case DecompileMode::OFFSET:
 		case DecompileMode::STATEMENTS:
-			arch.print->setXML(true);
+			arch.print->setMarkup(true);
 			break;
 		default:
 			break;
@@ -181,7 +184,8 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	if(mode == DecompileMode::XML)
 	{
 		out_stream << "<result><function>";
-		func->saveXml(out_stream, 0, true);
+		PrettyXmlEncode enc(out_stream);
+		func->encode(enc, 0, true);
 		out_stream << "</function><code>";
 	}
 	switch(mode)
@@ -199,9 +203,11 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 					throw LowlevelError("Failed to parse XML code from Decompiler");
 			}
 			break;
-		case DecompileMode::DEBUG_XML:
-			arch.saveXml(out_stream);
+		case DecompileMode::DEBUG_XML: {
+			PrettyXmlEncode enc(out_stream);
+			arch.encode(enc);
 			break;
+		}
 		default:
 			break;
 	}
@@ -652,10 +658,27 @@ static RzCmdStatus pdgstar_handler(RzCore *core, int argc, const char **argv) {
 	return RZ_CMD_STATUS_OK;
 }
 
+void rz_ghidra_lib_init(void)
+{
+	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
+	lib_init_refcount++;
+	startDecompilerLibrary(nullptr);
+}
+
+void rz_ghidra_lib_fini(void)
+{
+	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
+	lib_init_refcount--;
+	if(lib_init_refcount < 0)
+		return;
+	if(lib_init_refcount == 0)
+		shutdownDecompilerLibrary();
+}
+
 static bool rz_ghidra_init(RzCore *core)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
-	startDecompilerLibrary(nullptr);
+	rz_ghidra_lib_init();
 
 	RzConfig *cfg = core->config;
 	rz_config_lock (cfg, false);
@@ -688,7 +711,7 @@ static bool rz_ghidra_init(RzCore *core)
 static bool rz_ghidra_fini(RzCore *core)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
-	shutdownDecompilerLibrary();
+	rz_ghidra_lib_fini();
 
 	auto rzcmd = core->rcmd;
 	RzCmdDesc *pdg_cd = rz_cmd_get_desc(rzcmd, "pdg");
