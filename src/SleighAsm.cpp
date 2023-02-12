@@ -57,7 +57,7 @@ void SleighAsm::initInner(std::string sleigh_id)
 }
 
 static void parseProto(const Element *el, std::vector<std::string> &arg_names,
-                       std::vector<std::string> &ret_names)
+		std::vector<std::string> &ret_names)
 {
 	if(el->getName() != "prototype")
 		throw LowlevelError("Expecting <prototype> tag");
@@ -103,7 +103,7 @@ static void parseProto(const Element *el, std::vector<std::string> &arg_names,
 }
 
 static void parseDefaultProto(const Element *el, std::vector<std::string> &arg_names,
-                              std::vector<std::string> &ret_names)
+		std::vector<std::string> &ret_names)
 {
 	const List &list(el->getChildren());
 	List::const_iterator iter;
@@ -157,7 +157,7 @@ static std::unordered_map<std::string, std::string> parseRegisterData(const Elem
 			unused = (*iter)->getAttributeValue("unused");
 			rename = (*iter)->getAttributeValue("rename");
 		}
-		catch(const XmlError &e)
+		catch(const DecoderError &e)
 		{
 			std::string err_prefix("Unknown attribute: ");
 			if(e.explain == err_prefix + "group") { /* nothing */ }
@@ -181,26 +181,39 @@ static std::unordered_map<std::string, std::string> parseRegisterData(const Elem
  * Context data is used to fill contextreg.
  */
 void SleighAsm::parseProcConfig(DocumentStorage &store)
+
 {
 	const Element *el = store.getTag("processor_spec");
 	if(!el)
 		throw LowlevelError("No processor configuration tag found");
-
-	const List &list(el->getChildren());
-	List::const_iterator iter;
-
-	for(iter = list.begin(); iter != list.end(); iter++)
+	XmlDecode decoder(&trans, el);
+	uint4 elemId = decoder.openElement(ELEM_PROCESSOR_SPEC);
+	for(;;)
 	{
-		const string &elname((*iter)->getName());
-		if(elname == "context_data")
-			context.restoreFromSpec(*iter, &trans);
-
-		if(elname == "programcounter")
-			pc_name = (*iter)->getAttributeValue("register");
-
-		if(elname == "register_data")
-			reg_group = parseRegisterData(*iter);
+		uint4 subId = decoder.peekElement();
+		if(subId == 0)
+			break;
+		if (subId == ELEM_PROGRAMCOUNTER)
+		{
+			decoder.openElement();
+			pc_name = decoder.readString(ATTRIB_REGISTER);
+			decoder.closeElement(subId);
+		}
+		else if (subId == ELEM_CONTEXT_DATA)
+			context.decodeFromSpec(decoder);
+		else if (subId == ELEM_REGISTER_DATA)
+		{
+			decoder.openElement();
+			parseRegisterData(decoder.getCurrentXmlElement());
+			decoder.closeElement(subId);
+		}
+		else
+		{
+			decoder.openElement();
+			decoder.closeElementSkipping(subId);
+		}
 	}
+	decoder.closeElement(elemId);
 }
 
 /*
@@ -226,7 +239,7 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 		Document *doc = store.openDocument(processorfile);
 		store.registerTag(doc->getRoot());
 	}
-	catch(XmlError &err)
+	catch(DecoderError &err)
 	{
 		ostringstream serr;
 		serr << "XML error parsing processor specification: " << processorfile;
@@ -246,7 +259,7 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 		Document *doc = store.openDocument(compilerfile);
 		store.registerTag(doc->getRoot());
 	}
-	catch(XmlError &err)
+	catch(DecoderError &err)
 	{
 		ostringstream serr;
 		serr << "XML error parsing compiler specification: " << compilerfile;
@@ -266,7 +279,7 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 		Document *doc = store.openDocument(slafile);
 		store.registerTag(doc->getRoot());
 	}
-	catch(XmlError &err)
+	catch(DecoderError &err)
 	{
 		ostringstream serr;
 		serr << "XML error parsing SLEIGH file: " << slafile;
@@ -284,7 +297,7 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 
 /*
  * From sleigh_arch.cc's resolveArchitecture()
- * This function is used to reolve the index of asm.cpu in description.
+ * This function is used to resolve the index of asm.cpu in description.
  * It is stripped because asm.cpu is the result of normalizeArchitecture().
  */
 void SleighAsm::resolveArch(const string &archid)
@@ -366,28 +379,33 @@ void SleighAsm::loadLanguageDescription(const string &specfile)
 	if(!s)
 		throw LowlevelError("Unable to open: " + specfile);
 
-	Document *doc;
-	Element *el;
+	XmlDecode decoder((const AddrSpaceManager *)0);
 	try
 	{
-		doc = xml_tree(s);
+		decoder.ingestStream(s);
 	}
-	catch(XmlError &err)
+	catch(DecoderError &err)
 	{
 		throw LowlevelError("Unable to parse sleigh specfile: " + specfile);
 	}
 
-	el = doc->getRoot();
-	const List &list(el->getChildren());
-	List::const_iterator iter;
-	for(iter = list.begin(); iter != list.end(); ++iter)
-	{
-		if((*iter)->getName() != "language")
-			continue;
-		description.push_back(LanguageDescription());
-		description.back().restoreXml(*iter);
+	uint4 elemId = decoder.openElement(ELEM_LANGUAGE_DEFINITIONS);
+	for(;;) {
+		uint4 subId = decoder.peekElement();
+		if(subId == 0)
+			break;
+		if(subId == ELEM_LANGUAGE)
+		{
+			description.emplace_back();
+			description.back().decode(decoder);
+		}
+		else
+		{
+			decoder.openElement();
+			decoder.closeElementSkipping(subId);
+		}
 	}
-	delete doc;
+	decoder.closeElement(elemId);
 }
 
 /*

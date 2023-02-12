@@ -93,7 +93,7 @@ SleighParserContext *RizinSleigh::getParserContext(Address &addr, SleighInstruct
 
 SleighParserContext *RizinSleigh::newSleighParserContext(Address &addr, SleighInstructionPrototype *proto)
 {
-	SleighParserContext *pos = new SleighParserContext(getContextCache());
+	SleighParserContext *pos = new SleighParserContext(getContextCache(), this);
 	pos->initialize(1, 0, getConstantSpace());
 	pos->setAddr(addr);
 	pos->setPrototype(proto);
@@ -235,9 +235,9 @@ FlowType SleighInstructionPrototype::convertFlowFlags(FlowFlags flags)
 {
 	if((flags & FLOW_LABEL) != 0)
 		flags = FlowFlags(flags | FLOW_BRANCH_TO_END);
-	flags = FlowFlags(flags & (~(FLOW_CROSSBUILD | FLOW_LABEL)));
+	int mask = FlowFlags(flags & (~(FLOW_CROSSBUILD | FLOW_LABEL)));
 	// NOTE: If prototype has cross-build, flow must be determined dynamically
-	switch(flags)
+	switch(mask)
 	{ // Convert flags to a standard flowtype
 		case 0:
 		case FLOW_BRANCH_TO_END: return FlowType::FALL_THROUGH;
@@ -546,9 +546,6 @@ Address SleighInstructionPrototype::getHandleAddr(FixedHandle &hand, AddrSpace *
 		return Address();
 
 	Address newaddr(hand.space, hand.space->wrapOffset(hand.offset_offset));
-
-	newaddr.toPhysical();
-
 	// if we are in an address space, translate it
 	// if (curSpace.isOverlaySpace()) {
 	// newaddr = curSpace.getOverlayAddress(newaddr);

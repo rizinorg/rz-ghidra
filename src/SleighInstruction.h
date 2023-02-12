@@ -274,7 +274,7 @@ private:
 	SleighInstructionPrototype *prototype = nullptr;
 
 public:
-	SleighParserContext(ContextCache *ccache): ParserContext(ccache) {}
+	SleighParserContext(ContextCache *ccache, Translate *trans): ParserContext(ccache, trans) {}
 	SleighInstructionPrototype *getPrototype() { return prototype; }
 	void setPrototype(SleighInstructionPrototype *p);
 };

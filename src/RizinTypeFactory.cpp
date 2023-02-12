@@ -53,11 +53,13 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, StackTypes &stack_t
 			// if(elements > 0)
 			// 	memberType = getTypeArray(elements, memberType);
 
-			fields.push_back({
+			TypeField tf = {
+				(int4)offset, // id = offset by default
 				(int4)offset, // Currently, this is 0 most of the time: member->offset,
 				std::string(member->name),
 				member_type
-			});
+			};
+			fields.push_back(tf);
 
 			// TODO: right now, we track member offset ourselves
 			// which means all structs are assumed to be packed.
@@ -110,7 +112,7 @@ Datatype *RizinTypeFactory::addRizinTypedef(RzBaseType *type, StackTypes &stack_
 	Datatype *resolved = fromRzTypeInternal(type->type, nullptr, &stack_types, true, false); // use prototype=true to avoid recursion
 	if(!resolved)
 		return nullptr;
-	Datatype *typedefd = getTypedef(resolved, type->name, 0);
+	Datatype *typedefd = getTypedef(resolved, type->name, 0, 0);
 	fromRzTypeInternal(type->type, nullptr, &stack_types, false, false); // fully create the type after querying with prototype=true before
 	return typedefd;
 }

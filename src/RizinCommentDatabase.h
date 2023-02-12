@@ -29,8 +29,8 @@ class RizinCommentDatabase : public CommentDatabase
 		CommentSet::const_iterator beginComment(const Address &fad) const override;
 		CommentSet::const_iterator endComment(const Address &fad) const override;
 
-		void saveXml(ostream &s) const override { cache.saveXml(s); }
-		void restoreXml(const Element *el, const AddrSpaceManager *trans) override { throw LowlevelError("commentdb::restoreXml unimplemented"); }
+		void encode(Encoder &encoder) const override { cache.encode(encoder); }
+		void decode(Decoder &decoder) override { throw LowlevelError("CommentDatabaseGhidra::decode unimplemented"); }
 };
 
 #endif //RZ_GHIDRA_RizinCOMMENTDATABASE_H

@@ -225,6 +225,7 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		params.registerTrial(addr, type->getSize());
 		int4 i = params.whichTrial(addr, type->getSize());
 		params.getTrial(i).markActive();
+		params.getTrial(i).markUsed();
 		return true;
 	});
 
@@ -298,11 +299,19 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 				return true;
 			}
 
-			paramIndex = params.whichTrial(addr, type->getSize());
-			if(paramIndex < 0)
+			int4 paramTrialIndex = params.whichTrial(addr, type->getSize());
+			if(paramTrialIndex < 0)
 			{
 				arch->addWarning("Failed to determine arg index of " + to_string(var->name));
 				return true;
+			}
+
+			paramIndex = 0;
+			for(int4 i = 0; i < paramTrialIndex; i++)
+			{
+				if(!params.getTrial(i).isUsed())
+					continue;
+				paramIndex++;
 			}
 		}
 
@@ -406,7 +415,8 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 
 	child(&doc, "rangelist");
 
-	auto sym = cache->addMapSym(&doc);
+	XmlDecode dec(arch, &doc);
+	auto sym = cache->addMapSym(dec);
 	return dynamic_cast<FunctionSymbol *>(sym);
 }
 
