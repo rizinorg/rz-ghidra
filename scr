@@ -1,0 +1,11 @@
+e asm.arch=x86
+e asm.bits=64
+o hex://4889f848c1f820894424fc85f67419660fefc0f30f5a4424fcf20f58050d010000f20f2cc001f8c30fafc7c3 0x1006aa rx
+o hex://0000000000000840 0x1007d8 r
+td "union myalt { uint32_t myint; float myfloat; };"
+td "struct packstruct { uint32_t a; myalt u; };"
+s 0x1006aa
+af
+afvr rdi val packstruct
+afvr rsi sel uint32_t
+pdg
