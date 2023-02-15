@@ -19,6 +19,7 @@ class RizinArchitecture;
 typedef struct rz_analysis_function_t RzAnalysisFunction;
 typedef struct rz_flag_item_t RzFlagItem;
 typedef struct rz_analysis_var_global_t RzAnalysisVarGlobal;
+typedef struct rz_bin_reloc_t RzBinReloc;
 
 class RizinScope : public Scope
 {
@@ -30,6 +31,7 @@ class RizinScope : public Scope
 		uint8 makeId() const { return (*next_id)++; }
 
 		FunctionSymbol *registerFunction(RzAnalysisFunction *fcn) const;
+		FunctionSymbol *registerRelocTarget(RzBinReloc *reloc) const;
 		Symbol *registerFlag(RzFlagItem *flag) const;
 		Symbol *registerGlobalVar(RzAnalysisVarGlobal *glob) const;
 		Symbol *queryRizinAbsolute(ut64 addr, bool contain) const;
@@ -85,8 +87,8 @@ class RizinScope : public Scope
 		void renameSymbol(Symbol *sym,const string &newname) override	{ throw LowlevelError("renameSymbol unimplemented"); }
 		void retypeSymbol(Symbol *sym,Datatype *ct) override			{ throw LowlevelError("retypeSymbol unimplemented"); }
 		string makeNameUnique(const string &nm) const override			{ throw LowlevelError("makeNameUnique unimplemented"); }
-		void saveXml(ostream &s) const override							{ cache->saveXml(s); }
-		void restoreXml(const Element *el) override						{ throw LowlevelError("restoreXml unimplemented"); }
+		void encode(Encoder &encoder) const override					{ cache->encode(encoder); }
+		void decode(Decoder &decoder) override							{ throw LowlevelError("decode unimplemented"); }
 		void printEntries(ostream &s) const override					{ throw LowlevelError("printEntries unimplemented"); }
 		int4 getCategorySize(int4 cat) const override					{ throw LowlevelError("getCategorySize unimplemented"); }
 		Symbol *getCategorySymbol(int4 cat,int4 ind) const override		{ throw LowlevelError("getCategorySymbol unimplemented"); }

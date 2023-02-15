@@ -52,13 +52,13 @@ type: mul
 0x00000000 DIV edx
 type: mod
 ----
-0x00000000 SHR eax,1
+0x00000000 SHR eax,0x1
 type: shr
 ----
-0x00000000 SHL eax,1
+0x00000000 SHL eax,0x1
 type: shl
 ----
-0x00000000 SAR eax,1
+0x00000000 SAR eax,0x1
 type: sar
 ----
 0x00000000 OR esp,dword ptr [0xfff0]
@@ -81,95 +81,95 @@ e asm.arch
 e asm.cpu
 e asm.bits
 wx 89e1
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx a168a00408
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx a368a00408
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 8945f0
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 8b4510
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 0f4c0d03000000
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx cd80
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 55
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 6a00
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 5d
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 83f853
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 85c0
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 83c410
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 81ec88100000
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx f7ea
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx f7f2
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx d1e8
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx d1e0
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx d1f8
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 0b25f0ff0000
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 2325f0ff0000
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 3325f0ff0000
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 8703
-pdi 1
+pdq 1
 ao | grep type
 EOF
 RUN
@@ -187,11 +187,11 @@ CMDS=<<EOF
 e asm.cpu=AARCH64:LE:64:v8A:gcc
 e asm.arch=ghidra
 wx 298947f9
-pdi 1
+pdq 1
 ao | grep type
 ?e ----
 wx 690200f9 @ 0x200
-pdi 1 @ 0x200
+pdq 1 @ 0x200
 ao @ 0x200| grep type
 EOF
 RUN

@@ -7,8 +7,6 @@
 
 #include <funcdata.hh>
 
-#include <rz_version.h>
-#include <rz_analysis.h>
 #include <rz_core.h>
 
 #include "RizinUtils.h"
@@ -166,47 +164,29 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 			arch->addWarning("Function " + to_string(fcn_name) + " has no calling convention set, args may be inaccurate.");
 	}
 
-	int4 extraPop = proto ? proto->getExtraPop() : arch->translate->getDefaultSize();
-	if(extraPop == ProtoModel::extrapop_unknown)
-		extraPop = arch->translate->getDefaultSize();
-
 	RangeList varRanges; // to check for overlaps
-	RzList *vars = rz_analysis_var_all_list(core->analysis, fcn);
 	auto stackSpace = arch->getStackSpace();
 
 	auto addrForVar = [&](RzAnalysisVar *var, bool warn_on_fail) {
-		switch(var->kind)
+		switch(var->storage.type)
 		{
-			case RZ_ANALYSIS_VAR_KIND_BPV:
+			case RZ_ANALYSIS_VAR_STORAGE_STACK:
 			{
 				uintb off;
-				int delta = var->delta + fcn->bp_off - extraPop; // not 100% sure if extraPop is correct here
+				st64 delta = var->storage.stack_off;
 				if(delta >= 0)
 					off = delta;
 				else
 					off = stackSpace->getHighest() + delta + 1;
 				return Address(stackSpace, off);
 			}
-			case RZ_ANALYSIS_VAR_KIND_REG:
+			case RZ_ANALYSIS_VAR_STORAGE_REG:
 			{
-				RzRegItem *reg = rz_reg_index_get(core->analysis->reg, var->delta);
-				if(!reg)
-				{
-					if(warn_on_fail)
-						arch->addWarning("Register for arg " + to_string(var->name) + " not found");
-					return Address();
-				}
-
-				auto ret = arch->registerAddressFromRizinReg(reg->name);
+				auto ret = arch->registerAddressFromRizinReg(var->storage.reg);
 				if(ret.isInvalid() && warn_on_fail)
 					arch->addWarning("Failed to match register " + to_string(var->name) + " for arg " + to_string(var->name));
-
 				return ret;
 			}
-			case RZ_ANALYSIS_VAR_KIND_SPV:
-				if(warn_on_fail)
-					arch->addWarning("Var " + to_string(var->name) + " is stack pointer based, which is not supported for decompilation.");
-				return Address();
 			default:
 				if(warn_on_fail)
 					arch->addWarning("Failed to get address for var " + to_string(var->name));
@@ -218,37 +198,36 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 
 	ParamActive params(false);
 
-	if(vars)
-	{
-		rz_list_foreach_cpp<RzAnalysisVar>(vars, [&](RzAnalysisVar *var) {
-			std::string typeError;
-			Datatype *type = var->type ? arch->getTypeFactory()->fromRzType(var->type, &typeError) : nullptr;
+	rz_pvector_foreach_cpp<RzAnalysisVar>(&fcn->vars, [&](RzAnalysisVar *var) {
+		std::string typeError;
+		Datatype *type = var->type ? arch->getTypeFactory()->fromRzType(var->type, &typeError) : nullptr;
+		if(!type)
+		{
+			char *tstr = rz_type_as_string(core->analysis->typedb, var->type);
+			arch->addWarning("Failed to match type " + to_string(tstr ? tstr : "?") + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
+			rz_mem_free(tstr);
+			type = arch->types->getBase(core->analysis->bits / 8, TYPE_UNKNOWN);
 			if(!type)
-			{
-				char *tstr = rz_type_as_string(core->analysis->typedb, var->type);
-				arch->addWarning("Failed to match type " + to_string(tstr ? tstr : "?") + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
-				rz_mem_free(tstr);
-				type = arch->types->getBase(core->analysis->bits / 8, TYPE_UNKNOWN);
-				if(!type)
-					return;
-			}
-			if(type->getSize() < 1)
-			{
-				arch->addWarning("Type " + type->getName() + " of variable " + to_string(var->name) + " has size 0");
-				return;
-			}
-			var_types[var] = type;
+				return true;
+		}
+		if(type->getSize() < 1)
+		{
+			arch->addWarning("Type " + type->getName() + " of variable " + to_string(var->name) + " has size 0");
+			return true;
+		}
+		var_types[var] = type;
 
-			if(!var->isarg)
-				return;
-			auto addr = addrForVar(var, true);
-			if(addr.isInvalid())
-				return;
-			params.registerTrial(addr, type->getSize());
-			int4 i = params.whichTrial(addr, type->getSize());
-			params.getTrial(i).markActive();
-		});
-	}
+		if(!rz_analysis_var_is_arg(var))
+			return true;
+		auto addr = addrForVar(var, true);
+		if(addr.isInvalid())
+			return true;
+		params.registerTrial(addr, type->getSize());
+		int4 i = params.whichTrial(addr, type->getSize());
+		params.getTrial(i).markActive();
+		params.getTrial(i).markUsed();
+		return true;
+	});
 
 	if(proto)
 		proto->deriveInputMap(&params);
@@ -266,132 +245,139 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		});
 	};
 
-	if(vars)
-	{
-		std::vector<Element *> argsByIndex;
+	std::vector<Element *> argsByIndex;
 
-		rz_list_foreach_cpp<RzAnalysisVar>(vars, [&](RzAnalysisVar *var) {
-			auto type_it = var_types.find(var);
-			if(type_it == var_types.end())
-				return;
-			Datatype *type = type_it->second;
-			bool typelock = true;
+	rz_pvector_foreach_cpp<RzAnalysisVar>(&fcn->vars, [&](RzAnalysisVar *var) {
+		auto type_it = var_types.find(var);
+		if(type_it == var_types.end())
+			return true;
+		Datatype *type = type_it->second;
+		bool typelock = true;
 
-			auto addr = addrForVar(var, var->isarg /* Already emitted this warning before */);
-			if(addr.isInvalid())
-				return;
+		auto addr = addrForVar(var, rz_analysis_var_is_arg(var) /* Already emitted this warning before */);
+		if(addr.isInvalid())
+			return true;
 
-			uintb last = addr.getOffset();
-			if(type->getSize() > 0)
-				last += type->getSize() - 1;
-			if(last < addr.getOffset())
+		uintb last = addr.getOffset();
+		if(type->getSize() > 0)
+			last += type->getSize() - 1;
+		if(last < addr.getOffset())
+		{
+			arch->addWarning("Variable " + to_string(var->name) + " extends beyond the stackframe. Try changing its type to something smaller.");
+			return true;
+		}
+		bool overlap = false;
+		for(const auto &range : varRanges)
+		{
+			if(range.getSpace() != addr.getSpace())
+				continue;
+			if(range.getFirst() > last)
+				continue;
+			if(range.getLast() < addr.getOffset())
+				continue;
+			overlap = true;
+			break;
+		}
+
+		if(overlap)
+		{
+			arch->addWarning("Detected overlap for variable " + to_string(var->name));
+
+			if(rz_analysis_var_is_arg(var)) // Can't have args with typelock=false, otherwise we get segfaults in the Decompiler
+				return true;
+
+			typelock = false;
+		}
+
+		int4 paramIndex = -1;
+		if(rz_analysis_var_is_arg(var))
+		{
+			if(proto && !proto->possibleInputParam(addr, type->getSize()))
 			{
-				arch->addWarning("Variable " + to_string(var->name) + " extends beyond the stackframe. Try changing its type to something smaller.");
-				return;
+				// Prevent segfaults in the Decompiler
+				arch->addWarning("Removing arg " + to_string(var->name) + " because it doesn't fit into ProtoModel");
+				return true;
 			}
-			bool overlap = false;
-			for(const auto &range : varRanges)
+
+			int4 paramTrialIndex = params.whichTrial(addr, type->getSize());
+			if(paramTrialIndex < 0)
 			{
-				if(range.getSpace() != addr.getSpace())
+				arch->addWarning("Failed to determine arg index of " + to_string(var->name));
+				return true;
+			}
+
+			paramIndex = 0;
+			for(int4 i = 0; i < paramTrialIndex; i++)
+			{
+				if(!params.getTrial(i).isUsed())
 					continue;
-				if(range.getFirst() > last)
-					continue;
-				if(range.getLast() < addr.getOffset())
-					continue;
-				overlap = true;
-				break;
+				paramIndex++;
 			}
+		}
 
-			if(overlap)
-			{
-				arch->addWarning("Detected overlap for variable " + to_string(var->name));
+		varRanges.insertRange(addr.getSpace(), addr.getOffset(), last);
 
-				if(var->isarg) // Can't have args with typelock=false, otherwise we get segfaults in the Decompiler
-					return;
-
-				typelock = false;
-			}
-
-			int4 paramIndex = -1;
-			if(var->isarg)
-			{
-				if(proto && !proto->possibleInputParam(addr, type->getSize()))
-				{
-					// Prevent segfaults in the Decompiler
-					arch->addWarning("Removing arg " + to_string(var->name) + " because it doesn't fit into ProtoModel");
-					return;
-				}
-
-				paramIndex = params.whichTrial(addr, type->getSize());
-				if(paramIndex < 0)
-				{
-					arch->addWarning("Failed to determine arg index of " + to_string(var->name));
-					return;
-				}
-			}
-
-			varRanges.insertRange(addr.getSpace(), addr.getOffset(), last);
-
-			auto mapsymElement = child(symbollistElement, "mapsym");
-			auto symbolElement = child(mapsymElement, "symbol", {
-					{ "name", var->name },
-					{ "typelock", typelock ? "true" : "false" },
-					{ "namelock", "true" },
-					{ "readonly", "false" },
-					{ "cat", var->isarg ? "0" : "-1" }
-			});
-
-			if(var->isarg)
-			{
-				if(argsByIndex.size() < paramIndex + 1)
-					argsByIndex.resize(paramIndex + 1, nullptr);
-
-				argsByIndex[paramIndex] = symbolElement;
-
-				symbolElement->addAttribute("index", to_string(paramIndex < 0 ? 0 : paramIndex));
-			}
-
-			childType(symbolElement, type);
-			childAddr(mapsymElement, "addr", addr);
-
-			auto rangelist = child(mapsymElement, "rangelist");
-			if(var->isarg && var->kind == RZ_ANALYSIS_VAR_KIND_REG)
-				childRegRange(rangelist);
+		auto mapsymElement = child(symbollistElement, "mapsym");
+		auto symbolElement = child(mapsymElement, "symbol", {
+				{ "name", var->name },
+				{ "typelock", typelock ? "true" : "false" },
+				{ "namelock", "true" },
+				{ "readonly", "false" },
+				{ "cat", rz_analysis_var_is_arg(var) ? "0" : "-1" }
 		});
 
-		// Add placeholder args in gaps
-		for(size_t i=0; i<argsByIndex.size(); i++)
+		if(rz_analysis_var_is_arg(var))
 		{
-			if(argsByIndex[i])
-				continue;
+			if(argsByIndex.size() < paramIndex + 1)
+				argsByIndex.resize(paramIndex + 1, nullptr);
 
-			auto trial = params.getTrial(i);
+			argsByIndex[paramIndex] = symbolElement;
 
-			Datatype *type = arch->types->getBase(trial.getSize(), TYPE_UNKNOWN);
-			if(!type)
-				continue;
-
-			auto mapsymElement = child(symbollistElement, "mapsym");
-			auto symbolElement = child(mapsymElement, "symbol", {
-					{ "name", "placeholder_" + to_string(i) },
-					{ "typelock", "true" },
-					{ "namelock", "true" },
-					{ "readonly", "false" },
-					{ "cat", "0" },
-					{ "index", to_string(i) }
-			});
-
-			childAddr(mapsymElement, "addr", trial.getAddress());
-			childType(symbolElement, type);
-
-			auto rangelist = child(mapsymElement, "rangelist");
-			if(trial.getAddress().getSpace() != arch->translate->getStackSpace())
-				childRegRange(rangelist);
+			symbolElement->addAttribute("index", to_string(paramIndex < 0 ? 0 : paramIndex));
 		}
+
+		childType(symbolElement, type);
+		childAddr(mapsymElement, "addr", addr);
+
+		auto rangelist = child(mapsymElement, "rangelist");
+		if(rz_analysis_var_is_arg(var) && var->storage.type == RZ_ANALYSIS_VAR_STORAGE_REG)
+			childRegRange(rangelist);
+		return true;
+	});
+
+	// Add placeholder args in gaps
+	for(size_t i=0; i<argsByIndex.size(); i++)
+	{
+		if(argsByIndex[i])
+			continue;
+
+		auto trial = params.getTrial(i);
+
+		Datatype *type = arch->types->getBase(trial.getSize(), TYPE_UNKNOWN);
+		if(!type)
+			continue;
+
+		auto mapsymElement = child(symbollistElement, "mapsym");
+		auto symbolElement = child(mapsymElement, "symbol", {
+				{ "name", "placeholder_" + to_string(i) },
+				{ "typelock", "true" },
+				{ "namelock", "true" },
+				{ "readonly", "false" },
+				{ "cat", "0" },
+				{ "index", to_string(i) }
+		});
+
+		childAddr(mapsymElement, "addr", trial.getAddress());
+		childType(symbolElement, type);
+
+		auto rangelist = child(mapsymElement, "rangelist");
+		if(trial.getAddress().getSpace() != arch->translate->getStackSpace())
+			childRegRange(rangelist);
 	}
 
-	rz_list_free(vars);
-
+	int4 extraPop = proto ? proto->getExtraPop() : arch->translate->getDefaultSize();
+	if(extraPop == ProtoModel::extrapop_unknown)
+		extraPop = arch->translate->getDefaultSize();
 	auto prototypeElement = child(functionElement, "prototype", {
 			{ "extrapop", to_string(extraPop) },
 			{ "model", proto ? proto->getName() : "unknown" }
@@ -429,8 +415,17 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 
 	child(&doc, "rangelist");
 
-	auto sym = cache->addMapSym(&doc);
+	XmlDecode dec(arch, &doc);
+	auto sym = cache->addMapSym(dec);
 	return dynamic_cast<FunctionSymbol *>(sym);
+}
+
+FunctionSymbol *RizinScope::registerRelocTarget(RzBinReloc *reloc) const
+{
+	RzCoreLock core(arch->getCore());
+	if(!reloc->import || !reloc->import->name)
+		return nullptr;
+	return cache->addFunction(Address(arch->getDefaultCodeSpace(), reloc->target_vaddr), reloc->import->name);
 }
 
 Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
@@ -449,12 +444,7 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 			auto bf = reinterpret_cast<RzBinFile *>(pos);
 			if(!bf->o)
 				continue;
-			void *s = ht_up_find(bf->o->strings_db, flag->offset, nullptr);
-			if(s)
-			{
-				str = reinterpret_cast<RzBinString *>(s);
-				break;
-			}
+			str = rz_bin_object_get_string_at(bf->o, flag->offset, true);
 		}
 		Datatype *ptype;
 		const char *tn = "char";
@@ -462,18 +452,24 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 		{
 			switch(str->type)
 			{
-				case RZ_BIN_STRING_ENC_WIDE_LE:
-				case RZ_BIN_STRING_ENC_WIDE_BE:
+				case RZ_STRING_ENC_UTF16LE:
+				case RZ_STRING_ENC_UTF16BE:
 					tn = "char16_t";
 					break;
-				case RZ_BIN_STRING_ENC_WIDE32_LE:
-				case RZ_BIN_STRING_ENC_WIDE32_BE:
+				case RZ_STRING_ENC_UTF32LE:
+				case RZ_STRING_ENC_UTF32BE:
 					tn = "char32_t";
+					break;
+				default:
 					break;
 			}
 		}
 		ptype = arch->types->findByName(tn);
 		int4 sz = static_cast<int4>(flag->size) / ptype->getSize();
+		if(!sz && str) // Zero string length is an error
+			sz = str->length;
+		if(!sz)
+			sz = 1; // The decompiler will figure out the length to display
 		type = arch->types->getTypeArray(sz, ptype);
 		attr |= Varnode::readonly;
 	}
@@ -543,6 +539,14 @@ Symbol *RizinScope::queryRizinAbsolute(ut64 addr, bool contain) const
 		glob = rz_analysis_var_global_get_byaddr_at(core->analysis, addr);
 	if(glob)
 		return registerGlobalVar(glob);
+
+	RzBinReloc *reloc = rz_core_get_reloc_to(core, addr);
+	if(reloc && reloc->import)
+	{
+		auto rsym = registerRelocTarget(reloc);
+		if(rsym)
+			return rsym;
+	}
 
 	// TODO: register more things
 

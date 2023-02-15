@@ -139,32 +139,47 @@ void AnnotateCommentOffset(ANNOTATOR_PARAMS)
 void AnnotateColor(ANNOTATOR_PARAMS)
 {
 	pugi::xml_attribute attr = node.attribute("color");
-	if (attr.empty())
+	if(attr.empty())
 		return;
 
-	std::string color = attr.as_string();
-	if (color == "")
+	int color = attr.as_int(-1);
+	if(color < 0)
 		return;
 
 	RSyntaxHighlightType type;
-	if (color == "keyword")
-		type = RZ_SYNTAX_HIGHLIGHT_TYPE_KEYWORD;
-	else if (color == "comment")
-		type = RZ_SYNTAX_HIGHLIGHT_TYPE_COMMENT;
-	else if (color == "type")
-		type = RZ_SYNTAX_HIGHLIGHT_TYPE_DATATYPE;
-	else if (color == "funcname")
-		type = RZ_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_NAME;
-	else if (color == "param")
-		type = RZ_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_PARAMETER;
-	else if (color == "var")
-		type = RZ_SYNTAX_HIGHLIGHT_TYPE_LOCAL_VARIABLE;
-	else if (color == "const")
-		type = RZ_SYNTAX_HIGHLIGHT_TYPE_CONSTANT_VARIABLE;
-	else if (color == "global")
-		type = RZ_SYNTAX_HIGHLIGHT_TYPE_GLOBAL_VARIABLE;
-	else
-		return;
+	switch(color)
+	{
+		case Emit::syntax_highlight::keyword_color:
+			type = RZ_SYNTAX_HIGHLIGHT_TYPE_KEYWORD;
+			break;
+		case Emit::syntax_highlight::comment_color:
+			type = RZ_SYNTAX_HIGHLIGHT_TYPE_COMMENT;
+			break;
+		case Emit::syntax_highlight::type_color:
+			type = RZ_SYNTAX_HIGHLIGHT_TYPE_DATATYPE;
+			break;
+		case Emit::syntax_highlight::funcname_color:
+			type = RZ_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_NAME;
+			break;
+		case Emit::syntax_highlight::var_color:
+			type = RZ_SYNTAX_HIGHLIGHT_TYPE_LOCAL_VARIABLE;
+			break;
+		case Emit::syntax_highlight::const_color:
+			type = RZ_SYNTAX_HIGHLIGHT_TYPE_CONSTANT_VARIABLE;
+			break;
+		case Emit::syntax_highlight::param_color:
+			type = RZ_SYNTAX_HIGHLIGHT_TYPE_FUNCTION_PARAMETER;
+			break;
+		case Emit::syntax_highlight::global_color:
+			type = RZ_SYNTAX_HIGHLIGHT_TYPE_GLOBAL_VARIABLE;
+			break;
+		case Emit::syntax_highlight::no_color:
+		case Emit::syntax_highlight::error_color:
+		case Emit::syntax_highlight::special_color:
+		default:
+			return;
+	}
+
 	RzCodeAnnotation annotation = {};
 	annotation.type = RZ_CODE_ANNOTATION_TYPE_SYNTAX_HIGHLIGHT;
 	annotation.syntax_highlight.type = type;

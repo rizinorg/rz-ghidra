@@ -30,7 +30,7 @@ EOF
 CMDS=<<EOF
 pdga
 s main
-pdi 24
+pdq 24
 EOF
 RUN
 
@@ -86,7 +86,7 @@ EOF
 CMDS=<<EOF
 pdga
 s main
-pdi 44
+pdq 44
 EOF
 RUN
 
@@ -115,7 +115,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 18
+pdq 18
 EOF
 RUN
 
@@ -124,7 +124,7 @@ FILE=rizin-testbins/elf/analysis/dwarf_load
 EXPECT=<<EOF
 0x0000dac8   sym.main:
 0x0000dac8 cpy r12,sp
-0x0000dacc stmdb sp!,{r4 r11 r12 lr pc}
+0x0000dacc stmdb sp!,{r4,r11,r12,lr,pc}
 0x0000dad0 sub r11,r12,#0x4
 0x0000dad4 sub sp,sp,#0x19c0
 0x0000dad8 sub sp,sp,#0xc
@@ -177,7 +177,7 @@ EOF
 CMDS=<<EOF
 pdga
 s main
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -188,7 +188,8 @@ EXPECT=<<EOF
 0x80001000 lui sp, 0x803f
 0x80001004 ori sp, sp, 0xfff0
 0x80001008 lui t0, 0x8003
-0x8000100c 0x80001013 invalid
+0x8000100c addiu t0, t0, -0x3b50
+0x80001010 lui t1, 0x8015
 0x80001014   str.e0:
 0x80001014 0x80001019 invalid
 0x8000101a sll zero, a1, 0x0
@@ -199,7 +200,8 @@ EXPECT=<<EOF
 0x80001028 bne at, zero, 0x80001020
 0x8000102c sw zero, -0x4(t0)
 0x80001030 lui t0, 0x8003
-0x80001034 0x8000103b invalid
+0x80001034 addiu t0, t0, -0x3b50
+0x80001038 lui t1, 0x8003
 0x8000103c addiu t1, t1, -0x3b50
 0x80001040 beq t0, t1, 0x80001058
 0x80001044 nop
@@ -237,7 +239,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -260,7 +262,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 12
+pdq 12
 EOF
 RUN
 
@@ -321,7 +323,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -382,7 +384,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -446,7 +448,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -507,7 +509,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -553,7 +555,7 @@ EXPECT=<<EOF
 0x0001186c stw g1,[l0+g0]
 0x00011870 sll g1,0x2,g1
 0x00011874 lduw [l2+g1],g1
-0x00011878 jmpl [g1+g0],o7
+0x00011878 jmpl g1+g0,o7
 0x0001187c nop
 0x00011880 lduw [l0+g0],g1
 0x00011884 cmp g1,l1
@@ -568,7 +570,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -590,14 +592,14 @@ EXPECT=<<EOF
 0x00000320 st z, r1
 0x00000322 ldi zlo,0x4e
 0x00000324 ldi zhi,0x0
-0x00000326 ldi wlo,0x1d
-0x00000328 st z, wlo
+0x00000326 ldi r24,0x1d
+0x00000328 st z, r24
 0x0000032a ldi zlo,0x4a
 0x0000032c ldi zhi,0x0
-0x0000032e ldi wlo,0x8
-0x00000330 ldi whi,0x0
-0x00000332 std z+0x1, whi
-0x00000334 st z, wlo
+0x0000032e ldi r24,0x8
+0x00000330 ldi r25,0x0
+0x00000332 std z+0x1, r25
+0x00000334 st z, r24
 0x00000336 ldi zlo,0x48
 0x00000338 ldi zhi,0x0
 0x0000033a std z+0x1, r1
@@ -610,27 +612,27 @@ EXPECT=<<EOF
 0x00000348 st z, r1
 0x0000034a ldi zlo,0x57
 0x0000034c ldi zhi,0x0
-0x0000034e ldi wlo,0x10
-0x00000350 st z, wlo
+0x0000034e ldi r24,0x10
+0x00000350 st z, r24
 0x00000352 ldi zlo,0x37
 0x00000354 ldi zhi,0x0
-0x00000356 ser wlo
-0x00000358 st z, wlo
+0x00000356 ser r24
+0x00000358 st z, r24
 0x0000035a ldi zlo,0x34
 0x0000035c ldi zhi,0x0
-0x0000035e ser wlo
-0x00000360 st z, wlo
+0x0000035e ser r24
+0x00000360 st z, r24
 0x00000362 ldi zlo,0x31
 0x00000364 ldi zhi,0x0
-0x00000366 ldi wlo,0x1
-0x00000368 st z, wlo
+0x00000366 ldi r24,0x1
+0x00000368 st z, r24
 0x0000036a ldi zlo,0x6a
 0x0000036c ldi zhi,0x0
 EOF
 CMDS=<<EOF
 pdga
 s main
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -691,7 +693,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdi 50
+pdq 50
 EOF
 RUN
 
@@ -725,7 +727,7 @@ e asm.cpu=v850
 e asm.bits=32
 pdgss
 wx 8100e009ba154007b8a8042a400e000184ff88990c0a400faba80c0a400faca8
-pdi 10
+pdq 10
 EOF
 EXPECT=<<EOF
 V850:LE:32:default

@@ -6,9 +6,9 @@ on:
 
 jobs:
   licenses:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: REUSE Compliance Check
-      uses: fsfe/reuse-action@v1.1
+      uses: fsfe/reuse-action@v1

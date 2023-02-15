@@ -10,24 +10,19 @@ jobs:
   include:
     - os: linux
       name: X86_64
-      dist: focal
+      dist: jammy
     - os: linux
       name: S390X
       arch: s390x
-      dist: focal
+      dist: jammy
     - os: linux
       name: PPC64
       arch: ppc64le
-      dist: focal
+      dist: jammy
     - os: linux
       name: ARM64
       arch: arm64
-      dist: focal
-  allow_failures:
-    - os: linux
-      name: S390X
-      arch: s390x
-      dist: focal
+      dist: jammy
 
 addons:
   apt:
