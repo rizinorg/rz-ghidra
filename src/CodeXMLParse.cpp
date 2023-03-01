@@ -48,7 +48,7 @@ struct ParseCodeXMLContext
 static char *strdup_rz(const char *s)
 {
 	size_t sz = strlen(s);
-	char *r = reinterpret_cast<char *>(rz_malloc(sz + 1));
+	char *r = reinterpret_cast<char *>(rz_mem_alloc(sz + 1));
 	if(!r)
 		return NULL;
 	memcpy(r, s, sz + 1);
@@ -350,7 +350,7 @@ RZ_API RzAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
 	ParseNode(doc.child("function"), &ctx, ss, code);
 
 	std::string str = ss.str();
-	code->code = reinterpret_cast<char *>(rz_malloc(str.length() + 1));
+	code->code = reinterpret_cast<char *>(rz_mem_alloc(str.length() + 1));
 	if(!code->code)
 	{
 		rz_annotated_code_free(code);
