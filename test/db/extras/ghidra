@@ -3350,3 +3350,34 @@ undefined4 sym.ko_example_init(void)
 }
 EOF
 RUN
+
+NAME=realname and multiple flags at function
+FILE=rizin-testbins/mach0/hello-macos-arm64-objc-stubs-stripped
+CMDS=<<EOF
+e asm.flags.real=1
+aaa
+pdg @ 0x100003ae8
+EOF
+EXPECT=<<EOF
+
+// WARNING: Variable defined which should be unmapped: var_10h
+// WARNING: [rz-ghidra] Detected overlap for variable var_28h
+// WARNING: [rz-ghidra] Detected overlap for variable var_2ch
+
+void method.Test.methodWithTwoArgs:secondArg:(int64_t arg1, int64_t arg2, int64_t arg3, int64_t arg4)
+{
+    int32_t var_2ch;
+    int64_t var_24h;
+    int64_t var_18h;
+    int64_t var_10h;
+    
+    var_2ch = (int32_t)arg4;
+    if (var_2ch < (int32_t)arg3) {
+        var_2ch = (int32_t)arg3;
+    }
+    *(int32_t *)(arg1 + 8) = var_2ch;
+    NSLog(__CFConstantStringClassReference);
+    return;
+}
+EOF
+RUN
