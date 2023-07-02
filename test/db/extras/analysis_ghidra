@@ -83,91 +83,91 @@ e asm.bits
 wx 89e1
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx a168a00408
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx a368a00408
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 8945f0
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 8b4510
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 0f4c0d03000000
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx cd80
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 55
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 6a00
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 5d
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 83f853
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 85c0
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 83c410
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 81ec88100000
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx f7ea
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx f7f2
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx d1e8
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx d1e0
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx d1f8
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 0b25f0ff0000
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 2325f0ff0000
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 3325f0ff0000
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 8703
 pdq 1
 ao | grep type
@@ -189,7 +189,7 @@ e asm.arch=ghidra
 wx 298947f9
 pdq 1
 ao | grep type
-?e ----
+echo ----
 wx 690200f9 @ 0x200
 pdq 1 @ 0x200
 ao @ 0x200| grep type

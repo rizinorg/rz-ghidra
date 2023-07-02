@@ -247,7 +247,7 @@ s sym.get_global_array_entry
 af
 e ghidra.rawptr=1
 pdg
-?e --
+echo --
 e ghidra.rawptr=0
 pdg
 EOF
@@ -275,7 +275,7 @@ s sym.get_global_var
 af
 e ghidra.rawptr=1
 pdg
-?e --
+echo --
 e ghidra.rawptr=0
 pdg
 EOF
@@ -315,15 +315,15 @@ s sym.get_global_var
 af
 e ghidra.rawptr=1
 pdg
-?e --
+echo --
 e ghidra.rawptr=0
 pdg
-?e --
+echo --
 s sym.get_global_array_entry
 af
 e ghidra.rawptr=1
 pdg
-?e --
+echo --
 e ghidra.rawptr=0
 pdg
 EOF
@@ -2277,12 +2277,12 @@ afvs 4 bright BrightPtr
 afvs 8 argc "Bright *"
 afvs 12 argv "const char **"
 pdg
-?e --
+echo --
 afvs 4 bright "BrightTypedefd *"
 afvs 8 argc int32_t
 afvs 12 argv "const char **"
 pdg
-?e --
+echo --
 afvs 4 bright BrightTypedefdPtr
 pdg
 EOF
@@ -2740,18 +2740,18 @@ s main
 af
 e scr.color=0
 pdg
-?e --
+echo --
 pdgo
-?e --
+echo --
 pdg*
-?e --
+echo --
 pdgx~!id=,<addr
-?e --
+echo --
 pdgd~!id=,protectedMode
-?e --
+echo --
 e scr.color=3
 pdg
-?e --
+echo --
 pdgo
 EOF
 RUN
@@ -3076,7 +3076,7 @@ EOF
 CMDS=<<EOF
 s main
 pi 8
-?e -----
+echo -----
 pdgsd 8~!STORE
 EOF
 RUN
@@ -3254,10 +3254,10 @@ FILE=rizin-testbins/mach0/hello-macos-arm64
 CMDS=<<EOF
 aaa
 s main
-?e ------------ with propagation
+echo ------------ with propagation
 e ghidra.ropropagate
 pdg
-?e ------------ without propagation
+echo ------------ without propagation
 e ghidra.ropropagate=0
 pdg
 EOF
