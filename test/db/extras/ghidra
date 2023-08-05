@@ -247,7 +247,7 @@ s sym.get_global_array_entry
 af
 e ghidra.rawptr=1
 pdg
-?e --
+echo --
 e ghidra.rawptr=0
 pdg
 EOF
@@ -275,7 +275,7 @@ s sym.get_global_var
 af
 e ghidra.rawptr=1
 pdg
-?e --
+echo --
 e ghidra.rawptr=0
 pdg
 EOF
@@ -315,15 +315,15 @@ s sym.get_global_var
 af
 e ghidra.rawptr=1
 pdg
-?e --
+echo --
 e ghidra.rawptr=0
 pdg
-?e --
+echo --
 s sym.get_global_array_entry
 af
 e ghidra.rawptr=1
 pdg
-?e --
+echo --
 e ghidra.rawptr=0
 pdg
 EOF
@@ -2277,12 +2277,12 @@ afvs 4 bright BrightPtr
 afvs 8 argc "Bright *"
 afvs 12 argv "const char **"
 pdg
-?e --
+echo --
 afvs 4 bright "BrightTypedefd *"
 afvs 8 argc int32_t
 afvs 12 argv "const char **"
 pdg
-?e --
+echo --
 afvs 4 bright BrightTypedefdPtr
 pdg
 EOF
@@ -2740,18 +2740,18 @@ s main
 af
 e scr.color=0
 pdg
-?e --
+echo --
 pdgo
-?e --
+echo --
 pdg*
-?e --
+echo --
 pdgx~!id=,<addr
-?e --
+echo --
 pdgd~!id=,protectedMode
-?e --
+echo --
 e scr.color=3
 pdg
-?e --
+echo --
 pdgo
 EOF
 RUN
@@ -3076,7 +3076,7 @@ EOF
 CMDS=<<EOF
 s main
 pi 8
-?e -----
+echo -----
 pdgsd 8~!STORE
 EOF
 RUN
@@ -3254,10 +3254,10 @@ FILE=rizin-testbins/mach0/hello-macos-arm64
 CMDS=<<EOF
 aaa
 s main
-?e ------------ with propagation
+echo ------------ with propagation
 e ghidra.ropropagate
 pdg
-?e ------------ without propagation
+echo ------------ without propagation
 e ghidra.ropropagate=0
 pdg
 EOF
@@ -3347,6 +3347,37 @@ undefined4 sym.ko_example_init(void)
     __fentry__();
     printk("Hello, Rizin!\n");
     return 0;
+}
+EOF
+RUN
+
+NAME=realname and multiple flags at function
+FILE=rizin-testbins/mach0/hello-macos-arm64-objc-stubs-stripped
+CMDS=<<EOF
+e asm.flags.real=1
+aaa
+pdg @ 0x100003ae8
+EOF
+EXPECT=<<EOF
+
+// WARNING: Variable defined which should be unmapped: var_10h
+// WARNING: [rz-ghidra] Detected overlap for variable var_28h
+// WARNING: [rz-ghidra] Detected overlap for variable var_2ch
+
+void method.Test.methodWithTwoArgs:secondArg:(int64_t arg1, int64_t arg2, int64_t arg3, int64_t arg4)
+{
+    int32_t var_2ch;
+    int64_t var_24h;
+    int64_t var_18h;
+    int64_t var_10h;
+    
+    var_2ch = (int32_t)arg4;
+    if (var_2ch < (int32_t)arg3) {
+        var_2ch = (int32_t)arg3;
+    }
+    *(int32_t *)(arg1 + 8) = var_2ch;
+    NSLog(__CFConstantStringClassReference);
+    return;
 }
 EOF
 RUN

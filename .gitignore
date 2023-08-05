@@ -8,3 +8,4 @@ ghidra/flex/
 .ccls-cache
 .gdb_history
 .cache/
+.DS_Store

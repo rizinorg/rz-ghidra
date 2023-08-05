@@ -2937,9 +2937,7 @@ static bool esil_peek_n(RzAnalysisEsil *esil, int bits)
 		ut64 bitmask = genmask(bits - 1);
 		ut8 a[sizeof(ut64)] = {0};
 		ret = !!rz_analysis_esil_mem_read(esil, addr, a, bytes);
-		ut64 b = rz_read_ble64(a, 0); // esil->analysis->big_endian);
-		if(esil->analysis->big_endian)
-			rz_mem_swapendian((ut8 *)&b, (const ut8 *)&b, bytes);
+		ut64 b = rz_read_ble64(a, esil->analysis->big_endian);
 
 		snprintf(res, sizeof(res), "0x%" PFMT64x, b & bitmask);
 		rz_analysis_esil_push(esil, res);

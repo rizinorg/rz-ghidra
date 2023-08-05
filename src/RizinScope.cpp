@@ -122,7 +122,8 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 				auto flag = reinterpret_cast<RzFlagItem *>(pos);
 				if(flag->space && flag->space->name && !strcmp(flag->space->name, RZ_FLAGS_FS_SECTIONS))
 					continue;
-				if (flag->realname && *flag->realname) {
+				if(!strcmp(flag->name, fcn->name) && flag->realname && *flag->realname)
+				{
 					fcn_name = flag->realname;
 					break;
 				}
