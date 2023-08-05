@@ -309,8 +309,8 @@ uint32_t sym.get_global_array_entry(void)
 }
 EOF
 CMDS=<<EOF
-avga global_var obj.global_var uint32_t
-avga global_array obj.global_array uint32_t[2]
+avga global_var uint32_t @ obj.global_var
+avga global_array uint32_t[2] @ obj.global_array
 s sym.get_global_var
 af
 e ghidra.rawptr=1
@@ -3232,9 +3232,6 @@ jstring sym.Java_JNIFoo_nativeFoo(JNIEnv *env, jobject obj)
     int64_t iVar1;
     jstring pvVar2;
     int64_t var_30h;
-    void *var_18h;
-    void *ptr;
-    int64_t var_8h;
     
     iVar1 = sym.imp.malloc(0x1e);
     if (iVar1 == 0) {
@@ -3267,8 +3264,8 @@ true
 
 // WARNING: Variable defined which should be unmapped: var_10h
 // WARNING: Variable defined which should be unmapped: var_8h
-// WARNING: [rz-ghidra] Detected overlap for variable var_2ch
 // WARNING: [rz-ghidra] Detected overlap for variable var_14h
+// WARNING: [rz-ghidra] Detected overlap for variable var_2ch
 
 undefined8 entry0(int64_t arg1, int64_t arg2)
 {
@@ -3300,8 +3297,8 @@ undefined8 entry0(int64_t arg1, int64_t arg2)
 
 // WARNING: Variable defined which should be unmapped: var_10h
 // WARNING: Variable defined which should be unmapped: var_8h
-// WARNING: [rz-ghidra] Detected overlap for variable var_2ch
 // WARNING: [rz-ghidra] Detected overlap for variable var_14h
+// WARNING: [rz-ghidra] Detected overlap for variable var_2ch
 
 undefined8 entry0(int64_t arg1, int64_t arg2)
 {
@@ -3361,14 +3358,12 @@ EOF
 EXPECT=<<EOF
 
 // WARNING: Variable defined which should be unmapped: var_10h
-// WARNING: [rz-ghidra] Detected overlap for variable var_28h
 // WARNING: [rz-ghidra] Detected overlap for variable var_2ch
 
 void method.Test.methodWithTwoArgs:secondArg:(int64_t arg1, int64_t arg2, int64_t arg3, int64_t arg4)
 {
     int32_t var_2ch;
-    int64_t var_24h;
-    int64_t var_18h;
+    int64_t var_28h;
     int64_t var_10h;
     
     var_2ch = (int32_t)arg4;
