@@ -4,7 +4,7 @@
 
 <!--[![Build Status](https://travis-ci.com/rizinorg/rz-ghidra-dec.svg?token=JDmXp2pDhXxtPErySVHM&branch=master)](https://travis-ci.com/rizinorg/rz-ghidra)-->
 
-This is an integration of the Ghidra decompiler and Sleigh Disassembler for [rizin](https://github.com/rizinorg/rizin).
+This is an integration of the Ghidra decompiler and Sleigh Disassembler for [Rizin](https://github.com/rizinorg/rizin).
 It is solely based on the decompiler part of Ghidra, which is written entirely in
 C++, so Ghidra itself is not required at all and the plugin can be built self-contained.
 This project was presented, initially for radare2, at r2con 2019 as part of the Cutter talk: [https://youtu.be/eHtMiezr7l8?t=950](https://youtu.be/eHtMiezr7l8?t=950)
@@ -48,7 +48,7 @@ git submodule init
 git submodule update
 ```
 
-Then, the rizin plugin can be built and installed as follows:
+Then, the Rizin plugin can be built and installed as follows:
 
 ```
 mkdir build && cd build
@@ -57,8 +57,9 @@ make
 make install
 ```
 
-Here, set the `CMAKE_INSTALL_PREFIX` to a location where rizin can load the plugin from.
+Here, set the `CMAKE_INSTALL_PREFIX` to a location where Rizin can load the plugin from.
 The install step is necessary for the plugin to work because it includes installing the necessary Sleigh files.
+If you are using Rizin from git, also set `CMAKE_PREFIX_PATH` to the Rizin installation directory.
 
 To also build the Cutter plugin, you must have Cutter installed from source under some prefix,
 which can be optionally specified with `-DCMAKE_PREFIX_PATH=<path>`, then pass `-DBUILD_CUTTER_PLUGIN=ON` to cmake
