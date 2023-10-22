@@ -5,6 +5,8 @@
 #include "SleighAsm.h"
 #include "ArchMap.h"
 
+using namespace ghidra;
+
 AsmLoadImage::AsmLoadImage()
 	: LoadImage("rizin_asm"), buf(rz_buf_new_sparse(0xff), rz_buf_free)
 {

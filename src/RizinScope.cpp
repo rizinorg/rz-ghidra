@@ -11,6 +11,8 @@
 
 #include "RizinUtils.h"
 
+using namespace ghidra;
+
 RizinScope::RizinScope(RizinArchitecture *arch)
 		: Scope(0, "", arch, this),
 		  arch(arch),

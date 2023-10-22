@@ -6,7 +6,7 @@
 
 #include <marshal.hh>
 
-class PrettyXmlEncode: public XmlEncode
+class PrettyXmlEncode: public ghidra::XmlEncode
 {
 	private:
 		int depth = 0;
@@ -14,8 +14,8 @@ class PrettyXmlEncode: public XmlEncode
 
 	public:
 		PrettyXmlEncode(std::ostream &s) : XmlEncode(s) {}
-		void openElement(const ElementId &elemId) override;
-		void closeElement(const ElementId &elemId) override;
+		void openElement(const ghidra::ElementId &elemId) override;
+		void closeElement(const ghidra::ElementId &elemId) override;
 };
 
 #endif

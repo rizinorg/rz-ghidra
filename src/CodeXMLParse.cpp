@@ -16,6 +16,8 @@
 #include <sstream>
 #include <string>
 
+using namespace ghidra;
+
 struct ParseCodeXMLContext
 {
 	Funcdata *func;
@@ -262,7 +264,8 @@ static const std::map<std::string, std::vector <void (*)(ANNOTATOR_PARAMS)> > an
 	{ "variable", { AnnotateVariable, AnnotateColor } },
 	{ "funcname", { AnnotateFunctionName, AnnotateColor } },
 	{ "type", { AnnotateColor } },
-	{ "syntax", { AnnotateColor } }
+	{ "syntax", { AnnotateColor } },
+	{ "value", { AnnotateColor } }
 };
 
 //#define TEST_UNKNOWN_NODES

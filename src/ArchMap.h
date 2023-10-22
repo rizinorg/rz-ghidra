@@ -21,6 +21,6 @@ RZ_API std::string SleighIdFromCore(RzCore *core);
 /**
  * Match sleigh id from sleigh-plugin specific settings (asm.cpu)
  */
-RZ_API std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian, const vector<LanguageDescription> &langs);
+RZ_API std::string SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian, const std::vector<ghidra::LanguageDescription> &langs);
 
 #endif

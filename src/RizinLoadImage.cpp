@@ -5,6 +5,8 @@
 #include "RizinArchitecture.h"
 #include "RizinUtils.h"
 
+using namespace ghidra;
+
 RizinLoadImage::RizinLoadImage(RzCoreMutex *core_mutex, AddrSpaceManager *addr_space_manager)
 	: LoadImage("rizin_program"),
 	core_mutex(core_mutex),

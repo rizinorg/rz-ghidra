@@ -15,18 +15,18 @@
 
 class RzCoreMutex;
 
-class RizinLoadImage : public LoadImage
+class RizinLoadImage : public ghidra::LoadImage
 {
 	private:
 		RzCoreMutex *const core_mutex;
-		AddrSpaceManager *addr_space_manager;
+		ghidra::AddrSpaceManager *addr_space_manager;
 
 	public:
-		explicit RizinLoadImage(RzCoreMutex *core_mutex, AddrSpaceManager *addr_space_manager);
+		explicit RizinLoadImage(RzCoreMutex *core_mutex, ghidra::AddrSpaceManager *addr_space_manager);
 
-		void loadFill(uint1 *ptr, int4 size, const Address &addr) override;
-		void getReadonly(RangeList &list) const override;
-		string getArchType() const override;
+		void loadFill(ghidra::uint1 *ptr, ghidra::int4 size, const ghidra::Address &addr) override;
+		void getReadonly(ghidra::RangeList &list) const override;
+		std::string getArchType() const override;
 		void adjustVma(long adjust) override;
 };
 

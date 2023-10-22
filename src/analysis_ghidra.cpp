@@ -13,6 +13,8 @@
 #include "SleighAsm.h"
 #include "SleighAnalysisValue.h"
 
+using namespace ghidra;
+
 static SleighAsm sanalysis;
 
 static int archinfo(RzAnalysis *analysis, RzAnalysisInfoType query)

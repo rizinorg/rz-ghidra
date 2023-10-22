@@ -3,6 +3,8 @@
 
 #include "PrettyXmlEncode.h"
 
+using namespace ghidra;
+
 void PrettyXmlEncode::indent()
 {
 	for(int i = 0; i < depth; i++)

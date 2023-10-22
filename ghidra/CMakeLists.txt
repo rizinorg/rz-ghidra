@@ -171,11 +171,6 @@ if(GENERATE_PARSERS)
 			else()
 				set(yacc_prefix "${yacc_name}")
 			endif()
-			if(BISON_VERSION VERSION_LESS 2.6)
-				set(BISON_COMPILE_FLAGS "--name-prefix=${yacc_prefix}")
-			else()
-				set(BISON_COMPILE_FLAGS "-Dapi.prefix={${yacc_prefix}}")
-			endif()
 			BISON_TARGET(${yacc_name}
 					"${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_DIR}/${yacc_file}"
 					"${CMAKE_CURRENT_BINARY_DIR}/bison/${yacc_name}.cpp"

@@ -8,6 +8,8 @@
 
 #include "RizinUtils.h"
 
+using namespace ghidra;
+
 RizinCommentDatabase::RizinCommentDatabase(RizinArchitecture *arch)
 	: arch(arch),
 	cache_filled(false)

@@ -29,7 +29,7 @@ public:
 	bool is_mem() const { return type == RZ_ANALYSIS_VAL_MEM; }
 
 	void invalid() { absolute = -1; }
-	void mem(uint4 size);
+	void mem(ghidra::uint4 size);
 	RzAnalysisValue *dup() const;
 
 private:
