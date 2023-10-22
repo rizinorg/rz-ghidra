@@ -9,6 +9,8 @@
 
 #include "RizinUtils.h"
 
+using namespace ghidra;
+
 RizinTypeFactory::RizinTypeFactory(RizinArchitecture *arch)
 	: TypeFactory(arch),
 	arch(arch)

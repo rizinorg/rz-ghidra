@@ -15,6 +15,8 @@
 #include <iostream>
 #include <cassert>
 
+using namespace ghidra;
+
 // maps rizin calling conventions to decompiler proto models
 static const std::map<std::string, std::string> cc_map = {
 		{ "cdecl", "__cdecl" },
@@ -153,7 +155,10 @@ Scope *RizinArchitecture::buildDatabase(DocumentStorage &store)
 void RizinArchitecture::buildTypegrp(DocumentStorage &store)
 {
 	types = rizinTypeFactory = new RizinTypeFactory(this);
+}
 
+void RizinArchitecture::buildCoreTypes(DocumentStorage &store)
+{
 	// TODO: load from rizin?
 	types->setCoreType("void", 1, TYPE_VOID, false);
 	types->setCoreType("bool", 1, TYPE_BOOL, false);

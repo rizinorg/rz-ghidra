@@ -3,6 +3,8 @@
 
 #include "SleighAnalysisValue.h"
 
+using namespace ghidra;
+
 RzAnalysisValueType SleighAnalysisValue::type_from_values(const SleighAnalysisValue &in0, const SleighAnalysisValue &in1)
 {
 	RzAnalysisValueType res;

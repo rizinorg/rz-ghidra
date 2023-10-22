@@ -7,6 +7,8 @@
 #include <map>
 #include <functional>
 
+using namespace ghidra;
+
 std::string CompilerFromCore(RzCore *core);
 
 template<typename T>

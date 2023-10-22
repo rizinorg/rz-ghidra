@@ -4,6 +4,8 @@
 
 #include "SleighInstruction.h"
 
+using namespace ghidra;
+
 SleighInstructionPrototype *RizinSleigh::getPrototype(SleighInstruction *context)
 {
 	SleighInstructionPrototype *new_proto = new SleighInstructionPrototype(this, context);
