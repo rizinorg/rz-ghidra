@@ -2,9 +2,14 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include "RizinPrintC.h"
+#include "RizinArchitecture.h"
 
 #include <varnode.hh>
 #include <architecture.hh>
+
+#include <rz_core.h>
+
+#include "RizinUtils.h"
 
 using namespace ghidra;
 
@@ -41,4 +46,28 @@ void RizinPrintC::pushUnnamedLocation(const Address &addr, const Varnode *vn, co
 	{
 		PrintC::pushUnnamedLocation(addr,vn, op);
 	}
+}
+
+std::string RizinPrintC::genericFunctionName(const ghidra::Address &addr)
+{
+	auto arch = dynamic_cast<RizinArchitecture *>(glb);
+	if (arch) {
+		RzCoreLock core(arch->getCore());
+		const RzList *flags = rz_flag_get_list(core->flags, addr.getOffset());
+		if(flags)
+		{
+			RzListIter *iter;
+			void *pos;
+			rz_list_foreach(flags, iter, pos)
+			{
+				auto flag = reinterpret_cast<RzFlagItem *>(pos);
+				if(flag->space && flag->space->name && !strcmp(flag->space->name, RZ_FLAGS_FS_SECTIONS))
+					continue;
+				if(core->flags->realnames && flag->realname)
+					return flag->realname;
+				return flag->name;
+			}
+		}
+	}
+	return PrintC::genericFunctionName(addr);
 }
