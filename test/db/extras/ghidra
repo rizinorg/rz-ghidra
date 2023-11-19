@@ -1129,7 +1129,7 @@ NAME=constant variable annotation
 FILE=bins/dectest32
 EXPECT=<<EOF
 {
-  "code": "\nvoid sym.PrintAmbassador(int32_t arg_4h)\n{\n    func_0x08049050(\"Ambassador value: \");\n    switch(arg_4h) {\n    case 0:\n        func_0x08049050(\"pure\");\n        break;\n    case 1:\n        func_0x08049050(\"reason\");\n        break;\n    case 2:\n        func_0x08049050(\"revolution\");\n        break;\n    case 3:\n        func_0x08049050(\"echoes\");\n        break;\n    case 4:\n        func_0x08049050(\"wall\");\n        break;\n    default:\n        if (arg_4h == 1000000) {\n            func_0x08049050(\"million\");\n        }\n        break;\n    case -0x452e541f:\n        break;\n    }\n    func_0x08049090(10);\n    return;\n}\n",
+  "code": "\nvoid sym.PrintAmbassador(int32_t arg_4h)\n{\n    sym.imp.printf(\"Ambassador value: \");\n    switch(arg_4h) {\n    case 0:\n        sym.imp.printf(\"pure\");\n        break;\n    case 1:\n        sym.imp.printf(\"reason\");\n        break;\n    case 2:\n        sym.imp.printf(\"revolution\");\n        break;\n    case 3:\n        sym.imp.printf(\"echoes\");\n        break;\n    case 4:\n        sym.imp.printf(\"wall\");\n        break;\n    default:\n        if (arg_4h == 1000000) {\n            sym.imp.printf(\"million\");\n        }\n        break;\n    case -0x452e541f:\n        break;\n    }\n    sym.imp.putchar(10);\n    return;\n}\n",
   "annotations": [
     {
       "start": 1,
@@ -1176,477 +1176,477 @@ EXPECT=<<EOF
     },
     {
       "start": 48,
-      "end": 63,
+      "end": 62,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
       "start": 48,
-      "end": 63,
+      "end": 62,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 64,
-      "end": 84,
+      "start": 63,
+      "end": 83,
       "type": "constant_variable",
       "offset": 134520840
     },
     {
-      "start": 64,
-      "end": 84,
+      "start": 63,
+      "end": 83,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
       "start": 48,
-      "end": 85,
+      "end": 84,
       "type": "offset",
       "offset": 134517295
     },
     {
-      "start": 91,
-      "end": 97,
+      "start": 90,
+      "end": 96,
       "type": "offset",
       "offset": 134517332
     },
     {
-      "start": 91,
-      "end": 97,
+      "start": 90,
+      "end": 96,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 98,
-      "end": 104,
+      "start": 97,
+      "end": 103,
       "type": "function_parameter",
       "name": "arg_4h"
     },
     {
-      "start": 98,
-      "end": 104,
+      "start": 97,
+      "end": 103,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 112,
-      "end": 116,
+      "start": 111,
+      "end": 115,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 117,
-      "end": 118,
+      "start": 116,
+      "end": 117,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 128,
-      "end": 143,
+      "start": 127,
+      "end": 141,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 128,
-      "end": 143,
+      "start": 127,
+      "end": 141,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 144,
-      "end": 150,
+      "start": 142,
+      "end": 148,
       "type": "constant_variable",
       "offset": 134520859
     },
     {
-      "start": 144,
-      "end": 150,
+      "start": 142,
+      "end": 148,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 128,
-      "end": 151,
+      "start": 127,
+      "end": 149,
       "type": "offset",
       "offset": 134517353
     },
     {
-      "start": 161,
-      "end": 166,
+      "start": 159,
+      "end": 164,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 161,
-      "end": 167,
+      "start": 159,
+      "end": 165,
       "type": "offset",
       "offset": 134517361
     },
     {
-      "start": 172,
-      "end": 176,
+      "start": 170,
+      "end": 174,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 177,
-      "end": 178,
+      "start": 175,
+      "end": 176,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 188,
-      "end": 203,
+      "start": 186,
+      "end": 200,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 188,
-      "end": 203,
+      "start": 186,
+      "end": 200,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 204,
-      "end": 212,
+      "start": 201,
+      "end": 209,
       "type": "constant_variable",
       "offset": 134520864
     },
     {
-      "start": 204,
-      "end": 212,
+      "start": 201,
+      "end": 209,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 188,
-      "end": 213,
+      "start": 186,
+      "end": 210,
       "type": "offset",
       "offset": 134517371
     },
     {
-      "start": 223,
-      "end": 228,
+      "start": 220,
+      "end": 225,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 223,
-      "end": 229,
+      "start": 220,
+      "end": 226,
       "type": "offset",
       "offset": 134517379
     },
     {
-      "start": 234,
-      "end": 238,
+      "start": 231,
+      "end": 235,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 239,
-      "end": 240,
+      "start": 236,
+      "end": 237,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 250,
-      "end": 265,
+      "start": 247,
+      "end": 261,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 250,
-      "end": 265,
+      "start": 247,
+      "end": 261,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 266,
-      "end": 278,
+      "start": 262,
+      "end": 274,
       "type": "constant_variable",
       "offset": 134520871
     },
     {
-      "start": 266,
-      "end": 278,
+      "start": 262,
+      "end": 274,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 250,
-      "end": 279,
+      "start": 247,
+      "end": 275,
       "type": "offset",
       "offset": 134517389
     },
     {
-      "start": 289,
-      "end": 294,
+      "start": 285,
+      "end": 290,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 289,
-      "end": 295,
+      "start": 285,
+      "end": 291,
       "type": "offset",
       "offset": 134517397
     },
     {
-      "start": 300,
-      "end": 304,
+      "start": 296,
+      "end": 300,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 305,
-      "end": 306,
+      "start": 301,
+      "end": 302,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 316,
-      "end": 331,
+      "start": 312,
+      "end": 326,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 316,
-      "end": 331,
+      "start": 312,
+      "end": 326,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 332,
-      "end": 340,
+      "start": 327,
+      "end": 335,
       "type": "constant_variable",
       "offset": 134520882
     },
     {
-      "start": 332,
-      "end": 340,
+      "start": 327,
+      "end": 335,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 316,
-      "end": 341,
+      "start": 312,
+      "end": 336,
       "type": "offset",
       "offset": 134517407
     },
     {
-      "start": 351,
-      "end": 356,
+      "start": 346,
+      "end": 351,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 351,
-      "end": 357,
+      "start": 346,
+      "end": 352,
       "type": "offset",
       "offset": 134517415
     },
     {
-      "start": 362,
-      "end": 366,
+      "start": 357,
+      "end": 361,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 367,
-      "end": 368,
+      "start": 362,
+      "end": 363,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 378,
-      "end": 393,
+      "start": 373,
+      "end": 387,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 378,
-      "end": 393,
+      "start": 373,
+      "end": 387,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 394,
-      "end": 400,
+      "start": 388,
+      "end": 394,
       "type": "constant_variable",
       "offset": 134520889
     },
     {
-      "start": 394,
-      "end": 400,
+      "start": 388,
+      "end": 394,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 378,
-      "end": 401,
+      "start": 373,
+      "end": 395,
       "type": "offset",
       "offset": 134517425
     },
     {
-      "start": 411,
-      "end": 416,
+      "start": 405,
+      "end": 410,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 411,
-      "end": 417,
+      "start": 405,
+      "end": 411,
       "type": "offset",
       "offset": 134517433
     },
     {
-      "start": 422,
-      "end": 429,
+      "start": 416,
+      "end": 423,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 439,
-      "end": 441,
+      "start": 433,
+      "end": 435,
       "type": "offset",
       "offset": 134517341
     },
     {
-      "start": 439,
-      "end": 441,
+      "start": 433,
+      "end": 435,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 443,
-      "end": 449,
+      "start": 437,
+      "end": 443,
       "type": "function_parameter",
       "name": "arg_4h"
     },
     {
-      "start": 443,
-      "end": 449,
+      "start": 437,
+      "end": 443,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 450,
-      "end": 452,
+      "start": 444,
+      "end": 446,
       "type": "offset",
       "offset": 134517334
     },
     {
-      "start": 453,
-      "end": 460,
+      "start": 447,
+      "end": 454,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 476,
-      "end": 491,
+      "start": 470,
+      "end": 484,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 476,
-      "end": 491,
+      "start": 470,
+      "end": 484,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 492,
-      "end": 501,
+      "start": 485,
+      "end": 494,
       "type": "constant_variable",
       "offset": 134520894
     },
     {
-      "start": 492,
-      "end": 501,
+      "start": 485,
+      "end": 494,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 476,
-      "end": 502,
+      "start": 470,
+      "end": 495,
       "type": "offset",
       "offset": 134517443
     },
     {
-      "start": 522,
-      "end": 527,
+      "start": 515,
+      "end": 520,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 533,
-      "end": 537,
+      "start": 526,
+      "end": 530,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 538,
-      "end": 549,
+      "start": 531,
+      "end": 542,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 559,
-      "end": 564,
+      "start": 552,
+      "end": 557,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 559,
-      "end": 565,
+      "start": 552,
+      "end": 558,
       "type": "offset",
       "offset": 134517332
     },
     {
-      "start": 576,
-      "end": 591,
+      "start": 569,
+      "end": 584,
       "type": "function_name",
       "name": "",
       "offset": 134516880
     },
     {
-      "start": 576,
-      "end": 591,
+      "start": 569,
+      "end": 584,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 592,
-      "end": 594,
+      "start": 585,
+      "end": 587,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 576,
-      "end": 595,
+      "start": 569,
+      "end": 588,
       "type": "offset",
       "offset": 134517459
     },
     {
-      "start": 601,
-      "end": 607,
+      "start": 594,
+      "end": 600,
       "type": "offset",
       "offset": 134517469
     },
     {
-      "start": 601,
-      "end": 607,
+      "start": 594,
+      "end": 600,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 601,
-      "end": 607,
+      "start": 594,
+      "end": 600,
       "type": "offset",
       "offset": 134517469
     }
@@ -2225,7 +2225,7 @@ void entry0(void)
     int32_t var_ch;
     
     // [10] -r-x section size 200 named .text
-    func_0x0000039c();
+    sym.imp.__libc_init();
     // WARNING: Bad instruction - Truncating control flow here
     halt_baddata();
 }
@@ -3286,6 +3286,71 @@ void method.Test.methodWithTwoArgs:secondArg:(int64_t arg1, int64_t arg2, int64_
     *(int32_t *)(arg1 + 8) = var_2ch;
     NSLog(__CFConstantStringClassReference);
     return;
+}
+EOF
+RUN
+
+NAME=Generated function names without rizin functions
+FILE=rizin-testbins/mach0/hello-macos-arm64-objc-stubs-stripped
+CMDS=<<EOF
+aalos
+s main
+aF
+pdg @e:asm.flags.real=1
+pdg @e:asm.flags.real=0
+EOF
+EXPECT=<<EOF
+
+// WARNING: Variable defined which should be unmapped: var_10h
+
+undefined8 main(void)
+{
+    undefined4 uVar1;
+    undefined8 uVar2;
+    undefined8 uVar3;
+    int64_t var_50h;
+    int64_t var_48h;
+    int64_t var_40h;
+    int64_t var_38h;
+    int64_t var_10h;
+    
+    uVar2 = objc_autoreleasePoolPush();
+    uVar1 = (**(code **)0x100008158)(0x100008148);
+    NSLog(__CFConstantStringClassReference);
+    uVar3 = objc_alloc_init(0x100008120);
+    objc_msgSend$methodWithoutArgs(uVar3, var_48h);
+    objc_msgSend$methodWithOneArg:(uVar3, var_48h, 0x7b);
+    objc_msgSend$methodWithTwoArgs:secondArg:(uVar3, var_48h, 0x539, uVar1);
+    objc_msgSend$methodWithReturn(uVar3, var_48h);
+    NSLog(__CFConstantStringClassReference);
+    objc_autoreleasePoolPop(uVar2);
+    return 0;
+}
+
+// WARNING: Variable defined which should be unmapped: var_10h
+
+undefined8 main(void)
+{
+    undefined4 uVar1;
+    undefined8 uVar2;
+    undefined8 uVar3;
+    int64_t var_50h;
+    int64_t var_48h;
+    int64_t var_40h;
+    int64_t var_38h;
+    int64_t var_10h;
+    
+    uVar2 = sym.imp.objc_autoreleasePoolPush();
+    uVar1 = (**(code **)0x100008158)(0x100008148);
+    sym.imp.NSLog(reloc.__CFConstantStringClassReference.1000040a8);
+    uVar3 = sym.imp.objc_alloc_init(0x100008120);
+    stub.objc_msgSend_methodWithoutArgs(uVar3, var_48h);
+    stub.objc_msgSend_methodWithOneArg:(uVar3, var_48h, 0x7b);
+    stub.objc_msgSend_methodWithTwoArgs:secondArg:(uVar3, var_48h, 0x539, uVar1);
+    stub.objc_msgSend_methodWithReturn(uVar3, var_48h);
+    sym.imp.NSLog(reloc.__CFConstantStringClassReference.1000040c8);
+    sym.imp.objc_autoreleasePoolPop(uVar2);
+    return 0;
 }
 EOF
 RUN
