@@ -3138,13 +3138,10 @@ pdg
 EOF
 EXPECT=<<EOF
 
-// WARNING: Variable defined which should be unmapped: var_30h
-
 jstring sym.Java_JNIFoo_nativeFoo(JNIEnv *env, jobject obj)
 {
     int64_t iVar1;
     jstring pvVar2;
-    int64_t var_30h;
     
     iVar1 = sym.imp.malloc(0x1e);
     if (iVar1 == 0) {
