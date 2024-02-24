@@ -190,10 +190,9 @@ EXPECT=<<EOF
 0x80001008 lui t0, 0x8003
 0x8000100c addiu t0, t0, -0x3b50
 0x80001010 lui t1, 0x8015
-0x80001014   str.e0:
-0x80001014 0x80001019 invalid
-0x8000101a sll zero, a1, 0x0
-0x8000101e invalid
+0x80001014 addiu t1, t1, 0x6530
+0x80001018 beq t0, t1, 0x80001030
+0x8000101c nop
 0x80001020 addiu t0, t0, 0x4
 0x80001024 sltu at, t0, t1
 0x80001028   pc:
@@ -236,6 +235,7 @@ EXPECT=<<EOF
 0x800010b8 sw zero, 0x0(at)
 0x800010bc bgtz v0, 0x800010b8
 0x800010c0 addi v0, v0, -0x1
+0x800010c4 mfc0 v0, wired
 EOF
 CMDS=<<EOF
 pdga
@@ -538,8 +538,8 @@ EXPECT=<<EOF
 0x00011828 ldub [l3+0xc4],g1
 0x0001182c cmp g1,0x0
 0x00011830 bpne,pn %icc,0x11898
-0x00011834 sethi %hi(0x4a000),l2
-0x00011838 sethi %hi(0x4a000),l1
+0x00011834 sethi %hi(segment.LOAD1),l2
+0x00011838 sethi %hi(segment.LOAD1),l1
 0x0001183c or l2,0x8,l2
 0x00011840 or l1,0xc,l1
 0x00011844 sub l1,l2,l1
