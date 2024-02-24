@@ -118,16 +118,16 @@ static bool flowTypeHasFallthrough(FlowType t)
 	}
 }
 
-static uint4 hashConstructState(ConstructState *cs, uint4 hashCode)
+static ghidra::uint4 hashConstructState(ghidra::ConstructState *cs, ghidra::uint4 hashCode)
 {
 	if(cs->ct == nullptr)
 		return hashCode;
 
-	uint4 id = cs->ct->getId();
-	hashCode = crc_update(hashCode, id >> 8);
-	hashCode = crc_update(hashCode, id);
+	ghidra::uint4 id = cs->ct->getId();
+	hashCode = ghidra::crc_update(hashCode, id >> 8);
+	hashCode = ghidra::crc_update(hashCode, id);
 
-	for(ConstructState *p: cs->resolve)
+	for(ghidra::ConstructState *p: cs->resolve)
 		if(p != nullptr)
 			hashCode = hashConstructState(p, hashCode);
 
@@ -142,10 +142,10 @@ static uint4 hashConstructState(ConstructState *cs, uint4 hashCode)
 class OpTplWalker
 {
 private:
-	ConstructState *point = nullptr;          // The current node being visited
-	const vector<OpTpl *> *oparray = nullptr; // current array of ops being traversed
-	int4 depth;                               // Depth of current node within the tree
-	int4 breadcrumb[64];                      // Path of operands from the root
+	ghidra::ConstructState *point = nullptr;          // The current node being visited
+	const std::vector<ghidra::OpTpl *> *oparray = nullptr; // current array of ops being traversed
+	ghidra::int4 depth;                               // Depth of current node within the tree
+	ghidra::int4 breadcrumb[64];                      // Path of operands from the root
 	int maxsize;                              // Maximum number of directives for this point
 	int sectionnum;
 
@@ -153,10 +153,10 @@ private:
 	{
 		maxsize = 0;
 		oparray = nullptr;
-		Constructor *ct = point->ct;
+		ghidra::Constructor *ct = point->ct;
 		if(ct == nullptr)
 			return;
-		const ConstructTpl *tpl;
+		const ghidra::ConstructTpl *tpl;
 		if(sectionnum < 0)
 		{
 			tpl = ct->getTempl();
@@ -182,7 +182,7 @@ public:
 	 * @param root is the root ConstructState of the tree
 	 * @param sectionnum is the named section to traverse (or -1 for main section)
 	 */
-	OpTplWalker(ConstructState *root, int sectionnum): point(root), sectionnum(sectionnum)
+	OpTplWalker(ghidra::ConstructState *root, int sectionnum): point(root), sectionnum(sectionnum)
 	{
 		// NOTE: breadcrumb array size limits depth of parse
 		depth = 0;
@@ -194,7 +194,7 @@ public:
 	 * Constructor for walking a single template
 	 * @param tpl
 	 */
-	OpTplWalker(ConstructTpl *tpl)
+	OpTplWalker(ghidra::ConstructTpl *tpl)
 	{
 		depth = 0;
 		breadcrumb[0] = 0;
@@ -202,7 +202,7 @@ public:
 		maxsize = oparray->size();
 	}
 
-	ConstructState *getState() { return point; }
+	ghidra::ConstructState *getState() { return point; }
 
 	bool isState()
 	{
@@ -246,7 +246,7 @@ public:
 		}
 	}
 
-	int nextOpTpl(OpTpl *(&lastop))
+	int nextOpTpl(ghidra::OpTpl *(&lastop))
 	{
 		int curind = breadcrumb[depth]++;
 		if(curind >= maxsize)
@@ -254,8 +254,8 @@ public:
 		if(oparray == nullptr)
 			// Plus one to avoid overlay when zero appear, which means return truly lastop
 			return curind + 1; // Virtual build directive
-		OpTpl *op = (*oparray)[curind];
-		if(op->getOpcode() != OpCode::CPUI_MULTIEQUAL)
+		ghidra::OpTpl *op = (*oparray)[curind];
+		if(op->getOpcode() != ghidra::OpCode::CPUI_MULTIEQUAL)
 		{ // if NOT a build directive
 			lastop = op;
 			return 0; // return ordinary OpTpl
@@ -268,51 +268,51 @@ public:
 };
 
 class SleighInstructionPrototype;
-class SleighParserContext : public ParserContext
+class SleighParserContext : public ghidra::ParserContext
 {
 private:
 	SleighInstructionPrototype *prototype = nullptr;
 
 public:
-	SleighParserContext(ContextCache *ccache, Translate *trans): ParserContext(ccache, trans) {}
+	SleighParserContext(ghidra::ContextCache *ccache, ghidra::Translate *trans): ParserContext(ccache, trans) {}
 	SleighInstructionPrototype *getPrototype() { return prototype; }
 	void setPrototype(SleighInstructionPrototype *p);
 };
 
 class SleighInstruction;
 class SleighInstructionPrototype;
-class RizinSleigh : public Sleigh
+class RizinSleigh : public ghidra::Sleigh
 {
 	// To export protected member functions to SleighInstructionPrototype
 	friend SleighInstructionPrototype;
 
 private:
-	LoadImage *rizin_loader = nullptr;
-	mutable LRUCache<uintm, SleighInstruction *> ins_cache;
-	mutable unordered_map<uint4, SleighInstructionPrototype *> proto_cache;
+	ghidra::LoadImage *rizin_loader = nullptr;
+	mutable LRUCache<ghidra::uintm, SleighInstruction *> ins_cache;
+	mutable std::unordered_map<ghidra::uint4, SleighInstructionPrototype *> proto_cache;
 
-	void generateLocation(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker);
-	void generatePointer(const VarnodeTpl *vntpl, VarnodeData &vn, ParserWalker &walker);
+	void generateLocation(const ghidra::VarnodeTpl *vntpl, ghidra::VarnodeData &vn, ghidra::ParserWalker &walker);
+	void generatePointer(const ghidra::VarnodeTpl *vntpl, ghidra::VarnodeData &vn, ghidra::ParserWalker &walker);
 
 public:
-	RizinSleigh(LoadImage *ld, ContextDatabase *c_db): rizin_loader(ld), Sleigh(ld, c_db) {}
+	RizinSleigh(ghidra::LoadImage *ld, ghidra::ContextDatabase *c_db): rizin_loader(ld), Sleigh(ld, c_db) {}
 	~RizinSleigh() { clearCache(); }
 
-	void reset(LoadImage *ld,ContextDatabase *c_db) { rizin_loader = ld; Sleigh::reset(ld, c_db); }
-	void reconstructContext(ParserContext &protoContext);
-	SleighParserContext *newSleighParserContext(Address &addr, SleighInstructionPrototype *proto);
-	SleighParserContext *getParserContext(Address &addr, SleighInstructionPrototype *proto);
+	void reset(ghidra::LoadImage *ld, ghidra::ContextDatabase *c_db) { rizin_loader = ld; Sleigh::reset(ld, c_db); }
+	void reconstructContext(ghidra::ParserContext &protoContext);
+	SleighParserContext *newSleighParserContext(ghidra::Address &addr, SleighInstructionPrototype *proto);
+	SleighParserContext *getParserContext(ghidra::Address &addr, SleighInstructionPrototype *proto);
 
 	SleighInstructionPrototype *getPrototype(SleighInstruction *context);
-	SleighInstruction *getInstruction(Address &addr);
+	SleighInstruction *getInstruction(ghidra::Address &addr);
 
-	VarnodeData dumpInvar(OpTpl *op, Address &addr);
+	ghidra::VarnodeData dumpInvar(ghidra::OpTpl *op, ghidra::Address &addr);
 
 	void resolve(SleighParserContext &pos) const;
 	void clearCache();
-	LRUCache<uintm, SleighInstruction *> *getInsCache() { return &ins_cache; }
+	LRUCache<ghidra::uintm, SleighInstruction *> *getInsCache() { return &ins_cache; }
 
-	ParserContext *getContext(const Address &addr,int4 state) const
+	ghidra::ParserContext *getContext(const ghidra::Address &addr, ghidra::int4 state) const
 	{
 		return obtainContext(addr, state);
 	}
@@ -320,17 +320,17 @@ public:
 
 struct SleighInstruction
 {
-	Address baseaddr;
+	ghidra::Address baseaddr;
 	SleighInstructionPrototype *proto = nullptr;
 
-	SleighInstruction(Address &addr): baseaddr(addr) {}
+	SleighInstruction(ghidra::Address &addr): baseaddr(addr) {}
 
 	FlowType getFlowType();
-	std::vector<Address> getFlows();
+	std::vector<ghidra::Address> getFlows();
 	SleighParserContext *getParserContext();
-	SleighParserContext *getParserContext(Address &addr);
-	Address getFallThrough();
-	VarnodeData getIndirectInvar();
+	SleighParserContext *getParserContext(ghidra::Address &addr);
+	ghidra::Address getFallThrough();
+	ghidra::VarnodeData getIndirectInvar();
 };
 
 class SleighInstructionPrototype
@@ -356,9 +356,9 @@ private:
 
 	struct FlowRecord
 	{
-		ConstructState *addressnode =
+		ghidra::ConstructState *addressnode =
 		    nullptr;         // Constructor state containing destination address of flow
-		OpTpl *op = nullptr; // The pcode template producing the flow
+		ghidra::OpTpl *op = nullptr; // The pcode template producing the flow
 		FlowFlags flowFlags = FlowFlags(0); // flags associated with this flow
 	};
 
@@ -367,47 +367,47 @@ private:
 		int delay = 0;
 		bool hasCrossBuilds = false;
 		std::vector<FlowRecord *> flowState;
-		OpTpl *lastop = nullptr;
+		ghidra::OpTpl *lastop = nullptr;
 	};
 
 	FlowType flowType = FlowType::INVALID;
 	int delaySlotByteCnt = 0;
-	int4 length = 0;
+	ghidra::int4 length = 0;
 	bool hasCrossBuilds = false;
 	std::vector<FlowRecord *> flowStateList;
 	std::vector<std::vector<FlowRecord *>> flowStateListNamed;
 	RizinSleigh *sleigh = nullptr;
 
 	FlowFlags gatherFlags(FlowFlags curflags, SleighInstruction *inst, int secnum);
-	void gatherFlows(std::vector<Address> &res, SleighInstruction *inst, int secnum);
-	Address getHandleAddr(FixedHandle &hand, AddrSpace *curSpace);
+	void gatherFlows(std::vector<ghidra::Address> &res, SleighInstruction *inst, int secnum);
+	ghidra::Address getHandleAddr(ghidra::FixedHandle &hand, ghidra::AddrSpace *curSpace);
 	static FlowType convertFlowFlags(FlowFlags flags);
 	static FlowType flowListToFlowType(std::vector<FlowRecord *> &flowstate);
-	static bool handleIsInvalid(FixedHandle &hand);
+	static bool handleIsInvalid(ghidra::FixedHandle &hand);
 	static FlowSummary walkTemplates(OpTplWalker &walker);
-	static void addExplicitFlow(ConstructState *state, OpTpl *op, FlowFlags flags,
+	static void addExplicitFlow(ghidra::ConstructState *state, ghidra::OpTpl *op, FlowFlags flags,
 	                            FlowSummary &summary);
 
 public:
 	SleighInstruction *inst = nullptr;
-	ConstructState rootState;
-	uint4 hashCode = 0;
+	ghidra::ConstructState rootState;
+	ghidra::uint4 hashCode = 0;
 
 	FlowType getFlowType(SleighInstruction *inst);
-	std::vector<Address> getFlows(SleighInstruction *inst);
+	std::vector<ghidra::Address> getFlows(SleighInstruction *inst);
 	static const char *printFlowType(FlowType t);
 	int getLength() { return length; }
-	Address getFallThrough(SleighInstruction *inst);
+	ghidra::Address getFallThrough(SleighInstruction *inst);
 	int getFallThroughOffset(SleighInstruction *inst);
 	// bool isFallthrough() { return flowTypeHasFallthrough(getFlowType()); }
-	SleighParserContext *getParserContext(Address &addr) { return sleigh->getParserContext(addr, this); }
+	SleighParserContext *getParserContext(ghidra::Address &addr) { return sleigh->getParserContext(addr, this); }
 	void cacheTreeInfo(); // It could be renamed to parse(), but keep original name to ease update
-	VarnodeData getIndirectInvar(SleighInstruction *ins);
+	ghidra::VarnodeData getIndirectInvar(SleighInstruction *ins);
 
 	SleighInstructionPrototype(RizinSleigh *s, SleighInstruction *i): sleigh(s), inst(i)
 	{
 		if(sleigh == nullptr)
-			throw LowlevelError("Null pointer in SleighInstructionPrototype ctor");
+			throw ghidra::LowlevelError("Null pointer in SleighInstructionPrototype ctor");
 
 		rootState.parent = nullptr; // rootState = new ConstructState(null);
 		rootState.ct = nullptr;
@@ -434,7 +434,7 @@ public:
 		clearRootState(&rootState);
 	}
 
-	void clearRootState(ConstructState *curr)
+	void clearRootState(ghidra::ConstructState *curr)
 	{
 		// Classic DFS
 		if(curr)
@@ -449,21 +449,21 @@ public:
 	}
 };
 
-class SleighParserWalker : public ParserWalkerChange
+class SleighParserWalker : public ghidra::ParserWalkerChange
 {
 public:
-	SleighParserWalker(ParserContext *c): ParserWalkerChange(c) {}
+	SleighParserWalker(ghidra::ParserContext *c): ParserWalkerChange(c) {}
 
-	void subTreeState(ConstructState *subtree)
+	void subTreeState(ghidra::ConstructState *subtree)
 	{
 		point = subtree;
 		depth = 0;
 		breadcrumb[0] = 0;
 	}
 
-	void allocateOperand(int4 i)
+	void allocateOperand(ghidra::int4 i)
 	{
-		ConstructState *opstate = new ConstructState;
+		ghidra::ConstructState *opstate = new ghidra::ConstructState;
 		opstate->ct = nullptr;
 		opstate->parent = point;
 		opstate->length = opstate->offset = 0;

@@ -44,7 +44,7 @@ jobs:
         pip install meson
     - name: Prepare Rizin and Cutter
       run: |
-         git clone --recursive --depth 1 -b stable https://github.com/rizinorg/rizin
+         git clone --recursive --depth 1 https://github.com/rizinorg/rizin
          cd rizin
          meson build
          ninja -C build

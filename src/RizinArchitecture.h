@@ -12,18 +12,18 @@
 class RizinTypeFactory;
 typedef struct rz_core_t RzCore;
 
-class RizinArchitecture : public SleighArchitecture
+class RizinArchitecture : public ghidra::SleighArchitecture
 {
 	private:
 		RzCoreMutex coreMutex;
 
 		RizinTypeFactory *rizinTypeFactory = nullptr;
-		std::map<std::string, VarnodeData> registers;
+		std::map<std::string, ghidra::VarnodeData> registers;
 		std::vector<std::string> warnings;
 
 		bool rawptr = false;
 
-		void loadRegisters(const Translate *translate);
+		void loadRegisters(const ghidra::Translate *translate);
 
 	public:
 		explicit RizinArchitecture(RzCore *core, const std::string &sleigh_id);
@@ -32,23 +32,24 @@ class RizinArchitecture : public SleighArchitecture
 
 		RizinTypeFactory *getTypeFactory() const { return rizinTypeFactory; }
 
-		ProtoModel *protoModelFromRizinCC(const char *cc);
-		Address registerAddressFromRizinReg(const char *regname);
+		ghidra::ProtoModel *protoModelFromRizinCC(const char *cc);
+		ghidra::Address registerAddressFromRizinReg(const char *regname);
 
 		void addWarning(const std::string &warning)	{ warnings.push_back(warning); }
 		const std::vector<std::string> getWarnings() const { return warnings; }
-		ContextDatabase *getContextDatabase();
+		ghidra::ContextDatabase *getContextDatabase();
 
 		void setRawPtr(bool rawptr) { this->rawptr = rawptr; }
 
 	protected:
-		Translate *buildTranslator(DocumentStorage &store) override;
-		void buildLoader(DocumentStorage &store) override;
-		Scope *buildDatabase(DocumentStorage &store) override;
-		void buildTypegrp(DocumentStorage &store) override;
-		void buildCommentDB(DocumentStorage &store) override;
+		ghidra::Translate *buildTranslator(ghidra::DocumentStorage &store) override;
+		void buildLoader(ghidra::DocumentStorage &store) override;
+		ghidra::Scope *buildDatabase(ghidra::DocumentStorage &store) override;
+		void buildTypegrp(ghidra::DocumentStorage &store) override;
+		void buildCoreTypes(ghidra::DocumentStorage &store) override;
+		void buildCommentDB(ghidra::DocumentStorage &store) override;
 		void postSpecFile() override;
-		void buildAction(DocumentStorage &store) override;
+		void buildAction(ghidra::DocumentStorage &store) override;
 };
 
 

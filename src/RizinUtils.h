@@ -11,9 +11,9 @@ typedef struct rz_list_iter_t RzListIter;
 
 template<typename T, typename F> void rz_list_foreach_cpp(RzList *list, const F &func)
 {
-	for(RzListIter *it = list->head; it; it = it->n)
+	for(RzListIter *it = list->head; it; it = rz_list_iter_get_next(it))
 	{
-		func(reinterpret_cast<T *>(it->data));
+		func(reinterpret_cast<T *>(rz_list_iter_get_data(it)));
 	}
 }
 

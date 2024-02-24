@@ -56,7 +56,6 @@ jobs:
       with:
           repository: rizinorg/rizin
           path: rizin
-          ref: stable
     - name: Extract rizin version
       shell: pwsh
       run: echo "branch=$(python sys/version.py)" >> $Env:GITHUB_OUTPUT

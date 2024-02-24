@@ -6,24 +6,25 @@
 
 #include <printc.hh>
 
-class RizinPrintC : public PrintC
+class RizinPrintC : public ghidra::PrintC
 {
 	protected:
-		void pushUnnamedLocation(const Address &addr, const Varnode *vn,const PcodeOp *op) override;
+		void pushUnnamedLocation(const ghidra::Address &addr, const ghidra::Varnode *vn,const ghidra::PcodeOp *op) override;
+		std::string genericFunctionName(const ghidra::Address &addr) override;
 
 	public:
-		explicit RizinPrintC(Architecture *g, const string &nm = "c-language");
+		explicit RizinPrintC(ghidra::Architecture *g, const std::string &nm = "c-language");
 
 };
 
-class RizinPrintCCapability : public PrintLanguageCapability
+class RizinPrintCCapability : public ghidra::PrintLanguageCapability
 {
 	private:
 		static RizinPrintCCapability inst;
 		RizinPrintCCapability();
 
 	public:
-		PrintLanguage *buildLanguage(Architecture *glb) override;
+		ghidra::PrintLanguage *buildLanguage(ghidra::Architecture *glb) override;
 };
 
 #endif //RZ_GHIDRA_RizinPRINTC_H

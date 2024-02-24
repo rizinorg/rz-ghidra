@@ -6,6 +6,8 @@
 #include "SleighAsm.h"
 #include "rz_ghidra_internal.h"
 
+using namespace ghidra;
+
 static SleighAsm sasm;
 static RzIO *rio = nullptr;
 

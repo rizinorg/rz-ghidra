@@ -5,6 +5,8 @@
 #include "RizinArchitecture.h"
 #include "RizinUtils.h"
 
+using namespace ghidra;
+
 RizinLoadImage::RizinLoadImage(RzCoreMutex *core_mutex, AddrSpaceManager *addr_space_manager)
 	: LoadImage("rizin_program"),
 	core_mutex(core_mutex),
@@ -42,12 +44,13 @@ void RizinLoadImage::getReadonly(RangeList &list) const
 			rz_pvector_foreach_cpp<RzBinFile>(&info->cf->binfiles, [&](RzBinFile *bf) {
 				if(!bf->o || !bf->o->sections)
 					return true;
-				rz_list_foreach_cpp<RzBinSection>(bf->o->sections, [&](RzBinSection *sec) {
+				rz_pvector_foreach_cpp<RzBinSection>(bf->o->sections, [&](RzBinSection *sec) {
 					if(!sec->name || !sec->vsize)
-						return;
+						return true;
 					if(strstr(sec->name, "__objc_data") || strstr(sec->name, "__objc_classrefs") || strstr(sec->name, "__objc_msgrefs") ||
 						strstr(sec->name, "__objc_selrefs") || strstr(sec->name, "__objc_superrefs") || strstr(sec->name, "__objc_protorefs"))
 						list.insertRange(space, sec->vaddr, sec->vaddr + sec->vsize - 1);
+					return true;
 				});
 				return true;
 			});

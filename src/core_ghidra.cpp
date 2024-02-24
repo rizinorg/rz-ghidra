@@ -24,6 +24,8 @@
 #include <vector>
 #include <mutex>
 
+using namespace ghidra;
+
 #define CMD_PREFIX "pdg"
 #define CFG_PREFIX "ghidra"
 

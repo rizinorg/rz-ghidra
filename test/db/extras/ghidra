@@ -94,7 +94,6 @@ EXPECT=<<EOF
 x86:LE:16:Real Mode:
 
 // WARNING: Variable defined which should be unmapped: var_8h
-// WARNING: Could not reconcile some variable overlaps
 // WARNING: Unknown calling convention -- yet parameter storage is locked
 // WARNING: [rz-ghidra] Matching calling convention fastcall of function fcn.00001c98 failed, args may be inaccurate.
 
@@ -132,8 +131,7 @@ undefined4 fcn.00001c98(int16_t arg_6h, int16_t arg_4h, int16_t arg_ch)
             func_0x0000e4ae(0xdee, 10, 0x401e);
         } else {
             *(undefined *)*(undefined4 *)0x401e = 10;
-            piVar1 = (int16_t *)0x401e;
-            *piVar1 = *piVar1 + 1;
+            *(int16_t *)0x401e = *(int16_t *)0x401e + 1;
         }
         unaff_CS = 0xdee;
         func_0x0000e59a(0xdee, 0x401e);
@@ -333,7 +331,7 @@ NAME=function variable annotations
 FILE=bins/dectest64
 EXPECT=<<EOF
 {
-  "code": "\n// WARNING: Could not reconcile some variable overlaps\n// WARNING: [rz-ghidra] Detected overlap for variable var_28h\n// WARNING: [rz-ghidra] Detected overlap for variable var_14h\n\nundefined8 main(int argc, char **argv)\n{\n    undefined8 uVar1;\n    int64_t in_FS_OFFSET;\n    int64_t var_38h;\n    int64_t var_2ch;\n    int64_t var_10h;\n    \n    var_10h = *(int64_t *)(in_FS_OFFSET + 0x28);\n    var_2ch._0_4_ = argc;\n    sym.Aeropause((int64_t)&var_2ch + 4, argc, argv);\n    uVar1 = 0;\n    if (var_10h != *(int64_t *)(in_FS_OFFSET + 0x28)) {\n        uVar1 = sym.imp.__stack_chk_fail();\n    }\n    return uVar1;\n}\n",
+  "code": "\n// WARNING: [rz-ghidra] Detected overlap for variable var_28h\n// WARNING: [rz-ghidra] Detected overlap for variable var_14h\n\nundefined8 main(int argc, char **argv)\n{\n    undefined8 uVar1;\n    int64_t in_FS_OFFSET;\n    int64_t var_38h;\n    int64_t var_2ch;\n    int64_t var_10h;\n    \n    var_10h = *(int64_t *)(in_FS_OFFSET + 0x28);\n    var_2ch._0_4_ = argc;\n    sym.Aeropause((int64_t)&var_2ch + 4, argc, argv);\n    uVar1 = 0;\n    if (var_10h != *(int64_t *)(in_FS_OFFSET + 0x28)) {\n        uVar1 = sym.imp.__stack_chk_fail();\n    }\n    return uVar1;\n}\n",
   "annotations": [
     {
       "start": 1,
@@ -361,766 +359,670 @@ EXPECT=<<EOF
     },
     {
       "start": 13,
-      "end": 18,
+      "end": 24,
       "type": "offset",
       "offset": 4198782
     },
     {
       "start": 13,
-      "end": 18,
+      "end": 24,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 19,
-      "end": 22,
+      "start": 25,
+      "end": 33,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 19,
-      "end": 22,
+      "start": 25,
+      "end": 33,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 23,
-      "end": 32,
+      "start": 34,
+      "end": 41,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 23,
-      "end": 32,
+      "start": 34,
+      "end": 41,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 33,
-      "end": 37,
+      "start": 42,
+      "end": 45,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 33,
-      "end": 37,
+      "start": 42,
+      "end": 45,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 38,
-      "end": 46,
+      "start": 46,
+      "end": 54,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 38,
-      "end": 46,
+      "start": 46,
+      "end": 54,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 47,
-      "end": 55,
+      "start": 55,
+      "end": 62,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 47,
-      "end": 55,
+      "start": 55,
+      "end": 62,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 56,
-      "end": 59,
+      "start": 63,
+      "end": 66,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 56,
-      "end": 59,
+      "start": 63,
+      "end": 66,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 59,
-      "end": 67,
+      "start": 66,
+      "end": 74,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 59,
-      "end": 67,
+      "start": 66,
+      "end": 74,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 68,
-      "end": 79,
+      "start": 75,
+      "end": 86,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 68,
-      "end": 79,
+      "start": 75,
+      "end": 86,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 80,
-      "end": 88,
+      "start": 87,
+      "end": 95,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 80,
-      "end": 88,
+      "start": 87,
+      "end": 95,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 89,
-      "end": 96,
+      "start": 96,
+      "end": 103,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 89,
-      "end": 96,
+      "start": 96,
+      "end": 103,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 97,
-      "end": 100,
+      "start": 104,
+      "end": 107,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 97,
-      "end": 100,
+      "start": 104,
+      "end": 107,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 101,
-      "end": 109,
+      "start": 108,
+      "end": 116,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 101,
-      "end": 109,
+      "start": 108,
+      "end": 116,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 110,
-      "end": 117,
+      "start": 117,
+      "end": 124,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 110,
-      "end": 117,
+      "start": 117,
+      "end": 124,
       "type": "syntax_highlight",
       "syntax_highlight": "comment"
     },
     {
-      "start": 118,
-      "end": 121,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 118,
-      "end": 121,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 121,
-      "end": 129,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 121,
-      "end": 129,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 130,
-      "end": 141,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 130,
-      "end": 141,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 142,
-      "end": 150,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 142,
-      "end": 150,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 151,
-      "end": 158,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 151,
-      "end": 158,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 159,
-      "end": 162,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 159,
-      "end": 162,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 163,
-      "end": 171,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 163,
-      "end": 171,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 172,
-      "end": 179,
-      "type": "offset",
-      "offset": 4198782
-    },
-    {
-      "start": 172,
-      "end": 179,
-      "type": "syntax_highlight",
-      "syntax_highlight": "comment"
-    },
-    {
-      "start": 181,
-      "end": 191,
+      "start": 126,
+      "end": 136,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 192,
-      "end": 196,
+      "start": 137,
+      "end": 141,
       "type": "function_name",
       "name": "main",
       "offset": 4198782
     },
     {
-      "start": 192,
-      "end": 196,
+      "start": 137,
+      "end": 141,
       "type": "offset",
       "offset": 4198782
     },
     {
-      "start": 192,
-      "end": 196,
+      "start": 137,
+      "end": 141,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 197,
+      "start": 142,
+      "end": 145,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 146,
+      "end": 150,
+      "type": "function_parameter",
+      "name": "argc"
+    },
+    {
+      "start": 146,
+      "end": 150,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_parameter"
+    },
+    {
+      "start": 152,
+      "end": 156,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 159,
+      "end": 163,
+      "type": "function_parameter",
+      "name": "argv"
+    },
+    {
+      "start": 159,
+      "end": 163,
+      "type": "syntax_highlight",
+      "syntax_highlight": "function_parameter"
+    },
+    {
+      "start": 171,
+      "end": 181,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 182,
+      "end": 187,
+      "type": "local_variable",
+      "name": "uVar1"
+    },
+    {
+      "start": 182,
+      "end": 187,
+      "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 193,
       "end": 200,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
       "start": 201,
-      "end": 205,
-      "type": "function_parameter",
-      "name": "argc"
+      "end": 213,
+      "type": "local_variable",
+      "name": "in_FS_OFFSET"
     },
     {
       "start": 201,
-      "end": 205,
-      "type": "syntax_highlight",
-      "syntax_highlight": "function_parameter"
-    },
-    {
-      "start": 207,
-      "end": 211,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 214,
-      "end": 218,
-      "type": "function_parameter",
-      "name": "argv"
-    },
-    {
-      "start": 214,
-      "end": 218,
-      "type": "syntax_highlight",
-      "syntax_highlight": "function_parameter"
-    },
-    {
-      "start": 226,
-      "end": 236,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 237,
-      "end": 242,
-      "type": "local_variable",
-      "name": "uVar1"
-    },
-    {
-      "start": 237,
-      "end": 242,
+      "end": 213,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 219,
+      "end": 226,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 227,
+      "end": 234,
+      "type": "local_variable",
+      "name": "var_38h"
+    },
+    {
+      "start": 227,
+      "end": 234,
+      "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 240,
+      "end": 247,
+      "type": "syntax_highlight",
+      "syntax_highlight": "datatype"
+    },
+    {
+      "start": 248,
+      "end": 255,
+      "type": "local_variable",
+      "name": "var_2ch"
     },
     {
       "start": 248,
       "end": 255,
       "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 261,
+      "end": 268,
+      "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 256,
-      "end": 268,
+      "start": 269,
+      "end": 276,
       "type": "local_variable",
-      "name": "in_FS_OFFSET"
+      "name": "var_10h"
     },
     {
-      "start": 256,
-      "end": 268,
+      "start": 269,
+      "end": 276,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 274,
-      "end": 281,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 282,
-      "end": 289,
+      "start": 287,
+      "end": 294,
       "type": "local_variable",
-      "name": "var_38h"
+      "name": "var_10h"
     },
     {
-      "start": 282,
-      "end": 289,
+      "start": 287,
+      "end": 294,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
       "start": 295,
-      "end": 302,
+      "end": 296,
+      "type": "offset",
+      "offset": 4198797
+    },
+    {
+      "start": 297,
+      "end": 298,
+      "type": "offset",
+      "offset": 4198797
+    },
+    {
+      "start": 299,
+      "end": 306,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 303,
-      "end": 310,
+      "start": 310,
+      "end": 322,
+      "type": "local_variable",
+      "name": "in_FS_OFFSET"
+    },
+    {
+      "start": 310,
+      "end": 322,
+      "type": "syntax_highlight",
+      "syntax_highlight": "local_variable"
+    },
+    {
+      "start": 323,
+      "end": 324,
+      "type": "offset",
+      "offset": 4198797
+    },
+    {
+      "start": 325,
+      "end": 329,
+      "type": "syntax_highlight",
+      "syntax_highlight": "constant_variable"
+    },
+    {
+      "start": 287,
+      "end": 330,
+      "type": "offset",
+      "offset": 4198797
+    },
+    {
+      "start": 336,
+      "end": 343,
       "type": "local_variable",
       "name": "var_2ch"
     },
     {
-      "start": 303,
-      "end": 310,
+      "start": 336,
+      "end": 343,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 316,
-      "end": 323,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 324,
-      "end": 331,
-      "type": "local_variable",
-      "name": "var_10h"
-    },
-    {
-      "start": 324,
-      "end": 331,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
-    },
-    {
-      "start": 342,
-      "end": 349,
-      "type": "local_variable",
-      "name": "var_10h"
-    },
-    {
-      "start": 342,
-      "end": 349,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
+      "start": 343,
+      "end": 344,
+      "type": "offset",
+      "offset": 4198828
     },
     {
       "start": 350,
       "end": 351,
       "type": "offset",
-      "offset": 4198797
+      "offset": 4198828
     },
     {
       "start": 352,
-      "end": 353,
-      "type": "offset",
-      "offset": 4198797
-    },
-    {
-      "start": 354,
-      "end": 361,
-      "type": "syntax_highlight",
-      "syntax_highlight": "datatype"
-    },
-    {
-      "start": 365,
-      "end": 377,
-      "type": "local_variable",
-      "name": "in_FS_OFFSET"
-    },
-    {
-      "start": 365,
-      "end": 377,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
-    },
-    {
-      "start": 378,
-      "end": 379,
-      "type": "offset",
-      "offset": 4198797
-    },
-    {
-      "start": 380,
-      "end": 384,
-      "type": "syntax_highlight",
-      "syntax_highlight": "constant_variable"
-    },
-    {
-      "start": 342,
-      "end": 385,
-      "type": "offset",
-      "offset": 4198797
-    },
-    {
-      "start": 391,
-      "end": 398,
-      "type": "local_variable",
-      "name": "var_2ch"
-    },
-    {
-      "start": 391,
-      "end": 398,
-      "type": "syntax_highlight",
-      "syntax_highlight": "local_variable"
-    },
-    {
-      "start": 398,
-      "end": 399,
-      "type": "offset",
-      "offset": 4198828
-    },
-    {
-      "start": 405,
-      "end": 406,
-      "type": "offset",
-      "offset": 4198828
-    },
-    {
-      "start": 407,
-      "end": 411,
+      "end": 356,
       "type": "function_parameter",
       "name": "argc"
     },
     {
-      "start": 407,
-      "end": 411,
+      "start": 352,
+      "end": 356,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 391,
-      "end": 411,
+      "start": 336,
+      "end": 356,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 417,
-      "end": 430,
+      "start": 362,
+      "end": 375,
       "type": "function_name",
       "name": "sym.Aeropause",
       "offset": 4199038
     },
     {
-      "start": 417,
-      "end": 430,
+      "start": 362,
+      "end": 375,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 432,
-      "end": 439,
+      "start": 377,
+      "end": 384,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 440,
-      "end": 441,
+      "start": 385,
+      "end": 386,
       "type": "offset",
       "offset": 4198819
     },
     {
-      "start": 441,
-      "end": 448,
+      "start": 386,
+      "end": 393,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 449,
-      "end": 450,
+      "start": 394,
+      "end": 395,
       "type": "offset",
       "offset": 4198819
     },
     {
-      "start": 451,
-      "end": 452,
+      "start": 396,
+      "end": 397,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 452,
-      "end": 454,
+      "start": 397,
+      "end": 399,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 454,
-      "end": 458,
+      "start": 399,
+      "end": 403,
       "type": "function_parameter",
       "name": "argc"
     },
     {
-      "start": 454,
-      "end": 458,
+      "start": 399,
+      "end": 403,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 458,
-      "end": 460,
+      "start": 403,
+      "end": 405,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 460,
-      "end": 464,
+      "start": 405,
+      "end": 409,
       "type": "function_parameter",
       "name": "argv"
     },
     {
-      "start": 460,
-      "end": 464,
+      "start": 405,
+      "end": 409,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 417,
-      "end": 465,
+      "start": 362,
+      "end": 410,
       "type": "offset",
       "offset": 4198828
     },
     {
-      "start": 471,
-      "end": 476,
+      "start": 416,
+      "end": 421,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 471,
-      "end": 476,
+      "start": 416,
+      "end": 421,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 477,
-      "end": 478,
+      "start": 422,
+      "end": 423,
       "type": "offset",
       "offset": 4198833
     },
     {
-      "start": 479,
-      "end": 480,
+      "start": 424,
+      "end": 425,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 471,
-      "end": 480,
+      "start": 416,
+      "end": 425,
       "type": "offset",
       "offset": 4198833
     },
     {
-      "start": 486,
-      "end": 488,
+      "start": 431,
+      "end": 433,
       "type": "offset",
       "offset": 4198851
     },
     {
-      "start": 486,
-      "end": 488,
+      "start": 431,
+      "end": 433,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 490,
-      "end": 497,
+      "start": 435,
+      "end": 442,
       "type": "local_variable",
       "name": "var_10h"
     },
     {
-      "start": 490,
-      "end": 497,
+      "start": 435,
+      "end": 442,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 498,
-      "end": 500,
+      "start": 443,
+      "end": 445,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 501,
-      "end": 502,
+      "start": 446,
+      "end": 447,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 503,
-      "end": 510,
+      "start": 448,
+      "end": 455,
       "type": "syntax_highlight",
       "syntax_highlight": "datatype"
     },
     {
-      "start": 514,
-      "end": 526,
+      "start": 459,
+      "end": 471,
       "type": "local_variable",
       "name": "in_FS_OFFSET"
     },
     {
-      "start": 514,
-      "end": 526,
+      "start": 459,
+      "end": 471,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 527,
-      "end": 528,
+      "start": 472,
+      "end": 473,
       "type": "offset",
       "offset": 4198842
     },
     {
-      "start": 529,
-      "end": 533,
+      "start": 474,
+      "end": 478,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 546,
-      "end": 551,
+      "start": 491,
+      "end": 496,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 546,
-      "end": 551,
+      "start": 491,
+      "end": 496,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 552,
-      "end": 553,
+      "start": 497,
+      "end": 498,
       "type": "offset",
       "offset": 4198853
     },
     {
-      "start": 554,
-      "end": 578,
+      "start": 499,
+      "end": 523,
       "type": "function_name",
       "name": "sym.imp.__stack_chk_fail",
       "offset": 4198464
     },
     {
-      "start": 554,
-      "end": 578,
+      "start": 499,
+      "end": 523,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 546,
-      "end": 580,
+      "start": 491,
+      "end": 525,
       "type": "offset",
       "offset": 4198853
     },
     {
-      "start": 592,
-      "end": 598,
+      "start": 537,
+      "end": 543,
       "type": "offset",
       "offset": 4198859
     },
     {
-      "start": 592,
-      "end": 598,
+      "start": 537,
+      "end": 543,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 599,
-      "end": 604,
+      "start": 544,
+      "end": 549,
       "type": "local_variable",
       "name": "uVar1"
     },
     {
-      "start": 599,
-      "end": 604,
+      "start": 544,
+      "end": 549,
       "type": "syntax_highlight",
       "syntax_highlight": "local_variable"
     },
     {
-      "start": 592,
-      "end": 604,
+      "start": 537,
+      "end": 549,
       "type": "offset",
       "offset": 4198859
     }
@@ -1227,7 +1129,7 @@ NAME=constant variable annotation
 FILE=bins/dectest32
 EXPECT=<<EOF
 {
-  "code": "\nvoid sym.PrintAmbassador(int32_t arg_4h)\n{\n    func_0x08049050(\"Ambassador value: \");\n    switch(arg_4h) {\n    case 0:\n        func_0x08049050(\"pure\");\n        break;\n    case 1:\n        func_0x08049050(\"reason\");\n        break;\n    case 2:\n        func_0x08049050(\"revolution\");\n        break;\n    case 3:\n        func_0x08049050(\"echoes\");\n        break;\n    case 4:\n        func_0x08049050(\"wall\");\n        break;\n    default:\n        if (arg_4h == 1000000) {\n            func_0x08049050(\"million\");\n        }\n        break;\n    case -0x452e541f:\n        break;\n    }\n    func_0x08049090(10);\n    return;\n}\n",
+  "code": "\nvoid sym.PrintAmbassador(int32_t arg_4h)\n{\n    sym.imp.printf(\"Ambassador value: \");\n    switch(arg_4h) {\n    case 0:\n        sym.imp.printf(\"pure\");\n        break;\n    case 1:\n        sym.imp.printf(\"reason\");\n        break;\n    case 2:\n        sym.imp.printf(\"revolution\");\n        break;\n    case 3:\n        sym.imp.printf(\"echoes\");\n        break;\n    case 4:\n        sym.imp.printf(\"wall\");\n        break;\n    default:\n        if (arg_4h == 1000000) {\n            sym.imp.printf(\"million\");\n        }\n        break;\n    case -0x452e541f:\n        break;\n    }\n    sym.imp.putchar(10);\n    return;\n}\n",
   "annotations": [
     {
       "start": 1,
@@ -1274,477 +1176,477 @@ EXPECT=<<EOF
     },
     {
       "start": 48,
-      "end": 63,
+      "end": 62,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
       "start": 48,
-      "end": 63,
+      "end": 62,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 64,
-      "end": 84,
+      "start": 63,
+      "end": 83,
       "type": "constant_variable",
       "offset": 134520840
     },
     {
-      "start": 64,
-      "end": 84,
+      "start": 63,
+      "end": 83,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
       "start": 48,
-      "end": 85,
+      "end": 84,
       "type": "offset",
       "offset": 134517295
     },
     {
-      "start": 91,
-      "end": 97,
+      "start": 90,
+      "end": 96,
       "type": "offset",
       "offset": 134517332
     },
     {
-      "start": 91,
-      "end": 97,
+      "start": 90,
+      "end": 96,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 98,
-      "end": 104,
+      "start": 97,
+      "end": 103,
       "type": "function_parameter",
       "name": "arg_4h"
     },
     {
-      "start": 98,
-      "end": 104,
+      "start": 97,
+      "end": 103,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 112,
-      "end": 116,
+      "start": 111,
+      "end": 115,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 117,
-      "end": 118,
+      "start": 116,
+      "end": 117,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 128,
-      "end": 143,
+      "start": 127,
+      "end": 141,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 128,
-      "end": 143,
+      "start": 127,
+      "end": 141,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 144,
-      "end": 150,
+      "start": 142,
+      "end": 148,
       "type": "constant_variable",
       "offset": 134520859
     },
     {
-      "start": 144,
-      "end": 150,
+      "start": 142,
+      "end": 148,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 128,
-      "end": 151,
+      "start": 127,
+      "end": 149,
       "type": "offset",
       "offset": 134517353
     },
     {
-      "start": 161,
-      "end": 166,
+      "start": 159,
+      "end": 164,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 161,
-      "end": 167,
+      "start": 159,
+      "end": 165,
       "type": "offset",
       "offset": 134517361
     },
     {
-      "start": 172,
-      "end": 176,
+      "start": 170,
+      "end": 174,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 177,
-      "end": 178,
+      "start": 175,
+      "end": 176,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 188,
-      "end": 203,
+      "start": 186,
+      "end": 200,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 188,
-      "end": 203,
+      "start": 186,
+      "end": 200,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 204,
-      "end": 212,
+      "start": 201,
+      "end": 209,
       "type": "constant_variable",
       "offset": 134520864
     },
     {
-      "start": 204,
-      "end": 212,
+      "start": 201,
+      "end": 209,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 188,
-      "end": 213,
+      "start": 186,
+      "end": 210,
       "type": "offset",
       "offset": 134517371
     },
     {
-      "start": 223,
-      "end": 228,
+      "start": 220,
+      "end": 225,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 223,
-      "end": 229,
+      "start": 220,
+      "end": 226,
       "type": "offset",
       "offset": 134517379
     },
     {
-      "start": 234,
-      "end": 238,
+      "start": 231,
+      "end": 235,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 239,
-      "end": 240,
+      "start": 236,
+      "end": 237,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 250,
-      "end": 265,
+      "start": 247,
+      "end": 261,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 250,
-      "end": 265,
+      "start": 247,
+      "end": 261,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 266,
-      "end": 278,
+      "start": 262,
+      "end": 274,
       "type": "constant_variable",
       "offset": 134520871
     },
     {
-      "start": 266,
-      "end": 278,
+      "start": 262,
+      "end": 274,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 250,
-      "end": 279,
+      "start": 247,
+      "end": 275,
       "type": "offset",
       "offset": 134517389
     },
     {
-      "start": 289,
-      "end": 294,
+      "start": 285,
+      "end": 290,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 289,
-      "end": 295,
+      "start": 285,
+      "end": 291,
       "type": "offset",
       "offset": 134517397
     },
     {
-      "start": 300,
-      "end": 304,
+      "start": 296,
+      "end": 300,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 305,
-      "end": 306,
+      "start": 301,
+      "end": 302,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 316,
-      "end": 331,
+      "start": 312,
+      "end": 326,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 316,
-      "end": 331,
+      "start": 312,
+      "end": 326,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 332,
-      "end": 340,
+      "start": 327,
+      "end": 335,
       "type": "constant_variable",
       "offset": 134520882
     },
     {
-      "start": 332,
-      "end": 340,
+      "start": 327,
+      "end": 335,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 316,
-      "end": 341,
+      "start": 312,
+      "end": 336,
       "type": "offset",
       "offset": 134517407
     },
     {
-      "start": 351,
-      "end": 356,
+      "start": 346,
+      "end": 351,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 351,
-      "end": 357,
+      "start": 346,
+      "end": 352,
       "type": "offset",
       "offset": 134517415
     },
     {
-      "start": 362,
-      "end": 366,
+      "start": 357,
+      "end": 361,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 367,
-      "end": 368,
+      "start": 362,
+      "end": 363,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 378,
-      "end": 393,
+      "start": 373,
+      "end": 387,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 378,
-      "end": 393,
+      "start": 373,
+      "end": 387,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 394,
-      "end": 400,
+      "start": 388,
+      "end": 394,
       "type": "constant_variable",
       "offset": 134520889
     },
     {
-      "start": 394,
-      "end": 400,
+      "start": 388,
+      "end": 394,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 378,
-      "end": 401,
+      "start": 373,
+      "end": 395,
       "type": "offset",
       "offset": 134517425
     },
     {
-      "start": 411,
-      "end": 416,
+      "start": 405,
+      "end": 410,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 411,
-      "end": 417,
+      "start": 405,
+      "end": 411,
       "type": "offset",
       "offset": 134517433
     },
     {
-      "start": 422,
-      "end": 429,
+      "start": 416,
+      "end": 423,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 439,
-      "end": 441,
+      "start": 433,
+      "end": 435,
       "type": "offset",
       "offset": 134517341
     },
     {
-      "start": 439,
-      "end": 441,
+      "start": 433,
+      "end": 435,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 443,
-      "end": 449,
+      "start": 437,
+      "end": 443,
       "type": "function_parameter",
       "name": "arg_4h"
     },
     {
-      "start": 443,
-      "end": 449,
+      "start": 437,
+      "end": 443,
       "type": "syntax_highlight",
       "syntax_highlight": "function_parameter"
     },
     {
-      "start": 450,
-      "end": 452,
+      "start": 444,
+      "end": 446,
       "type": "offset",
       "offset": 134517334
     },
     {
-      "start": 453,
-      "end": 460,
+      "start": 447,
+      "end": 454,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 476,
-      "end": 491,
+      "start": 470,
+      "end": 484,
       "type": "function_name",
       "name": "",
       "offset": 134516816
     },
     {
-      "start": 476,
-      "end": 491,
+      "start": 470,
+      "end": 484,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 492,
-      "end": 501,
+      "start": 485,
+      "end": 494,
       "type": "constant_variable",
       "offset": 134520894
     },
     {
-      "start": 492,
-      "end": 501,
+      "start": 485,
+      "end": 494,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 476,
-      "end": 502,
+      "start": 470,
+      "end": 495,
       "type": "offset",
       "offset": 134517443
     },
     {
-      "start": 522,
-      "end": 527,
+      "start": 515,
+      "end": 520,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 533,
-      "end": 537,
+      "start": 526,
+      "end": 530,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 538,
-      "end": 549,
+      "start": 531,
+      "end": 542,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 559,
-      "end": 564,
+      "start": 552,
+      "end": 557,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 559,
-      "end": 565,
+      "start": 552,
+      "end": 558,
       "type": "offset",
       "offset": 134517332
     },
     {
-      "start": 576,
-      "end": 591,
+      "start": 569,
+      "end": 584,
       "type": "function_name",
       "name": "",
       "offset": 134516880
     },
     {
-      "start": 576,
-      "end": 591,
+      "start": 569,
+      "end": 584,
       "type": "syntax_highlight",
       "syntax_highlight": "function_name"
     },
     {
-      "start": 592,
-      "end": 594,
+      "start": 585,
+      "end": 587,
       "type": "syntax_highlight",
       "syntax_highlight": "constant_variable"
     },
     {
-      "start": 576,
-      "end": 595,
+      "start": 569,
+      "end": 588,
       "type": "offset",
       "offset": 134517459
     },
     {
-      "start": 601,
-      "end": 607,
+      "start": 594,
+      "end": 600,
       "type": "offset",
       "offset": 134517469
     },
     {
-      "start": 601,
-      "end": 607,
+      "start": 594,
+      "end": 600,
       "type": "syntax_highlight",
       "syntax_highlight": "keyword"
     },
     {
-      "start": 601,
-      "end": 607,
+      "start": 594,
+      "end": 600,
       "type": "offset",
       "offset": 134517469
     }
@@ -2299,7 +2201,7 @@ void entry0(void)
 {
     char *var_ch;
     
-    sym._call("hello", (int64_t)"world");
+    sym._call("hello", 0x100000faa);
     return;
 }
 EOF
@@ -2323,7 +2225,7 @@ void entry0(void)
     int32_t var_ch;
     
     // [10] -r-x section size 200 named .text
-    func_0x0000039c();
+    sym.imp.__libc_init();
     // WARNING: Bad instruction - Truncating control flow here
     halt_baddata();
 }
@@ -2400,31 +2302,31 @@ CCu base64:Jg== @ 0x804858a
         <range space="ram" first="0x8048540" last="0x804859b"/>
       </rangelist>
       <op code="1">
-        <seqnum space="ram" offset="0x8048566" uniq="0xea"/>
+        <seqnum space="ram" offset="0x8048566" uniq="0xe7"/>
       </op>
       <op code="7">
         <seqnum space="ram" offset="0x8048566" uniq="0x80"/>
         <void/>
       </op>
       <op code="1">
-        <seqnum space="ram" offset="0x8048572" uniq="0xeb"/>
+        <seqnum space="ram" offset="0x8048572" uniq="0xe8"/>
       </op>
       <op code="7">
         <seqnum space="ram" offset="0x8048572" uniq="0x85"/>
         <void/>
       </op>
       <op code="66">
-        <seqnum space="ram" offset="0x8048577" uniq="0xec"/>
+        <seqnum space="ram" offset="0x8048577" uniq="0xe9"/>
       </op>
       <op code="7">
         <seqnum space="ram" offset="0x8048585" uniq="0x8f"/>
         <void/>
       </op>
       <op code="66">
-        <seqnum space="ram" offset="0x804858a" uniq="0xed"/>
+        <seqnum space="ram" offset="0x804858a" uniq="0xea"/>
       </op>
       <op code="64">
-        <seqnum space="ram" offset="0x8048590" uniq="0xee"/>
+        <seqnum space="ram" offset="0x8048590" uniq="0xeb"/>
       </op>
       <op code="7">
         <seqnum space="ram" offset="0x8048590" uniq="0x96"/>
@@ -2444,19 +2346,19 @@ CCu base64:Jg== @ 0x804858a
     </high>
     <high repref="0x1c1" class="constant">
     </high>
-    <high repref="0x2f0" class="constant">
+    <high repref="0x2ea" class="constant">
       <type name="" size="4" metatype="ptr" core="true">
       </type>
     </high>
-    <high repref="0x2f1" class="constant">
+    <high repref="0x2eb" class="constant">
       <type name="" size="4" metatype="ptr" core="true">
       </type>
     </high>
-    <high repref="0x2e5" class="constant">
+    <high repref="0x2df" class="constant">
     </high>
-    <high repref="0x2ec" class="constant" symref="0x4000010000000000" offset="0">
+    <high repref="0x2e6" class="constant" symref="0x4000010000000000" offset="0">
     </high>
-    <high repref="0x2ee" class="constant" symref="0x4000010000000000" offset="0">
+    <high repref="0x2e8" class="constant" symref="0x4000010000000000" offset="0">
     </high>
     <high repref="0x176" class="other">
       <type name="" size="4" metatype="ptr" core="true">
@@ -2466,15 +2368,15 @@ CCu base64:Jg== @ 0x804858a
       <type name="" size="4" metatype="ptr" core="true">
       </type>
     </high>
-    <high repref="0x2e7" class="other" typelock="true">
+    <high repref="0x2e1" class="other" typelock="true">
       <type name="" size="4" metatype="ptr" core="true">
       </type>
     </high>
-    <high repref="0x2ea" class="other" typelock="true">
+    <high repref="0x2e4" class="other" typelock="true">
       <type name="" size="4" metatype="ptr" core="true">
       </type>
     </high>
-    <high repref="0x2f2" class="other">
+    <high repref="0x2ec" class="other">
     </high>
     <high repref="0x1a2" class="other">
     </high>
@@ -2492,7 +2394,7 @@ CCu base64:Jg== @ 0x804858a
 </function>
 --
 <save_state loadersymbols="false">
-  <typegrp intsize="4" longsize="4" structalign="4" enumsize="4" enumsigned="false"/>
+  <typegrp intsize="4" longsize="4" enumsize="4" enumsigned="false"/>
   <db>
     <property_changepoint space="ram" offset="0x8048000" val="0x2000"/>
     <property_changepoint space="ram" offset="0x80486bc" val="0x0"/>
@@ -2641,6 +2543,7 @@ CCu base64:Jg== @ 0x804858a
       <set name="bit64" val="0x0"/>
       <set name="highseg" val="0x0"/>
       <set name="instrPhase" val="0x0"/>
+      <set name="lockprefx" val="0x0"/>
       <set name="mandover" val="0x0"/>
       <set name="opsize" val="0x1"/>
       <set name="prefix_66" val="0x0"/>
@@ -2651,6 +2554,7 @@ CCu base64:Jg== @ 0x804858a
       <set name="reserved" val="0x0"/>
       <set name="rexBprefix" val="0x0"/>
       <set name="rexRprefix" val="0x0"/>
+      <set name="rexWRXBprefix" val="0x0"/>
       <set name="rexWprefix" val="0x0"/>
       <set name="rexXprefix" val="0x0"/>
       <set name="rexprefix" val="0x0"/>
@@ -2661,12 +2565,15 @@ CCu base64:Jg== @ 0x804858a
       <set name="vexMode" val="0x0"/>
       <set name="vexVVVV" val="0x0"/>
       <set name="vexVVVV_r64" val="0x0"/>
+      <set name="xacquireprefx" val="0x0"/>
+      <set name="xreleaseprefx" val="0x0"/>
     </context_pointset>
     <context_pointset space="register" offset="0x0">
       <set name="addrsize" val="0x0"/>
       <set name="bit64" val="0x0"/>
       <set name="highseg" val="0x0"/>
       <set name="instrPhase" val="0x0"/>
+      <set name="lockprefx" val="0x0"/>
       <set name="mandover" val="0x0"/>
       <set name="opsize" val="0x0"/>
       <set name="prefix_66" val="0x0"/>
@@ -2677,6 +2584,7 @@ CCu base64:Jg== @ 0x804858a
       <set name="reserved" val="0x0"/>
       <set name="rexBprefix" val="0x0"/>
       <set name="rexRprefix" val="0x0"/>
+      <set name="rexWRXBprefix" val="0x0"/>
       <set name="rexWprefix" val="0x0"/>
       <set name="rexXprefix" val="0x0"/>
       <set name="rexprefix" val="0x0"/>
@@ -2687,6 +2595,8 @@ CCu base64:Jg== @ 0x804858a
       <set name="vexMode" val="0x0"/>
       <set name="vexVVVV" val="0x0"/>
       <set name="vexVVVV_r64" val="0x0"/>
+      <set name="xacquireprefx" val="0x0"/>
+      <set name="xreleaseprefx" val="0x0"/>
     </context_pointset>
     <tracked_pointset space="ram" offset="0x0">
       <set space="register" offset="0x20a" size="1" val="0x0"/>
@@ -2834,6 +2744,7 @@ ARM:LE:32:v8
 ARM:LE:32:v8T
 ARM:LEBE:32:v7LEInstruction
 ARM:LEBE:32:v8LEInstruction
+BPF:LE:32:default
 CP1600:BE:16:default
 CR16C:LE:16:default
 DATA:BE:64:default
@@ -2953,6 +2864,7 @@ dsPIC30F:LE:24:default
 dsPIC33C:LE:24:default
 dsPIC33E:LE:24:default
 dsPIC33F:LE:24:default
+eBPF:LE:64:default
 pa-risc:BE:32:default
 sparc:BE:32:default
 sparc:BE:64:default
@@ -2964,6 +2876,7 @@ x86:LE:16:Protected Mode
 x86:LE:16:Real Mode
 x86:LE:32:System Management Mode
 x86:LE:32:default
+x86:LE:64:compat32
 x86:LE:64:default
 z180:LE:16:default
 z182:LE:16:default
@@ -2988,7 +2901,7 @@ add eax, 0xf
 shr eax, 4
 -----
 0x08048540: PUSH EBP
-    (unique,0x9b00,4) = COPY EBP
+    (unique,0x9b80,4) = COPY EBP
     ESP = INT_SUB ESP, 0x4
 0x08048541: MOV EBP,ESP
     EBP = COPY ESP
@@ -2998,20 +2911,20 @@ shr eax, 4
     ESP = INT_SUB ESP, 0x88
     SF = INT_SLESS ESP, 0x0
     ZF = INT_EQUAL ESP, 0x0
-    (unique,0xdc80,4) = INT_AND ESP, 0xff
-    (unique,0xdd00,1) = POPCOUNT (unique,0xdc80,4)
-    (unique,0xdd80,1) = INT_AND (unique,0xdd00,1), 0x1
-    PF = INT_EQUAL (unique,0xdd80,1), 0x0
+    (unique,0xdd00,4) = INT_AND ESP, 0xff
+    (unique,0xdd80,1) = POPCOUNT (unique,0xdd00,4)
+    (unique,0xde00,1) = INT_AND (unique,0xdd80,1), 0x1
+    PF = INT_EQUAL (unique,0xde00,1), 0x0
 0x08048549: AND ESP,0xfffffff0
     CF = COPY 0x0
     OF = COPY 0x0
     ESP = INT_AND ESP, 0xfffffff0
     SF = INT_SLESS ESP, 0x0
     ZF = INT_EQUAL ESP, 0x0
-    (unique,0xdc80,4) = INT_AND ESP, 0xff
-    (unique,0xdd00,1) = POPCOUNT (unique,0xdc80,4)
-    (unique,0xdd80,1) = INT_AND (unique,0xdd00,1), 0x1
-    PF = INT_EQUAL (unique,0xdd80,1), 0x0
+    (unique,0xdd00,4) = INT_AND ESP, 0xff
+    (unique,0xdd80,1) = POPCOUNT (unique,0xdd00,4)
+    (unique,0xde00,1) = INT_AND (unique,0xdd80,1), 0x1
+    PF = INT_EQUAL (unique,0xde00,1), 0x0
 0x0804854c: MOV EAX,0x0
     EAX = COPY 0x0
 0x08048551: ADD EAX,0xf
@@ -3020,58 +2933,58 @@ shr eax, 4
     EAX = INT_ADD EAX, 0xf
     SF = INT_SLESS EAX, 0x0
     ZF = INT_EQUAL EAX, 0x0
-    (unique,0xdc80,4) = INT_AND EAX, 0xff
-    (unique,0xdd00,1) = POPCOUNT (unique,0xdc80,4)
-    (unique,0xdd80,1) = INT_AND (unique,0xdd00,1), 0x1
-    PF = INT_EQUAL (unique,0xdd80,1), 0x0
+    (unique,0xdd00,4) = INT_AND EAX, 0xff
+    (unique,0xdd80,1) = POPCOUNT (unique,0xdd00,4)
+    (unique,0xde00,1) = INT_AND (unique,0xdd80,1), 0x1
+    PF = INT_EQUAL (unique,0xde00,1), 0x0
 0x08048554: ADD EAX,0xf
     CF = INT_CARRY EAX, 0xf
     OF = INT_SCARRY EAX, 0xf
     EAX = INT_ADD EAX, 0xf
     SF = INT_SLESS EAX, 0x0
     ZF = INT_EQUAL EAX, 0x0
-    (unique,0xdc80,4) = INT_AND EAX, 0xff
-    (unique,0xdd00,1) = POPCOUNT (unique,0xdc80,4)
-    (unique,0xdd80,1) = INT_AND (unique,0xdd00,1), 0x1
-    PF = INT_EQUAL (unique,0xdd80,1), 0x0
+    (unique,0xdd00,4) = INT_AND EAX, 0xff
+    (unique,0xdd80,1) = POPCOUNT (unique,0xdd00,4)
+    (unique,0xde00,1) = INT_AND (unique,0xdd80,1), 0x1
+    PF = INT_EQUAL (unique,0xde00,1), 0x0
 0x08048557: SHR EAX,0x4
-    (unique,0x41900,4) = INT_AND 0x4, 0x1f
-    (unique,0x41980,4) = COPY EAX
-    EAX = INT_RIGHT EAX, (unique,0x41900,4)
-    (unique,0x11180,1) = INT_NOTEQUAL (unique,0x41900,4), 0x0
-    (unique,0x11200,4) = INT_SUB (unique,0x41900,4), 0x1
-    (unique,0x11280,4) = INT_RIGHT (unique,0x41980,4), (unique,0x11200,4)
-    (unique,0x11300,4) = INT_AND (unique,0x11280,4), 0x1
-    (unique,0x11400,1) = INT_NOTEQUAL (unique,0x11300,4), 0x0
-    (unique,0x11480,1) = BOOL_NEGATE (unique,0x11180,1)
-    (unique,0x11500,1) = INT_AND (unique,0x11480,1), CF
-    (unique,0x11580,1) = INT_AND (unique,0x11180,1), (unique,0x11400,1)
-    CF = INT_OR (unique,0x11500,1), (unique,0x11580,1)
-    (unique,0x11700,1) = INT_EQUAL (unique,0x41900,4), 0x1
-    (unique,0x11800,1) = INT_SLESS (unique,0x41980,4), 0x0
-    (unique,0x11880,1) = BOOL_NEGATE (unique,0x11700,1)
-    (unique,0x11900,1) = INT_AND (unique,0x11880,1), OF
-    (unique,0x11980,1) = INT_AND (unique,0x11700,1), (unique,0x11800,1)
-    OF = INT_OR (unique,0x11900,1), (unique,0x11980,1)
-    (unique,0xdf00,1) = INT_NOTEQUAL (unique,0x41900,4), 0x0
-    (unique,0xe000,1) = INT_SLESS EAX, 0x0
-    (unique,0xe080,1) = BOOL_NEGATE (unique,0xdf00,1)
-    (unique,0xe100,1) = INT_AND (unique,0xe080,1), SF
-    (unique,0xe180,1) = INT_AND (unique,0xdf00,1), (unique,0xe000,1)
-    SF = INT_OR (unique,0xe100,1), (unique,0xe180,1)
-    (unique,0xe300,1) = INT_EQUAL EAX, 0x0
-    (unique,0xe380,1) = BOOL_NEGATE (unique,0xdf00,1)
-    (unique,0xe400,1) = INT_AND (unique,0xe380,1), ZF
-    (unique,0xe480,1) = INT_AND (unique,0xdf00,1), (unique,0xe300,1)
-    ZF = INT_OR (unique,0xe400,1), (unique,0xe480,1)
-    (unique,0xe580,4) = INT_AND EAX, 0xff
-    (unique,0xe600,1) = POPCOUNT (unique,0xe580,4)
-    (unique,0xe680,1) = INT_AND (unique,0xe600,1), 0x1
-    (unique,0xe780,1) = INT_EQUAL (unique,0xe680,1), 0x0
-    (unique,0xe800,1) = BOOL_NEGATE (unique,0xdf00,1)
-    (unique,0xe880,1) = INT_AND (unique,0xe800,1), PF
-    (unique,0xe900,1) = INT_AND (unique,0xdf00,1), (unique,0xe780,1)
-    PF = INT_OR (unique,0xe880,1), (unique,0xe900,1)
+    (unique,0x3e780,4) = INT_AND 0x4, 0x1f
+    (unique,0x3e800,4) = COPY EAX
+    EAX = INT_RIGHT EAX, (unique,0x3e780,4)
+    (unique,0x11200,1) = INT_NOTEQUAL (unique,0x3e780,4), 0x0
+    (unique,0x11280,4) = INT_SUB (unique,0x3e780,4), 0x1
+    (unique,0x11300,4) = INT_RIGHT (unique,0x3e800,4), (unique,0x11280,4)
+    (unique,0x11380,4) = INT_AND (unique,0x11300,4), 0x1
+    (unique,0x11480,1) = INT_NOTEQUAL (unique,0x11380,4), 0x0
+    (unique,0x11500,1) = BOOL_NEGATE (unique,0x11200,1)
+    (unique,0x11580,1) = INT_AND (unique,0x11500,1), CF
+    (unique,0x11600,1) = INT_AND (unique,0x11200,1), (unique,0x11480,1)
+    CF = INT_OR (unique,0x11580,1), (unique,0x11600,1)
+    (unique,0x11780,1) = INT_EQUAL (unique,0x3e780,4), 0x1
+    (unique,0x11880,1) = INT_SLESS (unique,0x3e800,4), 0x0
+    (unique,0x11900,1) = BOOL_NEGATE (unique,0x11780,1)
+    (unique,0x11980,1) = INT_AND (unique,0x11900,1), OF
+    (unique,0x11a00,1) = INT_AND (unique,0x11780,1), (unique,0x11880,1)
+    OF = INT_OR (unique,0x11980,1), (unique,0x11a00,1)
+    (unique,0xdf80,1) = INT_NOTEQUAL (unique,0x3e780,4), 0x0
+    (unique,0xe080,1) = INT_SLESS EAX, 0x0
+    (unique,0xe100,1) = BOOL_NEGATE (unique,0xdf80,1)
+    (unique,0xe180,1) = INT_AND (unique,0xe100,1), SF
+    (unique,0xe200,1) = INT_AND (unique,0xdf80,1), (unique,0xe080,1)
+    SF = INT_OR (unique,0xe180,1), (unique,0xe200,1)
+    (unique,0xe380,1) = INT_EQUAL EAX, 0x0
+    (unique,0xe400,1) = BOOL_NEGATE (unique,0xdf80,1)
+    (unique,0xe480,1) = INT_AND (unique,0xe400,1), ZF
+    (unique,0xe500,1) = INT_AND (unique,0xdf80,1), (unique,0xe380,1)
+    ZF = INT_OR (unique,0xe480,1), (unique,0xe500,1)
+    (unique,0xe600,4) = INT_AND EAX, 0xff
+    (unique,0xe680,1) = POPCOUNT (unique,0xe600,4)
+    (unique,0xe700,1) = INT_AND (unique,0xe680,1), 0x1
+    (unique,0xe800,1) = INT_EQUAL (unique,0xe700,1), 0x0
+    (unique,0xe880,1) = BOOL_NEGATE (unique,0xdf80,1)
+    (unique,0xe900,1) = INT_AND (unique,0xe880,1), PF
+    (unique,0xe980,1) = INT_AND (unique,0xdf80,1), (unique,0xe800,1)
+    PF = INT_OR (unique,0xe900,1), (unique,0xe980,1)
 EOF
 CMDS=<<EOF
 s main
@@ -3225,13 +3138,10 @@ pdg
 EOF
 EXPECT=<<EOF
 
-// WARNING: Variable defined which should be unmapped: var_30h
-
 jstring sym.Java_JNIFoo_nativeFoo(JNIEnv *env, jobject obj)
 {
     int64_t iVar1;
     jstring pvVar2;
-    int64_t var_30h;
     
     iVar1 = sym.imp.malloc(0x1e);
     if (iVar1 == 0) {
@@ -3373,6 +3283,71 @@ void method.Test.methodWithTwoArgs:secondArg:(int64_t arg1, int64_t arg2, int64_
     *(int32_t *)(arg1 + 8) = var_2ch;
     NSLog(__CFConstantStringClassReference);
     return;
+}
+EOF
+RUN
+
+NAME=Generated function names without rizin functions
+FILE=rizin-testbins/mach0/hello-macos-arm64-objc-stubs-stripped
+CMDS=<<EOF
+aalos
+s main
+aF
+pdg @e:asm.flags.real=1
+pdg @e:asm.flags.real=0
+EOF
+EXPECT=<<EOF
+
+// WARNING: Variable defined which should be unmapped: var_10h
+
+undefined8 main(void)
+{
+    undefined4 uVar1;
+    undefined8 uVar2;
+    undefined8 uVar3;
+    int64_t var_50h;
+    int64_t var_48h;
+    int64_t var_40h;
+    int64_t var_38h;
+    int64_t var_10h;
+    
+    uVar2 = objc_autoreleasePoolPush();
+    uVar1 = (**(code **)0x100008158)(0x100008148);
+    NSLog(__CFConstantStringClassReference);
+    uVar3 = objc_alloc_init(0x100008120);
+    objc_msgSend$methodWithoutArgs(uVar3, var_48h);
+    objc_msgSend$methodWithOneArg:(uVar3, var_48h, 0x7b);
+    objc_msgSend$methodWithTwoArgs:secondArg:(uVar3, var_48h, 0x539, uVar1);
+    objc_msgSend$methodWithReturn(uVar3, var_48h);
+    NSLog(__CFConstantStringClassReference);
+    objc_autoreleasePoolPop(uVar2);
+    return 0;
+}
+
+// WARNING: Variable defined which should be unmapped: var_10h
+
+undefined8 main(void)
+{
+    undefined4 uVar1;
+    undefined8 uVar2;
+    undefined8 uVar3;
+    int64_t var_50h;
+    int64_t var_48h;
+    int64_t var_40h;
+    int64_t var_38h;
+    int64_t var_10h;
+    
+    uVar2 = sym.imp.objc_autoreleasePoolPush();
+    uVar1 = (**(code **)0x100008158)(0x100008148);
+    sym.imp.NSLog(reloc.__CFConstantStringClassReference.1000040a8);
+    uVar3 = sym.imp.objc_alloc_init(0x100008120);
+    stub.objc_msgSend_methodWithoutArgs(uVar3, var_48h);
+    stub.objc_msgSend_methodWithOneArg:(uVar3, var_48h, 0x7b);
+    stub.objc_msgSend_methodWithTwoArgs:secondArg:(uVar3, var_48h, 0x539, uVar1);
+    stub.objc_msgSend_methodWithReturn(uVar3, var_48h);
+    sym.imp.NSLog(reloc.__CFConstantStringClassReference.1000040c8);
+    sym.imp.objc_autoreleasePoolPop(uVar2);
+    return 0;
 }
 EOF
 RUN

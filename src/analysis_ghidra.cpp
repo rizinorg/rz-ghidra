@@ -13,6 +13,8 @@
 #include "SleighAsm.h"
 #include "SleighAnalysisValue.h"
 
+using namespace ghidra;
+
 static SleighAsm sanalysis;
 
 static int archinfo(RzAnalysis *analysis, RzAnalysisInfoType query)
@@ -1364,7 +1366,7 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
 	if(!esil_stack.empty())
 		ss << ",CLEAR";
 	// std::cerr << hex << analysis_op->addr << " " << ss.str() << endl;
-	esilprintf(analysis_op, ss.str()[0] == ','? ss.str().c_str() + 1: ss.str().c_str());
+	esilprintf(analysis_op, "%s", ss.str()[0] == ','? ss.str().c_str() + 1: ss.str().c_str());
 }
 
 /* Not in use for now.

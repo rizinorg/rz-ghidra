@@ -5,7 +5,7 @@ RUN pacman --noconfirm -Syu
 RUN pacman --noconfirm -S git gcc make cmake pkg-config flex bison meson ninja qt5-base qt5-svg qt5-tools
 
 RUN cd /root && \
-	git clone --depth 1 -b stable https://github.com/rizinorg/rizin && \
+	git clone --depth 1 https://github.com/rizinorg/rizin && \
 	cd rizin && \
 	meson build --prefix=/usr && \
 	ninja -C build && \
