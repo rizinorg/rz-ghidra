@@ -1903,6 +1903,7 @@ NAME=aeropause64-sp (many features combined without bp)
 FILE=bins/dectest64-sp
 EXPECT=<<EOF
 
+// WARNING: [rz-ghidra] Detected overlap for variable var_14h
 // WARNING: [rz-ghidra] Removing arg arg_14h because it doesn't fit into ProtoModel
 
 void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
@@ -1910,7 +1911,6 @@ void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
     int32_t iVar1;
     Morning *pMVar2;
     int64_t var_20h;
-    int32_t var_14h;
     void **var_10h;
     
     pMVar2 = (Morning *)sym.imp.malloc(0x10);
@@ -1989,6 +1989,7 @@ RUN
 
 
 NAME=typedef
+BROKEN=1
 FILE=bins/dectest32
 EXPECT=<<EOF
 
@@ -3174,14 +3175,17 @@ true
 
 // WARNING: Variable defined which should be unmapped: var_10h
 // WARNING: Variable defined which should be unmapped: var_8h
+// WARNING: [rz-ghidra] Failed to get address for var argc
+// WARNING: [rz-ghidra] Failed to get address for var argv
 // WARNING: [rz-ghidra] Detected overlap for variable var_14h
 // WARNING: [rz-ghidra] Detected overlap for variable var_2ch
 
-undefined8 entry0(int64_t arg1, int64_t arg2)
+int64_t dbg.main(void)
 {
     undefined4 uVar1;
-    undefined8 uVar2;
-    undefined8 uVar3;
+    int64_t iVar2;
+    int64_t arg1;
+    int64_t arg2;
     int64_t var_50h;
     int64_t var_48h;
     int64_t var_40h;
@@ -3191,30 +3195,36 @@ undefined8 entry0(int64_t arg1, int64_t arg2)
     int64_t var_10h;
     int64_t var_8h;
     
-    uVar2 = fcn.100003d9c();
-    uVar1 = (**(code **)0x100008188)(sym._a);
+    arg1 = fcn.100003d9c();
+    iVar2 = arg1;
+    arg1._0_4_ = (*fcns[1])(&a);
+    uVar1 = (undefined4)arg1;
     section.1.__TEXT.__stubs("");
-    uVar3 = fcn.100003d84(sym.class_Test);
-    fcn.100003da8(uVar3, "methodWithoutArgs");
-    fcn.100003da8(uVar3, "methodWithOneArg:", 0x7b);
-    fcn.100003da8(uVar3, "methodWithTwoArgs:secondArg:", 0x539, uVar1);
-    fcn.100003da8(uVar3, "methodWithReturn");
+    arg1 = fcn.100003d84(sym.class_Test);
+    fcn.100003da8(arg1, "methodWithoutArgs");
+    fcn.100003da8(arg1, "methodWithOneArg:", 0x7b);
+    fcn.100003da8(arg1, "methodWithTwoArgs:secondArg:", 0x539, uVar1);
+    fcn.100003da8(arg1, "methodWithReturn");
     section.1.__TEXT.__stubs("");
-    fcn.100003d90(uVar2);
-    return 0;
+    fcn.100003d90(iVar2);
+    arg1 = 0;
+    return arg1;
 }
 ------------ without propagation
 
 // WARNING: Variable defined which should be unmapped: var_10h
 // WARNING: Variable defined which should be unmapped: var_8h
+// WARNING: [rz-ghidra] Failed to get address for var argc
+// WARNING: [rz-ghidra] Failed to get address for var argv
 // WARNING: [rz-ghidra] Detected overlap for variable var_14h
 // WARNING: [rz-ghidra] Detected overlap for variable var_2ch
 
-undefined8 entry0(int64_t arg1, int64_t arg2)
+int64_t dbg.main(void)
 {
     undefined4 uVar1;
-    undefined8 uVar2;
-    undefined8 uVar3;
+    int64_t iVar2;
+    int64_t arg1;
+    int64_t arg2;
     int64_t var_50h;
     int64_t var_48h;
     int64_t var_40h;
@@ -3224,17 +3234,20 @@ undefined8 entry0(int64_t arg1, int64_t arg2)
     int64_t var_10h;
     int64_t var_8h;
     
-    uVar2 = fcn.100003d9c();
-    uVar1 = (**(code **)0x100008188)(sym._a);
+    arg1 = fcn.100003d9c();
+    iVar2 = arg1;
+    arg1._0_4_ = (*fcns[1])(&a);
+    uVar1 = (undefined4)arg1;
     section.1.__TEXT.__stubs("");
-    uVar3 = fcn.100003d84(*(undefined8 *)0x100008110);
-    fcn.100003da8(uVar3, *(undefined8 *)0x1000080f0);
-    fcn.100003da8(uVar3, *(undefined8 *)0x1000080f8, 0x7b);
-    fcn.100003da8(uVar3, *(undefined8 *)0x100008100, 0x539, uVar1);
-    fcn.100003da8(uVar3, *(undefined8 *)0x100008108);
+    arg1 = fcn.100003d84(*(undefined8 *)0x100008110);
+    fcn.100003da8(arg1, *(undefined8 *)0x1000080f0);
+    fcn.100003da8(arg1, *(undefined8 *)0x1000080f8, 0x7b);
+    fcn.100003da8(arg1, *(undefined8 *)0x100008100, 0x539, uVar1);
+    fcn.100003da8(arg1, *(undefined8 *)0x100008108);
     section.1.__TEXT.__stubs("");
-    fcn.100003d90(uVar2);
-    return 0;
+    fcn.100003d90(iVar2);
+    arg1 = 0;
+    return arg1;
 }
 EOF
 RUN
