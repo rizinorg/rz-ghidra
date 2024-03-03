@@ -139,7 +139,10 @@ static const std::map<std::string, std::string> compiler_map = {
 
 std::string CompilerFromCore(RzCore *core)
 {
-	RzBinInfo *info = rz_bin_get_info(core->bin);
+	RzBinObject *bobj = rz_bin_cur_object(core->bin);
+	if (!bobj)
+		return std::string();
+	const RzBinInfo *info = rz_bin_object_get_info(bobj);
 	if (!info || !info->rclass)
 		return std::string();
 
