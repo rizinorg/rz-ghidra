@@ -8,6 +8,7 @@
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
 #include "PrettyXmlEncode.h"
+#include "PcodeFixupPreprocessor.h"
 #include "rz_ghidra.h"
 #include "rz_ghidra_internal.h"
 
@@ -134,6 +135,10 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	arch.readonlypropagate = cfg_var_ropropagate.GetBool(core->config);
 	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
 	arch.init(store);
+
+	// Must be called after arch.init(), but before decompiling the function
+	PcodeFixupPreprocessor::fixupSharedReturnCall(arch, core);
+
 	Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
 	arch.print->setOutputStream(&out_stream);
 	arch.setPrintLanguage("rizin-c-language");
