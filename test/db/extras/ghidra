@@ -3119,8 +3119,6 @@ EXPECT=<<EOF
 
 void sym.imp.exit noreturn (void)
 {
-    // WARNING: Could not recover jumptable at 0x080483e8. Too many branches
-    // WARNING: Treating indirect jump as call
     (*_reloc.exit)();
     return;
 }
@@ -3361,6 +3359,30 @@ undefined8 main(void)
     sym.imp.NSLog(reloc.__CFConstantStringClassReference.1000040c8);
     sym.imp.objc_autoreleasePoolPop(uVar2);
     return 0;
+}
+EOF
+RUN
+
+NAME=fixup shared return call to relocs
+FILE=bins/sharedReturn.o
+CMDS=<<EOF
+aaa
+pdg @ sym.main
+EOF
+EXPECT=<<EOF
+
+undefined8 sym.main(void)
+{
+    int32_t iVar1;
+    undefined8 uVar2;
+    
+    // [04] -r-x section size 31 named .text.startup
+    iVar1 = getNum();
+    if (iVar1 < 3) {
+        return 0;
+    }
+    uVar2 = calc(iVar1, 2);
+    return uVar2;
 }
 EOF
 RUN
