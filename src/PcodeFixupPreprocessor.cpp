@@ -24,10 +24,9 @@ void PcodeFixupPreprocessor::fixupSharedReturnJumpToRelocs(RzAnalysisFunction *f
 		if (xref->type != RZ_ANALYSIS_XREF_TYPE_CODE)
 			continue;
 
-		// If the target location is outside of the current function, and it is a imported function, then do the patch.
-		// FIXME: Use librz to confirm the target location is an imported function.
-		RzAnalysisFunction *targetFunction = rz_analysis_get_fcn_in(core->analysis, xref->to, RZ_ANALYSIS_FCN_TYPE_NULL);
-		if (targetFunction == NULL)
+		// If the target location is a imported function, then do the patch.
+		RzBinReloc *reloc = rz_core_get_reloc_to(core, xref->to);
+		if (reloc != nullptr && reloc->import != nullptr)
 		{
 			func->getOverride().insertFlowOverride(Address(arch.getDefaultCodeSpace(), xref->from), Override::CALL_RETURN);
 		}
