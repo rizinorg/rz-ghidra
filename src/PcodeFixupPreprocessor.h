@@ -6,10 +6,12 @@
 
 #include "RizinArchitecture.h"
 
+#include <rz_core.h>
+
 class PcodeFixupPreprocessor
 {
-    public:
-        static void fixupSharedReturnCall(RizinArchitecture &arch, RzCore *core);
+	public:
+		static void fixupSharedReturnJumpToRelocs(RzAnalysisFunction *function, ghidra::Funcdata *func, RzCore *core, RizinArchitecture &arch);
 };
 
 #endif
