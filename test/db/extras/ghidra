@@ -3119,6 +3119,8 @@ EXPECT=<<EOF
 
 void sym.imp.exit noreturn (void)
 {
+    // WARNING: Could not recover jumptable at 0x080483e8. Too many branches
+    // WARNING: Treating indirect jump as call
     (*_reloc.exit)();
     return;
 }
