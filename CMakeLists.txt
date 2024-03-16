@@ -57,6 +57,8 @@ set(CORE_SOURCE
 		src/RzCoreMutex.cpp
 		src/PrettyXmlEncode.h
 		src/PrettyXmlEncode.cpp
+		src/PcodeFixupPreprocessor.h
+		src/PcodeFixupPreprocessor.cpp
 		src/rz_ghidra.h
 		src/rz_ghidra_internal.h)
 

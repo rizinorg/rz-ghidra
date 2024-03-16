@@ -3364,3 +3364,27 @@ undefined8 main(void)
 }
 EOF
 RUN
+
+NAME=fixup shared return call to relocs
+FILE=bins/sharedReturn.o
+CMDS=<<EOF
+aaa
+pdg @ sym.main
+EOF
+EXPECT=<<EOF
+
+undefined8 sym.main(void)
+{
+    int32_t iVar1;
+    undefined8 uVar2;
+    
+    // [04] -r-x section size 31 named .text.startup
+    iVar1 = getNum();
+    if (iVar1 < 3) {
+        return 0;
+    }
+    uVar2 = calc(iVar1, 2);
+    return uVar2;
+}
+EOF
+RUN
