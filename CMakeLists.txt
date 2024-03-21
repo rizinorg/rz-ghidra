@@ -80,6 +80,7 @@ set(ANALYSIS_SOURCE
 endif()
 
 add_library(core_ghidra SHARED ${CORE_SOURCE})
+target_include_directories(core_ghidra PRIVATE ${OPENSSL_INCLUDE_DIR})
 target_link_libraries(core_ghidra ghidra_libdecomp)
 target_link_libraries(core_ghidra ${OPENSSL_LIBRARIES})
 target_link_libraries(core_ghidra pugixml)
@@ -106,6 +107,7 @@ endif()
 
 if(BUILD_SLEIGH_PLUGIN)
 add_library(asm_ghidra SHARED ${ASM_SOURCE})
+target_include_directories(asm_ghidra PRIVATE ${OPENSSL_INCLUDE_DIR})
 target_link_libraries(asm_ghidra core_ghidra)
 target_link_libraries(asm_ghidra ${OPENSSL_LIBRARIES})
 set_target_properties(asm_ghidra PROPERTIES
@@ -115,6 +117,7 @@ set_target_properties(asm_ghidra PROPERTIES
 		PREFIX "")
 
 add_library(analysis_ghidra SHARED ${ANALYSIS_SOURCE})
+target_include_directories(analysis_ghidra PRIVATE ${OPENSSL_INCLUDE_DIR})
 target_link_libraries(analysis_ghidra core_ghidra)
 target_link_libraries(analysis_ghidra ${OPENSSL_LIBRARIES})
 set_target_properties(analysis_ghidra PROPERTIES
