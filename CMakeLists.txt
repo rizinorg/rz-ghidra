@@ -6,6 +6,7 @@ project(rz-ghidra)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 find_package(Rizin REQUIRED Core)
+find_package(OpenSSL REQUIRED)
 
 set(RIZIN_INSTALL_PLUGDIR "${Rizin_PLUGINDIR}" CACHE STRING "Directory to install rizin plugins into")
 
@@ -80,6 +81,7 @@ endif()
 
 add_library(core_ghidra SHARED ${CORE_SOURCE})
 target_link_libraries(core_ghidra ghidra_libdecomp)
+target_link_libraries(core_ghidra ${OPENSSL_LIBRARIES})
 target_link_libraries(core_ghidra pugixml)
 target_link_libraries(core_ghidra Rizin::Core)
 set_target_properties(core_ghidra PROPERTIES
@@ -105,6 +107,7 @@ endif()
 if(BUILD_SLEIGH_PLUGIN)
 add_library(asm_ghidra SHARED ${ASM_SOURCE})
 target_link_libraries(asm_ghidra core_ghidra)
+target_link_libraries(asm_ghidra ${OPENSSL_LIBRARIES})
 set_target_properties(asm_ghidra PROPERTIES
 		OUTPUT_NAME asm_ghidra
 		BUILD_RPATH "${LD_RPATH_STR}"
@@ -113,6 +116,7 @@ set_target_properties(asm_ghidra PROPERTIES
 
 add_library(analysis_ghidra SHARED ${ANALYSIS_SOURCE})
 target_link_libraries(analysis_ghidra core_ghidra)
+target_link_libraries(analysis_ghidra ${OPENSSL_LIBRARIES})
 set_target_properties(analysis_ghidra PROPERTIES
 		OUTPUT_NAME analysis_ghidra
 		BUILD_RPATH "${LD_RPATH_STR}"
