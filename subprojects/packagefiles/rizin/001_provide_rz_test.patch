@@ -1,0 +1,18 @@
+diff --git a/binrz/rz-test/meson.build b/binrz/rz-test/meson.build
+index 9dff846..6f6736c 100644
+--- a/binrz/rz-test/meson.build
++++ b/binrz/rz-test/meson.build
+@@ -1,6 +1,6 @@
+ 
+ if get_option('enable_rz_test')
+-  executable('rz-test', ['rz-test.c', 'load.c', 'run.c'],
++  rz_test_exe = executable('rz-test', ['rz-test.c', 'load.c', 'run.c'],
+     include_directories: [platform_inc],
+     dependencies: [
+       rz_util_dep,
+@@ -11,4 +11,5 @@ if get_option('enable_rz_test')
+     install_rpath: rpath_exe,
+     implicit_include_directories: false,
+   )
++  meson.override_find_program('rz-test', rz_test_exe)
+ endif

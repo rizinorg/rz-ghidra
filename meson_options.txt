@@ -1,0 +1,2 @@
+option('cutter-plugin', type: 'feature', value: 'disabled')
+option('enable-tests', type: 'boolean', value: false, description: 'Build unit tests in test')

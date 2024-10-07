@@ -1,0 +1,10 @@
+[wrap-git]
+directory=ghidra
+url=https://github.com/rizinorg/ghidra.git
+revision=b82c65ac80271e45dd78c24fe9d06730052c77ff
+patch_directory=ghidra
+depth=1
+
+[provide]
+ghidra=ghidra_dep
+

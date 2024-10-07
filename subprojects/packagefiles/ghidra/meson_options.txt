@@ -1,0 +1,5 @@
+option('build-decompile-executable', type: 'boolean', value : false)
+option('build-decompile-cli-executable', type: 'boolean', value : false)
+option('build-slaspecs', type: 'boolean', value : true)
+option('generate_parsers', type: 'boolean', value : true)
+
