@@ -1742,7 +1742,7 @@ void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
 {
     Morning *pMVar1;
     int32_t iVar2;
-    unsigned long in_stack_fffffff4;
+    size_t in_stack_fffffff4;
     
     pMVar1 = (Morning *)sym.imp.malloc(8);
     bright->morning = pMVar1;
