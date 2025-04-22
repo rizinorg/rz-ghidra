@@ -8,6 +8,7 @@
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
 #include "PrettyXmlEncode.h"
+#include "PcodeFixupPreprocessor.h"
 #include "rz_ghidra.h"
 #include "rz_ghidra_internal.h"
 
@@ -140,6 +141,12 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	ApplyPrintCConfig(core->config, dynamic_cast<PrintC *>(arch.print));
 	if(!func)
 		throw LowlevelError("No function in Scope");
+
+	// Other archs are not tested
+	if (strcmp(core->analysis->arch_target->arch, "x86") == 0)
+		// Must be called after arch.init(), but before decompiling the function
+		PcodeFixupPreprocessor::fixupSharedReturnJumpToRelocs(function, func, core, arch);
+
 	arch.getCore()->sleepBegin();
 	auto action = arch.allacts.getCurrent();
 	int res;

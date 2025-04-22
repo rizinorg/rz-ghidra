@@ -269,7 +269,9 @@ Datatype *RizinTypeFactory::fromRzTypeInternal(const RzType *ctype, string *erro
 			{
 				RzCoreLock core(arch->getCore());
 				char *tstr = rz_type_as_string(core->analysis->typedb, ctype);
-				*error = std::string("Failed to get any calling convention for callable ") + tstr;
+				if (error) {
+					*error = std::string("Failed to get any calling convention for callable ") + tstr;
+				}
 				rz_mem_free(tstr);
 				return nullptr;
 			}

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0...3.5)
 set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH True)
 
 project(rz-ghidra)
@@ -57,6 +57,8 @@ set(CORE_SOURCE
 		src/RzCoreMutex.cpp
 		src/PrettyXmlEncode.h
 		src/PrettyXmlEncode.cpp
+		src/PcodeFixupPreprocessor.h
+		src/PcodeFixupPreprocessor.cpp
 		src/rz_ghidra.h
 		src/rz_ghidra_internal.h)
 
