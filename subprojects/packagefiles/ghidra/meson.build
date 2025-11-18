@@ -75,6 +75,7 @@ source_decompiler = [
         'double.cc',
         'coreaction.cc',
         'condexe.cc',
+        'constseq.cc',
         'override.cc',
         'dynamic.cc',
         'crc32.cc',
@@ -83,6 +84,8 @@ source_decompiler = [
         'printc.cc',
         'printjava.cc',
         'memstate.cc',
+        'modelrules.cc',
+        'multiprecision.cc',
         'opbehavior.cc',
         'paramid.cc',
         'transform.cc',
@@ -120,6 +123,8 @@ source_sleigh = [
                 'sleighbase.cc',
                 'slghpatexpress.cc',
                 'slghpattern.cc',
+                'slaformat.cc',
+                'compression.cc',
                 'pcodecompile.cc',
   ]
 
@@ -141,6 +146,10 @@ source_console = [
 source_sleigh_compiler = [
                 'slgh_compile.cc',
                 'slgh_compile.hh',
+                'slaformat.cc',
+                'slaformat.hh',
+                'compression.cc',
+                'compression.hh',
   ]
 
 source_sleigh_compiler_yacc = [
@@ -202,6 +211,7 @@ foreach name,src : target_list
   endif
 
   lib_deps = []
+  lib_deps += [ dependency('zlib', required: true) ] #  FIXME: only required for sleigh_compiler!
   foreach l : src[4]
     lib_deps += declare_dependency(link_with: libs_list[l])
   endforeach

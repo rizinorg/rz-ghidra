@@ -13,10 +13,10 @@ void PrettyXmlEncode::indent()
 
 void PrettyXmlEncode::openElement(const ElementId &elemId)
 {
-	if(elementTagIsOpen)
+	if(tagStatus == tag_start)
 		outStream << ">\n";
 	else
-		elementTagIsOpen = true;
+		tagStatus = tag_start;
 	indent();
 	depth++;
 	outStream << '<' << elemId.getName();
@@ -25,10 +25,10 @@ void PrettyXmlEncode::openElement(const ElementId &elemId)
 void PrettyXmlEncode::closeElement(const ElementId &elemId)
 {
 	depth--;
-	if(elementTagIsOpen)
+	if(tagStatus == tag_start)
 	{
 		outStream << "/>\n";
-		elementTagIsOpen = false;
+		tagStatus = tag_stop;
 	}
 	else
 	{

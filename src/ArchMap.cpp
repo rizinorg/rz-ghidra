@@ -197,8 +197,7 @@ std::string CompilerFromCore(RzCore *core)
 
 RZ_API std::string SleighIdFromCore(RzCore *core)
 {
-	SleighArchitecture::collectSpecFiles(std::cerr);
-	auto langs = SleighArchitecture::getLanguageDescriptions();
+	auto langs = SleighArchitecture::getDescriptions();
 	const char *arch = rz_config_get(core->config, "asm.arch");
 	if (!strcmp(arch, "ghidra"))
 		return SleighIdFromSleighAsmConfig(core->rasm->cpu,

@@ -1,0 +1,25 @@
+diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/context.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/context.hh
+index 79fbe1eff6..48628c6470 100644
+--- a/Ghidra/Features/Decompiler/src/decompile/cpp/context.hh
++++ b/Ghidra/Features/Decompiler/src/decompile/cpp/context.hh
+@@ -94,6 +94,8 @@ private:
+   ConstructState *base_state;
+   int4 alloc;			// Number of ConstructState's allocated
+   int4 delayslot;		// delayslot depth
++protected:
++  ConstructState **getBaseState(void) { return &base_state; }
+ public:
+   ParserContext(ContextCache *ccache,Translate *trans);
+   ~ParserContext(void) { if (context != (uintm *)0) delete [] context; }
+diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
+index 32ef8565ef..951ef284fc 100644
+--- a/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
++++ b/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
+@@ -170,6 +170,7 @@ protected:
+   ParserContext *obtainContext(const Address &addr,int4 state) const;
+   void resolve(ParserContext &pos) const;	///< Generate a parse tree suitable for disassembly
+   void resolveHandles(ParserContext &pos) const;	///< Prepare the parse tree for p-code generation
++  ContextCache *getContextCache(void) { return cache; }
+ public:
+   Sleigh(LoadImage *ld,ContextDatabase *c_db);		///< Constructor
+   virtual ~Sleigh(void);				///< Destructor

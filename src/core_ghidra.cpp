@@ -7,7 +7,6 @@
 #include "RizinArchitecture.h"
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
-#include "PrettyXmlEncode.h"
 #include "PcodeFixupPreprocessor.h"
 #include "rz_ghidra.h"
 #include "rz_ghidra_internal.h"
@@ -114,11 +113,10 @@ static void ApplyPrintCConfig(RzConfig *cfg, PrintC *print_c)
 	else
 		print_c->setCStyleComments();
 
-	print_c->setSpaceAfterComma(true);
-
-	print_c->setNewlineBeforeOpeningBrace(cfg_var_nl_brace.GetBool(cfg));
-	print_c->setNewlineBeforeElse(cfg_var_nl_else.GetBool(cfg));
-	print_c->setNewlineAfterPrototype(false);
+	print_c->setBraceFormatFunction(cfg_var_nl_brace.GetBool(cfg) ? Emit::next_line : Emit::same_line );
+	print_c->setBraceFormatIfElse(cfg_var_nl_brace.GetBool(cfg) ? Emit::next_line : Emit::same_line );
+	print_c->setBraceFormatLoop(cfg_var_nl_brace.GetBool(cfg) ? Emit::next_line : Emit::same_line );
+	print_c->setBraceFormatSwitch(cfg_var_nl_brace.GetBool(cfg) ? Emit::next_line : Emit::same_line );
 	print_c->setIndentIncrement(cfg_var_indent.GetInt(cfg));
 	print_c->setLineCommentIndent(cfg_var_cmt_indent.GetInt(cfg));
 	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
@@ -186,6 +184,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 		case DecompileMode::OFFSET:
 		case DecompileMode::STATEMENTS:
 			arch.print->setMarkup(true);
+			arch.print->setPackedOutput(false);
 			break;
 		default:
 			break;
@@ -193,7 +192,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	if(mode == DecompileMode::XML)
 	{
 		out_stream << "<result><function>";
-		PrettyXmlEncode enc(out_stream);
+		XmlEncode enc(out_stream);
 		func->encode(enc, 0, true);
 		out_stream << "</function><code>";
 	}
@@ -213,7 +212,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 			}
 			break;
 		case DecompileMode::DEBUG_XML: {
-			PrettyXmlEncode enc(out_stream);
+			XmlEncode enc(out_stream);
 			arch.encode(enc);
 			break;
 		}
@@ -451,8 +450,7 @@ static void ListSleighLangs()
 {
 	DecompilerLock lock;
 
-	SleighArchitecture::collectSpecFiles(std::cerr);
-	auto langs = SleighArchitecture::getLanguageDescriptions();
+	auto langs = SleighArchitecture::getDescriptions();
 	if(langs.empty())
 	{
 		rz_cons_printf("No languages available, make sure %s is set correctly!\n", cfg_var_sleighhome.GetName());

@@ -1,0 +1,23 @@
+diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/marshal.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/marshal.cc
+index 3610a7da36..3a5bb2b55a 100644
+--- a/Ghidra/Features/Decompiler/src/decompile/cpp/marshal.cc
++++ b/Ghidra/Features/Decompiler/src/decompile/cpp/marshal.cc
+@@ -475,7 +475,7 @@ void XmlEncode::openElement(const ElementId &elemId)
+     outStream << '>';
+   else
+     tagStatus = tag_start;
+-  newLine();
++  //newLine();
+   outStream << '<' << elemId.getName();
+   depth += 1;
+ }
+@@ -490,7 +490,8 @@ void XmlEncode::closeElement(const ElementId &elemId)
+     return;
+   }
+   if (tagStatus != tag_content)
+-    newLine();
++    0;
++    //newLine();
+   else
+     tagStatus = tag_stop;
+ 

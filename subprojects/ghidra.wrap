@@ -1,9 +1,11 @@
 [wrap-git]
 directory=ghidra
-url=https://github.com/rizinorg/ghidra.git
-revision=b82c65ac80271e45dd78c24fe9d06730052c77ff
+url=https://github.com/NationalSecurityAgency/ghidra.git
+revision=Ghidra_11.4_build
 patch_directory=ghidra
 depth=1
+
+diff_files = ghidra/001_context_cache.patch, ghidra/002_xml_format.patch
 
 [provide]
 ghidra=ghidra_dep

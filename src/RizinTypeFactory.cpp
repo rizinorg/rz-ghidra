@@ -68,7 +68,6 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, StackTypes &stack_t
 			// This should be changed if there is a clear notion of the offset in rizin at some point.
 			offset += rz_type_db_get_bitsize(core->analysis->typedb, member->type) / 8;
 		});
-		setFields(fields, r, 0, 0);
 		return r;
 	}
 	catch(std::invalid_argument &e)
@@ -96,7 +95,11 @@ Datatype *RizinTypeFactory::addRizinEnum(RzBaseType *type)
 	try
 	{
 		auto enumType = getTypeEnum(type->name);
-		setEnumValues(namelist, vallist, assignlist, enumType);
+        std::map<uintb, std::string> nmap;
+        for (size_t i = 0; i < namelist.size(); ++i) {
+            nmap[vallist[i]] = namelist[i];
+        }
+		setEnumValues(nmap, enumType);
 		return enumType;
 	}
 	catch(LowlevelError &e)
@@ -275,7 +278,7 @@ Datatype *RizinTypeFactory::fromRzTypeInternal(const RzType *ctype, string *erro
 				rz_mem_free(tstr);
 				return nullptr;
 			}
-			Datatype *outtype = nullptr;
+			Datatype *outtype = arch->types->getTypeVoid();
 			if(callable->ret)
 			{
 				outtype = fromRzTypeInternal(callable->ret, error, stack_types, prototype, refd);
@@ -295,7 +298,12 @@ Datatype *RizinTypeFactory::fromRzTypeInternal(const RzType *ctype, string *erro
 			{
 				return nullptr;
 			}
-			return this->getTypeCode(pm, outtype, intypes, false); // dotdotdot arg can be used when rizin supports vararg callables
+            PrototypePieces proto = {
+              .model = pm,
+              .outtype = outtype,
+              .intypes = intypes,
+            };
+			return this->getTypeCode(proto);
 		}
 	}
 	return nullptr;
