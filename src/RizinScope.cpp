@@ -528,7 +528,7 @@ Symbol *RizinScope::queryRizinAbsolute(ut64 addr, bool contain) const
 	{
 		RzList *fcns = rz_analysis_get_functions_in(core->analysis, addr);
 		if(!rz_list_empty(fcns))
-			fcn = reinterpret_cast<RzAnalysisFunction *>(rz_list_first(fcns));
+			fcn = reinterpret_cast<RzAnalysisFunction *>(rz_list_first_val(fcns));
 		rz_list_free(fcns);
 	}
 #endif
