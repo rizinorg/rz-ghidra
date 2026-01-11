@@ -19,8 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Buster / default
-            image: buster
+          - name: Bullseye / default
+            image: bullseye
             args:
           - name: Arch / GENERATE_PARSERS=ON + optional executables
             image: arch
