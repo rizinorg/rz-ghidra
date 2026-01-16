@@ -1,7 +1,7 @@
 [wrap-git]
 directory=ghidra
 url=https://github.com/NationalSecurityAgency/ghidra.git
-revision=Ghidra_11.4_build
+revision=Ghidra_12.0.1_build
 patch_directory=ghidra
 depth=1
 
