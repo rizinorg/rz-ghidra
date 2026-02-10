@@ -13,7 +13,7 @@ template<typename T, typename F> void rz_list_foreach_cpp(RzList *list, const F 
 {
 	for(RzListIter *it = list->head; it; it = rz_list_next(it))
 	{
-		func(reinterpret_cast<T *>(rz_list_iter_get_data(it)));
+		func(reinterpret_cast<T *>(rz_list_val(it)));
 	}
 }
 
