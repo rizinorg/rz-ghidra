@@ -43,7 +43,7 @@ template <> class Mapper<bool> : public BaseMapper<bool> {
 template <> class Mapper<std::string> : public BaseMapper<std::string> {
     public:
 	using BaseMapper<std::string>::BaseMapper;
-	Mapper<std::string>(const char *constant)
+	Mapper(const char *constant)
 		: BaseMapper([constant](RzCore *core) { return constant; })
 	{
 	}

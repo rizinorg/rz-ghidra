@@ -23,10 +23,10 @@ endif()
 
 if(CMAKE_VERSION VERSION_LESS "3.1")
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-		add_definitions(-std=c++11)
+		add_definitions(-std=c++20)
 	endif()
 else()
-	set(CMAKE_CXX_STANDARD 11)
+	set(CMAKE_CXX_STANDARD 20)
 endif()
 
 add_subdirectory(ghidra)
