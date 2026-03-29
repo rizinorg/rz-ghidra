@@ -2904,6 +2904,7 @@ shr eax, 4
 0x08048540: PUSH EBP
     (unique,0x9b80,4) = COPY EBP
     ESP = INT_SUB ESP, 0x4
+    STORE ram[ESP] = (unique,0x9b80,4)
 0x08048541: MOV EBP,ESP
     EBP = COPY ESP
 0x08048543: SUB ESP,0x88
@@ -2991,7 +2992,7 @@ CMDS=<<EOF
 s main
 pi 8
 echo -----
-pdgsd 8~!STORE
+pdgsd 8
 EOF
 RUN
 
