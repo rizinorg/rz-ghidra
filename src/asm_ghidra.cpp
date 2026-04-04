@@ -13,19 +13,19 @@ static RzIO *rio = nullptr;
 
 //#define DEBUG_EXCEPTIONS
 
-static int disassemble(RzAsm *a, RzAsmOp *op, const ut8 *buf, int len)
+static int disassemble(const RzAsm *a, RzAsmOp *op, const ut8 *buf, int len)
 {
 	int r = 0;
 
-	if(!a->cpu)
+	if(!rz_asm_get_cpu(a))
 		return r;
 
 #ifndef DEBUG_EXCEPTIONS
 	try
 	{
 #endif
-		sasm.init(a->cpu, a->bits, a->big_endian, SleighAsm::getConfig(a));
-		r = sasm.disassemble(op, a->pc, buf, len);
+		sasm.init(rz_asm_get_cpu(a), rz_asm_get_bits(a), rz_asm_is_big_endian_set(a), SleighAsm::getConfig(a));
+		r = sasm.disassemble(op, rz_asm_get_pc(a), buf, len);
 #ifndef DEBUG_EXCEPTIONS
 	}
 	catch(const LowlevelError &e)

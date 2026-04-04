@@ -426,9 +426,10 @@ void SleighAsm::collectSpecfiles(void)
 		loadLanguageDescription(*iter);
 }
 
-RzConfig *SleighAsm::getConfig(RzAsm *a)
+RzConfig *SleighAsm::getConfig(const RzAsm *a)
 {
-	RzCore *core = a->num ? (RzCore *)(a->num->userptr) : NULL;
+	const RzBinBind *binbind = rz_asm_get_bin_bind(a);
+	RzCore *core = binbind->bin ? (RzCore *)(binbind->bin->user) : NULL;
 	if(!core)
 		return nullptr;
 	return core->config;

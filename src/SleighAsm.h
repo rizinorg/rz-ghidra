@@ -253,7 +253,7 @@ public:
 	int disassemble(RzAsmOp *op, ut64 offset, const ut8 *buf, size_t size);
 	int genOpcode(PcodeSlg &pcode_slg, ghidra::Address &addr, const ut8 *buf, size_t size);
 	std::vector<RizinReg> getRegs(void);
-	static RzConfig *getConfig(RzAsm *a);
+	static RzConfig *getConfig(const RzAsm *a);
 	static RzConfig *getConfig(RzAnalysis *a);
 };
 
