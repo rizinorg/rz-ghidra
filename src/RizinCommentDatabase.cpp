@@ -31,7 +31,8 @@ void RizinCommentDatabase::fillCache(const Address &fad) const
 	if(!fcn)
 		return;
 
-	rz_interval_tree_foreach_cpp<RzAnalysisMetaItem>(&core->analysis->meta, [fad, fcn, this](RzIntervalNode *node, RzAnalysisMetaItem *meta) {
+	RzIntervalTree *tmeta = rz_analysis_get_meta(core->analysis);
+	rz_interval_tree_foreach_cpp<RzAnalysisMetaItem>(tmeta, [fad, fcn, this](RzIntervalNode *node, RzAnalysisMetaItem *meta) {
 		if(!meta || meta->type != RZ_META_TYPE_COMMENT || !meta->str)
 			return;
 		if(!rz_analysis_function_contains(fcn, node->start))

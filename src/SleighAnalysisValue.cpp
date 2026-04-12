@@ -31,7 +31,8 @@ SleighAnalysisValue SleighAnalysisValue::resolve_arg(RzAnalysis *analysis, const
 	else if(arg->is_reg())
 	{
 		res.type = RZ_ANALYSIS_VAL_REG;
-		res.reg = rz_reg_get(analysis->reg, arg->name.c_str(), RZ_REG_TYPE_ANY);
+		RzReg *rreg = rz_analysis_get_reg(analysis);
+		res.reg = rz_reg_get(rreg, arg->name.c_str(), RZ_REG_TYPE_ANY);
 	}
 	else if(arg->is_ram())
 	{
@@ -210,7 +211,8 @@ std::vector<SleighAnalysisValue> SleighAnalysisValue::resolve_out(RzAnalysis *an
 	else if(arg->is_reg())
 	{
 		tmp.type = RZ_ANALYSIS_VAL_REG;
-		tmp.reg = rz_reg_get(analysis->reg, arg->name.c_str(), RZ_REG_TYPE_ANY);
+		RzReg *rreg = rz_analysis_get_reg(analysis);
+		tmp.reg = rz_reg_get(rreg, arg->name.c_str(), RZ_REG_TYPE_ANY);
 		res.push_back(tmp);
 	}
 	else if(arg->is_ram())
@@ -245,7 +247,8 @@ std::vector<SleighAnalysisValue> SleighAnalysisValue::resolve_out(RzAnalysis *an
 					{
 						tmp = SleighAnalysisValue();
 						tmp.type = RZ_ANALYSIS_VAL_REG;
-						tmp.reg = rz_reg_get(analysis->reg, iter->output->name.c_str(), RZ_REG_TYPE_ANY);
+						RzReg *rreg = rz_analysis_get_reg(analysis);
+						tmp.reg = rz_reg_get(rreg, iter->output->name.c_str(), RZ_REG_TYPE_ANY);
 						res.push_back(tmp);
 					}
 				}

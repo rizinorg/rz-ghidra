@@ -19,18 +19,21 @@ static SleighAsm sanalysis;
 
 static int archinfo(RzAnalysis *analysis, RzAnalysisInfoType query)
 {
+	RzAsm *rasm = ((RzCore *)rz_analysis_get_core_bind(analysis)->core)->rasm;
+
 	// This is to check if RzCore plugin set cpu properly.
-	if(!analysis->cpu)
+	const char *cpu = rz_asm_get_cpu(rasm);
+	if(!cpu)
 		return -1;
 
-	ut64 length = strlen(analysis->cpu), i = 0;
-	for(; i < length && analysis->cpu[i] != ':'; ++i) {}
+	ut64 length = strlen(cpu), i = 0;
+	for(; i < length && cpu[i] != ':'; ++i) {}
 	if(i == length)
 		return -1;
 
 	try
 	{
-		sanalysis.init(analysis->cpu, analysis->bits, analysis->big_endian, SleighAsm::getConfig(analysis));
+		sanalysis.init(cpu, rz_asm_get_bits(rasm), rz_asm_is_big_endian_set(rasm), SleighAsm::getConfig(analysis));
 	}
 	catch(const LowlevelError &e)
 	{
@@ -1388,9 +1391,10 @@ static bool analysis_type_NOP(const std::vector<Pcodeop> &Pcodes)
 static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const ut8 *data, int len,
                      RzAnalysisOpMask mask)
 {
+	RzAsm *rasm = ((RzCore *)rz_analysis_get_core_bind(a)->core)->rasm;
 	try
 	{
-		sanalysis.init(a->cpu, a->bits, a->big_endian, SleighAsm::getConfig(a));
+		sanalysis.init(rz_asm_get_cpu(rasm), rz_asm_get_bits(rasm), rz_asm_is_big_endian_set(rasm), SleighAsm::getConfig(a));
 
 		analysis_op->addr = addr;
 		analysis_op->sign = true;
@@ -1794,17 +1798,20 @@ static void append_hardcoded_regs(std::stringstream &buf, const std::string &arc
 
 static char *get_reg_profile(RzAnalysis *analysis)
 {
-	if(!analysis->cpu)
+	RzAsm *rasm = ((RzCore *)rz_analysis_get_core_bind(analysis)->core)->rasm;
+
+	const char *cpu = rz_asm_get_cpu(rasm);
+	if(!cpu)
 		return nullptr;
 
-	ut64 length = strlen(analysis->cpu), z = 0;
-	for(; z < length && analysis->cpu[z] != ':'; ++z) {}
+	ut64 length = strlen(cpu), z = 0;
+	for(; z < length && cpu[z] != ':'; ++z) {}
 	if(z == length)
 		return nullptr;
 
 	try
 	{
-		sanalysis.init(analysis->cpu, analysis->bits, analysis->big_endian, SleighAsm::getConfig(analysis));
+		sanalysis.init(cpu, rz_asm_get_bits(rasm), rz_asm_is_big_endian_set(rasm), SleighAsm::getConfig(analysis));
 	}
 	catch(const LowlevelError &e)
 	{
