@@ -5,6 +5,7 @@
 
 #include <rz_lib.h>
 #include <rz_analysis.h>
+#include <rz_esil/rz_esil.h>
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
@@ -12,6 +13,7 @@
 #include <limits>
 #include "SleighAsm.h"
 #include "SleighAnalysisValue.h"
+#define EANALYSIS(e) ((RzAnalysis *)(esil->panalysis))
 
 using namespace ghidra;
 
@@ -2017,10 +2019,10 @@ static int esil_get_parm_float(RzAnalysisEsil *esil, const char *str, long doubl
 			break;
 		case RZ_ANALYSIS_ESIL_PARM_REG:
 		{
-			RzRegItem *reg = rz_reg_get(esil->analysis->reg, str, get_reg_type(str));
+			RzRegItem *reg = rz_reg_get(rz_analysis_get_reg(EANALYSIS(esil)), str, get_reg_type(str));
 			if(reg)
 			{
-				*num = esil_get_double(esil->analysis->reg, reg);
+				*num = esil_get_double(rz_analysis_get_reg(EANALYSIS(esil)), reg);
 				ret = 1;
 			}
 			break;
@@ -2761,7 +2763,7 @@ static bool sleigh_esil_reg_num(RzAnalysisEsil *esil)
 	bool ret = false;
 	if(!esil || !esil->stack)
 		return false;
-	if(!esil->analysis || !esil->analysis->reg)
+	if(!EANALYSIS(esil) || !rz_analysis_get_reg(EANALYSIS(esil)))
 		return false;
 
 	char *name = rz_analysis_esil_pop(esil);
@@ -2772,13 +2774,13 @@ static bool sleigh_esil_reg_num(RzAnalysisEsil *esil)
 		if(RZ_ANALYSIS_ESIL_PARM_REG != rz_analysis_esil_get_parm_type(esil, name))
 			ERR("sleigh_esil_reg_num: stack top isn't register.");
 
-		is_float = sleigh_reg_get_float(esil->analysis->reg, name, get_reg_type(name));
+		is_float = sleigh_reg_get_float(rz_analysis_get_reg(EANALYSIS(esil)), name, get_reg_type(name));
 		if(is_float)
 		{
-			RzRegItem *ri = rz_reg_get(esil->analysis->reg, name, get_reg_type(name));
+			RzRegItem *ri = rz_reg_get(rz_analysis_get_reg(EANALYSIS(esil)), name, get_reg_type(name));
 			if (ri)
 			{
-				long double res = esil_get_double(esil->analysis->reg, ri);
+				long double res = esil_get_double(rz_analysis_get_reg(EANALYSIS(esil)), ri);
 				ret = esil_pushnum_float(esil, res);
 			}
 		}
@@ -2819,7 +2821,7 @@ static bool isnum(RzAnalysisEsil *esil, const char *str, ut64 *num)
 
 static bool ispackedreg(RzAnalysisEsil *esil, const char *str)
 {
-	RzRegItem *ri = rz_reg_get(esil->analysis->reg, str, -1);
+	RzRegItem *ri = rz_reg_get(rz_analysis_get_reg(EANALYSIS(esil)), str, -1);
 	return ri? ri->packed_size > 0: false;
 }
 
@@ -2851,8 +2853,8 @@ static inline ut64 genmask(int bits)
 
 static ut8 esil_internal_sizeof_reg(RzAnalysisEsil *esil, const char *r)
 {
-	rz_return_val_if_fail(esil && esil->analysis && esil->analysis->reg && r, 0);
-	RzRegItem *ri = rz_reg_get(esil->analysis->reg, r, -1);
+	rz_return_val_if_fail(esil && EANALYSIS(esil) && rz_analysis_get_reg(EANALYSIS(esil)) && r, 0);
+	RzRegItem *ri = rz_reg_get(rz_analysis_get_reg(EANALYSIS(esil)), r, -1);
 	return ri? ri->size: 0;
 }
 
@@ -2934,8 +2936,8 @@ static bool esil_peek_n(RzAnalysisEsil *esil, int bits)
 		{
 			ut8 a[sizeof(ut64) * 2] = {0};
 			ret = rz_analysis_esil_mem_read(esil, addr, a, bytes);
-			ut64 b = rz_read_ble64(&a, 0);    // esil->analysis->big_endian);
-			ut64 c = rz_read_ble64(&a[8], 0); // esil->analysis->big_endian);
+			ut64 b = rz_read_ble64(&a, 0);    // rz_analysis_is_big_endian_set(EANALYSIS(esil));
+			ut64 c = rz_read_ble64(&a[8], 0); // rz_analysis_is_big_endian_set(EANALYSIS(esil));
 			snprintf(res, sizeof(res), "0x%" PFMT64x, b);
 			rz_analysis_esil_push(esil, res);
 			snprintf(res, sizeof(res), "0x%" PFMT64x, c);
@@ -2946,7 +2948,7 @@ static bool esil_peek_n(RzAnalysisEsil *esil, int bits)
 		ut64 bitmask = genmask(bits - 1);
 		ut8 a[sizeof(ut64)] = {0};
 		ret = !!rz_analysis_esil_mem_read(esil, addr, a, bytes);
-		ut64 b = rz_read_ble64(a, esil->analysis->big_endian);
+		ut64 b = rz_read_ble64(a, rz_analysis_is_big_endian_set(EANALYSIS(esil)));
 
 		snprintf(res, sizeof(res), "0x%" PFMT64x, b & bitmask);
 		rz_analysis_esil_push(esil, res);
@@ -2983,11 +2985,11 @@ static bool esil_poke_n(RzAnalysisEsil *esil, int bits)
 				src2 = rz_analysis_esil_pop(esil);
 				if(src2 && rz_analysis_esil_get_parm(esil, src2, &num2))
 				{
-					rz_write_ble(b, num, esil->analysis->big_endian, 64);
+					rz_write_ble(b, num, rz_analysis_is_big_endian_set(EANALYSIS(esil)), 64);
 					ret = rz_analysis_esil_mem_write(esil, addr, b, bytes);
 					if(ret == 0)
 					{
-						rz_write_ble(b, num2, esil->analysis->big_endian, 64);
+						rz_write_ble(b, num2, rz_analysis_is_big_endian_set(EANALYSIS(esil)), 64);
 						ret = rz_analysis_esil_mem_write(esil, addr + 8, b, bytes);
 					}
 					goto out;
@@ -3002,12 +3004,12 @@ static bool esil_poke_n(RzAnalysisEsil *esil, int bits)
 			esil->cb.hook_mem_read = NULL;
 			rz_analysis_esil_mem_read(esil, addr, b, bytes);
 			esil->cb.hook_mem_read = oldhook;
-			n = rz_read_ble64(b, esil->analysis->big_endian);
+			n = rz_read_ble64(b, rz_analysis_is_big_endian_set(EANALYSIS(esil)));
 			esil->old = n;
 			esil->cur = num;
 			esil->lastsz = bits;
 			num = num & bitmask;
-			rz_write_ble(b, num, esil->analysis->big_endian, bits);
+			rz_write_ble(b, num, rz_analysis_is_big_endian_set(EANALYSIS(esil)), bits);
 			ret = rz_analysis_esil_mem_write(esil, addr, b, bytes);
 		}
 	}
@@ -3039,12 +3041,12 @@ static bool sleigh_esil_eq(RzAnalysisEsil *esil)
 
 	if(ESIL_PARM_FLOAT == esil_get_parm_type_float(esil, src))
 	{
-		RzRegItem *ri = rz_reg_get(esil->analysis->reg, dst, get_reg_type(dst));
+		RzRegItem *ri = rz_reg_get(rz_analysis_get_reg(EANALYSIS(esil)), dst, get_reg_type(dst));
 		if(ri)
 		{
 			esil_get_parm_float(esil, src, &tmp);
-			ret = esil_set_double(esil->analysis->reg, ri, tmp);
-			sleigh_reg_set_float(esil->analysis->reg, dst, get_reg_type(dst), true);
+			ret = esil_set_double(rz_analysis_get_reg(EANALYSIS(esil)), ri, tmp);
+			sleigh_reg_set_float(rz_analysis_get_reg(EANALYSIS(esil)), dst, get_reg_type(dst), true);
 		}
 	}
 	else
@@ -3052,7 +3054,7 @@ static bool sleigh_esil_eq(RzAnalysisEsil *esil)
 		rz_analysis_esil_push(esil, src);
 		rz_analysis_esil_push(esil, dst);
 		ret = esil_eq(esil);
-		sleigh_reg_set_float(esil->analysis->reg, dst, get_reg_type(dst), false);
+		sleigh_reg_set_float(rz_analysis_get_reg(EANALYSIS(esil)), dst, get_reg_type(dst), false);
 	}
 
 	rz_mem_free(dst);
@@ -3239,8 +3241,9 @@ end1:
 	return ret;
 }
 
-static int esil_sleigh_init(RzAnalysisEsil *esil)
+static bool esil_sleigh_init(void *pesil)
 {
+	RzAnalysisEsil *esil = (RzAnalysisEsil *)pesil;
 	if(!esil)
 		return false;
 
@@ -3282,34 +3285,24 @@ static int esil_sleigh_init(RzAnalysisEsil *esil)
 	return true;
 }
 
-static int esil_sleigh_fini(RzAnalysisEsil *esil)
+static bool esil_sleigh_fini(void *pesil)
 {
 	float_mem.clear();
 	return true;
 }
 
 RzAnalysisPlugin rz_analysis_plugin_ghidra = {
-	/* .name = */ "ghidra",
-	/* .desc = */ "SLEIGH Disassembler from Ghidra",
-	/* .license = */ "GPL3",
-	/* .arch = */ "sleigh",
-	/* .author = */ "FXTi",
-	/* .version = */ nullptr,
-	/* .bits = */ 0,
-	/* .esil = */ true,
-	/* .fileformat_type = */ 0,
-	/* .init = */ nullptr,
-	/* .fini = */ nullptr,
-	/* .archinfo = */ &archinfo,
-	/* .analysis_mask = */ nullptr,
-	/* .preludes = */ nullptr,
-	/* .address_bits = */ nullptr,
-	/* .op = */ &sleigh_op,
-	/* .get_reg_profile = */ &get_reg_profile,
-	/* .esil_init = */ esil_sleigh_init,
-	/* .esil_post_loop = */ nullptr,
-	/* .esil_trap = */ nullptr,
-	/* .esil_fini = */ esil_sleigh_fini,
+	.name = "ghidra",
+	.desc = "SLEIGH Disassembler from Ghidra",
+	.license = "GPL3",
+	.arch = "sleigh",
+	.author = "FXTi",
+	.esil = true,
+	.archinfo = archinfo,
+	.op = sleigh_op,
+	.get_reg_profile = get_reg_profile,
+	.esil_init = esil_sleigh_init,
+	.esil_fini = esil_sleigh_fini,
 };
 
 #ifndef CORELIB
