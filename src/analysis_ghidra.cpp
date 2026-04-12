@@ -13,6 +13,7 @@
 #include <limits>
 #include "SleighAsm.h"
 #include "SleighAnalysisValue.h"
+
 #define EANALYSIS(e) ((RzAnalysis *)(esil->panalysis))
 
 using namespace ghidra;
