@@ -112,7 +112,8 @@ ContextDatabase *RizinArchitecture::getContextDatabase()
 void RizinArchitecture::postSpecFile()
 {
 	RzCoreLock core(getCore());
-	rz_list_foreach_cpp<RzAnalysisFunction>(core->analysis->fcns, [&](RzAnalysisFunction *func) {
+	RzList *fcns = rz_analysis_function_list(core->analysis);
+	rz_list_foreach_cpp<RzAnalysisFunction>(fcns, [&](RzAnalysisFunction *func) {
 		if (func->is_noreturn)
 		{
 			// Configure noreturn functions

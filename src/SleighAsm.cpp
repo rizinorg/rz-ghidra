@@ -437,7 +437,7 @@ RzConfig *SleighAsm::getConfig(const RzAsm *a)
 
 RzConfig *SleighAsm::getConfig(RzAnalysis *a)
 {
-	RzCore *core = a ? (RzCore *)a->coreb.core : nullptr;
+	RzCore *core = a ? (RzCore *)rz_analysis_get_core_bind(a)->core : nullptr;
 	if(!core)
 		return nullptr;
 	return core->config;
