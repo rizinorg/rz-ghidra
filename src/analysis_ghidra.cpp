@@ -2869,7 +2869,7 @@ static int rz_analysis_esil_reg_read_nocallback(RzAnalysisEsil *esil, const char
                                            int *size)
 {
 	int ret;
-	int (*old_hook_reg_read)(rz_analysis_esil_t *, const char *, long long unsigned int *, int *) =
+	int (*old_hook_reg_read)(rz_analysis_esil_t *, const char *, ut64 *, int *) =
 	    esil->cb.hook_reg_read;
 	esil->cb.hook_reg_read = NULL;
 	ret = rz_analysis_esil_reg_read(esil, regname, num, size);
@@ -3007,7 +3007,7 @@ static bool esil_poke_n(RzAnalysisEsil *esil, int bits)
 			}
 			// this is a internal peek performed before a poke
 			// we disable hooks to avoid run hooks on internal peeks
-			int (*oldhook)(rz_analysis_esil_t *, long long unsigned int, unsigned char *, int) =
+			int (*oldhook)(rz_analysis_esil_t *, ut64, unsigned char *, int) =
 			    esil->cb.hook_mem_read;
 			esil->cb.hook_mem_read = NULL;
 			rz_analysis_esil_mem_read(esil, addr, b, bytes);
