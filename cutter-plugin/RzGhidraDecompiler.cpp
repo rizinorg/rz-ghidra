@@ -16,7 +16,7 @@ RzGhidraDecompiler::RzGhidraDecompiler(QObject *parent)
 	task = nullptr;
 }
 
-void RzGhidraDecompiler::decompileAt(ut64 addr)
+void RzGhidraDecompiler::decompileAt(RVA addr)
 {
 	if(task)
 		return;
