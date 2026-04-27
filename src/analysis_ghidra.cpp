@@ -2396,7 +2396,7 @@ static bool sleigh_esil_float_add(RzAnalysisEsil *esil)
 			long double tmp = s + d;
 			auto raised = fetestexcept(FE_OVERFLOW);
 			if(raised & FE_OVERFLOW)
-				ret = esil_pushnum_float(esil, NAN);
+				ret = esil_pushnum_float(esil, std::numeric_limits<long double>::quiet_NaN());
 			else
 				ret = esil_pushnum_float(esil, s + d);
 		}
@@ -2441,7 +2441,7 @@ static bool sleigh_esil_float_sub(RzAnalysisEsil *esil)
 			long double tmp = d - s;
 			auto raised = fetestexcept(FE_OVERFLOW);
 			if(raised & FE_OVERFLOW)
-				ret = esil_pushnum_float(esil, NAN);
+				ret = esil_pushnum_float(esil, std::numeric_limits<long double>::quiet_NaN());
 			else
 				ret = esil_pushnum_float(esil, d - s);
 		}
@@ -2486,7 +2486,7 @@ static bool sleigh_esil_float_mul(RzAnalysisEsil *esil)
 			long double tmp = s * d;
 			auto raised = fetestexcept(FE_OVERFLOW);
 			if(raised & FE_OVERFLOW)
-				ret = esil_pushnum_float(esil, NAN);
+				ret = esil_pushnum_float(esil, std::numeric_limits<long double>::quiet_NaN());
 			else
 				ret = esil_pushnum_float(esil, s * d);
 		}
@@ -2531,7 +2531,7 @@ static bool sleigh_esil_float_div(RzAnalysisEsil *esil)
 			long double tmp = d / s;
 			auto raised = fetestexcept(FE_OVERFLOW);
 			if(raised & FE_OVERFLOW)
-				ret = esil_pushnum_float(esil, NAN);
+				ret = esil_pushnum_float(esil, std::numeric_limits<long double>::quiet_NaN());
 			else
 				ret = esil_pushnum_float(esil, d / s);
 		}
