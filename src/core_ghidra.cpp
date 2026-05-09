@@ -553,10 +553,10 @@ static void PrintAutoSleighLang(RzCore *core)
 
 static void EnablePlugin(RzCore *core)
 {
+	rz_config_set(core->config, "asm.arch", "ghidra");
 	auto id = SleighIdFromCore(core);
 	rz_config_set(core->config, "ghidra.lang", id.c_str());
 	rz_config_set(core->config, "asm.cpu", id.c_str());
-	rz_config_set(core->config, "asm.arch", "ghidra");
 }
 
 static void SetInitialSleighHome(RzConfig *cfg)
