@@ -97,7 +97,7 @@ x86:LE:16:Real Mode:
 // WARNING: Unknown calling convention -- yet parameter storage is locked
 // WARNING: [rz-ghidra] Matching calling convention fastcall of function fcn.00001c98 failed, args may be inaccurate.
 
-undefined4 fcn.00001c98(int16_t arg_6h, int16_t arg_4h, int16_t arg_ch)
+undefined4 fcn.00001c98(int16_t arg_6h, int16_t arg_4h, int16_t arg_ch, int16_t arg3)
 {
     int16_t *piVar1;
     undefined2 uVar2;
@@ -1742,7 +1742,7 @@ void sym.Aeropause(Bright *bright, int32_t argc, char **argv)
 {
     Morning *pMVar1;
     int32_t iVar2;
-    size_t in_stack_fffffff4;
+    unsigned long in_stack_fffffff4;
     
     pMVar1 = (Morning *)sym.imp.malloc(8);
     bright->morning = pMVar1;
@@ -2267,14 +2267,14 @@ undefined4 main(void)
     0x0804859b    |    return 0;
                   |}
 --
-CCu base64:Jg== @ 0x8048577
+CCu base64:Jg== @ 0x804858a
 CCu base64:bWFpbg== @ 0x8048540
 CCu base64:c3ltLmltcC5zY2FuZigweDgwNDg2YjIsICZ2YXJfN2NoKQ== @ 0x8048585
 CCu base64:c3ltLmNoZWNrKChpbnQzMl90KSZ2YXJfN2NoKQ== @ 0x8048590
-CCu base64:cmV0dXJuIDA= @ 0x804859b
 CCu base64:c3ltLmltcC5wcmludGYoIklPTEkgQ3JhY2ttZSBMZXZlbCAweDA1XG4iKQ== @ 0x8048566
 CCu base64:c3ltLmltcC5wcmludGYoIlBhc3N3b3JkOiAiKQ== @ 0x8048572
-CCu base64:Jg== @ 0x804858a
+CCu base64:cmV0dXJuIDA= @ 0x804859b
+CCu base64:Jg== @ 0x8048577
 --
 <result><function><function name="main" size="92">
   <localdb main="stack" lock="false">
@@ -2896,10 +2896,10 @@ push ebp
 mov ebp, esp
 sub esp, 0x88
 and esp, 0xfffffff0
-mov eax, 0
-add eax, 0xf
-add eax, 0xf
-shr eax, 4
+mov eax, 0x00
+add eax, 0x0f
+add eax, 0x0f
+shr eax, 0x04
 -----
 0x08048540: PUSH EBP
     (unique,0x9b80,4) = COPY EBP
@@ -3092,6 +3092,7 @@ NAME=strings
 FILE=bins/strings
 CMDS=<<EOF
 aaa
+avgt utf16_str "char16_t [36]"
 afvt arg1 "char16_t *" @ sym.use_utf16
 pdg @ main
 EOF
@@ -3101,7 +3102,7 @@ undefined8 main(void)
 {
     sym.imp.puts("Hello this is a regular string\n");
     sym.use_utf16(L"Henlo completely obsolete encoding\n");
-    sym.imp.fputws(L"This is a wiiiiiiiiiiiide string\n", _reloc.stdout);
+    sym.imp.fputws(L"This is a wiiiiiiiiiiiide string\n", stdout);
     return 0;
 }
 EOF
