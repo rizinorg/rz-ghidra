@@ -6,7 +6,6 @@
 #include <rz_lib.h>
 #include <rz_analysis.h>
 #include <rz_esil/rz_esil.h>
-#include <algorithm>
 #include <cfloat>
 #include <cmath>
 #include <cfenv>
@@ -20,29 +19,33 @@ using namespace ghidra;
 
 static SleighAsm sanalysis;
 
-static int archinfo(RzAnalysis *analysis, RzAnalysisInfoType query)
+static bool setup_sleigh(RzAnalysis *analysis)
 {
-	RzAsm *rasm = ((RzCore *)rz_analysis_get_core_bind(analysis)->core)->rasm;
-
-	// This is to check if RzCore plugin set cpu properly.
-	const char *cpu = rz_asm_get_cpu(rasm);
+	const char *cpu = rz_analysis_get_cpu(analysis);
 	if(!cpu)
-		return -1;
+		return false;
 
 	ut64 length = strlen(cpu), i = 0;
 	for(; i < length && cpu[i] != ':'; ++i) {}
 	if(i == length)
-		return -1;
+		return false;
 
 	try
 	{
-		sanalysis.init(cpu, rz_asm_get_bits(rasm), rz_asm_is_big_endian_set(rasm), SleighAsm::getConfig(analysis));
+		sanalysis.init(cpu, rz_analysis_get_bits(analysis), rz_analysis_is_big_endian_set(analysis), SleighAsm::getConfig(analysis));
 	}
 	catch(const LowlevelError &e)
 	{
 		std::cerr << "SleighInit " << e.explain << std::endl;
-		return -1;
+		return false;
 	}
+	return true;
+}
+
+static int archinfo(RzAnalysis *analysis, RzAnalysisInfoType query)
+{
+	if(!setup_sleigh(analysis))
+		return -1;
 
 	if(query == RZ_ANALYSIS_ARCHINFO_TEXT_ALIGN)
 		return sanalysis.alignment;
@@ -1394,11 +1397,10 @@ static bool analysis_type_NOP(const std::vector<Pcodeop> &Pcodes)
 static int sleigh_op(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, const ut8 *data, int len,
                      RzAnalysisOpMask mask)
 {
-	RzAsm *rasm = ((RzCore *)rz_analysis_get_core_bind(a)->core)->rasm;
+	if(!setup_sleigh(a))
+		return -1;
 	try
 	{
-		sanalysis.init(rz_asm_get_cpu(rasm), rz_asm_get_bits(rasm), rz_asm_is_big_endian_set(rasm), SleighAsm::getConfig(a));
-
 		analysis_op->addr = addr;
 		analysis_op->sign = true;
 		analysis_op->type = RZ_ANALYSIS_OP_TYPE_ILL;
@@ -1801,26 +1803,8 @@ static void append_hardcoded_regs(std::stringstream &buf, const std::string &arc
 
 static char *get_reg_profile(RzAnalysis *analysis)
 {
-	RzAsm *rasm = ((RzCore *)rz_analysis_get_core_bind(analysis)->core)->rasm;
-
-	const char *cpu = rz_asm_get_cpu(rasm);
-	if(!cpu)
-		return nullptr;
-
-	ut64 length = strlen(cpu), z = 0;
-	for(; z < length && cpu[z] != ':'; ++z) {}
-	if(z == length)
-		return nullptr;
-
-	try
-	{
-		sanalysis.init(cpu, rz_asm_get_bits(rasm), rz_asm_is_big_endian_set(rasm), SleighAsm::getConfig(analysis));
-	}
-	catch(const LowlevelError &e)
-	{
-		std::cerr << "SleightInit " << e.explain << std::endl;
-		return nullptr;
-	}
+	if(!setup_sleigh(analysis))
+		return NULL;
 
 	auto reg_list = sanalysis.getRegs();
 	std::stringstream buf;
