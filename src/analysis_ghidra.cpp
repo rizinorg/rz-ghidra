@@ -857,7 +857,7 @@ static void sleigh_esil(RzAnalysis *a, RzAnalysisOp *analysis_op, ut64 addr, con
 			case CPUI_NEW:
 			case CPUI_SEGMENTOP:
 			case CPUI_INSERT:
-			case CPUI_EXTRACT: /* Above don't have explicit definition */
+			/* case CPUI_EXTRACT: */ /* Above don't have explicit definition */
 			case CPUI_MULTIEQUAL:
 			case CPUI_INDIRECT:
 			case CPUI_CAST:

@@ -80,7 +80,7 @@ jobs:
         pkg-config --list-all
         mkdir build
         cd build
-        cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ env.RIZIN_INSTALL_PREFIX }};${{ env.RIZIN_INSTALL_PREFIX }}\include\librz;${{ env.RIZIN_INSTALL_PREFIX }}\include\librz\sdb" -DCMAKE_INSTALL_PREFIX=${{ env.ARTIFACT_PATH }} -DBUILD_CUTTER_PLUGIN=OFF -DBUILD_SLEIGH_PLUGIN=OFF -DRIZIN_INSTALL_PLUGDIR=${{ env.RIZIN_PLUGIN_PATH }}
+        cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${{ env.RIZIN_INSTALL_PREFIX }};${{ env.RIZIN_INSTALL_PREFIX }}\include\librz;${{ env.RIZIN_INSTALL_PREFIX }}\include\librz\sdb" -DCMAKE_INSTALL_PREFIX=${{ env.ARTIFACT_PATH }} -DBUILD_CUTTER_PLUGIN=OFF -DBUILD_SLEIGH_PLUGIN=OFF -DRIZIN_INSTALL_PLUGDIR=${{ env.RIZIN_PLUGIN_PATH }} -DUSE_SYSTEM_ZLIB=OFF
         cmake --build . --config Release
         cmake --build . --config Release --target install
 

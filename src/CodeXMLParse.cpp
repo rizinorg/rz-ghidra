@@ -341,7 +341,7 @@ static void ParseNode(pugi::xml_node node, ParseCodeXMLContext *ctx, std::ostrea
 RZ_API RzAnnotatedCode *ParseCodeXML(Funcdata *func, const char *xml)
 {
 	pugi::xml_document doc;
-	if(!doc.load_string(xml, pugi::parse_default | pugi::parse_ws_pcdata))
+	if(!doc.load_string(xml, pugi::parse_default | pugi::parse_ws_pcdata_single))
 		return nullptr;
 
 	std::stringstream ss;
