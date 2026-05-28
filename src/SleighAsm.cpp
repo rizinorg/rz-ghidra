@@ -278,7 +278,8 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 
 	try
 	{
-		Document *doc = store.openDocument(slafile);
+		std::istringstream s("<sleigh>" + slafile + "</sleigh>");
+		Document *doc = store.parseDocument(s);
 		store.registerTag(doc->getRoot());
 	}
 	catch(DecoderError &err)

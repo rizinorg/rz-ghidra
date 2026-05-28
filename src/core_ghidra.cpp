@@ -7,7 +7,6 @@
 #include "RizinArchitecture.h"
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
-#include "PrettyXmlEncode.h"
 #include "PcodeFixupPreprocessor.h"
 #include "rz_ghidra.h"
 #include "rz_ghidra_internal.h"
@@ -138,18 +137,21 @@ static bool SleighHomeConfigGet(void *user, void *pvalue) {
 	return true;
 }
 
-static ConfigBind cfg_var_sleighhome   ("sleighhome",            "SLEIGHHOME", SleighHomeConfigGet, SleighHomeConfigSet);
-static ConfigStr  cfg_var_sleighid     ("lang",        "",       "Custom Sleigh ID to override auto-detection (e.g. x86:LE:32:default)");
-static ConfigBool cfg_var_cmt_cpp      ("cmt.cpp",     true,     "C++ comment style");
-static ConfigInt  cfg_var_cmt_indent   ("cmt.indent",  4,        "Comment indent");
-static ConfigBool cfg_var_nl_brace     ("nl.brace",    false,    "Newline before opening '{'");
-static ConfigBool cfg_var_nl_else      ("nl.else",     false,    "Newline before else");
-static ConfigInt  cfg_var_indent       ("indent",      4,        "Indent increment");
-static ConfigInt  cfg_var_linelen      ("linelen",     120,      "Max line length");
-static ConfigInt  cfg_var_maximplref   ("maximplref",  2,        "Maximum number of references to an expression before showing an explicit variable.");
-static ConfigBool cfg_var_rawptr       ("rawptr",      true,     "Show unknown globals as raw addresses instead of variables");
-static ConfigBool cfg_var_ropropagate  ("ropropagate", true,     "Propagate read-only memory locations as constants");
-static ConfigBool cfg_var_verbose      ("verbose",     true,     "Show verbose warning messages while decompiling");
+static ConfigBind cfg_var_sleighhome      ("sleighhome",            "SLEIGHHOME", SleighHomeConfigGet, SleighHomeConfigSet);
+static ConfigStr  cfg_var_sleighid        ("lang",         "",       "Custom Sleigh ID to override auto-detection (e.g. x86:LE:32:default)");
+static ConfigBool cfg_var_cmt_cpp         ("cmt.cpp",      true,     "C++ comment style");
+static ConfigInt  cfg_var_cmt_indent      ("cmt.indent",   4,        "Comment indent");
+static ConfigBool cfg_var_nl_brace_fcn    ("nl.brace.fcn", true,     "Newline before opening '{' after function prototype");
+static ConfigBool cfg_var_nl_brace_ifelse ("nl.brace.ifelse", false, "Newline before opening '{' in if/else");
+static ConfigBool cfg_var_nl_brace_loop   ("nl.brace.loop", false,   "Newline before opening '{' in loop");
+static ConfigBool cfg_var_nl_brace_switch ("nl.brace.switch", false, "Newline before opening '{' in switch");
+static ConfigBool cfg_var_nl_else         ("nl.else",      false,    "Newline before else");
+static ConfigInt  cfg_var_indent          ("indent",       4,        "Indent increment");
+static ConfigInt  cfg_var_linelen         ("linelen",      120,      "Max line length");
+static ConfigInt  cfg_var_maximplref      ("maximplref",   2,        "Maximum number of references to an expression before showing an explicit variable.");
+static ConfigBool cfg_var_rawptr          ("rawptr",       true,     "Show unknown globals as raw addresses instead of variables");
+static ConfigBool cfg_var_ropropagate     ("ropropagate",  true,     "Propagate read-only memory locations as constants");
+static ConfigBool cfg_var_verbose         ("verbose",      true,     "Show verbose warning messages while decompiling");
 
 class DecompilerLock
 {
@@ -186,9 +188,11 @@ static void ApplyPrintCConfig(RzConfig *cfg, PrintC *print_c)
 
 	print_c->setSpaceAfterComma(true);
 
-	print_c->setNewlineBeforeOpeningBrace(cfg_var_nl_brace.Get(cfg));
+	print_c->setBraceFormatFunction(cfg_var_nl_brace_fcn.Get(cfg) ? Emit::next_line : Emit::same_line);
+	print_c->setBraceFormatIfElse(cfg_var_nl_brace_ifelse.Get(cfg) ? Emit::next_line : Emit::same_line);
+	print_c->setBraceFormatLoop(cfg_var_nl_brace_loop.Get(cfg) ? Emit::next_line : Emit::same_line);
+	print_c->setBraceFormatSwitch(cfg_var_nl_brace_switch.Get(cfg) ? Emit::next_line : Emit::same_line);
 	print_c->setNewlineBeforeElse(cfg_var_nl_else.Get(cfg));
-	print_c->setNewlineAfterPrototype(false);
 	print_c->setIndentIncrement(cfg_var_indent.Get(cfg));
 	print_c->setLineCommentIndent(cfg_var_cmt_indent.Get(cfg));
 	print_c->setMaxLineSize(cfg_var_linelen.Get(cfg));
@@ -263,7 +267,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	if(mode == DecompileMode::XML)
 	{
 		out_stream << "<result><function>";
-		PrettyXmlEncode enc(out_stream);
+		XmlEncode enc(out_stream);
 		func->encode(enc, 0, true);
 		out_stream << "</function><code>";
 	}
@@ -283,7 +287,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 			}
 			break;
 		case DecompileMode::DEBUG_XML: {
-			PrettyXmlEncode enc(out_stream);
+			XmlEncode enc(out_stream);
 			arch.encode(enc);
 			break;
 		}

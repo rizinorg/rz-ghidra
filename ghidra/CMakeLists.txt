@@ -73,6 +73,11 @@ set(SOURCE_DECOMPILER_CXX
 	transform.cc
 	string_ghidra.cc
 	stringmanage.cc
+	bitfield.cc
+	expression.cc
+	multiprecision.cc
+	modelrules.cc
+	constseq.cc
 	# callgraph.cc			// uncomment for debug
 	# ifacedecomp.cc		// uncomment for debug
 	# ifaceterm.cc			// uncomment for debug
@@ -104,6 +109,8 @@ set(SOURCE_SLEIGH_CXX
 		inject_sleigh.cc
 		filemanage.cc
 		semantics.cc
+		slaformat.cc
+		compression.cc
 		slghsymbol.cc
 		context.cc
 		sleighbase.cc
@@ -214,6 +221,16 @@ add_library(ghidra_sleigh STATIC ${SOURCE_SLEIGH_CXX})
 target_link_libraries(ghidra_sleigh PUBLIC ghidra_base)
 target_include_directories(ghidra_sleigh PUBLIC "${SOURCE_DIR}")
 set_target_properties(ghidra_sleigh PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if(USE_SYSTEM_ZLIB)
+	find_package(ZLIB REQUIRED)
+	target_include_directories(ghidra_sleigh PUBLIC ${ZLIB_INCLUDE_DIRS}) # zlib.h is included in headers
+	target_link_libraries(ghidra_sleigh PRIVATE ZLIB::ZLIB)
+else()
+	FetchContent_MakeAvailable(ZLIB)
+	target_include_directories(ghidra_sleigh PUBLIC "${zlib_SOURCE_DIR}") # zlib.h is included in headers
+	target_include_directories(ghidra_sleigh PUBLIC "${zlib_BINARY_DIR}") # zconf.h is built here
+	target_link_libraries(ghidra_sleigh PRIVATE zlibstatic)
+endif()
 
 add_library(ghidra_libdecomp STATIC ${SOURCE_LIBDECOMP_CXX})
 target_link_libraries(ghidra_libdecomp PUBLIC ghidra_decompiler ghidra_sleigh)

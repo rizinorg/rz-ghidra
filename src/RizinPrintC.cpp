@@ -40,7 +40,7 @@ void RizinPrintC::pushUnnamedLocation(const Address &addr, const Varnode *vn, co
 	{
 		pushOp(&dereference, op);
 		auto type = glb->types->getTypePointer(space->getAddrSize(), vn->getType(), space->getWordSize());
-		pushConstant(addr.getOffset(), type, vartoken, vn, op);
+		pushConstant(addr.getOffset(), type, vartoken, vn, op, 0);
 	}
 	else
 	{
