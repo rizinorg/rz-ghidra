@@ -748,7 +748,12 @@ void rz_ghidra_lib_fini(void)
 		shutdownDecompilerLibrary();
 }
 
-static bool rz_ghidra_init(RzCore *core)
+struct PluginContext
+{
+	RzCmdDesc *root_cd;
+};
+
+static bool rz_ghidra_init(RzCore *core, void **user)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	rz_ghidra_lib_init();
@@ -771,17 +776,26 @@ static bool rz_ghidra_init(RzCore *core)
 	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdga", pdga_handler, &pdga_help);
 	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdg*", pdgstar_handler, &pdgstar_help);
 	SetInitialSleighHome(cfg);
+
+	auto ctx = new PluginContext;
+	ctx->root_cd = root_cd;
+	*user = ctx;
+
 	return true;
 }
 
-static bool rz_ghidra_fini(RzCore *core)
+static bool rz_ghidra_fini(RzCore *core, void *user)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	rz_ghidra_lib_fini();
 
-	auto rzcmd = core->rcmd;
-	RzCmdDesc *pdg_cd = rz_cmd_get_desc(rzcmd, "pdg");
-	rz_cmd_desc_remove(rzcmd, pdg_cd);
+	auto ctx = reinterpret_cast<PluginContext *>(user);
+	if(ctx)
+	{
+		rz_cmd_desc_remove(core->rcmd, ctx->root_cd);
+		delete ctx;
+	}
+
 	return true;
 }
 
