@@ -195,7 +195,6 @@ EXPECT=<<EOF
 0x8000101c nop
 0x80001020 addiu t0, t0, 0x4
 0x80001024 sltu at, t0, t1
-0x80001028   pc:
 0x80001028 bne at, zero, 0x80001020
 0x8000102c sw zero, -0x4(t0)
 0x80001030 lui t0, 0x8003
@@ -239,7 +238,7 @@ EXPECT=<<EOF
 EOF
 CMDS=<<EOF
 pdga
-pdq 50
+pdq 50 @ section.text
 EOF
 RUN
 
@@ -269,7 +268,7 @@ RUN
 NAME=PowerPC_BE_32
 FILE=rizin-testbins/dol/sqrxz4-gc.dol
 EXPECT=<<EOF
-0x80003100   section.text_0:
+0x80003100   section..text0:
 0x80003100 b 0x80003120
 0x80003104 rlwnm. r1,r27,r14,0x9,0x13
 0x80003108 invalid
@@ -655,7 +654,7 @@ EXPECT=<<EOF
 0x80000dcc link.w a6,0x0
 0x80000dd0 move.l #-0x7fea4ee4,d0
 0x80000dd6 subi.l #-0x7fea4ee7,d0
-0x80000ddc moveq #0x6,d1
+0x80000ddc moveq 0x6,d1
 0x80000dde cmp.l d0,d1
 0x80000de0 bcc.b 0x80000df6
 0x80000de2 lea (0x0).l,a0

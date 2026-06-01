@@ -184,8 +184,8 @@ type: load
 type: store
 EOF
 CMDS=<<EOF
-e asm.cpu=AARCH64:LE:64:v8A:gcc
 e asm.arch=ghidra
+e asm.cpu=AARCH64:LE:64:v8A:gcc
 wx 298947f9
 pdq 1
 ao | grep type
@@ -203,7 +203,6 @@ ghidra
 V850:LE:32:default
 address: 0x0
 opcode: cmp r7, r6
-esilcost: 0
 disasm: cmp r7, r6
 mnemonic: cmp
 mask: ffff
@@ -238,7 +237,6 @@ ghidra
 V850:LE:32:default
 address: 0x0
 opcode: ld.w 0x4[r29], r11
-esilcost: 4
 disasm: ld.w 0x4[r29], r11
 mnemonic: ld.w
 mask: ffffffff
