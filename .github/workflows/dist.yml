@@ -59,6 +59,6 @@ jobs:
           ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rz-ghidra-src.tar.gz/rz-ghidra-src.tar.gz
+          asset_path: ./rz-ghidra-src.tar.gz
           asset_name: rz-ghidra-src-${{ steps.extract_version.outputs.version }}.tar.gz
           asset_content_type: application/zip
