@@ -206,10 +206,10 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		Datatype *type = var->type ? arch->getTypeFactory()->fromRzType(var->type, &typeError) : nullptr;
 		if(!type)
 		{
-			char *tstr = rz_type_as_string(core->analysis->typedb, var->type);
+			char *tstr = rz_type_as_string(rz_analysis_get_type_db(core->analysis), var->type);
 			arch->addWarning("Failed to match type " + to_string(tstr ? tstr : "?") + " for variable " + to_string(var->name) + " to Decompiler type: " + typeError);
 			rz_mem_free(tstr);
-			type = arch->types->getBase(core->analysis->bits / 8, TYPE_UNKNOWN);
+			type = arch->types->getBase(rz_asm_get_bits(core->rasm) / 8, TYPE_UNKNOWN);
 			if(!type)
 				return true;
 		}
@@ -528,7 +528,7 @@ Symbol *RizinScope::queryRizinAbsolute(ut64 addr, bool contain) const
 	{
 		RzList *fcns = rz_analysis_get_functions_in(core->analysis, addr);
 		if(!rz_list_empty(fcns))
-			fcn = reinterpret_cast<RzAnalysisFunction *>(rz_list_first(fcns));
+			fcn = reinterpret_cast<RzAnalysisFunction *>(rz_list_first_val(fcns));
 		rz_list_free(fcns);
 	}
 #endif

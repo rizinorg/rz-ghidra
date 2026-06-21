@@ -20,7 +20,7 @@ hottub_trigger: '.*'
 tasks:
     - rizinbuild: |
         cd rizin
-        meson --prefix=${HOME} build
+        meson setup --prefix=${HOME} -Duse_sys_pcre2=enabled build
         ninja -C build
     - rizininstall: |
         cd rizin

@@ -278,7 +278,8 @@ void SleighAsm::buildSpecfile(DocumentStorage &store)
 
 	try
 	{
-		Document *doc = store.openDocument(slafile);
+		std::istringstream s("<sleigh>" + slafile + "</sleigh>");
+		Document *doc = store.parseDocument(s);
 		store.registerTag(doc->getRoot());
 	}
 	catch(DecoderError &err)
@@ -426,9 +427,10 @@ void SleighAsm::collectSpecfiles(void)
 		loadLanguageDescription(*iter);
 }
 
-RzConfig *SleighAsm::getConfig(RzAsm *a)
+RzConfig *SleighAsm::getConfig(const RzAsm *a)
 {
-	RzCore *core = a->num ? (RzCore *)(a->num->userptr) : NULL;
+	const RzBinBind *binbind = rz_asm_get_bin_bind(a);
+	RzCore *core = binbind->bin ? (RzCore *)(binbind->bin->user) : NULL;
 	if(!core)
 		return nullptr;
 	return core->config;
@@ -436,7 +438,7 @@ RzConfig *SleighAsm::getConfig(RzAsm *a)
 
 RzConfig *SleighAsm::getConfig(RzAnalysis *a)
 {
-	RzCore *core = a ? (RzCore *)a->coreb.core : nullptr;
+	RzCore *core = a ? (RzCore *)rz_analysis_get_core_bind(a)->core : nullptr;
 	if(!core)
 		return nullptr;
 	return core->config;

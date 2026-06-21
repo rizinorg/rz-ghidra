@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.0...3.5)
+
 set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH True)
 
 project(rz-ghidra)
@@ -16,6 +17,9 @@ option(BUILD_SLASPECS "Build Sleigh specs for architectures from Ghidra" ON)
 option(BUILD_SLEIGH_PLUGIN "Build asm and analysis plugin to use sleigh as a disassembler in rizin" ON)
 option(GENERATE_PARSERS "Re-generate all parsers with Bison/Flex instead of using pre-generated ones" OFF)
 
+option(USE_SYSTEM_PUGIXML "Use system pugixml library" OFF)
+option(USE_SYSTEM_ZLIB "Use system zlib library" ON)
+
 if (BUILD_CUTTER_PLUGIN)
 	find_package(Cutter REQUIRED)
 	set(CUTTER_INSTALL_PLUGDIR "${Cutter_USER_PLUGINDIR}" CACHE STRING "Directory to install Cutter plugin into")
@@ -23,14 +27,14 @@ endif()
 
 if(CMAKE_VERSION VERSION_LESS "3.1")
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-		add_definitions(-std=c++11)
+		add_definitions(-std=c++20)
 	endif()
 else()
-	set(CMAKE_CXX_STANDARD 11)
+	set(CMAKE_CXX_STANDARD 20)
 endif()
 
-add_subdirectory(ghidra)
 add_subdirectory(third-party)
+add_subdirectory(ghidra)
 
 set(PUBLIC_HEADERS
 		src/rz_ghidra.h)
@@ -55,8 +59,6 @@ set(CORE_SOURCE
 		src/RizinPrintC.cpp
 		src/RzCoreMutex.h
 		src/RzCoreMutex.cpp
-		src/PrettyXmlEncode.h
-		src/PrettyXmlEncode.cpp
 		src/PcodeFixupPreprocessor.h
 		src/PcodeFixupPreprocessor.cpp
 		src/rz_ghidra.h

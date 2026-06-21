@@ -1,8 +1,8 @@
-
-FROM docker.io/library/debian:buster
+FROM docker.io/library/debian:bullseye
 
 RUN apt-get update
-RUN apt-get -y install git g++ cmake pkg-config flex bison python3 python3-pip ninja-build qt5-default libqt5svg5-dev qttools5-dev && \
+RUN apt-get -y install git g++ cmake pkg-config flex bison python3 python3-pip ninja-build \
+	qtbase5-dev qt5-qmake libqt5svg5-dev qttools5-dev && \
 	pip3 install meson
 
 RUN cd /root && \

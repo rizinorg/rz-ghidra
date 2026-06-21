@@ -17,7 +17,7 @@ RizinLoadImage::RizinLoadImage(RzCoreMutex *core_mutex, AddrSpaceManager *addr_s
 void RizinLoadImage::loadFill(uint1 *ptr, int4 size, const Address &addr)
 {
 	RzCoreLock core(core_mutex);
-	rz_io_read_at(core->io, addr.getOffset(), ptr, size);
+	rz_io_read_at_mapped(core->io, addr.getOffset(), ptr, size);
 }
 
 void RizinLoadImage::getReadonly(RangeList &list) const

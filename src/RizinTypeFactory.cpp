@@ -38,13 +38,14 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, StackTypes &stack_t
 			prototypes.erase(r);
 		}
 		void *it;
+		RzTypeDB *typedb = rz_analysis_get_type_db(core->analysis);
 		rz_vector_foreach_cpp<RzTypeStructMember>(&type->struct_data.members, [&](RzTypeStructMember *member) {
 			if(!member->type || !member->name)
 				return;
 			Datatype *member_type = fromRzType(member->type, nullptr, &stack_types);
 			if(!member_type)
 			{
-				char *tstr = rz_type_as_string(core->analysis->typedb, member->type);
+				char *tstr = rz_type_as_string(typedb, member->type);
 				arch->addWarning(std::string("Failed to match type ") + (tstr ? tstr : "?") + " of member " + member->name
 						+ " in struct " + type->name);
 				rz_mem_free(tstr);
@@ -66,11 +67,15 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, StackTypes &stack_t
 			// TODO: right now, we track member offset ourselves
 			// which means all structs are assumed to be packed.
 			// This should be changed if there is a clear notion of the offset in rizin at some point.
-			offset += rz_type_db_get_bitsize(core->analysis->typedb, member->type) / 8;
+			offset += rz_type_db_get_bitsize(typedb, member->type) / 8;
 		});
-		setFields(fields, r, 0, 0);
+		std::vector<TypeBitField> bitfields;
+		int4 align = 1; // TODO: take this from rizin if available in the future
+		int4 size = offset + rz_num_align_delta(offset, align);
+		setFields(fields, bitfields, r, size, align, 0);
 		return r;
 	}
+
 	catch(std::invalid_argument &e)
 	{
 		arch->addWarning(std::string("Failed to load struct ") + type->name);
@@ -81,22 +86,18 @@ Datatype *RizinTypeFactory::addRizinStruct(RzBaseType *type, StackTypes &stack_t
 Datatype *RizinTypeFactory::addRizinEnum(RzBaseType *type)
 {
 	assert(type->kind == RZ_BASE_TYPE_KIND_ENUM);
-	std::vector<std::string> namelist;
-	std::vector<uintb> vallist;
-	std::vector<bool> assignlist;
+	std::map<uintb, std::string> namemap;
 	rz_vector_foreach_cpp<RzTypeEnumCase>(&type->enum_data.cases, [&](RzTypeEnumCase *ceys) {
 		if(!ceys->name)
 			return;
-		namelist.push_back(ceys->name);
-		vallist.push_back(ceys->val);
-		assignlist.push_back(true); // all enum values from rizin have explicit values
+		namemap[ceys->val] = ceys->name;
 	});
-	if(namelist.empty())
+	if(namemap.empty())
 		return nullptr;
 	try
 	{
 		auto enumType = getTypeEnum(type->name);
-		setEnumValues(namelist, vallist, assignlist, enumType);
+		setEnumValues(namemap, enumType);
 		return enumType;
 	}
 	catch(LowlevelError &e)
@@ -147,7 +148,8 @@ Datatype *RizinTypeFactory::addRizinAtomicType(RzBaseType *type, StackTypes &sta
 		return nullptr;
 	}
 	RzCoreLock core(arch->getCore());
-	type_metatype mt = metatypeOfTypeclass(rz_base_type_typeclass(core->analysis->typedb, type));
+	RzTypeDB *typedb = rz_analysis_get_type_db(core->analysis);
+	type_metatype mt = metatypeOfTypeclass(rz_base_type_typeclass(typedb, type));
 	// setCoreType(type->name, type->size / 8, mt, false); // TODO: conditionally enable chartp when supported in rizin
 	return getBase(type->size / 8, mt, type->name);
 }
@@ -163,7 +165,8 @@ Datatype *RizinTypeFactory::queryRizin(const string &n, StackTypes &stack_types,
 	Datatype *r = nullptr;
 
 	RzCoreLock core(arch->getCore());
-	RzBaseType *type = rz_type_db_get_base_type(core->analysis->typedb, n.c_str());
+	RzTypeDB *typedb = rz_analysis_get_type_db(core->analysis);
+	RzBaseType *type = rz_type_db_get_base_type(typedb, n.c_str());
 	if(!type || !type->name)
 		goto beach;
 	switch(type->kind)
@@ -268,7 +271,7 @@ Datatype *RizinTypeFactory::fromRzTypeInternal(const RzType *ctype, string *erro
 			if(!pm)
 			{
 				RzCoreLock core(arch->getCore());
-				char *tstr = rz_type_as_string(core->analysis->typedb, ctype);
+				char *tstr = rz_type_as_string(rz_analysis_get_type_db(core->analysis), ctype);
 				if (error) {
 					*error = std::string("Failed to get any calling convention for callable ") + tstr;
 				}
@@ -295,7 +298,14 @@ Datatype *RizinTypeFactory::fromRzTypeInternal(const RzType *ctype, string *erro
 			{
 				return nullptr;
 			}
-			return this->getTypeCode(pm, outtype, intypes, false); // dotdotdot arg can be used when rizin supports vararg callables
+			PrototypePieces pcs = { 0 };
+			pcs.model = pm;
+			if(callable->name)
+				pcs.name = callable->name;
+			pcs.outtype = outtype;
+			pcs.intypes = intypes;
+			pcs.firstVarArgSlot = -1; // can be used when rizin supports vararg callables
+			return this->getTypeCode(pcs);
 		}
 	}
 	return nullptr;

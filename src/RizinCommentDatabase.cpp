@@ -25,13 +25,14 @@ void RizinCommentDatabase::fillCache(const Address &fad) const
 	{
 		RzList *fcns = rz_analysis_get_functions_in(core->analysis, fad.getOffset());
 		if(!rz_list_empty(fcns))
-			fcn = reinterpret_cast<RzAnalysisFunction *>(rz_list_first(fcns));
+			fcn = reinterpret_cast<RzAnalysisFunction *>(rz_list_first_val(fcns));
 		rz_list_free(fcns);
 	}
 	if(!fcn)
 		return;
 
-	rz_interval_tree_foreach_cpp<RzAnalysisMetaItem>(&core->analysis->meta, [fad, fcn, this](RzIntervalNode *node, RzAnalysisMetaItem *meta) {
+	RzIntervalTree *tmeta = rz_analysis_get_meta(core->analysis);
+	rz_interval_tree_foreach_cpp<RzAnalysisMetaItem>(tmeta, [fad, fcn, this](RzIntervalNode *node, RzAnalysisMetaItem *meta) {
 		if(!meta || meta->type != RZ_META_TYPE_COMMENT || !meta->str)
 			return;
 		if(!rz_analysis_function_contains(fcn, node->start))

@@ -43,7 +43,7 @@ template <> class Mapper<bool> : public BaseMapper<bool> {
 template <> class Mapper<std::string> : public BaseMapper<std::string> {
     public:
 	using BaseMapper<std::string>::BaseMapper;
-	Mapper<std::string>(const char *constant)
+	Mapper(const char *constant)
 		: BaseMapper([constant](RzCore *core) { return constant; })
 	{
 	}
@@ -201,9 +201,9 @@ RZ_API std::string SleighIdFromCore(RzCore *core)
 	auto langs = SleighArchitecture::getLanguageDescriptions();
 	const char *arch = rz_config_get(core->config, "asm.arch");
 	if (!strcmp(arch, "ghidra"))
-		return SleighIdFromSleighAsmConfig(core->rasm->cpu,
-						   core->rasm->bits,
-						   core->rasm->big_endian,
+		return SleighIdFromSleighAsmConfig(rz_asm_get_cpu(core->rasm),
+						   rz_asm_get_bits(core->rasm),
+						   rz_asm_is_big_endian_set(core->rasm),
 						   langs);
 	auto arch_it = arch_map.find(arch);
 	if (arch_it == arch_map.end())

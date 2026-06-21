@@ -7,7 +7,6 @@
 #include "RizinArchitecture.h"
 #include "CodeXMLParse.h"
 #include "ArchMap.h"
-#include "PrettyXmlEncode.h"
 #include "PcodeFixupPreprocessor.h"
 #include "rz_ghidra.h"
 #include "rz_ghidra_internal.h"
@@ -30,56 +29,129 @@ using namespace ghidra;
 #define CMD_PREFIX "pdg"
 #define CFG_PREFIX "ghidra"
 
-typedef bool (*ConfigVarCb)(void *user, void *data);
-
-struct ConfigVar
+class ConfigBase
 {
 	private:
-		static std::vector<const ConfigVar *> vars_all;
+		static std::vector<ConfigBase *> vars_all;
 
+	protected:
 		const std::string name;
-		const char * const defval;
-		const char * const desc;
-		ConfigVarCb callback;
+		const std::string desc;
+
+		virtual ~ConfigBase() {};
+		ConfigBase(std::string var, const char* desc) : name(CFG_PREFIX "." + var), desc(desc) { vars_all.push_back(this); };
 
 	public:
-		ConfigVar(const char *var, const char *defval, const char *desc, ConfigVarCb callback = nullptr)
-			: name(std::string(CFG_PREFIX) + "." + var), defval(defval), desc(desc), callback(callback) { vars_all.push_back(this); }
+		const char *GetName() const	{ return name.c_str(); }
+		const char *GetDesc() const	{ return desc.c_str(); }
 
-		const char *GetName() const					{ return name.c_str(); }
-		const char *GetDefault() const				{ return defval; }
-		const char *GetDesc() const					{ return desc; }
-		ConfigVarCb GetCallback() const				{ return callback; }
+		virtual void Add(RzConfig *cfg) = 0;
 
-		ut64 GetInt(RzConfig *cfg) const				{ return rz_config_get_i(cfg, name.c_str()); }
-		bool GetBool(RzConfig *cfg) const			{ return GetInt(cfg) != 0; }
-		std::string GetString(RzConfig *cfg) const	{ return rz_config_get(cfg, name.c_str()); }
-
-		void Set(RzConfig *cfg, const char *s) const	{ rz_config_set(cfg, name.c_str(), s); }
-
-		static const std::vector<const ConfigVar *> &GetAll()	{ return vars_all; }
+		static const std::vector<ConfigBase *> &GetAll()	{ return vars_all; }
 };
-std::vector<const ConfigVar *> ConfigVar::vars_all;
 
-bool SleighHomeConfig(void *user, void *data);
+std::vector<ConfigBase *> ConfigBase::vars_all;
 
-static const ConfigVar cfg_var_sleighhome   ("sleighhome",  "",         "SLEIGHHOME", SleighHomeConfig);
-static const ConfigVar cfg_var_sleighid     ("lang",        "",         "Custom Sleigh ID to override auto-detection (e.g. x86:LE:32:default)");
-static const ConfigVar cfg_var_cmt_cpp      ("cmt.cpp",     "true",     "C++ comment style");
-static const ConfigVar cfg_var_cmt_indent   ("cmt.indent",  "4",        "Comment indent");
-static const ConfigVar cfg_var_nl_brace     ("nl.brace",    "false",    "Newline before opening '{'");
-static const ConfigVar cfg_var_nl_else      ("nl.else",     "false",    "Newline before else");
-static const ConfigVar cfg_var_indent       ("indent",      "4",        "Indent increment");
-static const ConfigVar cfg_var_linelen      ("linelen",     "120",      "Max line length");
-static const ConfigVar cfg_var_maximplref   ("maximplref",  "2",        "Maximum number of references to an expression before showing an explicit variable.");
-static const ConfigVar cfg_var_rawptr       ("rawptr",      "true",     "Show unknown globals as raw addresses instead of variables");
-static const ConfigVar cfg_var_ropropagate  ("ropropagate", "true",     "Propagate read-only memory locations as constants");
-static const ConfigVar cfg_var_verbose      ("verbose",     "true",     "Show verbose warning messages while decompiling");
+class ConfigBool : ConfigBase
+{
+	private:
+		bool defval;
 
+	public:
+		ConfigBool(std::string var, const bool defval, const char *desc)
+			: ConfigBase(var, desc), defval(defval) {}
 
+		bool Get(RzConfig *cfg) const		{ return rz_config_get_bool(cfg, name.c_str()); };
+		void Set(RzConfig *cfg, bool value)	{ rz_config_set_bool(cfg, name.c_str(), value); };
+		void Add(RzConfig *cfg)				{ rz_config_add_bool(cfg, name.c_str(), desc.c_str(), defval); };
+};
+
+class ConfigInt : ConfigBase
+{
+	private:
+		ut64 defval;
+
+	public:
+		ConfigInt(std::string var, const ut64 defval, const char *desc)
+			: ConfigBase(var, desc), defval(defval) {}
+
+		ut64 Get(RzConfig *cfg) const		{ return rz_config_get_integer(cfg, name.c_str()); };
+		void Set(RzConfig *cfg, ut64 value)	{ rz_config_set_integer(cfg, name.c_str(), value); };
+		void Add(RzConfig *cfg)				{ rz_config_add_integer(cfg, name.c_str(), desc.c_str(), defval); };
+};
+
+class ConfigStr : ConfigBase
+{
+	private:
+		std::string defval;
+
+	public:
+		ConfigStr(std::string var, const std::string defval, const char *desc)
+			: ConfigBase(var, desc), defval(defval) {}
+
+		std::string Get(RzConfig *cfg) const		{ return rz_config_get_string(cfg, name.c_str()); };
+		void Set(RzConfig *cfg, std::string value)	{ rz_config_set_string(cfg, name.c_str(), value.c_str()); };
+		void Add(RzConfig *cfg)						{ rz_config_add_string(cfg, name.c_str(), desc.c_str(), defval.c_str()); };
+};
+
+class ConfigBind : public ConfigBase
+{
+	private:
+		RzConfigBindGet get;
+		RzConfigBindSet set;
+		RzConfigBindOpts opts;
+		std::string bind_value;
+
+	public:
+		ConfigBind(std::string var, const char *desc, RzConfigBindGet get, RzConfigBindSet set, RzConfigBindOpts opts = nullptr)
+			: ConfigBase(var, desc), get(get), set(set), opts(opts) {}
+
+		const char* Get(RzConfig *cfg) const		{ return bind_value.c_str(); };
+		void Set(RzConfig *cfg, const char* value)	{
+			if (set(NULL, value)) {
+				bind_value = value;
+			}
+		};
+		void Add(RzConfig *cfg)						{
+			rz_config_add_string_bind(cfg, name.c_str(), desc.c_str(), get, set, opts, static_cast<void *>(this));
+		};
+};
 
 static std::recursive_mutex decompiler_mutex;
 static int lib_init_refcount = 0; // protected by decompiler_mutex, refcounts rz_ghidra_lib_init initialization
+
+static bool SleighHomeConfigSet(void */* user */, const void *pvalue) {
+	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
+	auto value = reinterpret_cast<const char *>(pvalue);
+	SleighArchitecture::shutdown();
+	SleighArchitecture::specpaths = FileManage();
+	if(value && *value)
+		SleighArchitecture::scanForSleighDirectories(value);
+	return true;
+}
+
+static bool SleighHomeConfigGet(void *user, void *pvalue) {
+	auto cfgbind = reinterpret_cast<ConfigBind *>(user);
+	auto value = reinterpret_cast<const char **>(pvalue);
+	*value = cfgbind->Get(NULL);
+	return true;
+}
+
+static ConfigBind cfg_var_sleighhome      ("sleighhome",            "SLEIGHHOME", SleighHomeConfigGet, SleighHomeConfigSet);
+static ConfigStr  cfg_var_sleighid        ("lang",         "",       "Custom Sleigh ID to override auto-detection (e.g. x86:LE:32:default)");
+static ConfigBool cfg_var_cmt_cpp         ("cmt.cpp",      true,     "C++ comment style");
+static ConfigInt  cfg_var_cmt_indent      ("cmt.indent",   4,        "Comment indent");
+static ConfigBool cfg_var_nl_brace_fcn    ("nl.brace.fcn", true,     "Newline before opening '{' after function prototype");
+static ConfigBool cfg_var_nl_brace_ifelse ("nl.brace.ifelse", false, "Newline before opening '{' in if/else");
+static ConfigBool cfg_var_nl_brace_loop   ("nl.brace.loop", false,   "Newline before opening '{' in loop");
+static ConfigBool cfg_var_nl_brace_switch ("nl.brace.switch", false, "Newline before opening '{' in switch");
+static ConfigBool cfg_var_nl_else         ("nl.else",      false,    "Newline before else");
+static ConfigInt  cfg_var_indent          ("indent",       4,        "Indent increment");
+static ConfigInt  cfg_var_linelen         ("linelen",      120,      "Max line length");
+static ConfigInt  cfg_var_maximplref      ("maximplref",   2,        "Maximum number of references to an expression before showing an explicit variable.");
+static ConfigBool cfg_var_rawptr          ("rawptr",       true,     "Show unknown globals as raw addresses instead of variables");
+static ConfigBool cfg_var_ropropagate     ("ropropagate",  true,     "Propagate read-only memory locations as constants");
+static ConfigBool cfg_var_verbose         ("verbose",      true,     "Show verbose warning messages while decompiling");
 
 class DecompilerLock
 {
@@ -109,19 +181,21 @@ static void ApplyPrintCConfig(RzConfig *cfg, PrintC *print_c)
 	if(!print_c)
 		return;
 
-	if(cfg_var_cmt_cpp.GetBool(cfg))
+	if(cfg_var_cmt_cpp.Get(cfg))
 		print_c->setCPlusPlusStyleComments();
 	else
 		print_c->setCStyleComments();
 
 	print_c->setSpaceAfterComma(true);
 
-	print_c->setNewlineBeforeOpeningBrace(cfg_var_nl_brace.GetBool(cfg));
-	print_c->setNewlineBeforeElse(cfg_var_nl_else.GetBool(cfg));
-	print_c->setNewlineAfterPrototype(false);
-	print_c->setIndentIncrement(cfg_var_indent.GetInt(cfg));
-	print_c->setLineCommentIndent(cfg_var_cmt_indent.GetInt(cfg));
-	print_c->setMaxLineSize(cfg_var_linelen.GetInt(cfg));
+	print_c->setBraceFormatFunction(cfg_var_nl_brace_fcn.Get(cfg) ? Emit::next_line : Emit::same_line);
+	print_c->setBraceFormatIfElse(cfg_var_nl_brace_ifelse.Get(cfg) ? Emit::next_line : Emit::same_line);
+	print_c->setBraceFormatLoop(cfg_var_nl_brace_loop.Get(cfg) ? Emit::next_line : Emit::same_line);
+	print_c->setBraceFormatSwitch(cfg_var_nl_brace_switch.Get(cfg) ? Emit::next_line : Emit::same_line);
+	print_c->setNewlineBeforeElse(cfg_var_nl_else.Get(cfg));
+	print_c->setIndentIncrement(cfg_var_indent.Get(cfg));
+	print_c->setLineCommentIndent(cfg_var_cmt_indent.Get(cfg));
+	print_c->setMaxLineSize(cfg_var_linelen.Get(cfg));
 }
 
 static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringstream &out_stream, RzAnnotatedCode **out_code)
@@ -129,11 +203,11 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	RzAnalysisFunction *function = rz_analysis_get_fcn_in(core->analysis, addr, RZ_ANALYSIS_FCN_TYPE_NULL);
 	if(!function)
 		throw LowlevelError("No function at this offset");
-	RizinArchitecture arch(core, cfg_var_sleighid.GetString(core->config));
+	RizinArchitecture arch(core, cfg_var_sleighid.Get(core->config));
 	DocumentStorage store;
-	arch.max_implied_ref = cfg_var_maximplref.GetInt(core->config);
-	arch.readonlypropagate = cfg_var_ropropagate.GetBool(core->config);
-	arch.setRawPtr(cfg_var_rawptr.GetBool(core->config));
+	arch.max_implied_ref = cfg_var_maximplref.Get(core->config);
+	arch.readonlypropagate = cfg_var_ropropagate.Get(core->config);
+	arch.setRawPtr(cfg_var_rawptr.Get(core->config));
 	arch.init(store);
 	Funcdata *func = arch.symboltab->getGlobalScope()->findFunction(Address(arch.getDefaultCodeSpace(), function->addr));
 	arch.print->setOutputStream(&out_stream);
@@ -143,7 +217,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 		throw LowlevelError("No function in Scope");
 
 	// Other archs are not tested
-	if (strcmp(core->analysis->arch_target->arch, "x86") == 0)
+	if (strcmp(rz_analysis_get_arch_target(core->analysis)->arch, "x86") == 0)
 		// Must be called after arch.init(), but before decompiling the function
 		PcodeFixupPreprocessor::fixupSharedReturnJumpToRelocs(function, func, core, arch);
 
@@ -173,7 +247,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 		if(res==0)
 			eprintf("(no change)\n");
 	}*/
-	if(cfg_var_verbose.GetBool(core->config))
+	if(cfg_var_verbose.Get(core->config))
 	{
 		for(const auto &warning : arch.getWarnings())
 			func->warningHeader("[rz-ghidra] " + warning);
@@ -193,7 +267,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 	if(mode == DecompileMode::XML)
 	{
 		out_stream << "<result><function>";
-		PrettyXmlEncode enc(out_stream);
+		XmlEncode enc(out_stream);
 		func->encode(enc, 0, true);
 		out_stream << "</function><code>";
 	}
@@ -213,7 +287,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 			}
 			break;
 		case DecompileMode::DEBUG_XML: {
-			PrettyXmlEncode enc(out_stream);
+			XmlEncode enc(out_stream);
 			arch.encode(enc);
 			break;
 		}
@@ -421,7 +495,7 @@ static void Disassemble(RzCore *core, ut64 ops)
 	if(!ops)
 		ops = 10; // random default value
 
-	RizinArchitecture arch(core, cfg_var_sleighid.GetString(core->config));
+	RizinArchitecture arch(core, cfg_var_sleighid.Get(core->config));
 	DocumentStorage store;
 	arch.init(store);
 
@@ -485,25 +559,15 @@ static void EnablePlugin(RzCore *core)
 {
 	auto id = SleighIdFromCore(core);
 	rz_config_set(core->config, "ghidra.lang", id.c_str());
-	rz_config_set(core->config, "asm.cpu", id.c_str());
 	rz_config_set(core->config, "asm.arch", "ghidra");
-}
-
-bool SleighHomeConfig(void */* user */, void *data)
-{
-	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
-	auto node = reinterpret_cast<RzConfigNode *>(data);
-	SleighArchitecture::shutdown();
-	SleighArchitecture::specpaths = FileManage();
-	if(node->value && *node->value)
-		SleighArchitecture::scanForSleighDirectories(node->value);
-	return true;
+	rz_config_set(core->config, "asm.cpu", id.c_str());
 }
 
 static void SetInitialSleighHome(RzConfig *cfg)
 {
 	// user-set, for example from .rizinrc
-	if(!cfg_var_sleighhome.GetString(cfg).empty())
+	std::string user_set = cfg_var_sleighhome.Get(cfg);
+	if(!user_set.empty())
 		return;
 
 	// SLEIGHHOME env
@@ -684,23 +748,21 @@ void rz_ghidra_lib_fini(void)
 		shutdownDecompilerLibrary();
 }
 
-static bool rz_ghidra_init(RzCore *core)
+struct PluginContext
+{
+	RzCmdDesc *root_cd;
+};
+
+static bool rz_ghidra_init(RzCore *core, void **user)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	rz_ghidra_lib_init();
 
 	RzConfig *cfg = core->config;
-	rz_config_lock (cfg, false);
-	for(const auto var : ConfigVar::GetAll())
+	for(auto var : ConfigBase::GetAll())
 	{
-		RzConfigNode *node;
-		if(var->GetCallback())
-			node = rz_config_set_cb(cfg, var->GetName(), var->GetDefault(), var->GetCallback());
-		else
-			node = rz_config_set(cfg, var->GetName(), var->GetDefault());
-		rz_config_node_desc(node, var->GetDesc());
+		var->Add(cfg);
 	}
-	rz_config_lock (cfg, true);
 
 	auto rzcmd = core->rcmd;
 	RzCmdDesc *root_cd = rz_cmd_desc_group_new(rzcmd, rz_cmd_get_desc(rzcmd, "pd"), "pdg", pdg_handler, &pdg_help, &root_help);
@@ -714,17 +776,26 @@ static bool rz_ghidra_init(RzCore *core)
 	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdga", pdga_handler, &pdga_help);
 	rz_cmd_desc_argv_new(rzcmd, root_cd, "pdg*", pdgstar_handler, &pdgstar_help);
 	SetInitialSleighHome(cfg);
+
+	auto ctx = new PluginContext;
+	ctx->root_cd = root_cd;
+	*user = ctx;
+
 	return true;
 }
 
-static bool rz_ghidra_fini(RzCore *core)
+static bool rz_ghidra_fini(RzCore *core, void *user)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	rz_ghidra_lib_fini();
 
-	auto rzcmd = core->rcmd;
-	RzCmdDesc *pdg_cd = rz_cmd_get_desc(rzcmd, "pdg");
-	rz_cmd_desc_remove(rzcmd, pdg_cd);
+	auto ctx = reinterpret_cast<PluginContext *>(user);
+	if(ctx)
+	{
+		rz_cmd_desc_remove(core->rcmd, ctx->root_cd);
+		delete ctx;
+	}
+
 	return true;
 }
 
