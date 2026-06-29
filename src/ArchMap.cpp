@@ -227,14 +227,32 @@ SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian,
 		return std::string();
 	if (std::string(cpu).find(':') != string::npos) // complete id specified
 		return cpu;
-	// short form if possible
+	// short form: resolve against the available sleigh languages so we honor
+	// the endianness the processor actually ships rather than assuming the
+	// host/config default. Some processors are single-endian (e.g. V850 is
+	// little-endian only), which previously produced an unusable id such as
+	// "V850:BE:32" on big-endian hosts and broke disassembly there.
 	std::string low_cpu = StrToLower(cpu);
+	std::string proc_name;
+	bool has_be = false, has_le = false;
 	for (const auto &lang : langs) {
-		auto proc = lang.getProcessor();
-		if (StrToLower(proc) == low_cpu) {
-			return proc + ":" + (bigendian ? "BE" : "LE") + ":" +
-			       to_string(bits) + ":" + "default";
-		}
+		if (StrToLower(lang.getProcessor()) != low_cpu)
+			continue;
+		proc_name = lang.getProcessor();
+		if (lang.getSize() != bits)
+			continue;
+		if (lang.isBigEndian())
+			has_be = true;
+		else
+			has_le = true;
 	}
-	return cpu;
+	if (proc_name.empty())
+		return cpu;
+	bool be = bigendian;
+	if (be && !has_be && has_le)
+		be = false;
+	else if (!be && !has_le && has_be)
+		be = true;
+	return proc_name + ":" + (be ? "BE" : "LE") + ":" + to_string(bits) +
+	       ":" + "default";
 }
