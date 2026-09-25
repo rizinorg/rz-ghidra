@@ -337,12 +337,12 @@ static void DecompileCmd(RzCore *core, DecompileMode mode)
 			case DecompileMode::OFFSET:
 			{
 				RzVector *offsets = rz_annotated_code_line_offsets(code);
-				rz_core_annotated_code_print(code, offsets);
+				rz_core_annotated_code_print(core->cons, code, offsets);
 				rz_vector_free(offsets);
 			}
 			break;
 			case DecompileMode::DEFAULT:
-				rz_core_annotated_code_print(code, nullptr);
+				rz_core_annotated_code_print(core->cons, code, nullptr);
 				break;
 			case DecompileMode::STATEMENTS:
 				rz_core_annotated_code_print_comment_cmds(code);
