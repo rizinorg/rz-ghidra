@@ -39,25 +39,16 @@ jobs:
     - name: Extract version
       id: extract_version
       run: echo "version=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.extract_version.outputs.version }}
-          draft: true
-          prerelease: false
     - uses: actions/download-artifact@v3
     - name: Display structure of downloaded files
       run: ls -R
-    - name: Upload rz-ghidra src tarball
-      uses: actions/upload-release-asset@v1
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Rename asset
+      run: mv ./rz-ghidra-src.tar.gz/rz-ghidra-src.tar.gz ./rz-ghidra-src-${{ steps.extract_version.outputs.version }}.tar.gz
+    - name: Create Release and Upload Asset
+      uses: softprops/action-gh-release@v2
       with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rz-ghidra-src.tar.gz/rz-ghidra-src.tar.gz
-          asset_name: rz-ghidra-src-${{ steps.extract_version.outputs.version }}.tar.gz
-          asset_content_type: application/zip
+          tag_name: ${{ github.ref }}
+          name: Release ${{ steps.extract_version.outputs.version }}
+          draft: true
+          prerelease: false
+          files: ./rz-ghidra-src-${{ steps.extract_version.outputs.version }}.tar.gz
