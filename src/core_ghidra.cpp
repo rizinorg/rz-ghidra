@@ -731,14 +731,14 @@ static RzCmdStatus pdgstar_handler(RzCore *core, int argc, const char **argv) {
 	return RZ_CMD_STATUS_OK;
 }
 
-void rz_ghidra_lib_init(void)
+RZ_API void rz_ghidra_lib_init(void)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	lib_init_refcount++;
 	startDecompilerLibrary(nullptr);
 }
 
-void rz_ghidra_lib_fini(void)
+RZ_API void rz_ghidra_lib_fini(void)
 {
 	std::lock_guard<std::recursive_mutex> lock(decompiler_mutex);
 	lib_init_refcount--;
