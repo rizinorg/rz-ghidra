@@ -449,10 +449,10 @@ class PcodeRawOut : public PcodeEmit
 	              int4 isize) override
 	    {
 		    std::stringstream ss;
+		    bool is_store = false;
 		    if(opc == CPUI_STORE && isize == 3)
 		    {
-			    print_vardata(ss, vars[2]);
-			    ss << " = ";
+			    is_store = true;
 			    isize = 2;
 		    }
 		    if(outvar)
@@ -485,6 +485,11 @@ class PcodeRawOut : public PcodeEmit
 				    ss << ", ";
 					print_vardata(ss, vars[i]);
 			    }
+		    }
+		    if(is_store)
+		    {
+			    ss << " = ";
+			    print_vardata(ss, vars[2]);
 		    }
 			rz_cons_printf("    %s\n", ss.str().c_str());
 	    }
