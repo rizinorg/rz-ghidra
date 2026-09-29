@@ -49,7 +49,7 @@ jobs:
           release_name: Release ${{ steps.extract_version.outputs.version }}
           draft: true
           prerelease: false
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4.1.7
     - name: Display structure of downloaded files
       run: ls -R
     - name: Upload rz-ghidra src tarball
