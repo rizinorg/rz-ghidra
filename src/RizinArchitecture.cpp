@@ -28,7 +28,9 @@ static const std::map<std::string, std::string> cc_map = {
 		{ "amd64", "__stdcall" },
 		{ "arm64", "__cdecl" },
 		{ "arm32", "__stdcall" },
-		{ "arm16", "__stdcall" } /* not actually __stdcall */
+		{ "arm16", "__stdcall" }, /* not actually __stdcall */
+		{ "golang", "abi-internal" },
+		{ "golang_abi0", "abi0" }
 };
 
 std::string FilenameFromCore(RzCore *core)
