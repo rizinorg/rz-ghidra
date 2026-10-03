@@ -188,6 +188,18 @@ std::string CompilerFromCore(RzCore *core)
 	if (!info || !info->rclass)
 		return std::string();
 
+	// Check if this binary contains Go pclntab structures
+	const RzPVector *sections = rz_bin_object_get_sections_all(bobj);
+	if (sections) {
+		void **it;
+		rz_pvector_foreach (sections, it) {
+			RzBinSection *sec = (RzBinSection *)*it;
+			if (sec && sec->name && strstr(sec->name, "gopclntab")) {
+				return "golang";
+			}
+		}
+	}
+
 	auto comp_it = compiler_map.find(info->rclass);
 	if (comp_it == compiler_map.end())
 		return std::string();
