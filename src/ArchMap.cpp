@@ -138,6 +138,8 @@ static const std::map<std::string, ArchMapper> arch_map = {
 
 	{ "tricore", { "tricore" } },
 
+	{ "hexagon", { "Hexagon" } },
+
 	{ "pic",
 	  {
 		  CUSTOM_BASEID((RzCore *core) {
