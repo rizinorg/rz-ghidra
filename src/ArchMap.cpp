@@ -97,7 +97,7 @@ static const std::map<std::string, ArchMapper> arch_map = {
 
 	{ "mips", { "MIPS" } },
 	{ "dalvik", { "Dalvik" } },
-	{ "6502", { "6502", "default", 16 } },
+	{ "6502", { "6502", "default", 16, false } },
 	{ "8051", { "8051", "default", 16, true } },
 	{ "java", { "JVM", "default", bits_mapper_default, true } },
 	{ "hppa", { "pa-risc" } },
@@ -134,9 +134,9 @@ static const std::map<std::string, ArchMapper> arch_map = {
 
 	{ "v850",
 	  { CUSTOM_BASEID((RzCore *core) { return "V850"; }), "default",
-	    CUSTOM_BITS((RzCore *core) { return 32; }) } },
+	    CUSTOM_BITS((RzCore *core) { return 32; }), false } },
 
-	{ "tricore", { "tricore" } },
+	{ "tricore", { "tricore", "default", bits_mapper_default, false } },
 
 	{ "pic",
 	  {
@@ -229,12 +229,33 @@ SleighIdFromSleighAsmConfig(const char *cpu, int bits, bool bigendian,
 		return cpu;
 	// short form if possible
 	std::string low_cpu = StrToLower(cpu);
+	const LanguageDescription *best_lang = nullptr;
+	int best_score = -1;
+
 	for (const auto &lang : langs) {
-		auto proc = lang.getProcessor();
-		if (StrToLower(proc) == low_cpu) {
-			return proc + ":" + (bigendian ? "BE" : "LE") + ":" +
-			       to_string(bits) + ":" + "default";
+		if (StrToLower(lang.getProcessor()) != low_cpu) {
+			continue;
 		}
+
+		int score = 0;
+		if (lang.isBigEndian() == bigendian) {
+			score += 4;
+		}
+		if (bits > 0 && lang.getSize() == bits) {
+			score += 2;
+		}
+		if (lang.getVariant() == "default") {
+			score += 1;
+		}
+
+		if (score > best_score) {
+			best_score = score;
+			best_lang = &lang;
+		}
+	}
+
+	if (best_lang) {
+		return best_lang->getId();
 	}
 	return cpu;
 }
