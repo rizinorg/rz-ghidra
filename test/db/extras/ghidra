@@ -3604,3 +3604,16 @@ undefined8 sym.main(void)
 }
 EOF
 RUN
+
+NAME=Golang decompilation with ABI mapping
+FILE=rizin-testbins/golang/go-re-sample-linux-amd64-go121
+CMDS=<<EOF
+aalg
+s sym.main.main
+pdg
+EOF
+REGEXP_FILTER_OUT=(sym\.main\.main\([^)]*\))
+EXPECT=<<EOF
+sym.main.main(void)
+EOF
+RUN
