@@ -6,6 +6,22 @@ project(rz-ghidra)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+if(POLICY CMP0177)
+	cmake_policy(SET CMP0177 NEW)
+endif()
+
+if(MSVC)
+	add_compile_options(
+		"$<$<COMPILE_LANGUAGE:C>:/utf-8>"
+		"$<$<COMPILE_LANGUAGE:CXX>:/utf-8>"
+		"$<$<COMPILE_LANGUAGE:CXX>:/EHsc>"
+	)
+endif()
+
+if(WIN32)
+	add_compile_definitions(_WINDOWS)
+endif()
+
 find_package(Rizin REQUIRED Core)
 
 set(RIZIN_INSTALL_PLUGDIR "${Rizin_PLUGINDIR}" CACHE STRING "Directory to install rizin plugins into")
