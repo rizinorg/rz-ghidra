@@ -156,13 +156,13 @@ static ConfigBool cfg_var_verbose         ("verbose",      true,     "Show verbo
 class DecompilerLock
 {
 	public:
-		DecompilerLock()
+		DecompilerLock(RzCore *core)
 		{
 			if(!decompiler_mutex.try_lock())
 			{
-				void *bed = rz_cons_sleep_begin();
+				void *bed = rz_interrupt_sleep_begin(core->intr);
 				decompiler_mutex.lock();
-				rz_cons_sleep_end(bed);
+				rz_interrupt_sleep_end(core->intr, bed);
 			}
 		}
 
@@ -298,7 +298,7 @@ static void Decompile(RzCore *core, ut64 addr, DecompileMode mode, std::stringst
 
 RZ_API RzAnnotatedCode *rz_ghidra_decompile_annotated_code(RzCore *core, ut64 addr)
 {
-	DecompilerLock lock;
+	DecompilerLock lock(core);
 	RzAnnotatedCode *code = nullptr;
 #ifndef DEBUG_EXCEPTIONS
 	try
@@ -323,7 +323,7 @@ RZ_API RzAnnotatedCode *rz_ghidra_decompile_annotated_code(RzCore *core, ut64 ad
 
 static void DecompileCmd(RzCore *core, DecompileMode mode)
 {
-	DecompilerLock lock;
+	DecompilerLock lock(core);
 
 #ifndef DEBUG_EXCEPTIONS
 	try
@@ -337,24 +337,24 @@ static void DecompileCmd(RzCore *core, DecompileMode mode)
 			case DecompileMode::OFFSET:
 			{
 				RzVector *offsets = rz_annotated_code_line_offsets(code);
-				rz_core_annotated_code_print(core->cons, code, offsets);
+				rz_core_annotated_code_print(code, offsets, core->cons);
 				rz_vector_free(offsets);
 			}
 			break;
 			case DecompileMode::DEFAULT:
-				rz_core_annotated_code_print(core->cons, code, nullptr);
+				rz_core_annotated_code_print(code, nullptr, core->cons);
 				break;
 			case DecompileMode::STATEMENTS:
-				rz_core_annotated_code_print_comment_cmds(code);
+				rz_core_annotated_code_print_comment_cmds(code, core->cons);
 				break;
 			case DecompileMode::JSON:
-				rz_core_annotated_code_print_json(code);
+				rz_core_annotated_code_print_json(code, core->cons);
 				break;
 			case DecompileMode::XML:
 				out_stream << "</code></result>";
 				// fallthrough
 			default:
-				rz_cons_printf("%s\n", out_stream.str().c_str());
+				rz_cons_printf(core->cons, "%s\n", out_stream.str().c_str());
 				break;
 		}
 		rz_annotated_code_free(code);
@@ -374,7 +374,7 @@ static void DecompileCmd(RzCore *core, DecompileMode mode)
 			pj_s(pj, s.c_str());
 			pj_end(pj);
 			pj_end(pj);
-			rz_cons_printf ("%s\n", pj_string (pj));
+			rz_cons_printf(core->cons, "%s\n", pj_string (pj));
 			pj_free(pj);
 		}
 		else
@@ -387,13 +387,18 @@ static void DecompileCmd(RzCore *core, DecompileMode mode)
 // see sleighexample.cc
 class AssemblyRaw : public AssemblyEmit
 {
+	private:
+		RzCore *_core = nullptr;
+
 	public:
+		AssemblyRaw(RzCore *core) : _core(core) {}
+
 		void dump(const Address &addr, const string &mnem, const string &body) override
 		{
 			std::stringstream ss;
 			addr.printRaw(ss);
 			ss << ": " << mnem << ' ' << body;
-			rz_cons_printf("%s\n", ss.str().c_str());
+			rz_cons_printf(_core->cons, "%s\n", ss.str().c_str());
 		}
 };
 
@@ -401,6 +406,7 @@ class PcodeRawOut : public PcodeEmit
 {
 	private:
 		const Translate *trans = nullptr;
+		RzCore *_core = nullptr;
 
 		void print_vardata(ostream &s, VarnodeData &data)
 		{
@@ -443,7 +449,7 @@ class PcodeRawOut : public PcodeEmit
 	    }
 
 	public:
-	    PcodeRawOut(const Translate *t): trans(t) {}
+	    PcodeRawOut(const Translate *t, RzCore *core): trans(t), _core(core) {}
 
 	    void dump(const Address &addr, OpCode opc, VarnodeData *outvar, VarnodeData *vars,
 	              int4 isize) override
@@ -486,7 +492,7 @@ class PcodeRawOut : public PcodeEmit
 					print_vardata(ss, vars[i]);
 			    }
 		    }
-			rz_cons_printf("    %s\n", ss.str().c_str());
+			rz_cons_printf(_core->cons, "    %s\n", ss.str().c_str());
 	    }
 };
 
@@ -500,8 +506,8 @@ static void Disassemble(RzCore *core, ut64 ops)
 	arch.init(store);
 
 	const Translate *trans = arch.translate;
-	PcodeRawOut emit(arch.translate);
-	AssemblyRaw assememit;
+	PcodeRawOut emit(arch.translate, core);
+	AssemblyRaw assememit(core);
 	Address addr(trans->getDefaultCodeSpace(), core->offset);
 	for(ut64 i=0; i<ops; i++)
 	{
@@ -515,39 +521,39 @@ static void Disassemble(RzCore *core, ut64 ops)
 		{
 			std::stringstream ss;
 			addr.printRaw(ss);
-			rz_cons_printf("%s: invalid\n", ss.str().c_str());
+			rz_cons_printf(core->cons, "%s: invalid\n", ss.str().c_str());
 			addr = addr + trans->getAlignment();
 		}
 	}
 }
 
-static void ListSleighLangs()
+static void ListSleighLangs(RzCore *core)
 {
-	DecompilerLock lock;
+	DecompilerLock lock(core);
 
 	SleighArchitecture::collectSpecFiles(std::cerr);
 	auto langs = SleighArchitecture::getLanguageDescriptions();
 	if(langs.empty())
 	{
-		rz_cons_printf("No languages available, make sure %s is set correctly!\n", cfg_var_sleighhome.GetName());
+		rz_cons_printf(core->cons, "No languages available, make sure %s is set correctly!\n", cfg_var_sleighhome.GetName());
 		return;
 	}
 
 	std::vector<std::string> ids;
 	std::transform(langs.begin(), langs.end(), std::back_inserter(ids), [](const LanguageDescription &lang) { return lang.getId(); });
 	std::sort(ids.begin(), ids.end());
-	std::for_each(ids.begin(), ids.end(), [](const std::string &id) {
-		rz_cons_printf("%s\n", id.c_str());
+	std::for_each(ids.begin(), ids.end(), [&](const std::string &id) {
+		rz_cons_printf(core->cons, "%s\n", id.c_str());
 	});
 }
 
 static void PrintAutoSleighLang(RzCore *core)
 {
-	DecompilerLock lock;
+	DecompilerLock lock(core);
 	try
 	{
 		auto id = SleighIdFromCore(core);
-		rz_cons_printf("%s\n", id.c_str());
+		rz_cons_printf(core->cons, "%s\n", id.c_str());
 	}
 	catch(LowlevelError &e)
 	{
@@ -677,7 +683,7 @@ static const RzCmdDescHelp pdgs_help = with(RzCmdDescHelp,
 );
 
 static RzCmdStatus pdgs_handler(RzCore *core, int argc, const char **argv) {
-	ListSleighLangs();
+	ListSleighLangs(core);
 	return RZ_CMD_STATUS_OK;
 }
 
