@@ -19,8 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Bullseye / default
-            image: bullseye
+          - name: Bookworm / default
+            image: bookworm
             args:
           - name: Arch / GENERATE_PARSERS=ON + optional executables
             image: arch
