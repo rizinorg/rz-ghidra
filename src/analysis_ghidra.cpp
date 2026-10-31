@@ -1868,10 +1868,10 @@ static char *get_reg_profile(RzAnalysis *analysis)
 	return strdup(res.c_str());
 }
 
-#define ERR(x)              \
-	if(esil->verbose)       \
-	{                       \
-		eprintf("%s\n", x); \
+#define ERR(x)                \
+	if(esil->config->verbose) \
+	{                         \
+		eprintf("%s\n", x);   \
 	}
 
 constexpr int ESIL_PARM_FLOAT = 127; // Avoid conflict
