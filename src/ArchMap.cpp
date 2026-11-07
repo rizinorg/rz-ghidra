@@ -9,7 +9,8 @@
 
 using namespace ghidra;
 
-std::string CompilerFromCore(RzCore *core);
+std::string CompilerFromCore(RzCore *core, const std::string &base_id,
+			     const std::vector<LanguageDescription> &langs);
 
 template <typename T> class BaseMapper {
     private:
@@ -75,12 +76,14 @@ class ArchMapper {
 	{
 	}
 
-	std::string Map(RzCore *core) const
+	std::string Map(RzCore *core,
+			const std::vector<LanguageDescription> &langs) const
 	{
-		return arch.Map(core) + ":" +
-		       (big_endian.Map(core) ? "BE" : "LE") + ":" +
-		       to_string(bits.Map(core)) + ":" + flavor.Map(core) +
-		       ":" + CompilerFromCore(core);
+		std::string base_id =
+			arch.Map(core) + ":" +
+			(big_endian.Map(core) ? "BE" : "LE") + ":" +
+			to_string(bits.Map(core)) + ":" + flavor.Map(core);
+		return base_id + ":" + CompilerFromCore(core, base_id, langs);
 	}
 };
 
@@ -181,13 +184,47 @@ static const std::map<std::string, std::string> compiler_map = {
 	{ "mach0", "gcc" }
 };
 
-std::string CompilerFromCore(RzCore *core)
+/**
+ * \brief Check whether Sleigh language \p base_id defines compiler spec \p compiler_id.
+ *
+ * \param base_id Base Sleigh language identifier (processor:endian:size:variant)
+ * \param compiler_id Compiler specification identifier to look up (e.g. "golang")
+ * \param langs Collected Sleigh language descriptions
+ * \return true if \p base_id provides \p compiler_id, false otherwise
+ */
+static bool LanguageHasCompiler(const std::string &base_id,
+				const std::string &compiler_id,
+				const std::vector<LanguageDescription> &langs)
+{
+	for (const auto &lang : langs) {
+		if (lang.getId() == base_id) {
+			for (int4 i = 0; i < lang.numCompilers(); ++i) {
+				if (lang.getCompiler(i).getId() == compiler_id) {
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+	return false;
+}
+
+std::string CompilerFromCore(RzCore *core, const std::string &base_id,
+			     const std::vector<LanguageDescription> &langs)
 {
 	RzBinObject *bobj = rz_bin_cur_object(core->bin);
 	if (!bobj)
 		return std::string();
 	const RzBinInfo *info = rz_bin_object_get_info(bobj);
-	if (!info || !info->rclass)
+	if (!info)
+		return std::string();
+
+	if (info->lang && RZ_STR_EQ(info->lang, "go") &&
+	    LanguageHasCompiler(base_id, "golang", langs)) {
+		return "golang";
+	}
+
+	if (!info->rclass)
 		return std::string();
 
 	auto comp_it = compiler_map.find(info->rclass);
@@ -211,7 +248,7 @@ RZ_API std::string SleighIdFromCore(RzCore *core)
 	if (arch_it == arch_map.end())
 		throw LowlevelError("Could not match asm.arch " +
 				    std::string(arch) + " to sleigh arch.");
-	return arch_it->second.Map(core);
+	return arch_it->second.Map(core, langs);
 }
 
 std::string StrToLower(std::string s)

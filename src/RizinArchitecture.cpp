@@ -28,7 +28,9 @@ static const std::map<std::string, std::string> cc_map = {
 		{ "amd64", "__stdcall" },
 		{ "arm64", "__cdecl" },
 		{ "arm32", "__stdcall" },
-		{ "arm16", "__stdcall" } /* not actually __stdcall */
+		{ "arm16", "__stdcall" }, /* not actually __stdcall */
+		{ "golang", "abi-internal" },
+		{ "golang_abi0", "abi0" }
 };
 
 std::string FilenameFromCore(RzCore *core)
@@ -46,13 +48,26 @@ RizinArchitecture::RizinArchitecture(RzCore *core, const std::string &sleigh_id)
 
 ProtoModel *RizinArchitecture::protoModelFromRizinCC(const char *cc)
 {
-	auto it = cc_map.find(cc);
-	if(it == cc_map.end())
+	if (!cc) {
 		return nullptr;
+	}
+
+	auto it = cc_map.find(cc);
+	if (it == cc_map.end()) {
+		return nullptr;
+	}
 
 	auto protoIt = protoModels.find(it->second);
-	if(protoIt == protoModels.end())
-		return nullptr;
+	if (protoIt == protoModels.end()) {
+		// 32-bit Go compiler specs (e.g. x86-32-golang.cspec) define only
+		// stack-only "abi0" while Rizin names the calling convention "golang".
+		if (it->second == "abi-internal") {
+			protoIt = protoModels.find("abi0");
+		}
+		if (protoIt == protoModels.end()) {
+			return nullptr;
+		}
+	}
 
 	return protoIt->second;
 }
@@ -111,18 +126,9 @@ ContextDatabase *RizinArchitecture::getContextDatabase()
 
 void RizinArchitecture::postSpecFile()
 {
-	RzCoreLock core(getCore());
-	RzList *fcns = rz_analysis_function_list(core->analysis);
-	rz_list_foreach_cpp<RzAnalysisFunction>(fcns, [&](RzAnalysisFunction *func) {
-		if (func->is_noreturn)
-		{
-			// Configure noreturn functions
-			Funcdata *infd = symboltab->getGlobalScope()->queryFunction(Address(getDefaultCodeSpace(), func->addr));
-			if(!infd)
-				return;
-			infd->getFuncProto().setNoReturn(true);
-		}
-	});
+	// Configure noreturn functions lazily via <prototype noreturn="..."/>
+	// in RizinScope::registerFunction() and RizinScope::registerFlag().
+	SleighArchitecture::postSpecFile();
 }
 
 void RizinArchitecture::buildAction(DocumentStorage &store)

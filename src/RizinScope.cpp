@@ -5,6 +5,7 @@
 #include "RizinArchitecture.h"
 #include "RizinTypeFactory.h"
 
+#include <cctype>
 #include <funcdata.hh>
 
 #include <rz_core.h>
@@ -37,6 +38,230 @@ static std::string hex(ut64 v)
 	std::stringstream ss;
 	ss << "0x" << std::hex << v;
 	return ss.str();
+}
+
+/**
+ * \brief Check whether \p name identifies a known non-returning Go runtime or stdlib function.
+ *
+ * Strips optional Rizin symbol prefixes (`sym.go.`, `sym.`, and Mach-O leading `_`),
+ * excludes closures and defer wrappers, and matches known Go runtime panic/throw/exit
+ * entry points rather than an open `runtime.panic*` wildcard so data globals
+ * (`runtime.panicking`, `runtime.paniclk`, `runtime.panicnil`) and returning helpers
+ * (`runtime.panicCheck1`, `runtime.panicCheck2`) are excluded.
+ *
+ * \param name Symbol or flag name to inspect
+ * \return true if \p name is a known non-returning Go function
+ */
+static bool isGolangNoReturnSymbol(const char *name)
+{
+	if (!name || !*name) {
+		return false;
+	}
+	if (!strncmp(name, "sym.go.", 7)) {
+		name += 7;
+	} else if (!strncmp(name, "sym.", 4)) {
+		name += 4;
+	}
+	if (*name == '_') {
+		name++;
+	}
+	if (name[0] != 'r' && name[0] != 'o' && name[0] != 's') {
+		return false;
+	}
+	if (strstr(name, ".func") || strstr(name, ".deferwrap")) {
+		return false;
+	}
+
+	static const char *const noreturn_prefixes[] = {
+		"runtime.goPanic",
+		"runtime.panicIndex",
+		"runtime.panicSlice",
+		"runtime.panicBounds",
+		"runtime.panicExtend",
+		"runtime.panicunsafe",
+		"runtime.panicMakeslice",
+	};
+	for (const char *pfx : noreturn_prefixes) {
+		if (!strncmp(name, pfx, strlen(pfx))) {
+			return true;
+		}
+	}
+
+	static const char *const noreturn_syms[] = {
+		"runtime.gopanic",
+		"runtime.panicdottypeE",
+		"runtime.panicdottypeI",
+		"runtime.panicmem",
+		"runtime.panicmemAddr",
+		"runtime.panicshift",
+		"runtime.panicdivide",
+		"runtime.panicoverflow",
+		"runtime.panicfloat",
+		"runtime.panicwrap",
+		"runtime.panicnildottype",
+		"runtime.panicrangestate",
+		"runtime.throw",
+		"runtime.fatalthrow",
+		"runtime.fatal",
+		"runtime.fatalpanic",
+		"runtime.exit",
+		"os.Exit",
+		"syscall.Exit",
+	};
+	for (const char *sym : noreturn_syms) {
+		size_t len = strlen(sym);
+		if (!strncmp(name, sym, len) &&
+		    (name[len] == '\0' || !strcmp(name + len, ".abi0") ||
+		     !strcmp(name + len, ".abiinternal"))) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * \brief Check whether \p name has a non-function Go data or metadata symbol prefix.
+ *
+ * Excludes Go interface tables, string/func metadata, build IDs, compile-unit info,
+ * typelink tables, and reflect type descriptors while permitting compiler-generated
+ * `type..eq.` / `type..hash.` / `type:.eq.` / `type:.hash.` functions.
+ *
+ * \param name Flag name to inspect
+ * \return true if \p name identifies non-function Go data or metadata
+ */
+static bool isGolangNonFunctionSymbol(const char *name)
+{
+	if (!name) {
+		return false;
+	}
+	if (!strncmp(name, "sym.", 4)) {
+		name += 4;
+	}
+	if (*name == '_') {
+		name++;
+	}
+	static const char *const non_func_prefixes[] = {
+		"go.itab.",
+		"go:itab.",
+		"go.string.",
+		"go:string.",
+		"go.func.",
+		"go:func.",
+		"go.buildid",
+		"go:buildid",
+		"go.cuinfo.",
+		"go:cuinfo.",
+		"go.typelink",
+		"go:typelink",
+	};
+	for (const char *pfx : non_func_prefixes) {
+		if (!strncmp(name, pfx, strlen(pfx))) {
+			return true;
+		}
+	}
+	if (!strncmp(name, "type.", 5) || !strncmp(name, "type:", 5)) {
+		return strncmp(name + 5, ".eq.", 4) != 0 && strncmp(name + 5, ".hash.", 6) != 0;
+	}
+	return false;
+}
+
+/**
+ * \brief Check whether \p offset lies in an executable IO map.
+ *
+ * \param io RzIO instance to query
+ * \param offset Virtual address when `io->va` is enabled, otherwise physical offset
+ * \return true if a mapped region covers \p offset and has `RZ_PERM_X`
+ */
+static bool isExecutableOffset(RzIO *io, ut64 offset)
+{
+	if (!io) {
+		return false;
+	}
+	RzIOMap *map = io->va ? rz_io_map_get(io, offset) : rz_io_map_get_paddr(io, offset);
+	return map && (map->perm & RZ_PERM_X);
+}
+
+/**
+ * \brief Check whether \p name ends with the Go `.abi0` assembly wrapper suffix.
+ *
+ * \param name Symbol or flag name to inspect
+ * \return true if \p name ends with `.abi0`
+ */
+static bool hasAbi0Suffix(const char *name)
+{
+	if (!name) {
+		return false;
+	}
+	size_t len = strlen(name);
+	return len > 5 && !strcmp(name + len - 5, ".abi0");
+}
+
+/**
+ * \brief Check whether \p name matches Rizin's auto-generated stack arg pattern (`arg_<hex>h`).
+ *
+ * \param name Variable name to inspect
+ * \return true if \p name has the form `arg_<hex>h`
+ */
+static bool isAutoStackArgName(const char *name)
+{
+	if (!name || strncmp(name, "arg_", 4) != 0) {
+		return false;
+	}
+	const char *p = name + 4;
+	if (!std::isxdigit(static_cast<unsigned char>(*p))) {
+		return false;
+	}
+	while (std::isxdigit(static_cast<unsigned char>(*p))) {
+		p++;
+	}
+	return p[0] == 'h' && p[1] == '\0';
+}
+
+/**
+ * \brief Check whether the earliest recorded access to \p var is a pure write.
+ *
+ * Go ABIInternal register spill slots are written by the callee (in the prologue or
+ * `morestack` stub) before being read, whereas overflow stack arguments are read first.
+ *
+ * \param var Stack variable whose offset-ordered access vector is inspected
+ * \return true if \p var has at least one access and the earliest is write-only
+ */
+static bool isWrittenBeforeRead(RzAnalysisVar *var)
+{
+	if (!var || rz_vector_empty(&var->accesses)) {
+		return false;
+	}
+	const auto *first = static_cast<const RzAnalysisVarAccess *>(
+		rz_vector_index_ptr(&var->accesses, 0));
+	return first &&
+	       (first->type & RZ_ANALYSIS_VAR_ACCESS_TYPE_WRITE) &&
+	       !(first->type & RZ_ANALYSIS_VAR_ACCESS_TYPE_READ);
+}
+
+/**
+ * \brief Find the index of the first trial in \p params overlapping \p addr of size \p sz.
+ *
+ * Works around Ghidra's `ParamActive::whichTrial()`, which returns `-1` on the first
+ * non-overlapping entry whenever `sz <= 1` instead of scanning remaining trials.
+ *
+ * \param params Active parameter trials container
+ * \param addr Storage address of the candidate argument
+ * \param sz Size in bytes of the candidate argument
+ * \return Matching trial index, or `-1` if no trial overlaps \p addr
+ */
+static int4 findParamTrialIndex(ParamActive &params, const Address &addr, int4 sz)
+{
+	int4 idx = params.whichTrial(addr, sz);
+	if (idx >= 0 || sz > 1) {
+		return idx;
+	}
+	for (int4 i = 0; i < params.getNumTrials(); i++) {
+		const ParamTrial &trial = params.getTrial(i);
+		if (addr.overlap(0, trial.getAddress(), trial.getSize()) >= 0) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 static Element *child(Element *el, const std::string &name, const std::map<std::string, std::string> &attrs = {})
@@ -199,6 +424,48 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 
 	std::map<RzAnalysisVar *, Datatype *> var_types;
 
+	const bool isGolangRegAbi = fcn->cc && !strcmp(fcn->cc, "golang") &&
+		rz_analysis_cc_max_arg(core->analysis, fcn->cc) > 0;
+	bool fcnHasStackWriteAccesses = false;
+	if (isGolangRegAbi) {
+		rz_pvector_foreach_cpp<RzAnalysisVar>(&fcn->vars, [&](RzAnalysisVar *var) {
+			if (var->storage.type != RZ_ANALYSIS_VAR_STORAGE_STACK) {
+				return true;
+			}
+			void *acc_it;
+			rz_vector_foreach (&var->accesses, acc_it) {
+				auto *acc = static_cast<RzAnalysisVarAccess *>(acc_it);
+				if (acc->type & RZ_ANALYSIS_VAR_ACCESS_TYPE_WRITE) {
+					fcnHasStackWriteAccesses = true;
+					return false;
+				}
+			}
+			return true;
+		});
+	}
+	auto isEffectiveArg = [&](RzAnalysisVar *var) {
+		if (!rz_analysis_var_is_arg(var)) {
+			return false;
+		}
+		// In Go ABIInternal ("golang" with register args), caller-reserved
+		// register spill slots at [entry_sp + 8..] are auto-detected as stack
+		// arguments (arg_<hex>h) with RZ_ANALYSIS_VAR_ORIGIN_NONE.
+		// Note: RzAnalysisVarOriginKind only distinguishes NONE vs DWARF, so
+		// user-defined afvs/afs stack arguments also have ORIGIN_NONE (with
+		// empty accesses or a custom name). Keep DWARF args, user-defined
+		// afvs/afs args, and overflow stack args that are read before written.
+		if (isGolangRegAbi &&
+		    var->storage.type == RZ_ANALYSIS_VAR_STORAGE_STACK &&
+		    var->origin.kind == RZ_ANALYSIS_VAR_ORIGIN_NONE &&
+		    !rz_vector_empty(&var->accesses) &&
+		    isAutoStackArgName(var->name)) {
+			if (!fcnHasStackWriteAccesses || isWrittenBeforeRead(var)) {
+				return false;
+			}
+		}
+		return true;
+	};
+
 	ParamActive params(false);
 
 	rz_pvector_foreach_cpp<RzAnalysisVar>(&fcn->vars, [&](RzAnalysisVar *var) {
@@ -220,15 +487,17 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		}
 		var_types[var] = type;
 
-		if(!rz_analysis_var_is_arg(var))
+		if(!isEffectiveArg(var))
 			return true;
 		auto addr = addrForVar(var, true);
 		if(addr.isInvalid())
 			return true;
 		params.registerTrial(addr, type->getSize());
-		int4 i = params.whichTrial(addr, type->getSize());
-		params.getTrial(i).markActive();
-		params.getTrial(i).markUsed();
+		int4 i = findParamTrialIndex(params, addr, type->getSize());
+		if (i >= 0) {
+			params.getTrial(i).markActive();
+			params.getTrial(i).markUsed();
+		}
 		return true;
 	});
 
@@ -257,7 +526,8 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		Datatype *type = type_it->second;
 		bool typelock = true;
 
-		auto addr = addrForVar(var, rz_analysis_var_is_arg(var) /* Already emitted this warning before */);
+		const bool isArg = isEffectiveArg(var);
+		auto addr = addrForVar(var, isArg /* Already emitted this warning before */);
 		if(addr.isInvalid())
 			return true;
 
@@ -286,14 +556,16 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		{
 			arch->addWarning("Detected overlap for variable " + to_string(var->name));
 
-			if(rz_analysis_var_is_arg(var)) // Can't have args with typelock=false, otherwise we get segfaults in the Decompiler
+			// Can't have args with typelock=false, otherwise the Decompiler segfaults
+			if (isArg) {
 				return true;
+			}
 
 			typelock = false;
 		}
 
 		int4 paramIndex = -1;
-		if(rz_analysis_var_is_arg(var))
+		if(isArg)
 		{
 			if(proto && !proto->possibleInputParam(addr, type->getSize()))
 			{
@@ -302,7 +574,7 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 				return true;
 			}
 
-			int4 paramTrialIndex = params.whichTrial(addr, type->getSize());
+			int4 paramTrialIndex = findParamTrialIndex(params, addr, type->getSize());
 			if(paramTrialIndex < 0)
 			{
 				arch->addWarning("Failed to determine arg index of " + to_string(var->name));
@@ -326,10 +598,10 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 				{ "typelock", typelock ? "true" : "false" },
 				{ "namelock", "true" },
 				{ "readonly", "false" },
-				{ "cat", rz_analysis_var_is_arg(var) ? "0" : "-1" }
+				{ "cat", isArg ? "0" : "-1" }
 		});
 
-		if(rz_analysis_var_is_arg(var))
+		if(isArg)
 		{
 			if(argsByIndex.size() < paramIndex + 1)
 				argsByIndex.resize(paramIndex + 1, nullptr);
@@ -343,7 +615,7 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		childAddr(mapsymElement, "addr", addr);
 
 		auto rangelist = child(mapsymElement, "rangelist");
-		if(rz_analysis_var_is_arg(var) && var->storage.type == RZ_ANALYSIS_VAR_STORAGE_REG)
+		if(isArg && var->storage.type == RZ_ANALYSIS_VAR_STORAGE_REG)
 			childRegRange(rangelist);
 		return true;
 	});
@@ -381,9 +653,14 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 	int4 extraPop = proto ? proto->getExtraPop() : arch->translate->getDefaultSize();
 	if(extraPop == ProtoModel::extrapop_unknown)
 		extraPop = arch->translate->getDefaultSize();
+	const bool isNoReturn = fcn->is_noreturn ||
+		(((fcn->name && !strncmp(fcn->name, "sym.go.", 7)) ||
+		  (fcn->cc && !strncmp(fcn->cc, "golang", 6))) &&
+		 isGolangNoReturnSymbol(fcn->name));
 	auto prototypeElement = child(functionElement, "prototype", {
 			{ "extrapop", to_string(extraPop) },
-			{ "model", proto ? proto->getName() : "unknown" }
+			{ "model", proto ? proto->getName() : "unknown" },
+			{ "noreturn", isNoReturn ? "true" : "false" }
 	});
 
 	Address returnAddr(arch->getSpaceByName("register"), 0);
@@ -434,6 +711,39 @@ FunctionSymbol *RizinScope::registerRelocTarget(RzBinReloc *reloc) const
 Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 {
 	RzCoreLock core(arch->getCore());
+
+	if (flag->space && flag->space->name &&
+	    !strcmp(flag->space->name, RZ_FLAGS_FS_SYMBOLS) && flag->name) {
+		const char *default_cc = rz_analysis_cc_default(core->analysis);
+		const bool is_go_cc = default_cc && !strncmp(default_cc, "golang", 6);
+		const bool is_go_sym = !strncmp(flag->name, "sym.go.", 7) ||
+			(!strncmp(flag->name, "sym.", 4) && is_go_cc);
+		if (is_go_sym && !isGolangNonFunctionSymbol(flag->name) &&
+		    isExecutableOffset(core->io, flag->offset)) {
+			const char *name = (core->flags->realnames && flag->realname)
+				? flag->realname
+				: flag->name;
+			Address addr(arch->getDefaultCodeSpace(), flag->offset);
+			FunctionSymbol *fsym = cache->addFunction(addr, name);
+			if (fsym) {
+				FuncProto &fproto = fsym->getFunction()->getFuncProto();
+				ProtoModel *proto = nullptr;
+				if (hasAbi0Suffix(flag->name) || hasAbi0Suffix(flag->realname)) {
+					proto = arch->protoModelFromRizinCC("golang_abi0");
+				} else if (is_go_cc) {
+					proto = arch->protoModelFromRizinCC(default_cc);
+				}
+				if (proto) {
+					fproto.setModel(proto);
+				}
+				if (rz_analysis_noreturn_at(core->analysis, flag->offset) ||
+				    isGolangNoReturnSymbol(flag->name)) {
+					fproto.setNoReturn(true);
+				}
+			}
+			return fsym;
+		}
+	}
 
 	uint4 attr = Varnode::namelock | Varnode::typelock;
 	Datatype *type = nullptr;

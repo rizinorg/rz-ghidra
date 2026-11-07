@@ -3604,3 +3604,125 @@ undefined8 sym.main(void)
 }
 EOF
 RUN
+
+NAME=Golang decompilation with ABI mapping
+FILE=rizin-testbins/golang/go-re-sample-linux-amd64-go121
+CMDS=<<EOF
+aalg
+s sym.main.main
+pdgss
+pdg ~WARNING,sym.main.main,FlagSet_.Bool,os.Exit
+s sym.flag.__FlagSet_.Bool
+af
+pdg ~sym.flag.__FlagSet_.Bool
+afvs 0x40 user_stack_arg int64_t
+pdg ~user_stack_arg
+EOF
+EXPECT=<<EOF
+x86:LE:64:default:golang
+void sym.main.main(void)
+    puVar4 = (uint8_t *)sym.flag.__FlagSet_.Bool(puVar2, str.enable, 6, 0, str.enable, 6);
+    // WARNING: Subroutine does not return
+        sym.os.Exit(1);
+    // WARNING: Subroutine does not return
+    // WARNING: Subroutine does not return
+        sym.os.Exit(1);
+sym.flag.__FlagSet_.Bool(int64_t arg1, int64_t arg2, int64_t arg3, undefined8 placeholder_3, int64_t arg5, int64_t arg6)
+          int64_t user_stack_arg)
+EOF
+RUN
+
+NAME=Golang lazy flag registration and non-executable symbol filtering
+FILE=rizin-testbins/golang/go-re-sample-linux-amd64-go121
+CMDS=<<EOF
+e analysis.cc=golang
+avgm runtime.writeBarrier
+fs symbols
+f- runtime.writeBarrier
+f- obj.runtime.writeBarrier
+f sym.runtime.writeBarrier 16 @ 0x5667b0
+s sym.main.main
+af
+afc golang
+pdg ~WARNING,sym.main.main,writeBarrier,FlagSet_.Bool,os.Exit
+f- sym.runtime.writeBarrier
+f sym.go.itab.test 16 @ 0x5667b0
+pdg ~sym.go.itab.test
+f- sym.go.itab.test
+f sym.runtime.panicking 4 @ 0x5667b0
+pdg ~panicking
+EOF
+EXPECT=<<EOF
+void sym.main.main(void)
+    if (_sym.runtime.writeBarrier != 0) {
+    puVar4 = (uint8_t *)sym.flag.__FlagSet_.Bool(puVar2, 0x4a2f0e, 6, 0, 0x4a2f0e, 6);
+    if (_sym.runtime.writeBarrier != 0) {
+    // WARNING: Subroutine does not return
+        sym.os.Exit(1);
+    // WARNING: Subroutine does not return
+    // WARNING: Subroutine does not return
+        sym.os.Exit(1);
+    if (_sym.go.itab.test != 0) {
+    if (_sym.go.itab.test != 0) {
+    if (_sym.runtime.panicking != 0) {
+    if (_sym.runtime.panicking != 0) {
+EOF
+RUN
+
+NAME=Golang ABI0 (Go <=1.16)
+FILE=rizin-testbins/golang/example-server-1.16-stripped
+CMDS=<<EOF
+aalg
+s sym.go.flag.__FlagSet_.parseOne
+pdgss
+afi~call-convention
+pdg ~FlagSet_.parseOne
+EOF
+EXPECT=<<EOF
+x86:LE:64:default:golang
+call-convention: golang_abi0
+void abi0 sym.go.flag.__FlagSet_.parseOne(int64_t arg_8h, int8_t arg_10h, int64_t arg_18h, int64_t arg_20h)
+EOF
+RUN
+
+NAME=Golang x86-32 stack-only ABI
+FILE=rizin-testbins/elf/analysis/go_stripped
+CMDS=<<EOF
+pdgss
+s entry0
+af
+afc golang
+afvs 4 my_arg int32_t
+pdg ~entry0,Matching calling convention golang
+EOF
+EXPECT=<<EOF
+x86:LE:32:default:golang
+void entry0(int32_t my_arg)
+EOF
+RUN
+
+NAME=Golang AArch64 ABI mapping
+FILE=rizin-testbins/golang/go-re-sample-android-arm64
+CMDS=<<EOF
+aalg
+s sym.flag.__FlagSet_.Bool
+af
+pdgss
+pdg ~sym.flag.__FlagSet_.Bool
+EOF
+EXPECT=<<EOF
+AARCH64:LE:64:v8A:golang
+undefined8 sym.flag.__FlagSet_.Bool(int64_t arg1, int64_t arg2, int64_t arg3, int64_t arg4, int64_t arg5, int64_t arg6)
+EOF
+RUN
+
+NAME=Golang unsupported architecture fallback
+FILE=rizin-testbins/golang/go-re-sample-linux-mips
+CMDS=<<EOF
+pdgss
+EOF
+EXPECT=<<EOF
+MIPS:BE:32:default:gcc
+EOF
+RUN
+
