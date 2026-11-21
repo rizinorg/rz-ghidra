@@ -1,9 +1,8 @@
-FROM docker.io/library/debian:bullseye
+FROM docker.io/library/debian:bookworm
 
 RUN apt-get update
-RUN apt-get -y install git g++ cmake pkg-config flex bison python3 python3-pip ninja-build \
-	qtbase5-dev qt5-qmake libqt5svg5-dev qttools5-dev && \
-	pip3 install meson
+RUN apt-get -y install git g++ cmake pkg-config flex bison python3 meson ninja-build zlib1g-dev \
+	qt6-base-dev libqt6svg6-dev libqt6core5compat6-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools
 
 RUN cd /root && \
 	git clone --depth 1 https://github.com/rizinorg/rizin && \
@@ -15,7 +14,7 @@ RUN cd /root && \
 RUN cd /root && \
 	git clone --recurse-submodules --depth 1 https://github.com/rizinorg/cutter && \
 	cd cutter && \
-	cmake -Bbuild -GNinja -DCUTTER_USE_BUNDLED_RIZIN=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCUTTER_QT=5 && \
+	cmake -Bbuild -GNinja -DCUTTER_USE_BUNDLED_RIZIN=OFF -DCMAKE_INSTALL_PREFIX=/usr && \
 	ninja -C build && \
 	ninja -C build install
 
