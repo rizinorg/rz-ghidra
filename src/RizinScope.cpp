@@ -453,13 +453,14 @@ FunctionSymbol *RizinScope::registerFunction(RzAnalysisFunction *fcn) const
 		// Note: RzAnalysisVarOriginKind only distinguishes NONE vs DWARF, so
 		// user-defined afvs/afs stack arguments also have ORIGIN_NONE (with
 		// empty accesses or a custom name). Keep DWARF args, user-defined
-		// afvs/afs args, and overflow stack args that are read before written.
+		// afvs/afs args, frameless leaf overflow stack args (no stack frame
+		// to spill registers), and framed overflow stack args read before written.
 		if (isGolangRegAbi &&
 		    var->storage.type == RZ_ANALYSIS_VAR_STORAGE_STACK &&
 		    var->origin.kind == RZ_ANALYSIS_VAR_ORIGIN_NONE &&
 		    !rz_vector_empty(&var->accesses) &&
 		    isAutoStackArgName(var->name)) {
-			if (!fcnHasStackWriteAccesses || isWrittenBeforeRead(var)) {
+			if ((!fcnHasStackWriteAccesses && fcn->maxstack > 0) || isWrittenBeforeRead(var)) {
 				return false;
 			}
 		}
@@ -719,6 +720,7 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 		const bool is_go_sym = !strncmp(flag->name, "sym.go.", 7) ||
 			(!strncmp(flag->name, "sym.", 4) && is_go_cc);
 		if (is_go_sym && !isGolangNonFunctionSymbol(flag->name) &&
+		    !isGolangNonFunctionSymbol(flag->realname) &&
 		    isExecutableOffset(core->io, flag->offset)) {
 			const char *name = (core->flags->realnames && flag->realname)
 				? flag->realname
@@ -737,7 +739,8 @@ Symbol *RizinScope::registerFlag(RzFlagItem *flag) const
 					fproto.setModel(proto);
 				}
 				if (rz_analysis_noreturn_at(core->analysis, flag->offset) ||
-				    isGolangNoReturnSymbol(flag->name)) {
+				    isGolangNoReturnSymbol(flag->name) ||
+				    isGolangNoReturnSymbol(flag->realname)) {
 					fproto.setNoReturn(true);
 				}
 			}

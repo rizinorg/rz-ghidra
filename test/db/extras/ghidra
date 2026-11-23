@@ -3483,3 +3483,45 @@ MIPS:BE:32:default:gcc
 EOF
 RUN
 
+NAME=Golang leaf ABIInternal overflow stack arguments
+FILE=rizin-testbins/golang/go-re-sample-linux-amd64-go121
+CMDS=<<EOF
+e io.cache=true
+e analysis.cc=golang
+s sym.main.main
+wx 488d14034801d14801f94801f14c01c14c01c94c01d14c01d9488b5424084801d1488b542410488d040ac3
+af
+afc golang
+afva
+pdg ~sym.main.main,arg_8h
+EOF
+EXPECT=<<EOF
+int64_t sym.main.main(undefined8 placeholder_0, int64_t arg2, int64_t arg3, int64_t arg4, int64_t arg5, int64_t arg6,
+                     int64_t arg7, int64_t arg8, int64_t arg9, int64_t arg_8h, int64_t arg_10h)
+    return arg_10h + arg3 + arg2 + in_RAX + arg4 + arg5 + arg6 + arg7 + arg8 + arg9 + arg_8h;
+EOF
+RUN
+
+NAME=Golang lazy flag realname noreturn
+FILE=rizin-testbins/golang/go-re-sample-linux-amd64-go121
+CMDS=<<EOF
+e analysis.cc=golang
+e asm.flags.real=true
+fs symbols
+f- sym.os.Exit
+f sym.go.aliased_exit 1 @ 0x479680
+fN sym.go.aliased_exit os.Exit
+s sym.main.main
+af
+afc golang
+pdg ~WARNING,os.Exit
+EOF
+EXPECT=<<EOF
+    // WARNING: Subroutine does not return
+        os.Exit(1);
+    // WARNING: Subroutine does not return
+    // WARNING: Subroutine does not return
+        os.Exit(1);
+EOF
+RUN
+
